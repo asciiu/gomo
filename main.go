@@ -1,11 +1,10 @@
 package main
 
 import (
-	"io/ioutil"
 	"net/http"
 	"log"
-	"encoding/json"
 	"github.com/labstack/echo"
+	"encoding/json"
 )
 
 type Order struct {
@@ -67,15 +66,9 @@ func postOrder(c echo.Context) error {
 	order := OrderRequest{}
 
 	defer c.Request().Body.Close()
-	b, err := ioutil.ReadAll(c.Request().Body)
+	err := json.NewDecoder(c.Request().Body).Decode(&order)
 	if err != nil {
 		log.Printf("failed reading the request %s", err)
-		return c.String(http.StatusInternalServerError, "")
-	}
-
-	err = json.Unmarshal(b, &order)
-	if err != nil {
-		log.Printf("failed to unmarshal %s", err)
 		return c.String(http.StatusInternalServerError, "")
 	}
 
