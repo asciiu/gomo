@@ -4,8 +4,10 @@ import (
 	"net/http"
 	"log"
 	"encoding/json"
+	"github.com/dgrijalva/jwt-go"
 	"github.com/labstack/echo"
 	"github.com/labstack/echo/middleware"
+	"time"
 )
 
 type Order struct {
@@ -45,6 +47,11 @@ type OrderRequest struct {
 	Conditions string `json:"conditions"`
 }
 
+type LoginRequest struct {
+	Username string `json:"username"`
+	Password string `json:"password"`
+}
+
 // e.GET("/users/:id", getUser)
 func getOrder(c echo.Context) error {
 	// User ID from path `users/:id`
@@ -64,7 +71,12 @@ func listOrders(c echo.Context) error {
 }
 
 func postOrder(c echo.Context) error {
+	user := c.Get("user").(*jwt.Token)
+	claims := user.Claims.(jwt.MapClaims)
+	name := claims["name"].(string)
+
 	order := OrderRequest{}
+
 
 	defer c.Request().Body.Close()
 	err := json.NewDecoder(c.Request().Body).Decode(&order)
@@ -74,7 +86,7 @@ func postOrder(c echo.Context) error {
 	}
 
 	log.Printf("this is your order: %#v", order)
-	return c.String(http.StatusOK, "post order!")
+	return c.String(http.StatusOK, "Welcome "+name+" your order has posted!")
 } 
 
 func updateOrder(c echo.Context) error {
@@ -89,22 +101,60 @@ func mainHandler(c echo.Context) error {
 	return c.String(http.StatusOK, "main")
 }
 
+func login(c echo.Context) error {
+	loginRequest := LoginRequest{}
+
+	defer c.Request().Body.Close()
+
+	err := json.NewDecoder(c.Request().Body).Decode(&loginRequest)
+	if err != nil {
+		log.Printf("failed reading the request %s", err)
+		return c.String(http.StatusInternalServerError, "")
+	}
+
+	if loginRequest.Username == "jon" && loginRequest.Password == "shhh!" {
+		// Create token
+		token := jwt.New(jwt.SigningMethodHS256)
+
+		// Set claims
+		claims := token.Claims.(jwt.MapClaims)
+		claims["name"] = "Jon Snow"
+		claims["admin"] = true
+		claims["exp"] = time.Now().Add(time.Hour * 72).Unix()
+
+		// Generate encoded token and send it as response.
+		t, err := token.SignedString([]byte("secret"))
+		if err != nil {
+			return err
+		}
+		return c.JSON(http.StatusOK, map[string]string{
+			"token": t,
+		})
+	}
+
+	return echo.ErrUnauthorized
+}
+
 func main() {
 	e := echo.New()
 
-	g := e.Group("/api")
 	// this logs the server interaction
-	g.Use(middleware.LoggerWithConfig(middleware.LoggerConfig{
+	e.Use(middleware.LoggerWithConfig(middleware.LoggerConfig{
 		Format: `[${time_rfc3339}]  ${status}  ${method}  ${host}${path} ${latency_human}` + "\n",
 	}))
-	g.GET("/main", mainHandler)
+	e.Use(middleware.Recover())
 
+	// Login route
+	e.POST("/login", login)
 
-	e.GET("/orders", listOrders)
-	e.POST("/orders", postOrder)
-	e.GET("/orders/:id", getOrder)
-	e.PUT("/orders/:id", updateOrder)
-	e.DELETE("/orders/:id", deleteOrder)
+	// api group
+	api := e.Group("/api")
+	api.Use(middleware.JWT([]byte("secret")))
+	api.GET("/orders", listOrders)
+	api.POST("/orders", postOrder)
+	api.GET("/orders/:id", getOrder)
+	api.PUT("/orders/:id", updateOrder)
+	api.DELETE("/orders/:id", deleteOrder)
 
 	e.GET("/", func(c echo.Context) error {
 		return c.String(http.StatusOK, "Hello, World!")
