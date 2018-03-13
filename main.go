@@ -3,8 +3,9 @@ package main
 import (
 	"net/http"
 	"log"
-	"github.com/labstack/echo"
 	"encoding/json"
+	"github.com/labstack/echo"
+	"github.com/labstack/echo/middleware"
 )
 
 type Order struct {
@@ -84,8 +85,20 @@ func deleteOrder(c echo.Context) error {
 	return c.String(http.StatusOK, "delete it!")
 }
 
+func mainHandler(c echo.Context) error {
+	return c.String(http.StatusOK, "main")
+}
+
 func main() {
 	e := echo.New()
+
+	g := e.Group("/api")
+	// this logs the server interaction
+	g.Use(middleware.LoggerWithConfig(middleware.LoggerConfig{
+		Format: `[${time_rfc3339}]  ${status}  ${method}  ${host}${path} ${latency_human}` + "\n",
+	}))
+	g.GET("/main", mainHandler)
+
 
 	e.GET("/orders", listOrders)
 	e.POST("/orders", postOrder)
