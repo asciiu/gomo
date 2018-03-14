@@ -37,6 +37,11 @@ type Order struct {
 	createdAt          int64  //integer
 }
 
+type JwtClaims struct {
+	Name string `json:"name"`
+	jwt.StandardClaims
+}
+
 type OrderRequest struct {
 	ApiKeyId           string  `json:"apiKeyId"`
 	ExchangeMarketName string  `json:"exchangeMarketName"`
@@ -55,6 +60,14 @@ type LoginRequest struct {
 
 // e.GET("/users/:id", getUser)
 func getOrder(c echo.Context) error {
+	user := c.Get("user")
+	token := user.(*jwt.Token)
+	claims, ok := token.Claims.(jwt.MapClaims)
+	if !ok {
+		log.Println("ERROR!")
+	}
+
+	log.Println("User name: ", claims["name"], "User ID: ", claims["jti"])
 	// User ID from path `users/:id`
 	id := c.Param("id")
 
@@ -101,6 +114,27 @@ func mainHandler(c echo.Context) error {
 	return c.String(http.StatusOK, "main")
 }
 
+func createJwtToken() (string, error) {
+	claims := JwtClaims{
+		"jack",
+		jwt.StandardClaims{
+			Id:        "userId",
+			ExpiresAt: time.Now().Add(time.Hour * 3).Unix(),
+		},
+	}
+
+	rawToken := jwt.NewWithClaims(jwt.SigningMethodHS512, claims)
+
+	// Generate encoded token and send it as response.
+	// TODO read secret from env var
+	token, err := rawToken.SignedString([]byte("cuddlegang"))
+	if err != nil {
+		return "", err
+	}
+
+	return token, nil
+}
+
 func login(c echo.Context) error {
 	loginRequest := LoginRequest{}
 
@@ -113,29 +147,14 @@ func login(c echo.Context) error {
 	}
 
 	if loginRequest.Username == "jon" && loginRequest.Password == "shhh!" {
-		// crate a cookie instance
-		cookie := &http.Cookie{}
-		cookie.Name = "sessionID"
-		cookie.Value = "session value"
-		cookie.Expires = time.Now().Add(48 * time.Hour)
-		c.SetCookie(cookie)
-
-		// Create token
-		token := jwt.New(jwt.SigningMethodHS256)
-
-		// Set claims
-		claims := token.Claims.(jwt.MapClaims)
-		claims["name"] = "Jon Snow"
-		claims["admin"] = true
-		claims["exp"] = time.Now().Add(time.Hour * 3).Unix()
-
 		// Generate encoded token and send it as response.
-		t, err := token.SignedString([]byte("secret"))
+		// TODO read secret from env var
+		token, err := createJwtToken()
 		if err != nil {
 			return err
 		}
 		return c.JSON(http.StatusOK, map[string]string{
-			"token": t,
+			"token": token,
 		})
 	}
 
@@ -157,14 +176,18 @@ func main() {
 	e.Use(middleware.LoggerWithConfig(middleware.LoggerConfig{
 		Format: `[${time_rfc3339}]  ${status}  ${method}  ${host}${path} ${latency_human}` + "\n",
 	}))
-	e.Use(middleware.Recover())
+	//e.Use(middleware.Recover())
 
 	// Login route
 	e.POST("/login", login)
 
 	// api group
 	api := e.Group("/api")
-	api.Use(middleware.JWT([]byte("secret")))
+	// TODO read the secret from env
+	api.Use(middleware.JWTWithConfig(middleware.JWTConfig{
+		SigningKey:    []byte("cuddlegang"),
+		SigningMethod: "HS512",
+	}))
 	api.GET("/orders", listOrders)
 	api.POST("/orders", postOrder)
 	api.GET("/orders/:id", getOrder)
