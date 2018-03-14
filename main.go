@@ -1,50 +1,51 @@
 package main
 
 import (
-	"net/http"
-	"log"
 	"encoding/json"
+	"log"
+	"net/http"
+	"time"
+
 	"github.com/dgrijalva/jwt-go"
 	"github.com/labstack/echo"
 	"github.com/labstack/echo/middleware"
-	"time"
 )
 
 type Order struct {
-	orderID string 
-	apiKeyId string //Key id used for the order? Remember why we have this?
-	exchangeOrderID string
-	baseCurrency string // "BTC",
-    baseCurrencyLong string // "Bitcoin", //As above
-	marketCurrency string // "LTC",
-    marketCurrencyLong string // "Litecoin", //Only bittrex seems to have this, pass the short name if doesn't exist
-    minTradeSize string  //"0.001", //string
-    marketName string // "LTCBTC", //Convention is market+base this is our name
-    //marketPrice: "0.41231231", //String Last price from socket for the pair in the exchange
-    //?btcPrice: "0.41231231", //String This is a shortcut for me not to calculate we can discuss it
-    //?fiatPrice: "1.35",  //Stting This is a shortcut for me not to calculate we can discuss it          
-    exchange string // "binance"
-    exchangeMarketName string // "LTC-BTC", //Some exchanges put dash others reverse them i.e. BTCLTC, 
-	orderType string // limit, market, stop, fake_market, see above.
-	rate string //String
-	baseQuantity float64
-	quantity float64 // baseQuantity / rate
-	quantityRemaining float64 // how many 
-	side string // buy, sell
-	conditions string
-	status string //open, draft, closed,
-	createdAt int64 //integer
+	orderID            string
+	apiKeyId           string //Key id used for the order? Remember why we have this?
+	exchangeOrderID    string
+	baseCurrency       string // "BTC",
+	baseCurrencyLong   string // "Bitcoin", //As above
+	marketCurrency     string // "LTC",
+	marketCurrencyLong string // "Litecoin", //Only bittrex seems to have this, pass the short name if doesn't exist
+	minTradeSize       string //"0.001", //string
+	marketName         string // "LTCBTC", //Convention is market+base this is our name
+	//marketPrice: "0.41231231", //String Last price from socket for the pair in the exchange
+	//?btcPrice: "0.41231231", //String This is a shortcut for me not to calculate we can discuss it
+	//?fiatPrice: "1.35",  //Stting This is a shortcut for me not to calculate we can discuss it
+	exchange           string // "binance"
+	exchangeMarketName string // "LTC-BTC", //Some exchanges put dash others reverse them i.e. BTCLTC,
+	orderType          string // limit, market, stop, fake_market, see above.
+	rate               string //String
+	baseQuantity       float64
+	quantity           float64 // baseQuantity / rate
+	quantityRemaining  float64 // how many
+	side               string  // buy, sell
+	conditions         string
+	status             string //open, draft, closed,
+	createdAt          int64  //integer
 }
 
 type OrderRequest struct {
-	ApiKeyId string `json:"apiKeyId"`
-	ExchangeMarketName string `json:"exchangeMarketName"`
-	MarketName string `json:"marketName"`
-	Side string `json:"side"`
-	OrderType string `json:"orderType"`
-	UnitPrice float64 `json:"unitPrice"`
-	Qauntity float64 `json:"quantity"`
-	Conditions string `json:"conditions"`
+	ApiKeyId           string  `json:"apiKeyId"`
+	ExchangeMarketName string  `json:"exchangeMarketName"`
+	MarketName         string  `json:"marketName"`
+	Side               string  `json:"side"`
+	OrderType          string  `json:"orderType"`
+	UnitPrice          float64 `json:"unitPrice"`
+	Qauntity           float64 `json:"quantity"`
+	Conditions         string  `json:"conditions"`
 }
 
 type LoginRequest struct {
@@ -58,7 +59,7 @@ func getOrder(c echo.Context) error {
 	id := c.Param("id")
 
 	return c.JSON(http.StatusOK, map[string]string{
-		"id": id,
+		"id":           id,
 		"exchangeName": "amigonex",
 	})
 }
@@ -67,7 +68,7 @@ func listOrders(c echo.Context) error {
 	// Get team and member from the query string
 	team := c.QueryParam("team")
 	member := c.QueryParam("member")
-	return c.String(http.StatusOK, "team:" + team + ", member:" + member)
+	return c.String(http.StatusOK, "team:"+team+", member:"+member)
 }
 
 func postOrder(c echo.Context) error {
@@ -76,7 +77,6 @@ func postOrder(c echo.Context) error {
 	name := claims["name"].(string)
 
 	order := OrderRequest{}
-
 
 	defer c.Request().Body.Close()
 	err := json.NewDecoder(c.Request().Body).Decode(&order)
@@ -87,7 +87,7 @@ func postOrder(c echo.Context) error {
 
 	log.Printf("this is your order: %#v", order)
 	return c.String(http.StatusOK, "Welcome "+name+" your order has posted!")
-} 
+}
 
 func updateOrder(c echo.Context) error {
 	return c.String(http.StatusOK, "update it!")
@@ -113,6 +113,13 @@ func login(c echo.Context) error {
 	}
 
 	if loginRequest.Username == "jon" && loginRequest.Password == "shhh!" {
+		// crate a cookie instance
+		cookie := &http.Cookie{}
+		cookie.Name = "sessionID"
+		cookie.Value = "session value"
+		cookie.Expires = time.Now().Add(48 * time.Hour)
+		c.SetCookie(cookie)
+
 		// Create token
 		token := jwt.New(jwt.SigningMethodHS256)
 
@@ -135,9 +142,17 @@ func login(c echo.Context) error {
 	return echo.ErrUnauthorized
 }
 
+func ServerHeader(next echo.HandlerFunc) echo.HandlerFunc {
+	return func(c echo.Context) error {
+		c.Response().Header().Set(echo.HeaderServer, "Gomo/0.1")
+		return next(c)
+	}
+}
+
 func main() {
 	e := echo.New()
 
+	e.Use(ServerHeader)
 	// this logs the server interaction
 	e.Use(middleware.LoggerWithConfig(middleware.LoggerConfig{
 		Format: `[${time_rfc3339}]  ${status}  ${method}  ${host}${path} ${latency_human}` + "\n",
