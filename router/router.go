@@ -17,8 +17,8 @@ func New(db *sql.DB) *echo.Echo {
 	middlewares.SetMainMiddlewares(e)
 	middlewares.SetApiMiddlewares(apiGroup)
 
-	api.MainGroup(e, db)
-	api.ApiGroup(apiGroup)
+	api.AuthRoutes(e, db)
+	api.OrderRoutes(apiGroup, db)
 
 	return e
 }

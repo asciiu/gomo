@@ -1,6 +1,7 @@
-package handlers
+package controllers
 
 import (
+	"database/sql"
 	"encoding/json"
 	"log"
 	"net/http"
@@ -8,6 +9,10 @@ import (
 	jwt "github.com/dgrijalva/jwt-go"
 	"github.com/labstack/echo"
 )
+
+type OrderController struct {
+	DB *sql.DB
+}
 
 type Order struct {
 	orderID            string

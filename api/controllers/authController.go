@@ -1,4 +1,4 @@
-package handlers
+package controllers
 
 import (
 	"database/sql"
@@ -12,7 +12,7 @@ import (
 	uuid "github.com/satori/go.uuid"
 )
 
-type MainRoutes struct {
+type AuthController struct {
 	DB *sql.DB
 }
 
@@ -47,7 +47,7 @@ func createJwtToken() (string, error) {
 	return token, nil
 }
 
-func (routes *MainRoutes) Login(c echo.Context) error {
+func (controller *AuthController) Login(c echo.Context) error {
 	loginRequest := LoginRequest{}
 
 	defer c.Request().Body.Close()
@@ -73,11 +73,11 @@ func (routes *MainRoutes) Login(c echo.Context) error {
 	return echo.ErrUnauthorized
 }
 
-func (routes *MainRoutes) Signup(c echo.Context) error {
+func (controller *AuthController) Signup(c echo.Context) error {
 	// panic on error
 	u1 := uuid.Must(uuid.NewV4())
 
-	stmt, err := routes.DB.Prepare("INSERT INTO users(id, first_name, last_name, email, password, salt) VALUES($1,$2,$3,$4,$5,$6)")
+	stmt, err := controller.DB.Prepare("INSERT INTO users(id, first_name, last_name, email, password, salt) VALUES($1,$2,$3,$4,$5,$6)")
 	if err != nil {
 		log.Print("HERE")
 		log.Fatal(err)
