@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"database/sql"
 	"encoding/json"
 	"log"
 	"net/http"
@@ -8,7 +9,12 @@ import (
 
 	jwt "github.com/dgrijalva/jwt-go"
 	"github.com/labstack/echo"
+	uuid "github.com/satori/go.uuid"
 )
+
+type MainRoutes struct {
+	DB *sql.DB
+}
 
 type JwtClaims struct {
 	Name string `json:"name"`
@@ -41,7 +47,7 @@ func createJwtToken() (string, error) {
 	return token, nil
 }
 
-func Login(c echo.Context) error {
+func (routes *MainRoutes) Login(c echo.Context) error {
 	loginRequest := LoginRequest{}
 
 	defer c.Request().Body.Close()
@@ -65,4 +71,26 @@ func Login(c echo.Context) error {
 	}
 
 	return echo.ErrUnauthorized
+}
+
+func (routes *MainRoutes) Signup(c echo.Context) error {
+	// panic on error
+	u1 := uuid.Must(uuid.NewV4())
+
+	stmt, err := routes.DB.Prepare("INSERT INTO users(id, first_name, last_name, email, password, salt) VALUES($1,$2,$3,$4,$5,$6)")
+	if err != nil {
+		log.Print("HERE")
+		log.Fatal(err)
+	}
+	res, err := stmt.Exec(u1, "test", "name", "test@email", "password", "salt")
+	if err != nil {
+		log.Fatal(err)
+	}
+	rowCnt, err := res.RowsAffected()
+	if err != nil {
+		log.Fatal(err)
+	}
+	log.Printf("affected = %d\n", rowCnt)
+
+	return c.String(http.StatusOK, "registered")
 }

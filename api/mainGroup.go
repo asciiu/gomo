@@ -1,17 +1,17 @@
 package api
 
 import (
-	"net/http"
+	"database/sql"
 
 	"github.com/asciiu/gomo/api/handlers"
 	"github.com/labstack/echo"
 )
 
-func MainGroup(e *echo.Echo) {
-	// Login route
-	e.POST("/login", handlers.Login)
+func MainGroup(e *echo.Echo, db *sql.DB) {
 
-	e.GET("/", func(c echo.Context) error {
-		return c.String(http.StatusOK, "Hello, World!")
-	})
+	main := &handlers.MainRoutes{DB: db}
+
+	// Login route
+	e.POST("/login", main.Login)
+	e.POST("/signup", main.Signup)
 }

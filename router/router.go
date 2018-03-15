@@ -1,12 +1,14 @@
 package router
 
 import (
+	"database/sql"
+
 	"github.com/asciiu/gomo/api"
 	"github.com/asciiu/gomo/api/middlewares"
 	"github.com/labstack/echo"
 )
 
-func New() *echo.Echo {
+func New(db *sql.DB) *echo.Echo {
 	e := echo.New()
 
 	// api group
@@ -15,7 +17,7 @@ func New() *echo.Echo {
 	middlewares.SetMainMiddlewares(e)
 	middlewares.SetApiMiddlewares(apiGroup)
 
-	api.MainGroup(e)
+	api.MainGroup(e, db)
 	api.ApiGroup(apiGroup)
 
 	return e
