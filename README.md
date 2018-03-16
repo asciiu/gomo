@@ -3,7 +3,9 @@ A Go port of the beloved fomo api.
 
 ### Prerequisites
 Install goose. 
+```
 $ go get -u github.com/pressly/goose/cmd/goose
+```
 https://github.com/pressly/goose
 
 ### Getting Started 
