@@ -3,9 +3,10 @@
 -- USERS
 CREATE TABLE users(
     id uuid PRIMARY KEY,
-    first_name VARCHAR NOT NULL,
-    last_name VARCHAR NOT NULL,
+    first_name VARCHAR,
+    last_name VARCHAR,
     email VARCHAR UNIQUE NOT NULL,
+    email_verified BOOLEAN NOT NULL,
     password VARCHAR NOT NULL,
     salt VARCHAR NOT NULL,
     created_on TIMESTAMP DEFAULT now(),

@@ -3,8 +3,8 @@ package main
 import (
 	"log"
 
-	"github.com/asciiu/gomo/database"
-	"github.com/asciiu/gomo/router"
+	"github.com/asciiu/gomo/api/routes"
+	"github.com/asciiu/gomo/common/database"
 	_ "github.com/lib/pq"
 )
 
@@ -16,10 +16,10 @@ func checkErr(err error) {
 }
 
 func main() {
-	db, err := database.NewDB("postgres://postgres@localhost/fomo_dev?&sslmode=disable")
+	db, err := database.NewDB("postgres://postgres@localhost/gomo_dev?&sslmode=disable")
 	checkErr(err)
 	defer db.Close()
 
-	e := router.New(db)
+	e := routes.New(db)
 	e.Logger.Fatal(e.Start(":5000"))
 }

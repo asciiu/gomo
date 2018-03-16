@@ -1,9 +1,8 @@
-package router
+package routes
 
 import (
 	"database/sql"
 
-	"github.com/asciiu/gomo/api"
 	"github.com/asciiu/gomo/api/middlewares"
 	"github.com/labstack/echo"
 )
@@ -17,8 +16,8 @@ func New(db *sql.DB) *echo.Echo {
 	middlewares.SetMainMiddlewares(e)
 	middlewares.SetApiMiddlewares(apiGroup)
 
-	api.AuthRoutes(e, db)
-	api.OrderRoutes(apiGroup, db)
+	AuthRoutes(e, db)
+	OrderRoutes(apiGroup, db)
 
 	return e
 }
