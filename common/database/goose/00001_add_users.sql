@@ -6,8 +6,8 @@ CREATE TABLE users(
     first_name VARCHAR,
     last_name VARCHAR,
     email VARCHAR UNIQUE NOT NULL,
-    email_verified BOOLEAN NOT NULL,
-    password VARCHAR NOT NULL,
+    email_verified BOOLEAN NOT NULL DEFAULT false,
+    password_hash VARCHAR NOT NULL,
     salt VARCHAR NOT NULL,
     created_on TIMESTAMP DEFAULT now(),
     updated_on TIMESTAMP DEFAULT current_timestamp

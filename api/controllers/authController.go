@@ -77,7 +77,7 @@ func (controller *AuthController) Signup(c echo.Context) error {
 	// panic on error
 	u1 := uuid.Must(uuid.NewV4())
 
-	stmt, err := controller.DB.Prepare("INSERT INTO users(id, first_name, last_name, email, password, salt) VALUES($1,$2,$3,$4,$5,$6)")
+	stmt, err := controller.DB.Prepare("INSERT INTO users(id, first_name, last_name, email, password_hash, salt) VALUES($1,$2,$3,$4,$5,$6)")
 	if err != nil {
 		log.Print("HERE")
 		log.Fatal(err)
