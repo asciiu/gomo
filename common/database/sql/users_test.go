@@ -4,8 +4,6 @@ import (
 	"log"
 	"testing"
 
-	"github.com/satori/go.uuid"
-
 	"github.com/asciiu/gomo/common/database"
 	"github.com/asciiu/gomo/common/database/sql"
 	"github.com/asciiu/gomo/common/models"
@@ -23,20 +21,12 @@ func TestInsertUser(t *testing.T) {
 	checkErr(err)
 	defer db.Close()
 
-	newId, _ := uuid.NewV4()
-	user := models.User{
-		Id:            newId.String(),
-		First:         "test",
-		Last:          "one",
-		Email:         "test@email",
-		EmailVerified: true,
-		PasswordHash:  "hash",
-		Salt:          "salt",
-	}
-	_, error := sql.InsertUser(db, &user)
+	user := models.NewUser("test@email", "hash")
+	_, error := sql.InsertUser(db, user)
 	if error != nil {
 		t.Errorf("%s", error)
 	}
+	//fmt.Printf("%#v", *user)
 }
 
 func TestFindUser(t *testing.T) {
