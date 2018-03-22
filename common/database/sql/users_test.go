@@ -39,13 +39,13 @@ func TestInsertUser(t *testing.T) {
 	}
 }
 
-func TestGetUser(t *testing.T) {
+func TestFindUser(t *testing.T) {
 	db, err := database.NewDB("postgres://postgres@localhost/gomo_test?&sslmode=disable")
 	checkErr(err)
 	defer db.Close()
 
 	email := "test@email"
-	user, err := sql.GetUser(db, email)
+	user, err := sql.FindUser(db, email)
 	if err != nil {
 		t.Errorf("%s", err)
 	}
@@ -53,5 +53,6 @@ func TestGetUser(t *testing.T) {
 		t.Errorf("user not found %s", email)
 	}
 
-	//fmt.Printf("%+v\n", user)
+	sqlStatement := `delete from users where email = $1`
+	db.Exec(sqlStatement, email)
 }
