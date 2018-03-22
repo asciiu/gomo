@@ -17,3 +17,11 @@ Clean DB
 ```
 $ goose postgres "user=postgres dbname=gomo_dev sslmode=disable" down-to 0 
 ```
+
+### Testing 
+Apply DB schema to test database. Create dB gomo_test if it does not exist. 
+
+```
+$ goose postgres "user=postgres dbname=gomo_test sslmode=disable" up
+```
+
