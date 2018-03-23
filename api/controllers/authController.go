@@ -35,12 +35,9 @@ type SignupRequest struct {
 }
 
 func createJwtToken(user *models.User) (string, error) {
-	claims := JwtClaims{
-		user.Email,
-		jwt.StandardClaims{
-			Id:        user.Id,
-			ExpiresAt: time.Now().Add(time.Hour * 3).Unix(),
-		},
+	claims := jwt.StandardClaims{
+		Id:        user.Id,
+		ExpiresAt: time.Now().Add(time.Hour * 3).Unix(),
 	}
 
 	rawToken := jwt.NewWithClaims(jwt.SigningMethodHS512, claims)
