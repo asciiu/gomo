@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"log"
 	"net/http"
+	"os"
 	"time"
 
 	gsql "github.com/asciiu/gomo/common/database/sql"
@@ -19,7 +20,7 @@ type AuthController struct {
 }
 
 type JwtClaims struct {
-	Name string `json:"name"`
+	Email string `json:"email"`
 	jwt.StandardClaims
 }
 
@@ -33,11 +34,11 @@ type SignupRequest struct {
 	Password string `json:"password"`
 }
 
-func createJwtToken() (string, error) {
+func createJwtToken(user *models.User) (string, error) {
 	claims := JwtClaims{
-		"jack",
+		user.Email,
 		jwt.StandardClaims{
-			Id:        "userId",
+			Id:        user.Id,
 			ExpiresAt: time.Now().Add(time.Hour * 3).Unix(),
 		},
 	}
@@ -45,8 +46,7 @@ func createJwtToken() (string, error) {
 	rawToken := jwt.NewWithClaims(jwt.SigningMethodHS512, claims)
 
 	// Generate encoded token and send it as response.
-	// TODO read secret from env var
-	token, err := rawToken.SignedString([]byte("cuddlegang"))
+	token, err := rawToken.SignedString([]byte(os.Getenv("GOMO_JWT")))
 	if err != nil {
 		return "", err
 	}
@@ -76,7 +76,7 @@ func (controller *AuthController) Login(c echo.Context) error {
 		if bcrypt.CompareHashAndPassword([]byte(user.PasswordHash), []byte(loginRequest.Password)) == nil {
 			// Generate encoded token and send it as response.
 			// TODO read secret from env var
-			token, err := createJwtToken()
+			token, err := createJwtToken(user)
 			if err != nil {
 				return err
 			}
