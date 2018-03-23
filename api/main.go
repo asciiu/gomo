@@ -8,6 +8,11 @@ import (
 	_ "github.com/lib/pq"
 )
 
+const (
+	privateKeyPath = "keys/gomo-key-ecdsa"
+	publicKeyPath  = "keys/gomo-key-ecdsa.pub"
+)
+
 func checkErr(err error) {
 	if err != nil {
 		log.Println(err)

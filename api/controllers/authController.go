@@ -7,9 +7,11 @@ import (
 	"net/http"
 	"time"
 
+	gsql "github.com/asciiu/gomo/common/database/sql"
+	"github.com/asciiu/gomo/common/models"
 	jwt "github.com/dgrijalva/jwt-go"
 	"github.com/labstack/echo"
-	uuid "github.com/satori/go.uuid"
+	"golang.org/x/crypto/bcrypt"
 )
 
 type AuthController struct {
@@ -22,7 +24,12 @@ type JwtClaims struct {
 }
 
 type LoginRequest struct {
-	Username string `json:"username"`
+	Email    string `json:"email"`
+	Password string `json:"password"`
+}
+
+type SignupRequest struct {
+	Email    string `json:"email"`
 	Password string `json:"password"`
 }
 
@@ -58,39 +65,43 @@ func (controller *AuthController) Login(c echo.Context) error {
 		return c.String(http.StatusInternalServerError, "")
 	}
 
-	if loginRequest.Username == "jon" && loginRequest.Password == "shhh!" {
-		// Generate encoded token and send it as response.
-		// TODO read secret from env var
-		token, err := createJwtToken()
-		if err != nil {
-			return err
+	user, err := gsql.FindUser(controller.DB, loginRequest.Email)
+	switch {
+	case err == sql.ErrNoRows:
+		return echo.ErrUnauthorized
+	case err != nil:
+		log.Fatal(err)
+		return echo.ErrUnauthorized
+	default:
+		if bcrypt.CompareHashAndPassword([]byte(user.PasswordHash), []byte(loginRequest.Password)) == nil {
+			// Generate encoded token and send it as response.
+			// TODO read secret from env var
+			token, err := createJwtToken()
+			if err != nil {
+				return err
+			}
+			return c.JSON(http.StatusOK, map[string]string{
+				"token": token,
+			})
 		}
-		return c.JSON(http.StatusOK, map[string]string{
-			"token": token,
-		})
 	}
 
 	return echo.ErrUnauthorized
 }
 
 func (controller *AuthController) Signup(c echo.Context) error {
-	// panic on error
-	u1 := uuid.Must(uuid.NewV4())
+	signupRequest := SignupRequest{}
 
-	stmt, err := controller.DB.Prepare("INSERT INTO users(id, first_name, last_name, email, password_hash, salt) VALUES($1,$2,$3,$4,$5,$6)")
+	err := json.NewDecoder(c.Request().Body).Decode(&signupRequest)
 	if err != nil {
-		log.Print("HERE")
-		log.Fatal(err)
+		log.Printf("failed reading the signup request %s", err)
+		return c.String(http.StatusInternalServerError, "")
 	}
-	res, err := stmt.Exec(u1, "test", "name", "test@email", "password", "salt")
-	if err != nil {
-		log.Fatal(err)
-	}
-	rowCnt, err := res.RowsAffected()
-	if err != nil {
-		log.Fatal(err)
-	}
-	log.Printf("affected = %d\n", rowCnt)
 
+	user := models.NewUser(signupRequest.Email, signupRequest.Password)
+	_, error := gsql.InsertUser(controller.DB, user)
+	if error != nil {
+		log.Printf("failed reading the request %s", error)
+	}
 	return c.String(http.StatusOK, "registered")
 }
