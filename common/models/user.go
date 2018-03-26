@@ -3,22 +3,20 @@ package models
 import (
 	"log"
 
+	uuid "github.com/satori/go.uuid"
 	"golang.org/x/crypto/bcrypt"
 )
 
 func NewUser(email string, password string) *User {
-	// newId, err := uuid.NewV1()
-	// if err != nil {
-	// 	log.Println(err)
-	// }
+	newId, _ := uuid.NewV1()
 
-	//user := User{
-	//	Id:            newId.String(),
-	//	Email:         email,
-	//	EmailVerified: false,
-	//	PasswordHash:  hashAndSalt([]byte(password)),
-	//}
-	return &User{}
+	user := User{
+		Id:            newId.String(),
+		Email:         email,
+		EmailVerified: false,
+		PasswordHash:  hashAndSalt([]byte(password)),
+	}
+	return &user
 }
 
 func hashAndSalt(pwd []byte) string {
