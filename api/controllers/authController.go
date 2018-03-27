@@ -8,7 +8,7 @@ import (
 	"os"
 	"time"
 
-	gsql "github.com/asciiu/gomo/common/database/sql"
+	gsql "github.com/asciiu/gomo/common/db/sql"
 	"github.com/asciiu/gomo/common/models"
 	jwt "github.com/dgrijalva/jwt-go"
 	"github.com/labstack/echo"

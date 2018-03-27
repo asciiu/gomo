@@ -6,7 +6,7 @@ import (
 	"os"
 
 	"github.com/asciiu/gomo/api/routes"
-	"github.com/asciiu/gomo/common/database"
+	"github.com/asciiu/gomo/common/db"
 	_ "github.com/lib/pq"
 )
 
@@ -18,13 +18,18 @@ func checkErr(err error) {
 }
 
 func main() {
-	dbUrl := fmt.Sprintf("postgres://postgres@%s:%s/gomo_dev?&sslmode=disable", os.Getenv("DB_HOST"), os.Getenv("DB_PORT"))
+
+	dbUrl := fmt.Sprintf("postgres://postgres@%s:%s/%s?&sslmode=disable",
+		os.Getenv("DB_HOST"),
+		os.Getenv("DB_PORT"),
+		os.Getenv("DB_NAME"),
+	)
 	fmt.Println(dbUrl)
 
-	db, err := database.NewDB(dbUrl)
+	gomoDB, err := db.NewDB(dbUrl)
 	checkErr(err)
-	defer db.Close()
+	defer gomoDB.Close()
 
-	e := routes.New(db)
+	e := routes.New(gomoDB)
 	e.Logger.Fatal(e.Start(":5000"))
 }

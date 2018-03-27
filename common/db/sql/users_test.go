@@ -4,8 +4,8 @@ import (
 	"log"
 	"testing"
 
-	"github.com/asciiu/gomo/common/database"
-	"github.com/asciiu/gomo/common/database/sql"
+	"github.com/asciiu/gomo/common/db"
+	"github.com/asciiu/gomo/common/db/sql"
 	"github.com/asciiu/gomo/common/models"
 )
 
@@ -17,7 +17,7 @@ func checkErr(err error) {
 }
 
 func TestInsertUser(t *testing.T) {
-	db, err := database.NewDB("postgres://postgres@localhost/gomo_test?&sslmode=disable")
+	db, err := db.NewDB("postgres://postgres@localhost/gomo_test?&sslmode=disable")
 	checkErr(err)
 	defer db.Close()
 
@@ -30,7 +30,7 @@ func TestInsertUser(t *testing.T) {
 }
 
 func TestFindUser(t *testing.T) {
-	db, err := database.NewDB("postgres://postgres@localhost/gomo_test?&sslmode=disable")
+	db, err := db.NewDB("postgres://postgres@localhost/gomo_test?&sslmode=disable")
 	checkErr(err)
 	defer db.Close()
 
