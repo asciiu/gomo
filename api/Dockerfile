@@ -6,7 +6,7 @@ COPY . .
 
 RUN go get -u github.com/golang/dep/cmd/dep
 RUN dep init 
-RUN dep ensure
+RUN dep ensure -vendor-only
 RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build
 
 

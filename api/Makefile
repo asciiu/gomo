@@ -4,7 +4,5 @@ build:
 run:
 	docker run -p 5000:5000 \
 		-e GOMO_JWT=:jyVadHV5Z+tihp4ptuEvD2xXu6iWrFaSebYovtmzl0Cg4RDi1udp7qyme8ZZQl+A \
-		-e DB_PORT=5432 \
-		-e DB_HOST=docker.for.mac.host.internal \
-		-e DB_NAME=gomo_dev
+		-e DB_URL="postgres://postgres@docker.for.mac.host.internal:5432/gomo_dev?&sslmode=disable" \
 		gomo-api

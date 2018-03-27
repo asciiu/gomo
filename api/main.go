@@ -19,11 +19,7 @@ func checkErr(err error) {
 
 func main() {
 
-	dbUrl := fmt.Sprintf("postgres://postgres@%s:%s/%s?&sslmode=disable",
-		os.Getenv("DB_HOST"),
-		os.Getenv("DB_PORT"),
-		os.Getenv("DB_NAME"),
-	)
+	dbUrl := fmt.Sprintf("%s", os.Getenv("DB_URL"))
 	fmt.Println(dbUrl)
 
 	gomoDB, err := db.NewDB(dbUrl)
