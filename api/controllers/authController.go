@@ -36,6 +36,16 @@ type SignupRequest struct {
 	Password string `json:"password"`
 }
 
+type ResponseSuccess struct {
+	Status string           `json:"status"`
+	Data   *models.UserInfo `json:"data"`
+}
+
+type ResponseError struct {
+	Status  string `json:"status"`
+	Message string `json:"message"`
+}
+
 func createJwtToken(user *models.User) (string, error) {
 	claims := jwt.StandardClaims{
 		Id:        user.Id,
@@ -60,42 +70,54 @@ func (controller *AuthController) Login(c echo.Context) error {
 
 	err := json.NewDecoder(c.Request().Body).Decode(&loginRequest)
 	if err != nil {
-		log.Printf("failed reading the request %s", err)
-		return c.String(http.StatusInternalServerError, "")
+		response := &ResponseError{
+			Status:  "fail",
+			Message: "malformed json request for 'email' and 'password'",
+		}
+		return c.JSON(http.StatusBadRequest, response)
 	}
 
 	user, err := gsql.FindUser(controller.DB, loginRequest.Email)
 	switch {
 	case err == sql.ErrNoRows:
-		return echo.ErrUnauthorized
+		response := &ResponseError{
+			Status:  "fail",
+			Message: "password/login incorrect",
+		}
+		return c.JSON(http.StatusUnauthorized, response)
+
 	case err != nil:
 		log.Fatal(err)
-		return echo.ErrUnauthorized
+		response := &ResponseError{
+			Status:  "error",
+			Message: err.Error(),
+		}
+		return c.JSON(http.StatusInternalServerError, response)
+
 	default:
 		if bcrypt.CompareHashAndPassword([]byte(user.PasswordHash), []byte(loginRequest.Password)) == nil {
 			// Generate encoded token and send it as response.
 			// TODO read secret from env var
 			token, err := createJwtToken(user)
 			if err != nil {
-				return err
+				response := &ResponseError{
+					Status:  "error",
+					Message: err.Error(),
+				}
+				return c.JSON(http.StatusInternalServerError, response)
 			}
+
 			return c.JSON(http.StatusOK, map[string]string{
 				"token": token,
 			})
 		}
 	}
 
-	return echo.ErrUnauthorized
-}
-
-type JSendUserRegisteredSuccess struct {
-	Status string           `json:"status"`
-	Data   *models.UserInfo `json:"data"`
-}
-
-type JSendUserRegisteredError struct {
-	Status  string `json:"status"`
-	Message string `json:"message"`
+	response := &ResponseError{
+		Status:  "fail",
+		Message: "password/login incorrect",
+	}
+	return c.JSON(http.StatusUnauthorized, response)
 }
 
 func (controller *AuthController) Signup(c echo.Context) error {
@@ -103,7 +125,7 @@ func (controller *AuthController) Signup(c echo.Context) error {
 
 	err := json.NewDecoder(c.Request().Body).Decode(&signupRequest)
 	if err != nil {
-		response := &JSendUserRegisteredError{
+		response := &ResponseError{
 			Status:  "fail",
 			Message: err.Error(),
 		}
@@ -112,7 +134,7 @@ func (controller *AuthController) Signup(c echo.Context) error {
 	}
 
 	if signupRequest.Email == "" || signupRequest.Password == "" {
-		response := &JSendUserRegisteredError{
+		response := &ResponseError{
 			Status:  "fail",
 			Message: "email and password are required",
 		}
@@ -123,7 +145,7 @@ func (controller *AuthController) Signup(c echo.Context) error {
 	user := models.NewUser(signupRequest.First, signupRequest.Last, signupRequest.Email, signupRequest.Password)
 	_, error := gsql.InsertUser(controller.DB, user)
 	if error != nil {
-		response := &JSendUserRegisteredError{
+		response := &ResponseError{
 			Status:  "fail",
 			Message: error.Error(),
 		}
@@ -131,7 +153,7 @@ func (controller *AuthController) Signup(c echo.Context) error {
 		return c.JSON(http.StatusConflict, response)
 	}
 
-	response := &JSendUserRegisteredSuccess{
+	response := &ResponseSuccess{
 		Status: "success",
 		Data:   user.Info(),
 	}
