@@ -46,3 +46,19 @@ type User struct {
 	PasswordHash  string
 	Salt          string
 }
+
+type UserInfo struct {
+	Id    string
+	First string
+	Last  string
+	Email string
+}
+
+func (user *User) Info() *UserInfo {
+	return &UserInfo{
+		Id:    user.Id,
+		First: user.First,
+		Last:  user.Last,
+		Email: user.Email,
+	}
+}

@@ -89,8 +89,13 @@ func (controller *AuthController) Login(c echo.Context) error {
 }
 
 type JSendUserRegisteredSuccess struct {
-	Status string       `json:"status"`
-	Data   *models.User `json:"data"`
+	Status string           `json:"status"`
+	Data   *models.UserInfo `json:"data"`
+}
+
+type JSendUserRegisteredError struct {
+	Status  string `json:"status"`
+	Message string `json:"message"`
 }
 
 func (controller *AuthController) Signup(c echo.Context) error {
@@ -98,19 +103,37 @@ func (controller *AuthController) Signup(c echo.Context) error {
 
 	err := json.NewDecoder(c.Request().Body).Decode(&signupRequest)
 	if err != nil {
-		log.Printf("failed reading the signup request %s", err)
-		return c.String(http.StatusInternalServerError, "")
+		response := &JSendUserRegisteredError{
+			Status:  "fail",
+			Message: err.Error(),
+		}
+
+		return c.JSON(http.StatusBadRequest, response)
+	}
+
+	if signupRequest.Email == "" || signupRequest.Password == "" {
+		response := &JSendUserRegisteredError{
+			Status:  "fail",
+			Message: "email and password are required",
+		}
+
+		return c.JSON(http.StatusBadRequest, response)
 	}
 
 	user := models.NewUser(signupRequest.First, signupRequest.Last, signupRequest.Email, signupRequest.Password)
 	_, error := gsql.InsertUser(controller.DB, user)
 	if error != nil {
-		log.Printf("failed reading the request %s", error)
+		response := &JSendUserRegisteredError{
+			Status:  "fail",
+			Message: error.Error(),
+		}
+
+		return c.JSON(http.StatusConflict, response)
 	}
 
 	response := &JSendUserRegisteredSuccess{
 		Status: "success",
-		Data:   user,
+		Data:   user.Info(),
 	}
 
 	return c.JSON(http.StatusOK, response)
