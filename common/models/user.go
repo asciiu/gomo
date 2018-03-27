@@ -3,12 +3,12 @@ package models
 import (
 	"log"
 
-	uuid "github.com/satori/go.uuid"
+	"github.com/google/uuid"
 	"golang.org/x/crypto/bcrypt"
 )
 
 func NewUser(email string, password string) *User {
-	newId, _ := uuid.NewV1()
+	newId := uuid.New()
 
 	user := User{
 		Id:            newId.String(),
