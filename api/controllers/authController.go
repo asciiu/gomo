@@ -30,6 +30,8 @@ type LoginRequest struct {
 }
 
 type SignupRequest struct {
+	First    string `json:"first"`
+	Last     string `json:"last"`
 	Email    string `json:"email"`
 	Password string `json:"password"`
 }
@@ -86,6 +88,11 @@ func (controller *AuthController) Login(c echo.Context) error {
 	return echo.ErrUnauthorized
 }
 
+type JSendUserRegisteredSuccess struct {
+	Status string       `json:"status"`
+	Data   *models.User `json:"data"`
+}
+
 func (controller *AuthController) Signup(c echo.Context) error {
 	signupRequest := SignupRequest{}
 
@@ -95,10 +102,16 @@ func (controller *AuthController) Signup(c echo.Context) error {
 		return c.String(http.StatusInternalServerError, "")
 	}
 
-	user := models.NewUser(signupRequest.Email, signupRequest.Password)
+	user := models.NewUser(signupRequest.First, signupRequest.Last, signupRequest.Email, signupRequest.Password)
 	_, error := gsql.InsertUser(controller.DB, user)
 	if error != nil {
 		log.Printf("failed reading the request %s", error)
 	}
-	return c.String(http.StatusOK, "registered")
+
+	response := &JSendUserRegisteredSuccess{
+		Status: "success",
+		Data:   user,
+	}
+
+	return c.JSON(http.StatusOK, response)
 }

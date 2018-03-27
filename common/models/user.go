@@ -7,11 +7,13 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
-func NewUser(email string, password string) *User {
+func NewUser(first, last, email, password string) *User {
 	newId := uuid.New()
 
 	user := User{
 		Id:            newId.String(),
+		First:         first,
+		Last:          last,
 		Email:         email,
 		EmailVerified: false,
 		PasswordHash:  hashAndSalt([]byte(password)),
