@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"time"
 
 	"github.com/antonlindstrom/pgstore"
 	pb "github.com/asciiu/gomo/session-service/proto/session"
@@ -22,16 +23,20 @@ type service struct {
 // CreateConsignment - we created just one method on our service,
 // which is a create method, which takes a context and a request as an
 // argument, these are handled by the gRPC server.
-func (s *service) CreateSession(ctx context.Context, req *pb.Session, res *pb.Response) error {
+func (s *service) CreateSession(ctx context.Context, req *pb.SessionRequest, res *pb.Response) error {
 
-	// Save our consignment
-	session := &pb.Session{
-		Id:     "id",
-		UserId: "userId",
+	// Get a session.
+	sess, err := s.store.Get(nil, "session-key")
+	if err != nil {
+		log.Fatalf(err.Error())
+	}
+
+	session := pb.SessionResponse{
+		SessionId: sess.ID,
 	}
 
 	res.Success = true
-	res.Session = session
+	res.Response = &session
 
 	// Return matching the `Response` message we created in our
 	// protobuf definition.
@@ -40,14 +45,12 @@ func (s *service) CreateSession(ctx context.Context, req *pb.Session, res *pb.Re
 
 func (s *service) GetSession(ctx context.Context, req *pb.GetRequest, res *pb.Response) error {
 	// Save our consignment
-	session := &pb.Session{
-		Id:     "id",
-		UserId: "userId",
+	session := pb.SessionResponse{
+		SessionId: "id",
 	}
 
 	res.Success = true
-	res.Session = session
-
+	res.Response = &session
 	// Return matching the `Response` message we created in our
 	// protobuf definition.
 	return nil
@@ -55,14 +58,12 @@ func (s *service) GetSession(ctx context.Context, req *pb.GetRequest, res *pb.Re
 
 func (s *service) DeleteSession(ctx context.Context, req *pb.GetRequest, res *pb.Response) error {
 	// Save our consignment
-	session := &pb.Session{
-		Id:     "id",
-		UserId: "userId",
+	session := pb.SessionResponse{
+		SessionId: "id",
 	}
 
 	res.Success = true
-	res.Session = session
-
+	res.Response = &session
 	// Return matching the `Response` message we created in our
 	// protobuf definition.
 	return nil
@@ -118,6 +119,7 @@ func main() {
 	if err != nil {
 		log.Fatalf(err.Error())
 	}
+	store.StopCleanup(store.Cleanup(time.Minute * 5))
 
 	// Register our service with the gRPC server, this will tie our
 	// implementation into the auto-generated interface code for our

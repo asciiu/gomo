@@ -2,22 +2,31 @@ package routes
 
 import (
 	"database/sql"
+	"net/http"
 
 	"github.com/asciiu/gomo/api/middlewares"
 	"github.com/labstack/echo"
 )
 
+func health(c echo.Context) error {
+	return c.String(http.StatusOK, "")
+}
+
 func New(db *sql.DB) *echo.Echo {
 	e := echo.New()
 
 	// api group
-	apiGroup := e.Group("/api")
+	protectedApi := e.Group("/api")
 
 	middlewares.SetMainMiddlewares(e)
-	middlewares.SetApiMiddlewares(apiGroup)
+	middlewares.SetApiMiddlewares(protectedApi)
 
-	AuthRoutes(e, db)
-	OrderRoutes(apiGroup, db)
+	AuthRoutes(e.Group("/api"), db)
+	SessionRoutes(protectedApi, db)
+	OrderRoutes(protectedApi, db)
+
+	// required for health checks
+	e.GET("/index.html", health)
 
 	return e
 }
