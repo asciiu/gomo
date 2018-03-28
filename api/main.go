@@ -1,13 +1,16 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"log"
 	"os"
 
 	"github.com/asciiu/gomo/api/routes"
 	"github.com/asciiu/gomo/common/db"
+	pb "github.com/asciiu/gomo/session-service/proto/session"
 	_ "github.com/lib/pq"
+	microclient "github.com/micro/go-micro/client"
 )
 
 func checkErr(err error) {
@@ -18,6 +21,17 @@ func checkErr(err error) {
 }
 
 func main() {
+	client := pb.NewSessionServiceClient("go.micro.srv.session", microclient.DefaultClient)
+	session := &pb.Session{
+		Id:     "what",
+		UserId: "userid",
+	}
+
+	r, err := client.CreateSession(context.Background(), session)
+	if err != nil {
+		log.Fatalf("Could not greet: %v", err)
+	}
+	log.Printf("Created: #%v", r.Session)
 
 	dbUrl := fmt.Sprintf("%s", os.Getenv("DB_URL"))
 	fmt.Println(dbUrl)

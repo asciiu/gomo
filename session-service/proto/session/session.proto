@@ -1,0 +1,25 @@
+syntax = "proto3";
+
+package go.micro.srv.session; 
+
+service SessionService {
+  rpc CreateSession(Session) returns (Response) {}
+  rpc GetSession(GetRequest) returns (Response) {}
+  rpc DeleteSession(GetRequest) returns (Response) {}
+}
+
+message Session {
+  string id = 1;
+  string userId = 2;
+}
+
+message Response {
+  bool success = 1;
+  Session session = 2;
+}
+
+// Created a blank get request
+message GetRequest {
+    string sessionId = 1;
+    string sessionKey = 2;
+}
