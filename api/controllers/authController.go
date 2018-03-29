@@ -8,8 +8,11 @@ import (
 	"os"
 	"time"
 
+	asql "github.com/asciiu/gomo/api/db/sql"
 	gsql "github.com/asciiu/gomo/common/db/sql"
-	"github.com/asciiu/gomo/common/models"
+
+	apiModels "github.com/asciiu/gomo/api/models"
+	models "github.com/asciiu/gomo/common/models"
 	jwt "github.com/dgrijalva/jwt-go"
 	"github.com/labstack/echo"
 	"golang.org/x/crypto/bcrypt"
@@ -27,6 +30,7 @@ type JwtClaims struct {
 type LoginRequest struct {
 	Email    string `json:"email"`
 	Password string `json:"password"`
+	Remember bool   `json:"remember"`
 }
 
 type SignupRequest struct {
@@ -46,10 +50,10 @@ type ResponseError struct {
 	Message string `json:"message"`
 }
 
-func createJwtToken(user *models.User) (string, error) {
+func createJwtToken(user *models.User, duration time.Duration) (string, error) {
 	claims := jwt.StandardClaims{
 		Id:        user.Id,
-		ExpiresAt: time.Now().Add(time.Hour * 3).Unix(),
+		ExpiresAt: time.Now().Add(duration).Unix(),
 	}
 
 	rawToken := jwt.NewWithClaims(jwt.SigningMethodHS512, claims)
@@ -77,6 +81,7 @@ func (controller *AuthController) Login(c echo.Context) error {
 		return c.JSON(http.StatusBadRequest, response)
 	}
 
+	// lookup user by email
 	user, err := gsql.FindUser(controller.DB, loginRequest.Email)
 	switch {
 	case err == sql.ErrNoRows:
@@ -84,6 +89,7 @@ func (controller *AuthController) Login(c echo.Context) error {
 			Status:  "fail",
 			Message: "password/login incorrect",
 		}
+		// no user by this email send unauthorized response
 		return c.JSON(http.StatusUnauthorized, response)
 
 	case err != nil:
@@ -96,9 +102,7 @@ func (controller *AuthController) Login(c echo.Context) error {
 
 	default:
 		if bcrypt.CompareHashAndPassword([]byte(user.PasswordHash), []byte(loginRequest.Password)) == nil {
-			// Generate encoded token and send it as response.
-			// TODO read secret from env var
-			token, err := createJwtToken(user)
+			accessToken, err := createJwtToken(user, 5*time.Minute)
 			if err != nil {
 				response := &ResponseError{
 					Status:  "error",
@@ -107,9 +111,32 @@ func (controller *AuthController) Login(c echo.Context) error {
 				return c.JSON(http.StatusInternalServerError, response)
 			}
 
-			return c.JSON(http.StatusOK, map[string]string{
-				"token": token,
-			})
+			// issue a refresh token if remember is true
+			if loginRequest.Remember {
+				expiresOn := time.Now().Add(720 * time.Hour)
+				selectAuth := apiModels.NewSelectorAuth()
+				token := apiModels.NewRefreshToken(user.Id, selectAuth, expiresOn)
+
+				_, err3 := asql.InsertRefreshToken(controller.DB, token)
+
+				if err3 != nil {
+					response := &ResponseError{
+						Status:  "error",
+						Message: err.Error(),
+					}
+					return c.JSON(http.StatusInternalServerError, response)
+				}
+
+				return c.JSON(http.StatusOK, map[string]string{
+					"access":  accessToken,
+					"refresh": selectAuth,
+				})
+
+			} else {
+				return c.JSON(http.StatusOK, map[string]string{
+					"access": accessToken,
+				})
+			}
 		}
 	}
 

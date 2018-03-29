@@ -19,6 +19,7 @@ func New(db *sql.DB) *echo.Echo {
 	protectedApi := e.Group("/api")
 
 	middlewares.SetMainMiddlewares(e)
+	// the protected api will require auth header
 	middlewares.SetApiMiddlewares(protectedApi)
 
 	AuthRoutes(e.Group("/api"), db)
