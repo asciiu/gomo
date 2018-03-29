@@ -69,16 +69,12 @@ func createJwtToken(userId string, duration time.Duration) (string, error) {
 	return token, nil
 }
 
-//expiresOn := time.Now().Add(720 * time.Hour)
-//selectAuth := apiModels.NewSelectorAuth()
-//token := apiModels.NewRefreshToken(user.Id, selectAuth, expiresOn)
-//_, err3 := asql.InsertRefreshToken(controller.DB, token)
-
-func renewAccess(c echo.Context, refreshToken *apiModels.RefreshToken) {
+// Renews the refresh token and the access token in the reponse headers.
+func renewTokens(c echo.Context, refreshToken *apiModels.RefreshToken) {
 	// renew access
 	accessToken, err := createJwtToken(refreshToken.UserId, 5*time.Minute)
 	if err != nil {
-		fmt.Println("handle error")
+		log.Fatal(err)
 	}
 
 	// renew the refresh token
@@ -125,11 +121,11 @@ func (controller *AuthController) RefreshAccess(next echo.HandlerFunc) echo.Hand
 
 				if refreshToken.Compare(authenticator) && refreshToken.ExpiresOn.After(time.Now()) {
 					// renew access
-					renewAccess(c, refreshToken)
+					renewTokens(c, refreshToken)
 					_, err3 := asql.UpdateRefreshToken(controller.DB, refreshToken)
 
 					if err3 != nil {
-						fmt.Println("log this error")
+						log.Fatal(err3)
 					}
 				}
 
@@ -191,7 +187,7 @@ func (controller *AuthController) Login(c echo.Context) error {
 			// issue a refresh token if remember is true
 			if loginRequest.Remember {
 				refreshToken := apiModels.NewRefreshToken(user.Id)
-				renewAccess(c, refreshToken)
+				renewTokens(c, refreshToken)
 
 				_, err3 := asql.InsertRefreshToken(controller.DB, refreshToken)
 
