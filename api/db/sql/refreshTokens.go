@@ -2,6 +2,7 @@ package sql
 
 import (
 	"database/sql"
+	"time"
 
 	"github.com/asciiu/gomo/api/models"
 )
@@ -27,12 +28,18 @@ func InsertRefreshToken(db *sql.DB, token *models.RefreshToken) (*models.Refresh
 }
 
 func DeleteRefreshToken(db *sql.DB, token *models.RefreshToken) (*models.RefreshToken, error) {
-	sqlStatement := `delete from refresh_tokens where id = $1)`
+	sqlStatement := `delete from refresh_tokens where id = $1`
 	_, err := db.Exec(sqlStatement, token.Id)
 	if err != nil {
 		return nil, err
 	}
 	return token, nil
+}
+
+func DeleteStaleTokens(db *sql.DB, expiresOn time.Time) error {
+	sqlStatement := `delete from refresh_tokens where expires_on < $1`
+	_, err := db.Exec(sqlStatement, expiresOn)
+	return err
 }
 
 func UpdateRefreshToken(db *sql.DB, token *models.RefreshToken) (*models.RefreshToken, error) {

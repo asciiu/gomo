@@ -88,10 +88,14 @@ func renewTokens(c echo.Context, refreshToken *apiModels.RefreshToken) {
 	c.Response().Header().Set("Set-Refresh", selectAuth)
 }
 
-// My custom middleware function to check the refresh token
+// A custom middleware function to check the refresh token on each request.
 func (controller *AuthController) RefreshAccess(next echo.HandlerFunc) echo.HandlerFunc {
 	return func(c echo.Context) error {
 		auth := c.Request().Header.Get("Authorization")
+		if auth == "" {
+			return next(c)
+		}
+
 		tokenString := strings.Split(auth, " ")[1]
 
 		_, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
