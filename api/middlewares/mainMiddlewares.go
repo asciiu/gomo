@@ -15,7 +15,7 @@ func SetMainMiddlewares(e *echo.Echo) {
 	}))
 
 	// don't crash on exceptions
-	e.Use(middleware.Recover())
+	//e.Use(middleware.Recover())
 }
 
 func serverHeader(next echo.HandlerFunc) echo.HandlerFunc {

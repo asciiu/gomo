@@ -151,7 +151,7 @@ func (controller *AuthController) RefreshAccess(next echo.HandlerFunc) echo.Hand
 }
 
 // Handles a login request.
-func (controller *AuthController) Login(c echo.Context) error {
+func (controller *AuthController) HandleLogin(c echo.Context) error {
 	loginRequest := LoginRequest{}
 
 	defer c.Request().Body.Close()
@@ -230,7 +230,7 @@ func (controller *AuthController) Login(c echo.Context) error {
 }
 
 // Handles a new signup request
-func (controller *AuthController) Signup(c echo.Context) error {
+func (controller *AuthController) HandleSignup(c echo.Context) error {
 	signupRequest := SignupRequest{}
 
 	err := json.NewDecoder(c.Request().Body).Decode(&signupRequest)

@@ -2,13 +2,10 @@ package controllers
 
 import (
 	"database/sql"
-	"fmt"
-	"log"
 	"net/http"
-	"os"
-	"time"
 
-	"github.com/antonlindstrom/pgstore"
+	gsql "github.com/asciiu/gomo/common/db/sql"
+	jwt "github.com/dgrijalva/jwt-go"
 	"github.com/labstack/echo"
 )
 
@@ -16,33 +13,24 @@ type SessionController struct {
 	DB *sql.DB
 }
 
-func (controller *SessionController) Session(c echo.Context) error {
-	dbUrl := fmt.Sprintf("%s", os.Getenv("DB_URL"))
+func (controller *SessionController) HandleSession(c echo.Context) error {
+	token := c.Get("user").(*jwt.Token)
+	claims := token.Claims.(jwt.MapClaims)
+	userId := claims["jti"].(string)
 
-	store, err := pgstore.NewPGStore(dbUrl, []byte("secret-key"))
+	user, err := gsql.FindUserById(controller.DB, userId)
 	if err != nil {
-		log.Fatalf(err.Error())
-	}
-	defer store.Close()
-
-	// Run a background goroutine to clean up expired sessions from the database.
-	defer store.StopCleanup(store.Cleanup(time.Minute * 5))
-
-	// Get a session.
-	session, err := store.Get(c.Request(), "session-key")
-	if err != nil {
-		log.Fatalf(err.Error())
+		response := &ResponseError{
+			Status:  "error",
+			Message: err.Error(),
+		}
+		return c.JSON(http.StatusInternalServerError, response)
 	}
 
-	// Add a value.
-	session.Values["foo"] = "bar"
-
-	// Save.
-	if err = session.Save(c.Request(), c.Response().Writer); err != nil {
-		log.Fatalf("Error saving session: %v", err)
+	response := &ResponseSuccess{
+		Status: "success",
+		Data:   &UserData{user.Info()},
 	}
 
-	return c.JSON(http.StatusOK, map[string]string{
-		"sessionKey": session.ID,
-	})
+	return c.JSON(http.StatusOK, response)
 }

@@ -35,26 +35,26 @@ func New(db *sql.DB) *echo.Echo {
 	go cleanDatabase(db)
 
 	e := echo.New()
+	middlewares.SetMainMiddlewares(e)
 
 	// controllers
-	auth := &controllers.AuthController{DB: db}
+	authController := &controllers.AuthController{DB: db}
+	sessionController := &controllers.SessionController{DB: db}
 
 	// api group
 	openApi := e.Group("/api")
 
-	protectedApi := e.Group("/api")
-	protectedApi.Use(auth.RefreshAccess)
+	// open endpoints here
+	openApi.POST("/login", authController.HandleLogin)
+	openApi.POST("/signup", authController.HandleSignup)
 
-	middlewares.SetMainMiddlewares(e)
-	// the protected api will require auth header
+	protectedApi := e.Group("/api")
+	// set the auth middlewares
+	protectedApi.Use(authController.RefreshAccess)
 	middlewares.SetApiMiddlewares(protectedApi)
 
-	//AuthRoutes(e.Group("/api"), db)
-	// Login route
-	openApi.POST("/login", auth.Login)
-	openApi.POST("/signup", auth.Signup)
-
-	SessionRoutes(protectedApi, db)
+	// protected endpoints here
+	protectedApi.GET("/session", sessionController.HandleSession)
 	OrderRoutes(protectedApi, db)
 
 	// required for health checks
