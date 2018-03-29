@@ -48,10 +48,13 @@ func (token *RefreshToken) Renew(expire time.Time) string {
 		authenticatorStr)
 }
 
-func (token *RefreshToken) Compare(authenticator string) bool {
+// Returns true if the authenticator matches the tokens hash and
+// the token has not expired
+func (token *RefreshToken) Valid(authenticator string) bool {
 	h := sha256.New()
 	h.Write([]byte(authenticator))
-	return token.TokenHash == base64.StdEncoding.EncodeToString(h.Sum(nil))
+	return token.TokenHash == base64.StdEncoding.EncodeToString(h.Sum(nil)) &&
+		token.ExpiresOn.After(time.Now())
 }
 
 func NewSelectorAuth() string {

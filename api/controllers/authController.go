@@ -126,7 +126,7 @@ func (controller *AuthController) RefreshAccess(next echo.HandlerFunc) echo.Hand
 					return next(c)
 				}
 
-				if refreshToken.Compare(authenticator) && refreshToken.ExpiresOn.After(time.Now()) {
+				if refreshToken.Valid(authenticator) {
 					// renew access
 					renewTokens(c, refreshToken)
 					_, err3 := asql.UpdateRefreshToken(controller.DB, refreshToken)
