@@ -19,12 +19,6 @@ type RefreshToken struct {
 	ExpiresOn     time.Time
 }
 
-func (token *RefreshToken) Update(selector, hash string, expire time.Time) {
-	token.Selector = selector
-	token.TokenHash = hash
-	token.ExpiresOn = expire
-}
-
 func (token *RefreshToken) Renew(expire time.Time) string {
 	token.ExpiresOn = expire
 
@@ -55,20 +49,6 @@ func (token *RefreshToken) Valid(authenticator string) bool {
 	h.Write([]byte(authenticator))
 	return token.TokenHash == base64.StdEncoding.EncodeToString(h.Sum(nil)) &&
 		token.ExpiresOn.After(time.Now())
-}
-
-func NewSelectorAuth() string {
-	// random selector
-	selector := make([]byte, 16)
-	rand.Read(selector)
-
-	// random authenticator
-	authenticator := make([]byte, 64)
-	rand.Read(authenticator)
-
-	return fmt.Sprintf("%s:%s",
-		base64.StdEncoding.EncodeToString(selector),
-		base64.StdEncoding.EncodeToString(authenticator))
 }
 
 func NewRefreshToken(userId string) *RefreshToken {
