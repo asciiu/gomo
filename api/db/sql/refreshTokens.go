@@ -36,6 +36,12 @@ func DeleteRefreshToken(db *sql.DB, token *models.RefreshToken) (*models.Refresh
 	return token, nil
 }
 
+func DeleteRefreshTokenBySelector(db *sql.DB, selector string) error {
+	sqlStatement := `delete from refresh_tokens where selector = $1`
+	_, err := db.Exec(sqlStatement, selector)
+	return err
+}
+
 func DeleteStaleTokens(db *sql.DB, expiresOn time.Time) error {
 	sqlStatement := `delete from refresh_tokens where expires_on < $1`
 	_, err := db.Exec(sqlStatement, expiresOn)

@@ -229,6 +229,29 @@ func (controller *AuthController) HandleLogin(c echo.Context) error {
 	return c.JSON(http.StatusUnauthorized, response)
 }
 
+// Handles logout cleanup
+func (controller *AuthController) HandleLogout(c echo.Context) error {
+	selectAuth := c.Request().Header.Get("Refresh")
+	if selectAuth != "" {
+		sa := strings.Split(selectAuth, ":")
+
+		if len(sa) != 2 {
+			response := &ResponseError{
+				Status:  "fail",
+				Message: "refresh token invalid",
+			}
+			return c.JSON(http.StatusOK, response)
+		}
+
+		asql.DeleteRefreshTokenBySelector(controller.DB, sa[0])
+	}
+
+	response := &ResponseSuccess{
+		Status: "success",
+	}
+	return c.JSON(http.StatusOK, response)
+}
+
 // Handles a new signup request
 func (controller *AuthController) HandleSignup(c echo.Context) error {
 	signupRequest := SignupRequest{}

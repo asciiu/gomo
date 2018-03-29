@@ -55,6 +55,7 @@ func New(db *sql.DB) *echo.Echo {
 
 	// protected endpoints here
 	protectedApi.GET("/session", sessionController.HandleSession)
+	protectedApi.GET("/logout", authController.HandleLogout)
 	OrderRoutes(protectedApi, db)
 
 	// required for health checks
