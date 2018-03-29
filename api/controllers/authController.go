@@ -3,9 +3,11 @@ package controllers
 import (
 	"database/sql"
 	"encoding/json"
+	"fmt"
 	"log"
 	"net/http"
 	"os"
+	"strings"
 	"time"
 
 	asql "github.com/asciiu/gomo/api/db/sql"
@@ -65,6 +67,33 @@ func createJwtToken(user *models.User, duration time.Duration) (string, error) {
 	}
 
 	return token, nil
+}
+
+func (controller *AuthController) RefreshAccess(next echo.HandlerFunc) echo.HandlerFunc {
+	return func(c echo.Context) error {
+		selectAuth := c.Request().Header.Get("Refresh")
+		if selectAuth != "" {
+			sa := strings.Split(selectAuth, ":")
+
+			if len(sa) != 2 {
+				return next(c)
+			}
+
+			refreshToken, err := asql.FindRefreshToken(controller.DB, sa[0])
+			if err != nil {
+				return next(c)
+			}
+
+			if refreshToken.ExpiresOn.After(time.Now()) {
+				// renew access
+				// renew the refresh token
+				// send new access and new refresh token back in the response headers
+				fmt.Println("refresh access")
+			}
+		}
+		//c.Response().Header().Set(echo.HeaderServer, "Gomo/0.1")
+		return next(c)
+	}
 }
 
 func (controller *AuthController) Login(c echo.Context) error {
