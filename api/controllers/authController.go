@@ -20,6 +20,9 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
+const refreshDuration = 720 * time.Hour
+const jwtDuration = 5 * time.Minute
+
 type AuthController struct {
 	DB *sql.DB
 }
@@ -72,13 +75,13 @@ func createJwtToken(userId string, duration time.Duration) (string, error) {
 // Renews the refresh token and the access token in the reponse headers.
 func renewTokens(c echo.Context, refreshToken *apiModels.RefreshToken) {
 	// renew access
-	accessToken, err := createJwtToken(refreshToken.UserId, 5*time.Minute)
+	accessToken, err := createJwtToken(refreshToken.UserId, jwtDuration)
 	if err != nil {
 		log.Fatal(err)
 	}
 
 	// renew the refresh token
-	expiresOn := time.Now().Add(720 * time.Hour)
+	expiresOn := time.Now().Add(refreshDuration)
 	selectAuth := refreshToken.Renew(expiresOn)
 
 	c.Response().Header().Set("Set-Access", accessToken)
