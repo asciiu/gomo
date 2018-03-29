@@ -40,6 +40,7 @@ func New(db *sql.DB) *echo.Echo {
 	// controllers
 	authController := &controllers.AuthController{DB: db}
 	sessionController := &controllers.SessionController{DB: db}
+	userController := &controllers.UserController{DB: db}
 
 	// api group
 	openApi := e.Group("/api")
@@ -53,9 +54,13 @@ func New(db *sql.DB) *echo.Echo {
 	protectedApi.Use(authController.RefreshAccess)
 	middlewares.SetApiMiddlewares(protectedApi)
 
-	// protected endpoints here
+	// ###########################  protected endpoints here
 	protectedApi.GET("/session", sessionController.HandleSession)
 	protectedApi.GET("/logout", authController.HandleLogout)
+
+	// user manangement endpoints
+	protectedApi.PUT("/users/:id/changepassword", userController.ChangePassword)
+
 	OrderRoutes(protectedApi, db)
 
 	// required for health checks
