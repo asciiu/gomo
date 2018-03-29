@@ -46,8 +46,12 @@ type SignupRequest struct {
 }
 
 type ResponseSuccess struct {
-	Status string           `json:"status"`
-	Data   *models.UserInfo `json:"data"`
+	Status string    `json:"status"`
+	Data   *UserData `json:"data"`
+}
+
+type UserData struct {
+	User *models.UserInfo `json:"user"`
 }
 
 type ResponseError struct {
@@ -84,8 +88,8 @@ func renewTokens(c echo.Context, refreshToken *apiModels.RefreshToken) {
 	expiresOn := time.Now().Add(refreshDuration)
 	selectAuth := refreshToken.Renew(expiresOn)
 
-	c.Response().Header().Set("Set-Access", accessToken)
-	c.Response().Header().Set("Set-Refresh", selectAuth)
+	c.Response().Header().Set("set-authorization", accessToken)
+	c.Response().Header().Set("set-refresh", selectAuth)
 }
 
 // A custom middleware function to check the refresh token on each request.
@@ -205,17 +209,16 @@ func (controller *AuthController) Login(c echo.Context) error {
 					}
 					return c.JSON(http.StatusInternalServerError, response)
 				}
-
-				return c.JSON(http.StatusOK, map[string]string{
-					"dick": "bicycle",
-				})
-
 			} else {
-				c.Response().Header().Set("Set-Access", accessToken)
-				return c.JSON(http.StatusOK, map[string]string{
-					"ding!": accessToken,
-				})
+				c.Response().Header().Set("set-authorization", accessToken)
 			}
+
+			response := &ResponseSuccess{
+				Status: "success",
+				Data:   &UserData{user.Info()},
+			}
+
+			return c.JSON(http.StatusOK, response)
 		}
 	}
 
@@ -262,7 +265,7 @@ func (controller *AuthController) Signup(c echo.Context) error {
 
 	response := &ResponseSuccess{
 		Status: "success",
-		Data:   user.Info(),
+		Data:   &UserData{user.Info()},
 	}
 
 	return c.JSON(http.StatusOK, response)
