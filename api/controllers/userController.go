@@ -24,3 +24,12 @@ func (controller *UserController) ChangePassword(c echo.Context) error {
 
 	return c.JSON(http.StatusOK, response)
 }
+
+func (controller *UserController) UpdateUser(c echo.Context) error {
+
+	response := &ResponseSuccess{
+		Status: "success",
+	}
+
+	return c.JSON(http.StatusOK, response)
+}

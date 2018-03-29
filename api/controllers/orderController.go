@@ -51,7 +51,7 @@ type OrderRequest struct {
 	Conditions         string  `json:"conditions"`
 }
 
-func GetOrder(c echo.Context) error {
+func (controller *OrderController) GetOrder(c echo.Context) error {
 	user := c.Get("user")
 	token := user.(*jwt.Token)
 	claims, ok := token.Claims.(jwt.MapClaims)
@@ -69,14 +69,14 @@ func GetOrder(c echo.Context) error {
 	})
 }
 
-func ListOrders(c echo.Context) error {
+func (controller *OrderController) ListOrders(c echo.Context) error {
 	// Get team and member from the query string
 	team := c.QueryParam("team")
 	member := c.QueryParam("member")
 	return c.String(http.StatusOK, "team:"+team+", member:"+member)
 }
 
-func PostOrder(c echo.Context) error {
+func (controller *OrderController) PostOrder(c echo.Context) error {
 	user := c.Get("user").(*jwt.Token)
 	claims := user.Claims.(jwt.MapClaims)
 	name := claims["name"].(string)
@@ -94,10 +94,10 @@ func PostOrder(c echo.Context) error {
 	return c.String(http.StatusOK, "Welcome "+name+" your order has posted!")
 }
 
-func UpdateOrder(c echo.Context) error {
+func (controller *OrderController) UpdateOrder(c echo.Context) error {
 	return c.String(http.StatusOK, "update it!")
 }
 
-func DeleteOrder(c echo.Context) error {
+func (controller *OrderController) DeleteOrder(c echo.Context) error {
 	return c.String(http.StatusOK, "delete it!")
 }

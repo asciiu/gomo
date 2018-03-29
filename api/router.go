@@ -1,4 +1,4 @@
-package routes
+package main
 
 import (
 	"database/sql"
@@ -31,7 +31,7 @@ func cleanDatabase(db *sql.DB) {
 	}
 }
 
-func New(db *sql.DB) *echo.Echo {
+func NewRouter(db *sql.DB) *echo.Echo {
 	go cleanDatabase(db)
 
 	e := echo.New()
@@ -41,6 +41,7 @@ func New(db *sql.DB) *echo.Echo {
 	authController := &controllers.AuthController{DB: db}
 	sessionController := &controllers.SessionController{DB: db}
 	userController := &controllers.UserController{DB: db}
+	orderController := &controllers.OrderController{DB: db}
 
 	// api group
 	openApi := e.Group("/api")
@@ -60,8 +61,14 @@ func New(db *sql.DB) *echo.Echo {
 
 	// user manangement endpoints
 	protectedApi.PUT("/users/:id/changepassword", userController.ChangePassword)
+	protectedApi.PUT("/users/:id", userController.UpdateUser)
 
-	OrderRoutes(protectedApi, db)
+	// order management endpoints
+	protectedApi.GET("/orders", orderController.ListOrders)
+	protectedApi.POST("/orders", orderController.PostOrder)
+	protectedApi.GET("/orders/:id", orderController.GetOrder)
+	protectedApi.PUT("/orders/:id", orderController.UpdateOrder)
+	protectedApi.DELETE("/orders/:id", orderController.DeleteOrder)
 
 	// required for health checks
 	e.GET("/index.html", health)

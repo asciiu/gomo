@@ -5,7 +5,6 @@ import (
 	"log"
 	"os"
 
-	"github.com/asciiu/gomo/api/routes"
 	"github.com/asciiu/gomo/common/db"
 	_ "github.com/lib/pq"
 )
@@ -25,6 +24,6 @@ func main() {
 	checkErr(err)
 	defer gomoDB.Close()
 
-	e := routes.New(gomoDB)
+	e := NewRouter(gomoDB)
 	e.Logger.Fatal(e.Start(":5000"))
 }
