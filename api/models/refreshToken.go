@@ -5,18 +5,18 @@ import (
 	"crypto/sha256"
 	"encoding/base64"
 	"fmt"
-	"strings"
 	"time"
 
 	"github.com/google/uuid"
 )
 
 type RefreshToken struct {
-	Id        string
-	UserId    string
-	Selector  string
-	TokenHash string
-	ExpiresOn time.Time
+	Id            string
+	UserId        string
+	Selector      string
+	Authenticator string
+	TokenHash     string
+	ExpiresOn     time.Time
 }
 
 func (token *RefreshToken) Update(selector, hash string, expire time.Time) {
@@ -68,19 +68,12 @@ func NewSelectorAuth() string {
 		base64.StdEncoding.EncodeToString(authenticator))
 }
 
-func NewRefreshToken(userId, selectorAuth string, expiresOn time.Time) *RefreshToken {
+func NewRefreshToken(userId string) *RefreshToken {
 	newId := uuid.New()
-	pts := strings.Split(selectorAuth, ":")
-
-	h := sha256.New()
-	h.Write([]byte(pts[1]))
 
 	token := RefreshToken{
-		Id:        newId.String(),
-		UserId:    userId,
-		Selector:  pts[0],
-		TokenHash: base64.StdEncoding.EncodeToString(h.Sum(nil)),
-		ExpiresOn: expiresOn,
+		Id:     newId.String(),
+		UserId: userId,
 	}
 	return &token
 }

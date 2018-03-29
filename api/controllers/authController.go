@@ -69,6 +69,27 @@ func createJwtToken(userId string, duration time.Duration) (string, error) {
 	return token, nil
 }
 
+//expiresOn := time.Now().Add(720 * time.Hour)
+//selectAuth := apiModels.NewSelectorAuth()
+//token := apiModels.NewRefreshToken(user.Id, selectAuth, expiresOn)
+//_, err3 := asql.InsertRefreshToken(controller.DB, token)
+
+func renewAccess(c echo.Context, refreshToken *apiModels.RefreshToken) {
+	// renew access
+	accessToken, err := createJwtToken(refreshToken.UserId, 5*time.Minute)
+	if err != nil {
+		fmt.Println("handle error")
+	}
+
+	// renew the refresh token
+	expiresOn := time.Now().Add(720 * time.Hour)
+	selectAuth := refreshToken.Renew(expiresOn)
+
+	c.Response().Header().Set("Set-Access", accessToken)
+	c.Response().Header().Set("Set-Refresh", selectAuth)
+}
+
+// My custom middleware function to check the refresh token
 func (controller *AuthController) RefreshAccess(next echo.HandlerFunc) echo.HandlerFunc {
 	return func(c echo.Context) error {
 		auth := c.Request().Header.Get("Authorization")
@@ -104,23 +125,12 @@ func (controller *AuthController) RefreshAccess(next echo.HandlerFunc) echo.Hand
 
 				if refreshToken.Compare(authenticator) && refreshToken.ExpiresOn.After(time.Now()) {
 					// renew access
-					accessToken, err := createJwtToken(refreshToken.UserId, 5*time.Minute)
-					if err != nil {
-						return next(c)
-					}
-
-					// renew the refresh token
-					expiresOn := time.Now().Add(720 * time.Hour)
-					selectAuth := refreshToken.Renew(expiresOn)
-
+					renewAccess(c, refreshToken)
 					_, err3 := asql.UpdateRefreshToken(controller.DB, refreshToken)
 
 					if err3 != nil {
-						return next(c)
+						fmt.Println("log this error")
 					}
-
-					c.Response().Header().Set("Set-Access", accessToken)
-					c.Response().Header().Set("Set-Refresh", selectAuth)
 				}
 
 				if refreshToken.ExpiresOn.Before(time.Now()) {
@@ -133,6 +143,7 @@ func (controller *AuthController) RefreshAccess(next echo.HandlerFunc) echo.Hand
 	}
 }
 
+// Handles a login request.
 func (controller *AuthController) Login(c echo.Context) error {
 	loginRequest := LoginRequest{}
 
@@ -179,11 +190,10 @@ func (controller *AuthController) Login(c echo.Context) error {
 
 			// issue a refresh token if remember is true
 			if loginRequest.Remember {
-				expiresOn := time.Now().Add(720 * time.Hour)
-				selectAuth := apiModels.NewSelectorAuth()
-				token := apiModels.NewRefreshToken(user.Id, selectAuth, expiresOn)
+				refreshToken := apiModels.NewRefreshToken(user.Id)
+				renewAccess(c, refreshToken)
 
-				_, err3 := asql.InsertRefreshToken(controller.DB, token)
+				_, err3 := asql.InsertRefreshToken(controller.DB, refreshToken)
 
 				if err3 != nil {
 					response := &ResponseError{
@@ -194,13 +204,13 @@ func (controller *AuthController) Login(c echo.Context) error {
 				}
 
 				return c.JSON(http.StatusOK, map[string]string{
-					"access":  accessToken,
-					"refresh": selectAuth,
+					"dick": "bicycle",
 				})
 
 			} else {
+				c.Response().Header().Set("Set-Access", accessToken)
 				return c.JSON(http.StatusOK, map[string]string{
-					"access": accessToken,
+					"ding!": accessToken,
 				})
 			}
 		}
@@ -213,6 +223,7 @@ func (controller *AuthController) Login(c echo.Context) error {
 	return c.JSON(http.StatusUnauthorized, response)
 }
 
+// Handles a new signup request
 func (controller *AuthController) Signup(c echo.Context) error {
 	signupRequest := SignupRequest{}
 
