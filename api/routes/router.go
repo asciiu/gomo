@@ -20,6 +20,8 @@ func New(db *sql.DB) *echo.Echo {
 	auth := &controllers.AuthController{DB: db}
 
 	// api group
+	openApi := e.Group("/api")
+
 	protectedApi := e.Group("/api")
 	protectedApi.Use(auth.RefreshAccess)
 
@@ -29,8 +31,8 @@ func New(db *sql.DB) *echo.Echo {
 
 	//AuthRoutes(e.Group("/api"), db)
 	// Login route
-	e.POST("/login", auth.Login)
-	e.POST("/signup", auth.Signup)
+	openApi.POST("/login", auth.Login)
+	openApi.POST("/signup", auth.Signup)
 
 	SessionRoutes(protectedApi, db)
 	OrderRoutes(protectedApi, db)

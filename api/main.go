@@ -18,22 +18,6 @@ func checkErr(err error) {
 }
 
 func main() {
-	// Create a new service. Optionally include some options here.
-	// service := micro.NewService(micro.Name("greeter.client"))
-	// service.Init()
-
-	// client := pb.NewSessionServiceClient("go.micro.srv.session", service.Client())
-	// session := pb.SessionRequest{
-	// 	Id:     "what",
-	// 	UserId: "userid",
-	// }
-
-	// r, err := client.CreateSession(context.Background(), &session)
-	// if err != nil {
-	// 	log.Fatalf("Could not greet: %v", err)
-	// }
-	// log.Printf("Created: #%v", r.Response)
-
 	dbUrl := fmt.Sprintf("%s", os.Getenv("DB_URL"))
 	fmt.Println(dbUrl)
 

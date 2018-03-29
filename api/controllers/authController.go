@@ -52,9 +52,9 @@ type ResponseError struct {
 	Message string `json:"message"`
 }
 
-func createJwtToken(user *models.User, duration time.Duration) (string, error) {
+func createJwtToken(userId string, duration time.Duration) (string, error) {
 	claims := jwt.StandardClaims{
-		Id:        user.Id,
+		Id:        userId,
 		ExpiresAt: time.Now().Add(duration).Unix(),
 	}
 
@@ -71,27 +71,64 @@ func createJwtToken(user *models.User, duration time.Duration) (string, error) {
 
 func (controller *AuthController) RefreshAccess(next echo.HandlerFunc) echo.HandlerFunc {
 	return func(c echo.Context) error {
-		selectAuth := c.Request().Header.Get("Refresh")
-		if selectAuth != "" {
-			sa := strings.Split(selectAuth, ":")
+		auth := c.Request().Header.Get("Authorization")
+		tokenString := strings.Split(auth, " ")[1]
 
-			if len(sa) != 2 {
-				return next(c)
+		_, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
+			// Don't forget to validate the alg is what you expect:
+			if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
+				return nil, fmt.Errorf("Unexpected signing method: %v", token.Header["alg"])
 			}
 
-			refreshToken, err := asql.FindRefreshToken(controller.DB, sa[0])
-			if err != nil {
-				return next(c)
-			}
+			// hmacSampleSecret is a []byte containing your secret, e.g. []byte("my_secret_key")
+			return []byte(os.Getenv("GOMO_JWT")), nil
+		})
 
-			if refreshToken.ExpiresOn.After(time.Now()) {
-				// renew access
-				// renew the refresh token
-				// send new access and new refresh token back in the response headers
-				fmt.Println("refresh access")
+		if err != nil {
+
+			selectAuth := c.Request().Header.Get("Refresh")
+			if selectAuth != "" {
+				sa := strings.Split(selectAuth, ":")
+
+				if len(sa) != 2 {
+					return next(c)
+				}
+
+				selector := sa[0]
+				authenticator := sa[1]
+
+				refreshToken, err := asql.FindRefreshToken(controller.DB, selector)
+				if err != nil {
+					return next(c)
+				}
+
+				if refreshToken.Compare(authenticator) && refreshToken.ExpiresOn.After(time.Now()) {
+					// renew access
+					accessToken, err := createJwtToken(refreshToken.UserId, 5*time.Minute)
+					if err != nil {
+						return next(c)
+					}
+
+					// renew the refresh token
+					expiresOn := time.Now().Add(720 * time.Hour)
+					selectAuth := refreshToken.Renew(expiresOn)
+
+					_, err3 := asql.UpdateRefreshToken(controller.DB, refreshToken)
+
+					if err3 != nil {
+						return next(c)
+					}
+
+					c.Response().Header().Set("Set-Access", accessToken)
+					c.Response().Header().Set("Set-Refresh", selectAuth)
+				}
+
+				if refreshToken.ExpiresOn.Before(time.Now()) {
+					asql.DeleteRefreshToken(controller.DB, refreshToken)
+				}
 			}
 		}
-		//c.Response().Header().Set(echo.HeaderServer, "Gomo/0.1")
+
 		return next(c)
 	}
 }
@@ -131,7 +168,7 @@ func (controller *AuthController) Login(c echo.Context) error {
 
 	default:
 		if bcrypt.CompareHashAndPassword([]byte(user.PasswordHash), []byte(loginRequest.Password)) == nil {
-			accessToken, err := createJwtToken(user, 5*time.Minute)
+			accessToken, err := createJwtToken(user.Id, 5*time.Minute)
 			if err != nil {
 				response := &ResponseError{
 					Status:  "error",

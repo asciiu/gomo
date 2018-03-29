@@ -2,6 +2,7 @@ package models
 
 import (
 	"crypto/rand"
+	"crypto/sha256"
 	"encoding/base64"
 	"fmt"
 	"strings"
@@ -16,6 +17,41 @@ type RefreshToken struct {
 	Selector  string
 	TokenHash string
 	ExpiresOn time.Time
+}
+
+func (token *RefreshToken) Update(selector, hash string, expire time.Time) {
+	token.Selector = selector
+	token.TokenHash = hash
+	token.ExpiresOn = expire
+}
+
+func (token *RefreshToken) Renew(expire time.Time) string {
+	token.ExpiresOn = expire
+
+	// random selector
+	selector := make([]byte, 16)
+	rand.Read(selector)
+	selectStr := base64.StdEncoding.EncodeToString(selector)
+	token.Selector = selectStr
+
+	// random authenticator
+	authenticator := make([]byte, 64)
+	rand.Read(authenticator)
+	authenticatorStr := base64.StdEncoding.EncodeToString(authenticator)
+
+	h := sha256.New()
+	h.Write([]byte(authenticatorStr))
+	token.TokenHash = base64.StdEncoding.EncodeToString(h.Sum(nil))
+
+	return fmt.Sprintf("%s:%s",
+		base64.StdEncoding.EncodeToString(selector),
+		authenticatorStr)
+}
+
+func (token *RefreshToken) Compare(authenticator string) bool {
+	h := sha256.New()
+	h.Write([]byte(authenticator))
+	return token.TokenHash == base64.StdEncoding.EncodeToString(h.Sum(nil))
 }
 
 func NewSelectorAuth() string {
@@ -36,11 +72,14 @@ func NewRefreshToken(userId, selectorAuth string, expiresOn time.Time) *RefreshT
 	newId := uuid.New()
 	pts := strings.Split(selectorAuth, ":")
 
+	h := sha256.New()
+	h.Write([]byte(pts[1]))
+
 	token := RefreshToken{
 		Id:        newId.String(),
 		UserId:    userId,
 		Selector:  pts[0],
-		TokenHash: pts[1],
+		TokenHash: base64.StdEncoding.EncodeToString(h.Sum(nil)),
 		ExpiresOn: expiresOn,
 	}
 	return &token
