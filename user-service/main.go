@@ -10,18 +10,16 @@ import (
 	micro "github.com/micro/go-micro"
 )
 
-func main() {
+func NewUserService(name, dbUrl string) micro.Service {
 	// Create a new service. Include some options here.
 	srv := micro.NewService(
 		// This name must match the package name given in your protobuf definition
-		micro.Name("go.micro.srv.user"),
+		micro.Name(name),
 		micro.Version("latest"),
 	)
+
 	// Init will parse the command line flags.
 	srv.Init()
-
-	dbUrl := fmt.Sprintf("%s", os.Getenv("DB_URL"))
-	log.Println(dbUrl)
 
 	gomoDB, err := db.NewDB(dbUrl)
 
@@ -35,6 +33,13 @@ func main() {
 	// implementation into the auto-generated interface code for our
 	// protobuf definition.
 	pb.RegisterUserServiceHandler(srv.Server(), &UserService{gomoDB})
+
+	return srv
+}
+
+func main() {
+	dbUrl := fmt.Sprintf("%s", os.Getenv("DB_URL"))
+	srv := NewUserService("go.micro.srv.user", dbUrl)
 
 	if err := srv.Run(); err != nil {
 		log.Fatal(err)

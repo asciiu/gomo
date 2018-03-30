@@ -9,7 +9,8 @@ CREATE TABLE users(
     email_verified BOOLEAN NOT NULL DEFAULT false,
     password_hash VARCHAR NOT NULL,
     created_on TIMESTAMP DEFAULT now(),
-    updated_on TIMESTAMP DEFAULT current_timestamp
+    updated_on TIMESTAMP DEFAULT current_timestamp,
+    deleted_on TIMESTAMP
 );
 
 -- +goose Down

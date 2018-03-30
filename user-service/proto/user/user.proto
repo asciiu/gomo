@@ -3,21 +3,62 @@ syntax = "proto3";
 package go.micro.srv.user; 
 
 service UserService {
-  rpc GetUserInfo(UserInfoRequest) returns (Response) {}
   rpc ChangePassword(ChangePasswordRequest) returns (Response) {}
+  rpc CreateUser(CreateUserRequest) returns (UserResponse) {}
+  rpc DeleteUser(DeleteUserRequest) returns (Response) {}
+  rpc GetUserInfo(GetUserInfoRequest) returns (UserResponse) {}
+  rpc UpdateUser(UpdateUserRequest) returns (UserResponse) {}
 }
 
+// Requests
 message ChangePasswordRequest {
   string userId  = 1;
   string newPassword = 2;
   string oldPassword = 3;
 }
 
-message Response {
-  bool success = 1;
+message CreateUserRequest {
+  string first = 1;
+  string last = 2;
+  string email  = 3;
+  string password = 4;
 }
 
-// Created a blank get request
-message UserInfoRequest {
+message DeleteUserRequest {
+  string userId = 1;
+  bool hard = 2;
+}
+
+message GetUserInfoRequest {
     string userId = 1;
+}
+
+message UpdateUserRequest {
+    string userId = 1;
+    string first = 2;
+    string last = 3;
+    string email = 4;
+}
+
+// Responses
+message Response {
+  string status = 1;
+  string message = 2;
+}
+
+message User {
+  string userId = 1;
+  string first = 2;
+  string last = 3;
+  string email = 4;
+}
+
+message UserData {
+  User user = 1;
+}
+
+message UserResponse {
+  string status = 1;
+  string message = 2;
+  UserData data = 3;
 }
