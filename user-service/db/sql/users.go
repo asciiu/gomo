@@ -47,3 +47,8 @@ func InsertUser(db *sql.DB, user *models.User) (*models.User, error) {
 	}
 	return user, nil
 }
+
+func UpdateUserPassword(db *sql.DB, userId, hash string) error {
+	_, err := db.Exec("UPDATE users SET password_hash = $1 WHERE id = $2", hash, userId)
+	return err
+}

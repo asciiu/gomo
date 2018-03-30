@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"strings"
 	"testing"
 
 	"github.com/asciiu/gomo/common/db"
@@ -55,13 +56,54 @@ func TestInsertUser(t *testing.T) {
 
 func TestChangePassword(t *testing.T) {
 	service := setupService()
+	request := pb.CreateUserRequest{
+		First:    "test",
+		Last:     "last",
+		Email:    "email@email",
+		Password: "password",
+	}
 
-	request := pb.ChangePasswordRequest{
-		UserId:      "7cccddd9-0ee3-4832-a22c-ece20b3084bf",
-		OldPassword: "old",
+	response := pb.UserResponse{
+		Data: &pb.UserData{
+			&pb.User{},
+		},
+	}
+
+	service.CreateUser(context.Background(), &request, &response)
+
+	if response.Status != "success" {
+		t.Errorf(response.Message)
+	}
+
+	invalidChangeReq := pb.ChangePasswordRequest{
+		UserId:      response.Data.User.UserId,
+		OldPassword: "pass",
 		NewPassword: "new",
 	}
 
-	response := pb.Response{}
-	service.ChangePassword(context.Background(), &request, &response)
+	response2 := pb.Response{}
+	service.ChangePassword(context.Background(), &invalidChangeReq, &response2)
+	if !strings.Contains(response2.Message, "current password mismatch") {
+		t.Errorf(response.Message)
+	}
+
+	validChangeReq := pb.ChangePasswordRequest{
+		UserId:      response.Data.User.UserId,
+		OldPassword: "password",
+		NewPassword: "new",
+	}
+
+	response3 := pb.Response{}
+	eor := service.ChangePassword(context.Background(), &validChangeReq, &response3)
+	if response3.Status != "success" {
+		t.Errorf(eor.Error())
+	}
+
+	requestDelete := pb.DeleteUserRequest{
+		UserId: response.Data.User.UserId,
+		Hard:   true,
+	}
+
+	responseDel := pb.Response{}
+	service.DeleteUser(context.Background(), &requestDelete, &responseDel)
 }

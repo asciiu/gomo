@@ -4,12 +4,12 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
-	"log"
 	"strings"
 
 	userRepo "github.com/asciiu/gomo/user-service/db/sql"
 	"github.com/asciiu/gomo/user-service/models"
 	pb "github.com/asciiu/gomo/user-service/proto/user"
+	"golang.org/x/crypto/bcrypt"
 )
 
 type UserService struct {
@@ -59,17 +59,36 @@ func (service *UserService) DeleteUser(ctx context.Context, req *pb.DeleteUserRe
 	return err
 }
 
-func (s *UserService) ChangePassword(ctx context.Context, req *pb.ChangePasswordRequest, res *pb.Response) error {
-	_, error := userRepo.FindUserById(s.DB, req.UserId)
-	if error != nil {
-		log.Println(error)
+func (service *UserService) ChangePassword(ctx context.Context, req *pb.ChangePasswordRequest, res *pb.Response) error {
+	user, error := userRepo.FindUserById(service.DB, req.UserId)
+
+	switch {
+	case error == nil:
+		if bcrypt.CompareHashAndPassword([]byte(user.PasswordHash), []byte(req.OldPassword)) == nil {
+
+			err := userRepo.UpdateUserPassword(service.DB, req.UserId, models.HashAndSalt([]byte(req.NewPassword)))
+			if err != nil {
+				res.Status = "error"
+				res.Message = err.Error()
+			} else {
+				res.Status = "success"
+			}
+
+		} else {
+			res.Status = "fail"
+			res.Message = "current password mismatch"
+		}
+
+	case strings.Contains(error.Error(), "no rows in result set"):
+		res.Status = "fail"
+		res.Message = fmt.Sprintf("user id not found: %s", req.UserId)
+
+	default:
+		res.Status = "error"
+		res.Message = error.Error()
 	}
 
-	//fmt.Println(user)
-
-	//fmt.Printf("%s %s %s", req.UserId, req.OldPassword, req.NewPassword)
-
-	return nil
+	return error
 }
 
 func (s *UserService) GetUserInfo(ctx context.Context, req *pb.GetUserInfoRequest, res *pb.UserResponse) error {

@@ -16,12 +16,12 @@ func NewUser(first, last, email, password string) *User {
 		Last:          last,
 		Email:         email,
 		EmailVerified: false,
-		PasswordHash:  hashAndSalt([]byte(password)),
+		PasswordHash:  HashAndSalt([]byte(password)),
 	}
 	return &user
 }
 
-func hashAndSalt(pwd []byte) string {
+func HashAndSalt(pwd []byte) string {
 
 	// Use GenerateFromPassword to hash & salt pwd.
 	// MinCost is just an integer constant provided by the bcrypt
