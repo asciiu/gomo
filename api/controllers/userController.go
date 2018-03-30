@@ -8,7 +8,7 @@ import (
 
 	pb "github.com/asciiu/gomo/user-service/proto/user"
 	"github.com/labstack/echo"
-	microclient "github.com/micro/go-micro/client"
+	micro "github.com/micro/go-micro"
 	"golang.org/x/net/context"
 )
 
@@ -23,9 +23,13 @@ type ChangePasswordRequest struct {
 }
 
 func NewUserController(db *sql.DB) *UserController {
+	// Create a new service. Optionally include some options here.
+	service := micro.NewService(micro.Name("user.client"))
+	service.Init()
+
 	controller := UserController{
 		DB:     db,
-		Client: pb.NewUserServiceClient("go.micro.srv.user", microclient.DefaultClient),
+		Client: pb.NewUserServiceClient("go.micro.srv.user", service.Client()),
 	}
 	return &controller
 }
