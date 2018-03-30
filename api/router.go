@@ -38,7 +38,7 @@ func NewRouter(db *sql.DB) *echo.Echo {
 	middlewares.SetMainMiddlewares(e)
 
 	// controllers
-	authController := &controllers.AuthController{DB: db}
+	authController := controllers.NewAuthController(db)
 	sessionController := &controllers.SessionController{DB: db}
 	userController := controllers.NewUserController(db)
 	orderController := &controllers.OrderController{DB: db}

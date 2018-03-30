@@ -12,6 +12,8 @@ import (
 
 	asql "github.com/asciiu/gomo/api/db/sql"
 	gsql "github.com/asciiu/gomo/common/db/sql"
+	pb "github.com/asciiu/gomo/user-service/proto/user"
+	micro "github.com/micro/go-micro"
 
 	apiModels "github.com/asciiu/gomo/api/models"
 	models "github.com/asciiu/gomo/common/models"
@@ -24,7 +26,8 @@ const refreshDuration = 720 * time.Hour
 const jwtDuration = 5 * time.Minute
 
 type AuthController struct {
-	DB *sql.DB
+	DB     *sql.DB
+	Client pb.UserServiceClient
 }
 
 type JwtClaims struct {
@@ -57,6 +60,18 @@ type UserData struct {
 type ResponseError struct {
 	Status  string `json:"status"`
 	Message string `json:"message"`
+}
+
+func NewAuthController(db *sql.DB) *AuthController {
+	// Create a new service. Optionally include some options here.
+	service := micro.NewService(micro.Name("user.client"))
+	service.Init()
+
+	controller := AuthController{
+		DB:     db,
+		Client: pb.NewUserServiceClient("go.micro.srv.user", service.Client()),
+	}
+	return &controller
 }
 
 func createJwtToken(userId string, duration time.Duration) (string, error) {

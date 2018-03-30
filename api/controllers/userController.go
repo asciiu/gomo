@@ -3,10 +3,10 @@ package controllers
 import (
 	"database/sql"
 	"encoding/json"
-	"fmt"
 	"net/http"
 
 	pb "github.com/asciiu/gomo/user-service/proto/user"
+	jwt "github.com/dgrijalva/jwt-go"
 	"github.com/labstack/echo"
 	micro "github.com/micro/go-micro"
 	"golang.org/x/net/context"
@@ -23,7 +23,6 @@ type ChangePasswordRequest struct {
 }
 
 func NewUserController(db *sql.DB) *UserController {
-	// Create a new service. Optionally include some options here.
 	service := micro.NewService(micro.Name("user.client"))
 	service.Init()
 
@@ -35,7 +34,21 @@ func NewUserController(db *sql.DB) *UserController {
 }
 
 func (controller *UserController) ChangePassword(c echo.Context) error {
-	passwordRequest := ChangePasswordRequest{}
+	token := c.Get("user").(*jwt.Token)
+	claims := token.Claims.(jwt.MapClaims)
+	paramId := c.Param("id")
+	userId := claims["jti"].(string)
+
+	if paramId != userId {
+		response := &ResponseError{
+			Status:  "fail",
+			Message: "denied password change",
+		}
+
+		return c.JSON(http.StatusBadRequest, response)
+	}
+
+	passwordRequest := new(ChangePasswordRequest)
 
 	err := json.NewDecoder(c.Request().Body).Decode(&passwordRequest)
 	if err != nil {
@@ -47,20 +60,24 @@ func (controller *UserController) ChangePassword(c echo.Context) error {
 		return c.JSON(http.StatusBadRequest, response)
 	}
 
-	request2 := pb.ChangePasswordRequest{
-		UserId:      "1234",
-		OldPassword: "old",
-		NewPassword: "new",
+	changeRequest := pb.ChangePasswordRequest{
+		UserId:      userId,
+		OldPassword: passwordRequest.OldPassword,
+		NewPassword: passwordRequest.NewPassword,
 	}
 
-	r, err := controller.Client.ChangePassword(context.Background(), &request2)
+	r, err := controller.Client.ChangePassword(context.Background(), &changeRequest)
 	if err != nil {
-		fmt.Println(err)
+		response := &ResponseError{
+			Status:  "error",
+			Message: "change password service unavailable",
+		}
+
+		return c.JSON(http.StatusGone, response)
 	}
-	fmt.Println(r)
 
 	response := &ResponseSuccess{
-		Status: "success",
+		Status: r.Status,
 	}
 
 	return c.JSON(http.StatusOK, response)
