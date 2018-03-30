@@ -28,6 +28,7 @@ func HashAndSalt(pwd []byte) string {
 	// package along with DefaultCost & MaxCost.
 	// The cost can be any value you want provided it isn't lower
 	// than the MinCost (4)
+	// hash this using a server secret key
 	hash, err := bcrypt.GenerateFromPassword(pwd, bcrypt.MinCost)
 	if err != nil {
 		log.Println(err)

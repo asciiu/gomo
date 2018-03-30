@@ -59,6 +59,8 @@ func (service *UserService) DeleteUser(ctx context.Context, req *pb.DeleteUserRe
 	return err
 }
 
+// Changes the user's password. Password is updated when the request's
+// old password matches the current user's password hash.
 func (service *UserService) ChangePassword(ctx context.Context, req *pb.ChangePasswordRequest, res *pb.Response) error {
 	user, error := userRepo.FindUserById(service.DB, req.UserId)
 
@@ -91,9 +93,20 @@ func (service *UserService) ChangePassword(ctx context.Context, req *pb.ChangePa
 	return error
 }
 
-func (s *UserService) GetUserInfo(ctx context.Context, req *pb.GetUserInfoRequest, res *pb.UserResponse) error {
-	fmt.Println(req)
-	return nil
+func (service *UserService) GetUserInfo(ctx context.Context, req *pb.GetUserInfoRequest, res *pb.UserResponse) error {
+	user, error := userRepo.FindUserById(service.DB, req.UserId)
+	if error != nil {
+		res.Status = "fail"
+		res.Message = error.Error()
+	} else if error == nil {
+		res.Status = "success"
+		res.Data.User.UserId = user.Id
+		res.Data.User.First = user.First
+		res.Data.User.Last = user.Last
+		res.Data.User.Email = user.Email
+	}
+
+	return error
 }
 
 func (s *UserService) UpdateUser(ctx context.Context, req *pb.UpdateUserRequest, res *pb.UserResponse) error {

@@ -107,3 +107,42 @@ func TestChangePassword(t *testing.T) {
 	responseDel := pb.Response{}
 	service.DeleteUser(context.Background(), &requestDelete, &responseDel)
 }
+
+func TestGetUserInfo(t *testing.T) {
+	service := setupService()
+	request := pb.CreateUserRequest{
+		First:    "Bobbie",
+		Last:     "McGee",
+		Email:    "bobbie@luv",
+		Password: "password",
+	}
+
+	response := pb.UserResponse{
+		Data: &pb.UserData{
+			&pb.User{},
+		},
+	}
+
+	service.CreateUser(context.Background(), &request, &response)
+
+	if response.Status != "success" {
+		t.Errorf(response.Message)
+	}
+
+	getRequest := pb.GetUserInfoRequest{
+		UserId: response.Data.User.UserId,
+	}
+	service.GetUserInfo(context.Background(), &getRequest, &response)
+
+	if response.Status != "success" {
+		t.Errorf(response.Message)
+	}
+
+	requestDelete := pb.DeleteUserRequest{
+		UserId: response.Data.User.UserId,
+		Hard:   true,
+	}
+
+	responseDel := pb.Response{}
+	service.DeleteUser(context.Background(), &requestDelete, &responseDel)
+}
