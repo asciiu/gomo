@@ -23,10 +23,14 @@ func (service *UserService) CreateUser(ctx context.Context, req *pb.CreateUserRe
 	switch {
 	case error == nil:
 		res.Status = "success"
-		res.Data.User.UserId = user.Id
-		res.Data.User.First = user.First
-		res.Data.User.Last = user.Last
-		res.Data.User.Email = user.Email
+		res.Data = &pb.UserData{
+			User: &pb.User{
+				UserId: user.Id,
+				First:  user.First,
+				Last:   user.Last,
+				Email:  user.Email,
+			},
+		}
 		return nil
 
 	case strings.Contains(error.Error(), "violates unique constraint \"users_email_key\""):
@@ -100,10 +104,14 @@ func (service *UserService) GetUserInfo(ctx context.Context, req *pb.GetUserInfo
 		res.Message = error.Error()
 	} else if error == nil {
 		res.Status = "success"
-		res.Data.User.UserId = user.Id
-		res.Data.User.First = user.First
-		res.Data.User.Last = user.Last
-		res.Data.User.Email = user.Email
+		res.Data = &pb.UserData{
+			User: &pb.User{
+				UserId: user.Id,
+				First:  user.First,
+				Last:   user.Last,
+				Email:  user.Email,
+			},
+		}
 	}
 
 	return error
@@ -123,10 +131,14 @@ func (service *UserService) UpdateUser(ctx context.Context, req *pb.UpdateUserRe
 			res.Message = error.Error()
 		} else {
 			res.Status = "success"
-			res.Data.User.UserId = user.Id
-			res.Data.User.First = user.First
-			res.Data.User.Last = user.Last
-			res.Data.User.Email = user.Email
+			res.Data = &pb.UserData{
+				User: &pb.User{
+					UserId: user.Id,
+					First:  user.First,
+					Last:   user.Last,
+					Email:  user.Email,
+				},
+			}
 		}
 
 	case strings.Contains(error.Error(), "no rows in result set"):

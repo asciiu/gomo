@@ -26,11 +26,7 @@ func TestInsertUser(t *testing.T) {
 		Password: "password",
 	}
 
-	response := pb.UserResponse{
-		Data: &pb.UserData{
-			&pb.User{},
-		},
-	}
+	response := pb.UserResponse{}
 
 	service.CreateUser(context.Background(), &request, &response)
 
@@ -63,11 +59,7 @@ func TestChangePassword(t *testing.T) {
 		Password: "password",
 	}
 
-	response := pb.UserResponse{
-		Data: &pb.UserData{
-			&pb.User{},
-		},
-	}
+	response := pb.UserResponse{}
 
 	service.CreateUser(context.Background(), &request, &response)
 
@@ -117,11 +109,7 @@ func TestGetUserInfo(t *testing.T) {
 		Password: "password",
 	}
 
-	response := pb.UserResponse{
-		Data: &pb.UserData{
-			&pb.User{},
-		},
-	}
+	response := pb.UserResponse{}
 
 	service.CreateUser(context.Background(), &request, &response)
 
@@ -156,11 +144,7 @@ func TestUpdateUser(t *testing.T) {
 		Password: "password",
 	}
 
-	response := pb.UserResponse{
-		Data: &pb.UserData{
-			&pb.User{},
-		},
-	}
+	response := pb.UserResponse{}
 
 	service.CreateUser(context.Background(), &request, &response)
 

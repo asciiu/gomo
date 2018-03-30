@@ -11,19 +11,20 @@ import (
 	"time"
 
 	asql "github.com/asciiu/gomo/api/db/sql"
-	gsql "github.com/asciiu/gomo/common/db/sql"
+	gsql "github.com/asciiu/gomo/user-service/db/sql"
 	pb "github.com/asciiu/gomo/user-service/proto/user"
 	micro "github.com/micro/go-micro"
 
 	apiModels "github.com/asciiu/gomo/api/models"
-	models "github.com/asciiu/gomo/common/models"
+	models "github.com/asciiu/gomo/user-service/models"
 	jwt "github.com/dgrijalva/jwt-go"
 	"github.com/labstack/echo"
 	"golang.org/x/crypto/bcrypt"
+	"golang.org/x/net/context"
 )
 
 const refreshDuration = 720 * time.Hour
-const jwtDuration = 5 * time.Minute
+const jwtDuration = 60 * time.Minute
 
 type AuthController struct {
 	DB     *sql.DB
@@ -290,20 +291,32 @@ func (controller *AuthController) HandleSignup(c echo.Context) error {
 		return c.JSON(http.StatusBadRequest, response)
 	}
 
-	user := models.NewUser(signupRequest.First, signupRequest.Last, signupRequest.Email, signupRequest.Password)
-	_, error := gsql.InsertUser(controller.DB, user)
-	if error != nil {
-		response := &ResponseError{
-			Status:  "fail",
-			Message: error.Error(),
-		}
-
-		return c.JSON(http.StatusConflict, response)
+	createRequest := pb.CreateUserRequest{
+		First:    signupRequest.First,
+		Last:     signupRequest.Last,
+		Email:    signupRequest.Email,
+		Password: signupRequest.Password,
 	}
 
+	r, err := controller.Client.CreateUser(context.Background(), &createRequest)
+	if err != nil {
+		response := &ResponseError{
+			Status:  "error",
+			Message: "create user service unavailable",
+		}
+
+		return c.JSON(http.StatusGone, response)
+	}
 	response := &ResponseSuccess{
 		Status: "success",
-		Data:   &UserData{user.Info()},
+		Data: &UserData{
+			&models.UserInfo{
+				Id:    r.Data.User.UserId,
+				First: r.Data.User.First,
+				Last:  r.Data.User.Last,
+				Email: r.Data.User.Email,
+			},
+		},
 	}
 
 	return c.JSON(http.StatusOK, response)

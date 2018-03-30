@@ -49,10 +49,10 @@ type User struct {
 }
 
 type UserInfo struct {
-	Id    string
-	First string
-	Last  string
-	Email string
+	Id    string `json:"id"`
+	First string `json:"first"`
+	Last  string `json:"last"`
+	Email string `json:"email"`
 }
 
 func (user *User) Info() *UserInfo {

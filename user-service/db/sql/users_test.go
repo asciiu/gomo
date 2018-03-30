@@ -5,8 +5,8 @@ import (
 	"testing"
 
 	"github.com/asciiu/gomo/common/db"
-	"github.com/asciiu/gomo/common/db/sql"
-	"github.com/asciiu/gomo/common/models"
+	"github.com/asciiu/gomo/user-service/db/sql"
+	"github.com/asciiu/gomo/user-service/models"
 )
 
 func checkErr(err error) {
@@ -21,7 +21,7 @@ func TestInsertUser(t *testing.T) {
 	checkErr(err)
 	defer db.Close()
 
-	user := models.NewUser("test@email", "hash")
+	user := models.NewUser("first", "last", "test@email", "hash")
 	_, error := sql.InsertUser(db, user)
 	if error != nil {
 		t.Errorf("%s", error)
