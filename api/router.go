@@ -40,7 +40,7 @@ func NewRouter(db *sql.DB) *echo.Echo {
 	// controllers
 	authController := &controllers.AuthController{DB: db}
 	sessionController := &controllers.SessionController{DB: db}
-	userController := &controllers.UserController{DB: db}
+	userController := &controllers.NewUserController{DB: db}
 	orderController := &controllers.OrderController{DB: db}
 
 	// api group

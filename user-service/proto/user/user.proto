@@ -8,8 +8,9 @@ service UserService {
 }
 
 message ChangePasswordRequest {
-  string id = 1;
-  string userId = 2;
+  string userId  = 1;
+  string newPassword = 2;
+  string oldPassword = 3;
 }
 
 message Response {
