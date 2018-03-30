@@ -1,0 +1,22 @@
+syntax = "proto3";
+
+package go.micro.srv.user; 
+
+service UserService {
+  rpc GetUserInfo(UserInfoRequest) returns (Response) {}
+  rpc ChangePassword(ChangePasswordRequest) returns (Response) {}
+}
+
+message ChangePasswordRequest {
+  string id = 1;
+  string userId = 2;
+}
+
+message Response {
+  bool success = 1;
+}
+
+// Created a blank get request
+message UserInfoRequest {
+    string userId = 1;
+}
