@@ -1,8 +1,6 @@
 package main
 
 import (
-	"context"
-	"database/sql"
 	"fmt"
 	"log"
 	"os"
@@ -11,21 +9,6 @@ import (
 	pb "github.com/asciiu/gomo/user-service/proto/user"
 	micro "github.com/micro/go-micro"
 )
-
-type service struct {
-	DB *sql.DB
-}
-
-// CreateConsignment - we created just one method on our service,
-// which is a create method, which takes a context and a request as an
-// argument, these are handled by the gRPC server.
-func (s *service) ChangePassword(ctx context.Context, req *pb.ChangePasswordRequest, res *pb.Response) error {
-	return nil
-}
-
-func (s *service) GetUserInfo(ctx context.Context, req *pb.UserInfoRequest, res *pb.Response) error {
-	return nil
-}
 
 func main() {
 	// Create a new service. Include some options here.
@@ -38,7 +21,7 @@ func main() {
 	srv.Init()
 
 	dbUrl := fmt.Sprintf("%s", os.Getenv("DB_URL"))
-	fmt.Println(dbUrl)
+	log.Println(dbUrl)
 
 	gomoDB, err := db.NewDB(dbUrl)
 
@@ -51,9 +34,9 @@ func main() {
 	// Register our service with the gRPC server, this will tie our
 	// implementation into the auto-generated interface code for our
 	// protobuf definition.
-	pb.RegisterUserServiceHandler(srv.Server(), &service{gomoDB})
+	pb.RegisterUserServiceHandler(srv.Server(), &UserService{gomoDB})
 
 	if err := srv.Run(); err != nil {
-		fmt.Println(err)
+		log.Fatal(err)
 	}
 }
