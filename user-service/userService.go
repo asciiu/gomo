@@ -109,7 +109,34 @@ func (service *UserService) GetUserInfo(ctx context.Context, req *pb.GetUserInfo
 	return error
 }
 
-func (s *UserService) UpdateUser(ctx context.Context, req *pb.UpdateUserRequest, res *pb.UserResponse) error {
-	fmt.Println(req)
-	return nil
+func (service *UserService) UpdateUser(ctx context.Context, req *pb.UpdateUserRequest, res *pb.UserResponse) error {
+	user, error := userRepo.FindUserById(service.DB, req.UserId)
+	switch {
+	case error == nil:
+		user.Email = req.Email
+		user.First = req.First
+		user.Last = req.Last
+
+		user, error = userRepo.UpdateUserInfo(service.DB, user)
+		if error != nil {
+			res.Status = "error"
+			res.Message = error.Error()
+		} else {
+			res.Status = "success"
+			res.Data.User.UserId = user.Id
+			res.Data.User.First = user.First
+			res.Data.User.Last = user.Last
+			res.Data.User.Email = user.Email
+		}
+
+	case strings.Contains(error.Error(), "no rows in result set"):
+		res.Status = "fail"
+		res.Message = "user does not exist by that id"
+
+	default:
+		res.Status = "error"
+		res.Message = error.Error()
+	}
+
+	return error
 }

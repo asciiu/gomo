@@ -52,3 +52,13 @@ func UpdateUserPassword(db *sql.DB, userId, hash string) error {
 	_, err := db.Exec("UPDATE users SET password_hash = $1 WHERE id = $2", hash, userId)
 	return err
 }
+
+func UpdateUserInfo(db *sql.DB, user *models.User) (*models.User, error) {
+	sqlStatement := `UPDATE users SET first_name = $1, last_name = $2, email = $3 WHERE id = $4`
+	_, err := db.Exec(sqlStatement, user.First, user.Last, user.Email, user.Id)
+
+	if err != nil {
+		return nil, err
+	}
+	return user, nil
+}
