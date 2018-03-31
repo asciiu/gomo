@@ -47,7 +47,7 @@ func NewUserController(db *sql.DB) *UserController {
 
 	controller := UserController{
 		DB:     db,
-		Client: pb.NewUserServiceClient("go.micro.srv.user", service.Client()),
+		Client: pb.NewUserServiceClient("go.srv.user-service", service.Client()),
 	}
 	return &controller
 }

@@ -23,7 +23,7 @@ func NewSessionController(db *sql.DB) *SessionController {
 
 	controller := SessionController{
 		DB:     db,
-		Client: pb.NewUserServiceClient("go.micro.srv.user", service.Client()),
+		Client: pb.NewUserServiceClient("go.srv.user-service", service.Client()),
 	}
 	return &controller
 }

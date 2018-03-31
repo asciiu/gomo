@@ -39,7 +39,7 @@ func NewUserService(name, dbUrl string) micro.Service {
 
 func main() {
 	dbUrl := fmt.Sprintf("%s", os.Getenv("DB_URL"))
-	srv := NewUserService("go.micro.srv.user", dbUrl)
+	srv := NewUserService("go.srv.user-service", dbUrl)
 
 	if err := srv.Run(); err != nil {
 		log.Fatal(err)

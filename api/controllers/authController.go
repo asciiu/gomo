@@ -91,7 +91,7 @@ func NewAuthController(db *sql.DB) *AuthController {
 
 	controller := AuthController{
 		DB:     db,
-		Client: pb.NewUserServiceClient("go.micro.srv.user", service.Client()),
+		Client: pb.NewUserServiceClient("go.srv.user-service", service.Client()),
 	}
 	return &controller
 }
