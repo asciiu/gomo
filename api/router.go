@@ -38,10 +38,12 @@ func NewRouter(db *sql.DB) *echo.Echo {
 	middlewares.SetMainMiddlewares(e)
 
 	// controllers
+	apiKeyController := controllers.NewApiKeyController(db)
 	authController := controllers.NewAuthController(db)
+	deviceController := controllers.NewDeviceController(db)
+	orderController := controllers.NewOrderController(db)
 	sessionController := controllers.NewSessionController(db)
 	userController := controllers.NewUserController(db)
-	orderController := &controllers.OrderController{DB: db}
 
 	// api group
 	openApi := e.Group("/api")
@@ -63,12 +65,26 @@ func NewRouter(db *sql.DB) *echo.Echo {
 	protectedApi.PUT("/users/:id/changepassword", userController.HandleChangePassword)
 	protectedApi.PUT("/users/:id", userController.HandleUpdateUser)
 
+	// api key endpoints
+	protectedApi.GET("/keys", apiKeyController.HandleListKeys)
+	protectedApi.POST("/keys", apiKeyController.HandlePostKey)
+	protectedApi.GET("/keys/:keyId", apiKeyController.HandleGetKey)
+	protectedApi.PUT("/keys/:keyId", apiKeyController.HandleUpdateKey)
+	protectedApi.DELETE("/keys/:keyId", apiKeyController.HandleDeleteKey)
+
+	// device manage endpoints
+	protectedApi.GET("/devices", deviceController.HandleListDevices)
+	protectedApi.POST("/devices", deviceController.HandlePostDevice)
+	protectedApi.GET("/devices/:deviceId", deviceController.HandleGetDevice)
+	protectedApi.PUT("/devices/:deviceId", deviceController.HandleUpdateDevice)
+	protectedApi.DELETE("/devices/:deviceId", deviceController.HandleDeleteDevice)
+
 	// order management endpoints
-	protectedApi.GET("/orders", orderController.ListOrders)
-	protectedApi.POST("/orders", orderController.PostOrder)
-	protectedApi.GET("/orders/:id", orderController.GetOrder)
-	protectedApi.PUT("/orders/:id", orderController.UpdateOrder)
-	protectedApi.DELETE("/orders/:id", orderController.DeleteOrder)
+	protectedApi.GET("/orders", orderController.HandleListOrders)
+	protectedApi.POST("/orders", orderController.HandlePostOrder)
+	protectedApi.GET("/orders/:orderId", orderController.HandleGetOrder)
+	protectedApi.PUT("/orders/:orderId", orderController.HandleUpdateOrder)
+	protectedApi.DELETE("/orders/:orderId", orderController.HandleDeleteOrder)
 
 	// required for health checks
 	e.GET("/index.html", health)

@@ -51,7 +51,14 @@ type OrderRequest struct {
 	Conditions         string  `json:"conditions"`
 }
 
-func (controller *OrderController) GetOrder(c echo.Context) error {
+func NewOrderController(db *sql.DB) *OrderController {
+	controller := OrderController{
+		DB: db,
+	}
+	return &controller
+}
+
+func (controller *OrderController) HandleGetOrder(c echo.Context) error {
 	user := c.Get("user")
 	token := user.(*jwt.Token)
 	claims, ok := token.Claims.(jwt.MapClaims)
@@ -61,7 +68,7 @@ func (controller *OrderController) GetOrder(c echo.Context) error {
 
 	log.Println("User name: ", claims["name"], "User ID: ", claims["jti"])
 	// User ID from path `users/:id`
-	id := c.Param("id")
+	id := c.Param("orderId")
 
 	return c.JSON(http.StatusOK, map[string]string{
 		"id":           id,
@@ -69,14 +76,14 @@ func (controller *OrderController) GetOrder(c echo.Context) error {
 	})
 }
 
-func (controller *OrderController) ListOrders(c echo.Context) error {
+func (controller *OrderController) HandleListOrders(c echo.Context) error {
 	// Get team and member from the query string
 	team := c.QueryParam("team")
 	member := c.QueryParam("member")
 	return c.String(http.StatusOK, "team:"+team+", member:"+member)
 }
 
-func (controller *OrderController) PostOrder(c echo.Context) error {
+func (controller *OrderController) HandlePostOrder(c echo.Context) error {
 	user := c.Get("user").(*jwt.Token)
 	claims := user.Claims.(jwt.MapClaims)
 	name := claims["name"].(string)
@@ -94,10 +101,10 @@ func (controller *OrderController) PostOrder(c echo.Context) error {
 	return c.String(http.StatusOK, "Welcome "+name+" your order has posted!")
 }
 
-func (controller *OrderController) UpdateOrder(c echo.Context) error {
+func (controller *OrderController) HandleUpdateOrder(c echo.Context) error {
 	return c.String(http.StatusOK, "update it!")
 }
 
-func (controller *OrderController) DeleteOrder(c echo.Context) error {
+func (controller *OrderController) HandleDeleteOrder(c echo.Context) error {
 	return c.String(http.StatusOK, "delete it!")
 }
