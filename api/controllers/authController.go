@@ -191,8 +191,9 @@ func (controller *AuthController) RefreshAccess(next echo.HandlerFunc) echo.Hand
 //
 // user login (open)
 //
-// The login endpoint returns an authorization token in the 'set-authorization' response header.
+// The login endpoint returns an authorization token in the "set-authorization" response header.
 // You may also receive an optional refresh token if you include 'remember': true in your post request.
+// Both tokens will be returned in the reponse headers as "set-refresh" and "set-authorization".
 //
 // responses:
 //  200: responseSuccess "data" will be non null with "status": "success"
