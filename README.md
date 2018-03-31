@@ -36,7 +36,7 @@ $ goose postgres "user=postgres dbname=gomo_test sslmode=disable" up
 ### Generating the API docs
 From within the /api project 
 ```
-$ swagger generate spec -o ./swagger.json --scan-models
-$ swagger serve -F=swagger swagger.json
+$ swagger generate spec -o ./fomo-swagger.json --scan-models
+$ swagger serve -F=swagger fomo-swagger.json
 ```
 

@@ -12,10 +12,6 @@
   "info": {
     "description": "Endpoints labeled open do not require authentication. The protected endpoints on the other hand, do require\nauthentication. I'm not sure how long the jwt token should last. I'm thinking we should set the expire on\nthat token to be super short - like 5 minutes (upto an hour maybe?) to minimize the amount of time an\nattacker can use that token. The refresh token will last longer - currently 7 days. If you make a request\nto a protected endpoint using a \"Refresh\" token in your request headers, you will receive a new\nauthorization token (set-authorization) and refresh token (set-refresh) in the response headers when\nyou make a request with an expired authorization token. You MUST replace both tokens in your request headers\nto stay authenticated. The old refresh token gets replaced on the backend therefore, you need to use the\nnew refresh token to remain actively logged in.",
     "title": "FOMO API",
-    "contact": {
-      "name": "Flowy",
-      "email": "ellyssin.gimhae@gmail.com"
-    },
     "version": "0.0.1"
   },
   "host": "stage.fomo.exchange",

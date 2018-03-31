@@ -13,7 +13,7 @@
 //     Schemes: https
 //     BasePath: /api
 //     Version: 0.0.1
-//     Contact: Flowy <ellyssin.gimhae@gmail.com>
+//     Author: The flo
 //     Host: stage.fomo.exchange
 //
 //     Consumes:
