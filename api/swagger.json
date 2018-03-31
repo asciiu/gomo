@@ -21,9 +21,97 @@
   "host": "stage.fomo.exchange",
   "basePath": "/api",
   "paths": {
+    "/devices": {
+      "get": {
+        "description": "...",
+        "tags": [
+          "devices"
+        ],
+        "summary": "not implemented (protected)",
+        "operationId": "getAllDevices"
+      },
+      "post": {
+        "description": "...",
+        "tags": [
+          "devices"
+        ],
+        "summary": "not implemented (protected)",
+        "operationId": "addDevice"
+      }
+    },
+    "/devices/:deviceId": {
+      "get": {
+        "description": "...",
+        "tags": [
+          "devices"
+        ],
+        "summary": "not implemented (protected)",
+        "operationId": "getDevice"
+      },
+      "put": {
+        "description": "...",
+        "tags": [
+          "devices"
+        ],
+        "summary": "not implemented (protected)",
+        "operationId": "updateDevice"
+      },
+      "delete": {
+        "description": "...",
+        "tags": [
+          "devices"
+        ],
+        "summary": "not implemented (protected)",
+        "operationId": "deleteDevice"
+      }
+    },
+    "/keys": {
+      "get": {
+        "description": "...",
+        "tags": [
+          "keys"
+        ],
+        "summary": "not implemented (protected)",
+        "operationId": "getAllKey"
+      },
+      "post": {
+        "description": "..",
+        "tags": [
+          "keys"
+        ],
+        "summary": "not implemented (protected)",
+        "operationId": "postKey"
+      }
+    },
+    "/keys/:keyId": {
+      "get": {
+        "description": "...",
+        "tags": [
+          "keys"
+        ],
+        "summary": "not implemented (protected)",
+        "operationId": "getKey"
+      },
+      "put": {
+        "description": "..",
+        "tags": [
+          "keys"
+        ],
+        "summary": "not implemented (protected)",
+        "operationId": "updateKey"
+      },
+      "delete": {
+        "description": "...",
+        "tags": [
+          "keys"
+        ],
+        "summary": "not implemented (protected)",
+        "operationId": "deleteKey"
+      }
+    },
     "/login": {
       "post": {
-        "description": "The login endpoint returns an authorization token in the 'set-authorization' response header.\nYou may also receive an optional refresh token if you include 'remember': true in your post request.",
+        "description": "The login endpoint returns an authorization token in the \"set-authorization\" response header.\nYou may also receive an optional refresh token if you include 'remember': true in your post request.\nBoth tokens will be returned in the reponse headers as \"set-refresh\" and \"set-authorization\".",
         "tags": [
           "authentication"
         ],
@@ -108,6 +196,50 @@
             }
           }
         }
+      }
+    },
+    "/orders": {
+      "get": {
+        "description": "...",
+        "tags": [
+          "orders"
+        ],
+        "summary": "not implemented (protected)",
+        "operationId": "getAllOrders"
+      },
+      "post": {
+        "description": "...",
+        "tags": [
+          "orders"
+        ],
+        "summary": "not implemented (protected)",
+        "operationId": "addOrder"
+      }
+    },
+    "/orders/:orderId": {
+      "get": {
+        "description": "...",
+        "tags": [
+          "orders"
+        ],
+        "summary": "not implemented (protected)",
+        "operationId": "getOrder"
+      },
+      "put": {
+        "description": "...",
+        "tags": [
+          "orders"
+        ],
+        "summary": "not implemented (protected)",
+        "operationId": "updateOrder"
+      },
+      "delete": {
+        "description": "...",
+        "tags": [
+          "orders"
+        ],
+        "summary": "not implemented (protected)",
+        "operationId": "deleteOrder"
       }
     },
     "/session": {

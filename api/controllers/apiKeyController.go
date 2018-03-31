@@ -20,6 +20,11 @@ func NewApiKeyController(db *sql.DB) *ApiKeyController {
 	return &controller
 }
 
+// swagger:route GET /keys/:keyId keys getKey
+//
+// not implemented (protected)
+//
+// ...
 func (controller *ApiKeyController) HandleGetKey(c echo.Context) error {
 	user := c.Get("user")
 	token := user.(*jwt.Token)
@@ -36,24 +41,44 @@ func (controller *ApiKeyController) HandleGetKey(c echo.Context) error {
 	})
 }
 
+// swagger:route GET /keys keys getAllKey
+//
+// not implemented (protected)
+//
+// ...
 func (controller *ApiKeyController) HandleListKeys(c echo.Context) error {
 	return c.JSON(http.StatusOK, map[string]string{
 		"status": "not implemented",
 	})
 }
 
+// swagger:route POST /keys keys postKey
+//
+// not implemented (protected)
+//
+// ..
 func (controller *ApiKeyController) HandlePostKey(c echo.Context) error {
 	return c.JSON(http.StatusOK, map[string]string{
 		"status": "not implemented",
 	})
 }
 
+// swagger:route PUT /keys/:keyId keys updateKey
+//
+// not implemented (protected)
+//
+// ..
 func (controller *ApiKeyController) HandleUpdateKey(c echo.Context) error {
 	return c.JSON(http.StatusOK, map[string]string{
 		"status": "not implemented",
 	})
 }
 
+// swagger:route DELETE /keys/:keyId keys deleteKey
+//
+// not implemented (protected)
+//
+// ...
 func (controller *ApiKeyController) HandleDeleteKey(c echo.Context) error {
 	return c.JSON(http.StatusOK, map[string]string{
 		"status": "not implemented",

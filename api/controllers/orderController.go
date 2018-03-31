@@ -58,6 +58,11 @@ func NewOrderController(db *sql.DB) *OrderController {
 	return &controller
 }
 
+// swagger:route GET /orders/:orderId orders getOrder
+//
+// not implemented (protected)
+//
+// ...
 func (controller *OrderController) HandleGetOrder(c echo.Context) error {
 	user := c.Get("user")
 	token := user.(*jwt.Token)
@@ -76,6 +81,11 @@ func (controller *OrderController) HandleGetOrder(c echo.Context) error {
 	})
 }
 
+// swagger:route GET /orders orders getAllOrders
+//
+// not implemented (protected)
+//
+// ...
 func (controller *OrderController) HandleListOrders(c echo.Context) error {
 	// Get team and member from the query string
 	team := c.QueryParam("team")
@@ -83,6 +93,11 @@ func (controller *OrderController) HandleListOrders(c echo.Context) error {
 	return c.String(http.StatusOK, "team:"+team+", member:"+member)
 }
 
+// swagger:route POST /orders orders addOrder
+//
+// not implemented (protected)
+//
+// ...
 func (controller *OrderController) HandlePostOrder(c echo.Context) error {
 	user := c.Get("user").(*jwt.Token)
 	claims := user.Claims.(jwt.MapClaims)
@@ -101,10 +116,20 @@ func (controller *OrderController) HandlePostOrder(c echo.Context) error {
 	return c.String(http.StatusOK, "Welcome "+name+" your order has posted!")
 }
 
+// swagger:route PUT /orders/:orderId orders updateOrder
+//
+// not implemented (protected)
+//
+// ...
 func (controller *OrderController) HandleUpdateOrder(c echo.Context) error {
 	return c.String(http.StatusOK, "update it!")
 }
 
+// swagger:route DELETE /orders/:orderId orders deleteOrder
+//
+// not implemented (protected)
+//
+// ...
 func (controller *OrderController) HandleDeleteOrder(c echo.Context) error {
 	return c.String(http.StatusOK, "delete it!")
 }
