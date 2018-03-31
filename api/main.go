@@ -1,3 +1,27 @@
+// FOMO API
+//
+//     Schemes: https
+//     BasePath: /api
+//     Version: 0.0.1
+//     Contact: Flowy <ellyssin.gimhae@gmail.com>
+//     Host: stage.fomo.exchange
+//
+//     Consumes:
+//     - application/json
+//
+//     Produces:
+//     - application/json
+//
+//     Security:
+//     - bearer
+//
+//     SecurityDefinitions:
+//     Bearer:
+//          type: apiKey
+//          name: Authorization
+//          in: header
+//
+// swagger:meta
 package main
 
 import (

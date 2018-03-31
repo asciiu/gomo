@@ -36,19 +36,37 @@ type JwtClaims struct {
 	jwt.StandardClaims
 }
 
+// swagger:parameters login
 type LoginRequest struct {
-	Email    string `json:"email"`
+	// Required. Backend code does not check email atm.
+	// in: body
+	Email string `json:"email"`
+	// Required. Backend code does not have any password requirements atm.
+	// in: body
 	Password string `json:"password"`
-	Remember bool   `json:"remember"`
+	// Optional. Return refresh token in response
+	// in: body
+	Remember bool `json:"remember"`
 }
 
+// swagger:parameters signup
 type SignupRequest struct {
-	First    string `json:"first"`
-	Last     string `json:"last"`
-	Email    string `json:"email"`
+	// Optional.
+	// in: body
+	First string `json:"first"`
+	// Optional.
+	// in: body
+	Last string `json:"last"`
+	// Required. Must be unique! We need to validate these coming in.
+	// in: body
+	Email string `json:"email"`
+	// Required. We need password requirements.
+	// in: body
 	Password string `json:"password"`
 }
 
+// A ResponseSuccess will always contain a status of "successful".
+// swagger:model responseSuccess
 type ResponseSuccess struct {
 	Status string    `json:"status"`
 	Data   *UserData `json:"data"`
@@ -58,6 +76,9 @@ type UserData struct {
 	User *models.UserInfo `json:"user"`
 }
 
+// A ResponseSuccess will always contain a status of "successful".
+// This response may or may not include data encapsulating the user information.
+// swagger:model responseError
 type ResponseError struct {
 	Status  string `json:"status"`
 	Message string `json:"message"`
@@ -166,7 +187,18 @@ func (controller *AuthController) RefreshAccess(next echo.HandlerFunc) echo.Hand
 	}
 }
 
-// Handles a login request.
+// swagger:route POST /login authentication login
+//
+// user login (open)
+//
+// The login endpoint returns an authorization token in the 'set-authorization' response header.
+// You may also receive an optional refresh token if you include 'remember': true in your post request.
+//
+// responses:
+//  200: responseSuccess "data" will be non null with "status": "success"
+//  400: responseError email and password are not found in request with "status": "fail"
+//  401: responseError unauthorized user because of incorrect password with "status": "fail"
+//  500: responseError the message will state what the internal server error was with "status": "error"
 func (controller *AuthController) HandleLogin(c echo.Context) error {
 	loginRequest := LoginRequest{}
 
@@ -245,7 +277,16 @@ func (controller *AuthController) HandleLogin(c echo.Context) error {
 	return c.JSON(http.StatusUnauthorized, response)
 }
 
-// Handles logout cleanup
+// swagger:route GET /logout authentication logout
+//
+// logout user (protected)
+//
+// If a valid refresh token is found in the request headers, the server
+// will attempt to remove the refresh token from the database.
+//
+//	Responses:
+//	  200: responseSuccess data will be null with status "success"
+//	  400: responseError you either sent in no refresh token or the refresh token in the header is not valid with status: "fail"
 func (controller *AuthController) HandleLogout(c echo.Context) error {
 	selectAuth := c.Request().Header.Get("Refresh")
 	if selectAuth != "" {
@@ -256,7 +297,7 @@ func (controller *AuthController) HandleLogout(c echo.Context) error {
 				Status:  "fail",
 				Message: "refresh token invalid",
 			}
-			return c.JSON(http.StatusOK, response)
+			return c.JSON(http.StatusBadRequest, response)
 		}
 
 		asql.DeleteRefreshTokenBySelector(controller.DB, sa[0])
@@ -268,7 +309,18 @@ func (controller *AuthController) HandleLogout(c echo.Context) error {
 	return c.JSON(http.StatusOK, response)
 }
 
-// Handles a new signup request
+// swagger:route POST /signup authentication signup
+//
+// user registration (open)
+//
+// Registers a new user. Expects email to be unique. Duplicate email will result
+// in a bad request.
+//
+// responses:
+//  200: responseSuccess "data" will be non null with "status": "success"
+//  400: responseError message should relay information with regard to bad request with "status": "fail"
+//  410: responseError the user-service is not reachable. The user-service is a microservice that runs independantly from the api. When we take it offline you will receive this error.
+//  500: responseError the message will state what the internal server error was with "status": "error"
 func (controller *AuthController) HandleSignup(c echo.Context) error {
 	signupRequest := SignupRequest{}
 
@@ -307,6 +359,21 @@ func (controller *AuthController) HandleSignup(c echo.Context) error {
 
 		return c.JSON(http.StatusGone, response)
 	}
+
+	if r.Status != "success" {
+		response := &ResponseError{
+			Status:  r.Status,
+			Message: r.Message,
+		}
+
+		if r.Status == "fail" {
+			return c.JSON(http.StatusBadRequest, response)
+		}
+		if r.Status == "error" {
+			return c.JSON(http.StatusInternalServerError, response)
+		}
+	}
+
 	response := &ResponseSuccess{
 		Status: "success",
 		Data: &UserData{

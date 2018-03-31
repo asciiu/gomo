@@ -1,0 +1,526 @@
+{
+  "consumes": [
+    "application/json"
+  ],
+  "produces": [
+    "application/json"
+  ],
+  "schemes": [
+    "https"
+  ],
+  "swagger": "2.0",
+  "info": {
+    "description": "FOMO API",
+    "contact": {
+      "name": "Flowy",
+      "email": "ellyssin.gimhae@gmail.com"
+    },
+    "version": "0.0.1"
+  },
+  "host": "stage.fomo.exchange",
+  "basePath": "/api",
+  "paths": {
+    "/login": {
+      "post": {
+        "description": "The login endpoint returns an authorization token in the 'set-authorization' response header.\nYou may also receive an optional refresh token if you include 'remember': true in your post request.",
+        "tags": [
+          "authentication"
+        ],
+        "summary": "user login (open)",
+        "operationId": "login",
+        "parameters": [
+          {
+            "x-go-name": "Email",
+            "description": "Required. Backend code does not check email atm.",
+            "name": "email",
+            "in": "body",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "x-go-name": "Password",
+            "description": "Required. Backend code does not have any password requirements atm.",
+            "name": "password",
+            "in": "body",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "x-go-name": "Remember",
+            "description": "Optional. Return refresh token in response",
+            "name": "remember",
+            "in": "body",
+            "schema": {
+              "type": "boolean"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "\"data\" will be non null with \"status\": \"success\"",
+            "schema": {
+              "$ref": "#/definitions/responseSuccess"
+            }
+          },
+          "400": {
+            "description": "email and password are not found in request with \"status\": \"fail\"",
+            "schema": {
+              "$ref": "#/definitions/responseError"
+            }
+          },
+          "401": {
+            "description": "unauthorized user because of incorrect password with \"status\": \"fail\"",
+            "schema": {
+              "$ref": "#/definitions/responseError"
+            }
+          },
+          "500": {
+            "description": "the message will state what the internal server error was with \"status\": \"error\"",
+            "schema": {
+              "$ref": "#/definitions/responseError"
+            }
+          }
+        }
+      }
+    },
+    "/logout": {
+      "get": {
+        "description": "If a valid refresh token is found in the request headers, the server\nwill attempt to remove the refresh token from the database.",
+        "tags": [
+          "authentication"
+        ],
+        "summary": "logout user (protected)",
+        "operationId": "logout",
+        "responses": {
+          "200": {
+            "description": "data will be null with status \"success\"",
+            "schema": {
+              "$ref": "#/definitions/responseSuccess"
+            }
+          },
+          "400": {
+            "description": "you either sent in no refresh token or the refresh token in the header is not valid with status: \"fail\"",
+            "schema": {
+              "$ref": "#/definitions/responseError"
+            }
+          }
+        }
+      }
+    },
+    "/session": {
+      "get": {
+        "description": "Creates a new session for an authenticated user. The session data will eventually contain\nwhatever info you need to begin a new session. At the moment the response data mirrors\nlogin data. This endpoint depends on the user-service. If the user-service\nis unreachable, a 410 with a status of \"error\" will be returned.",
+        "tags": [
+          "session"
+        ],
+        "summary": "create a new session for a user (protected)",
+        "operationId": "sessionBegin",
+        "responses": {
+          "200": {
+            "description": "data will be non null with status \"success\"",
+            "schema": {
+              "$ref": "#/definitions/responseSuccess"
+            }
+          },
+          "410": {
+            "description": "the user-service is unreachable with status \"error\"",
+            "schema": {
+              "$ref": "#/definitions/responseError"
+            }
+          }
+        }
+      }
+    },
+    "/signup": {
+      "post": {
+        "description": "Registers a new user. Expects email to be unique. Duplicate email will result\nin a bad request.",
+        "tags": [
+          "authentication"
+        ],
+        "summary": "user registration (open)",
+        "operationId": "signup",
+        "parameters": [
+          {
+            "x-go-name": "First",
+            "description": "Optional.",
+            "name": "first",
+            "in": "body",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "x-go-name": "Last",
+            "description": "Optional.",
+            "name": "last",
+            "in": "body",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "x-go-name": "Email",
+            "description": "Required. Must be unique! We need to validate these coming in.",
+            "name": "email",
+            "in": "body",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "x-go-name": "Password",
+            "description": "Required. We need password requirements.",
+            "name": "password",
+            "in": "body",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "\"data\" will be non null with \"status\": \"success\"",
+            "schema": {
+              "$ref": "#/definitions/responseSuccess"
+            }
+          },
+          "400": {
+            "description": "message should relay information with regard to bad request with \"status\": \"fail\"",
+            "schema": {
+              "$ref": "#/definitions/responseError"
+            }
+          },
+          "410": {
+            "description": "the user-service is not reachable. The user-service is a microservice that runs independantly from the api. When we take it offline you will receive this error.",
+            "schema": {
+              "$ref": "#/definitions/responseError"
+            }
+          },
+          "500": {
+            "description": "the message will state what the internal server error was with \"status\": \"error\"",
+            "schema": {
+              "$ref": "#/definitions/responseError"
+            }
+          }
+        }
+      }
+    },
+    "/users/:id": {
+      "put": {
+        "description": "You can change the user's first, last, or email. Note we need to implement a secure method of\nverifing the user's new email. This has yet to be implemented.",
+        "tags": [
+          "users"
+        ],
+        "summary": "updates user info (protected)",
+        "operationId": "updateUser",
+        "parameters": [
+          {
+            "x-go-name": "First",
+            "description": "Optional.",
+            "name": "first",
+            "in": "body",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "x-go-name": "Last",
+            "description": "Optional.",
+            "name": "last",
+            "in": "body",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "x-go-name": "Email",
+            "description": "Optional. Note: we need to validate these!",
+            "name": "email",
+            "in": "body",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "\"data\" will contain updated user data with \"status\": \"success\"",
+            "schema": {
+              "$ref": "#/definitions/responseSuccess"
+            }
+          },
+          "400": {
+            "description": "message in badrequest should be descriptive with \"status\": \"fail\"",
+            "schema": {
+              "$ref": "#/definitions/responseError"
+            }
+          },
+          "401": {
+            "description": "unauthorized user because of incorrect url param with \"status\": \"fail\"",
+            "schema": {
+              "$ref": "#/definitions/responseError"
+            }
+          },
+          "410": {
+            "description": "the user-service is unreachable with status \"error\"",
+            "schema": {
+              "$ref": "#/definitions/responseError"
+            }
+          },
+          "500": {
+            "description": "the message will state what the internal server error was with \"status\": \"error\"",
+            "schema": {
+              "$ref": "#/definitions/responseError"
+            }
+          }
+        }
+      }
+    },
+    "/users/:id/changepassword": {
+      "put": {
+        "description": "Allows an authenticated user to change their password. The url param is the user's id.",
+        "tags": [
+          "users"
+        ],
+        "summary": "change a user's password (protected)",
+        "operationId": "changePassword",
+        "parameters": [
+          {
+            "x-go-name": "OldPassword",
+            "description": "Required.",
+            "name": "oldPassword",
+            "in": "body",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "x-go-name": "NewPassword",
+            "description": "Required.",
+            "name": "newPassword",
+            "in": "body",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "the status will be \"success\" with data null.",
+            "schema": {
+              "$ref": "#/definitions/responseSuccess"
+            }
+          },
+          "400": {
+            "description": "you did something wrong here with status \"fail\". Hopefully, the message is descriptive enough.",
+            "schema": {
+              "$ref": "#/definitions/responseError"
+            }
+          },
+          "401": {
+            "description": "the user Id in url param does not match with status \"fail\".",
+            "schema": {
+              "$ref": "#/definitions/responseError"
+            }
+          },
+          "410": {
+            "description": "the user-service is unreachable with status \"error\"",
+            "schema": {
+              "$ref": "#/definitions/responseError"
+            }
+          },
+          "500": {
+            "description": "the message will state what the internal server error was with \"status\": \"error\"",
+            "schema": {
+              "$ref": "#/definitions/responseError"
+            }
+          }
+        }
+      }
+    }
+  },
+  "definitions": {
+    "AuthController": {
+      "type": "object",
+      "properties": {
+        "Client": {
+          "$ref": "#/definitions/UserServiceClient"
+        },
+        "DB": {
+          "$ref": "#/definitions/DB"
+        }
+      },
+      "x-go-package": "github.com/asciiu/gomo/api/controllers"
+    },
+    "DB": {
+      "description": "The sql package creates and frees connections automatically; it\nalso maintains a free pool of idle connections. If the database has\na concept of per-connection state, such state can only be reliably\nobserved within a transaction. Once DB.Begin is called, the\nreturned Tx is bound to a single connection. Once Commit or\nRollback is called on the transaction, that transaction's\nconnection is returned to DB's idle connection pool. The pool size\ncan be controlled with SetMaxIdleConns.",
+      "type": "object",
+      "title": "DB is a database handle representing a pool of zero or more\nunderlying connections. It's safe for concurrent use by multiple\ngoroutines.",
+      "x-go-package": "database/sql"
+    },
+    "JwtClaims": {
+      "type": "object",
+      "properties": {
+        "aud": {
+          "type": "string",
+          "x-go-name": "Audience"
+        },
+        "email": {
+          "type": "string",
+          "x-go-name": "Email"
+        },
+        "exp": {
+          "type": "integer",
+          "format": "int64",
+          "x-go-name": "ExpiresAt"
+        },
+        "iat": {
+          "type": "integer",
+          "format": "int64",
+          "x-go-name": "IssuedAt"
+        },
+        "iss": {
+          "type": "string",
+          "x-go-name": "Issuer"
+        },
+        "jti": {
+          "type": "string",
+          "x-go-name": "Id"
+        },
+        "nbf": {
+          "type": "integer",
+          "format": "int64",
+          "x-go-name": "NotBefore"
+        },
+        "sub": {
+          "type": "string",
+          "x-go-name": "Subject"
+        }
+      },
+      "x-go-package": "github.com/asciiu/gomo/api/controllers"
+    },
+    "LoginRequest": {
+      "type": "object",
+      "properties": {
+        "email": {
+          "description": "Required. Backend code does not check email atm.\nin: body",
+          "type": "string",
+          "x-go-name": "Email"
+        },
+        "password": {
+          "description": "Required. Backend code does not have any password requirements atm.\nin: body",
+          "type": "string",
+          "x-go-name": "Password"
+        },
+        "remember": {
+          "description": "Optional. Return refresh token in response\nin: body",
+          "type": "boolean",
+          "x-go-name": "Remember"
+        }
+      },
+      "x-go-package": "github.com/asciiu/gomo/api/controllers"
+    },
+    "SignupRequest": {
+      "type": "object",
+      "properties": {
+        "email": {
+          "description": "Required. Must be unique! We need to validate these coming in.\nin: body",
+          "type": "string",
+          "x-go-name": "Email"
+        },
+        "first": {
+          "description": "Optional.\nin: body",
+          "type": "string",
+          "x-go-name": "First"
+        },
+        "last": {
+          "description": "Optional.\nin: body",
+          "type": "string",
+          "x-go-name": "Last"
+        },
+        "password": {
+          "description": "Required. We need password requirements.\nin: body",
+          "type": "string",
+          "x-go-name": "Password"
+        }
+      },
+      "x-go-package": "github.com/asciiu/gomo/api/controllers"
+    },
+    "UserData": {
+      "type": "object",
+      "properties": {
+        "user": {
+          "$ref": "#/definitions/UserInfo"
+        }
+      },
+      "x-go-package": "github.com/asciiu/gomo/api/controllers"
+    },
+    "UserInfo": {
+      "type": "object",
+      "properties": {
+        "email": {
+          "type": "string",
+          "x-go-name": "Email"
+        },
+        "first": {
+          "type": "string",
+          "x-go-name": "First"
+        },
+        "id": {
+          "type": "string",
+          "x-go-name": "Id"
+        },
+        "last": {
+          "type": "string",
+          "x-go-name": "Last"
+        }
+      },
+      "x-go-package": "github.com/asciiu/gomo/user-service/models"
+    },
+    "UserServiceClient": {
+      "type": "object",
+      "x-go-package": "github.com/asciiu/gomo/user-service/proto/user"
+    },
+    "responseError": {
+      "description": "This response may or may not include data encapsulating the user information.",
+      "type": "object",
+      "title": "A ResponseSuccess will always contain a status of \"successful\".",
+      "properties": {
+        "message": {
+          "type": "string",
+          "x-go-name": "Message"
+        },
+        "status": {
+          "type": "string",
+          "x-go-name": "Status"
+        }
+      },
+      "x-go-name": "ResponseError",
+      "x-go-package": "github.com/asciiu/gomo/api/controllers"
+    },
+    "responseSuccess": {
+      "type": "object",
+      "title": "A ResponseSuccess will always contain a status of \"successful\".",
+      "properties": {
+        "data": {
+          "$ref": "#/definitions/UserData"
+        },
+        "status": {
+          "type": "string",
+          "x-go-name": "Status"
+        }
+      },
+      "x-go-name": "ResponseSuccess",
+      "x-go-package": "github.com/asciiu/gomo/api/controllers"
+    }
+  },
+  "securityDefinitions": {
+    "Bearer": {
+      "type": "apiKey",
+      "name": "Authorization",
+      "in": "header"
+    }
+  }
+}

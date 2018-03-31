@@ -4,7 +4,7 @@ import (
 	"database/sql"
 	"net/http"
 
-	"github.com/asciiu/gomo/user-service/models"
+	models "github.com/asciiu/gomo/user-service/models"
 	pb "github.com/asciiu/gomo/user-service/proto/user"
 	jwt "github.com/dgrijalva/jwt-go"
 	"github.com/labstack/echo"
@@ -28,6 +28,18 @@ func NewSessionController(db *sql.DB) *SessionController {
 	return &controller
 }
 
+// swagger:route GET /session session sessionBegin
+//
+// create a new session for a user (protected)
+//
+// Creates a new session for an authenticated user. The session data will eventually contain
+// whatever info you need to begin a new session. At the moment the response data mirrors
+// login data. This endpoint depends on the user-service. If the user-service
+// is unreachable, a 410 with a status of "error" will be returned.
+//
+// responses:
+//  200: responseSuccess data will be non null with status "success"
+//  410: responseError the user-service is unreachable with status "error"
 func (controller *SessionController) HandleSession(c echo.Context) error {
 	token := c.Get("user").(*jwt.Token)
 	claims := token.Claims.(jwt.MapClaims)
