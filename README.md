@@ -40,3 +40,21 @@ $ swagger generate spec -o ./fomo-swagger.json --scan-models
 $ swagger serve -F=swagger fomo-swagger.json
 ```
 
+### Deploying
+From localhost using docker-machine you first need to create the ec2 instances:
+
+```
+docker-machine create --driver amazonec2 --amazonec2-region us-west-1 fomo-stage
+```
+
+Set the docker env:
+```
+eval $(docker-machine env fomo-stage)
+```
+
+Deploy via compose build and up. 
+```
+docker-compose build
+docker-compose -f docker-compose.yml -f docker-compose.stage.yml up -d
+```
+

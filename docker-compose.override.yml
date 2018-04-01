@@ -1,0 +1,30 @@
+# docker-compose.yml
+version: '3.6'
+services:
+
+  api:
+    build: ./api
+    ports: 
+      - 5000:5000
+    environment:
+      DB_URL: "postgres://fomo:fomornd@docker.for.mac.host.internal:6432/fomo_dev?&sslmode=disable"
+      MICRO_SERVER_ADDRESS: ":5001"
+      MICRO_REGISTRY: "mdns"
+      GOMO_JWT: "jyVadHV5Z+tihp4ptuEvD2xXu6iWrFaSebYovtmzl0Cg4RDi1udp7qyme8ZZQl+A"
+
+  user-service:
+    build: ./user-service
+    ports:
+      - 5001:5001
+    environment:
+      DB_URL: "postgres://fomo:fomornd@docker.for.mac.host.internal:6432/fomo_dev?&sslmode=disable"
+      MICRO_ADDRESS: ":5001"
+      MICRO_REGISTRY: "mdns"
+
+  database:
+    ports:
+      - 6432:5432
+    environment:
+      POSTGRES_PASSWORD: fomornd 
+      POSTGRES_DB: "fomo_dev"
+      POSTGRES_USER: "fomo"
