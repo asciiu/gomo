@@ -47,7 +47,14 @@ func (service *DeviceService) GetUserDevices(ctx context.Context, req *pb.GetUse
 }
 
 func (service *DeviceService) RemoveDevice(ctx context.Context, req *pb.RemoveDeviceRequest, res *pb.Response) error {
-	return nil
+	error := deviceRepo.DeleteDevice(service.DB, req.DeviceId)
+	if error == nil {
+		res.Status = "success"
+	} else {
+		res.Status = "error"
+		res.Message = error.Error()
+	}
+	return error
 }
 
 func (service *DeviceService) UpdateDevice(ctx context.Context, req *pb.UpdateDeviceRequest, res *pb.DeviceResponse) error {
