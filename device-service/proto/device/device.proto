@@ -1,0 +1,74 @@
+syntax = "proto3";
+
+package go.micro.srv.user; 
+
+service DeviceService {
+  rpc AddDevice(AddDeviceRequest) returns (DeviceResponse) {}
+  rpc GetUserDevice(GetUserDeviceRequest) returns (DeviceResponse) {}
+  rpc GetUserDevices(GetUserDevicesRequest) returns (DeviceListResponse) {}
+  rpc RemoveDevice(RemoveDeviceRequest) returns (Response) {}
+  rpc UpdateDevice(UpdateDeviceRequest) returns (DeviceResponse) {}
+}
+
+// Requests
+message AddDeviceRequest {
+  string userId = 1;
+  string deviceType = 2;
+  string externalDeviceId = 3;
+  string deviceToken = 4;
+}
+
+message GetUserDeviceRequest {
+  string userId = 1;
+  string deviceId = 2;
+}
+
+message GetUserDevicesRequest {
+    string userId = 1;
+}
+
+message RemoveDeviceRequest {
+  string userId = 1;
+  string deviceId = 2;
+}
+
+message UpdateDeviceRequest {
+  string externalDeviceId = 1;
+  string deviceId = 2;
+  string deviceType = 3;
+  string deviceToken = 4;
+}
+
+// Responses
+message Response {
+  string status = 1;
+  string message = 2;
+}
+
+message Device {
+  string deviceId = 1;
+  string userId = 2;
+  string externalDeviceId = 3;
+  string deviceType = 4;
+  string deviceToken = 5;
+}
+
+message UserDeviceData {
+  Device device = 1;
+}
+
+message UserDevicesData {
+  repeated Device device = 1;
+}
+
+message DeviceResponse {
+  string status = 1;
+  string message = 2;
+  UserDeviceData data = 3;
+}
+
+message DeviceListResponse {
+  string status = 1;
+  string message = 2;
+  UserDevicesData data = 3;
+}
