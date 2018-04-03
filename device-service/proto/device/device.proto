@@ -33,10 +33,11 @@ message RemoveDeviceRequest {
 }
 
 message UpdateDeviceRequest {
-  string externalDeviceId = 1;
-  string deviceId = 2;
-  string deviceType = 3;
-  string deviceToken = 4;
+  string deviceId = 1;
+  string userId = 2;
+  string externalDeviceId = 3;
+  string deviceType = 4;
+  string deviceToken = 5;
 }
 
 // Responses

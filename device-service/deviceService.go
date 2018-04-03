@@ -39,7 +39,25 @@ func (service *DeviceService) AddDevice(ctx context.Context, req *pb.AddDeviceRe
 }
 
 func (service *DeviceService) GetUserDevice(ctx context.Context, req *pb.GetUserDeviceRequest, res *pb.DeviceResponse) error {
-	return nil
+	device, error := deviceRepo.FindDevice(service.DB, req)
+
+	if error == nil {
+		res.Status = "success"
+		res.Data = &pb.UserDeviceData{
+			Device: &pb.Device{
+				DeviceId:         device.Id,
+				UserId:           device.UserId,
+				ExternalDeviceId: device.ExternalDeviceId,
+				DeviceType:       device.DeviceType,
+				DeviceToken:      device.DeviceToken,
+			},
+		}
+	} else {
+		res.Status = "error"
+		res.Message = error.Error()
+	}
+
+	return error
 }
 
 func (service *DeviceService) GetUserDevices(ctx context.Context, req *pb.GetUserDevicesRequest, res *pb.DeviceListResponse) error {
@@ -58,5 +76,22 @@ func (service *DeviceService) RemoveDevice(ctx context.Context, req *pb.RemoveDe
 }
 
 func (service *DeviceService) UpdateDevice(ctx context.Context, req *pb.UpdateDeviceRequest, res *pb.DeviceResponse) error {
-	return nil
+	device, error := deviceRepo.UpdateDevice(service.DB, req)
+	if error == nil {
+		res.Status = "success"
+		res.Data = &pb.UserDeviceData{
+			Device: &pb.Device{
+				DeviceId:         device.DeviceId,
+				UserId:           device.UserId,
+				ExternalDeviceId: device.ExternalDeviceId,
+				DeviceType:       device.DeviceType,
+				DeviceToken:      device.DeviceToken,
+			},
+		}
+	} else {
+		res.Status = "error"
+		res.Message = error.Error()
+	}
+
+	return error
 }

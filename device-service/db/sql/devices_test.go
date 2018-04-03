@@ -6,7 +6,7 @@ import (
 
 	"github.com/asciiu/gomo/common/db"
 	"github.com/asciiu/gomo/device-service/db/sql"
-	"github.com/asciiu/gomo/device-service/models"
+	pb "github.com/asciiu/gomo/device-service/proto/device"
 	userRepo "github.com/asciiu/gomo/user-service/db/sql"
 	user "github.com/asciiu/gomo/user-service/models"
 )
@@ -26,11 +26,11 @@ func TestInsertDevice(t *testing.T) {
 	checkErr(error)
 	defer db.Close()
 
-	device := models.NewDevice(user.Id, "device-1234", "ios", "tokie-tokie")
-	_, error = sql.InsertDevice(db, device)
+	device := pb.AddDeviceRequest{user.Id, "ios", "device-1234", "tokie-tokie"}
+	deviceAdded, error := sql.InsertDevice(db, &device)
 	checkErr(error)
 
-	error = sql.DeleteDevice(db, device.Id)
+	error = sql.DeleteDevice(db, deviceAdded.DeviceId)
 	checkErr(error)
 
 	error = userRepo.DeleteUserHard(db, user.Id)
@@ -45,17 +45,26 @@ func TestFindDevice(t *testing.T) {
 	checkErr(error)
 	defer db.Close()
 
-	device := models.NewDevice(user.Id, "device-1234", "ios", "tokie-tokie")
-	_, error = sql.InsertDevice(db, device)
+	device := pb.AddDeviceRequest{
+		UserId:           user.Id,
+		DeviceType:       "ios",
+		ExternalDeviceId: "device-1234",
+		DeviceToken:      "tokie-tokie",
+	}
+	deviceAdded, error := sql.InsertDevice(db, &device)
 	checkErr(error)
 
-	device2, err := sql.FindDevice(db, device.Id)
+	request := pb.GetUserDeviceRequest{
+		DeviceId: deviceAdded.DeviceId,
+		UserId:   user.Id,
+	}
+	device2, err := sql.FindDevice(db, &request)
 	checkErr(err)
-	if device.Id != device2.Id {
+	if deviceAdded.DeviceId != device2.DeviceId {
 		t.Errorf("no id match!")
 	}
 
-	error = sql.DeleteDevice(db, device.Id)
+	error = sql.DeleteDevice(db, deviceAdded.DeviceId)
 	checkErr(error)
 
 	error = userRepo.DeleteUserHard(db, user.Id)
@@ -70,22 +79,33 @@ func TestUpdateDevice(t *testing.T) {
 	checkErr(error)
 	defer db.Close()
 
-	device := models.NewDevice(user.Id, "device-1234", "ios", "tokie-tokie")
-	_, error = sql.InsertDevice(db, device)
+	device := pb.AddDeviceRequest{user.Id, "ios", "device-1234", "tokie-tokie"}
+	deviceAdded, error := sql.InsertDevice(db, &device)
 	checkErr(error)
 
-	device.DeviceType = "android"
+	deviceAdded.DeviceType = "android"
 
-	device, error = sql.UpdateDevice(db, device)
+	request := pb.UpdateDeviceRequest{
+		DeviceId:         deviceAdded.DeviceId,
+		UserId:           deviceAdded.UserId,
+		ExternalDeviceId: "1234",
+		DeviceType:       "android",
+		DeviceToken:      "tokie",
+	}
+	_, error = sql.UpdateDevice(db, &request)
 	checkErr(error)
 
-	device2, err := sql.FindDevice(db, device.Id)
+	requestFind := pb.GetUserDeviceRequest{
+		DeviceId: deviceAdded.DeviceId,
+		UserId:   user.Id,
+	}
+	device2, err := sql.FindDevice(db, &requestFind)
 	checkErr(err)
 	if device2.DeviceType != "android" {
 		t.Errorf("did not update!")
 	}
 
-	error = sql.DeleteDevice(db, device.Id)
+	error = sql.DeleteDevice(db, device2.DeviceId)
 	checkErr(error)
 
 	error = userRepo.DeleteUserHard(db, user.Id)

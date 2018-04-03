@@ -15,7 +15,7 @@ $ brew install go-swagger
 ```
 Refer to swagger markeup guide here: https://goswagger.io/generate/spec.html
 
-### Getting Started 
+### Migrate the Postgres DB schema 
 Apply the migrations from the "migrations" directory.
 ```
 $ goose postgres "user=postgres dbname=gomo_dev sslmode=disable" up
