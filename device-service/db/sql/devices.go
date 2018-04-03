@@ -13,7 +13,7 @@ func DeleteDevice(db *sql.DB, deviceId string) error {
 	return err
 }
 
-func FindDevice(db *sql.DB, req *pb.GetUserDeviceRequest) (*pb.Device, error) {
+func FindDeviceByDeviceId(db *sql.DB, req *pb.GetUserDeviceRequest) (*pb.Device, error) {
 	var d pb.Device
 	err := db.QueryRow("SELECT id, user_id, device_id, device_type, device_token FROM user_devices WHERE id = $1", req.DeviceId).
 		Scan(&d.DeviceId, &d.UserId, &d.ExternalDeviceId, &d.DeviceType, &d.DeviceToken)
@@ -27,7 +27,7 @@ func FindDevice(db *sql.DB, req *pb.GetUserDeviceRequest) (*pb.Device, error) {
 func FindDevicesByUserId(db *sql.DB, req *pb.GetUserDevicesRequest) ([]pb.Device, error) {
 	results := make([]pb.Device, 0)
 
-	rows, err := db.Query("SELECT id, user_id, device_id, device_type, device_token, created_on, updated_on FROM user_devices WHERE user_id = $1", req.UserId)
+	rows, err := db.Query("SELECT id, user_id, device_id, device_type, device_token FROM user_devices WHERE user_id = $1", req.UserId)
 	if err != nil {
 		log.Fatal(err)
 		return nil, err
