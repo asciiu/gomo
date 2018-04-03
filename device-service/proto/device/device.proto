@@ -6,7 +6,7 @@ service DeviceService {
   rpc AddDevice(AddDeviceRequest) returns (DeviceResponse) {}
   rpc GetUserDevice(GetUserDeviceRequest) returns (DeviceResponse) {}
   rpc GetUserDevices(GetUserDevicesRequest) returns (DeviceListResponse) {}
-  rpc RemoveDevice(RemoveDeviceRequest) returns (Response) {}
+  rpc RemoveDevice(RemoveDeviceRequest) returns (DeviceResponse) {}
   rpc UpdateDevice(UpdateDeviceRequest) returns (DeviceResponse) {}
 }
 
