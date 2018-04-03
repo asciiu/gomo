@@ -5,7 +5,6 @@ import (
 	"database/sql"
 
 	deviceRepo "github.com/asciiu/gomo/device-service/db/sql"
-	"github.com/asciiu/gomo/device-service/models"
 	pb "github.com/asciiu/gomo/device-service/proto/device"
 )
 
@@ -14,15 +13,14 @@ type DeviceService struct {
 }
 
 func (service *DeviceService) AddDevice(ctx context.Context, req *pb.AddDeviceRequest, res *pb.DeviceResponse) error {
-	device := models.NewDevice(req.UserId, req.ExternalDeviceId, req.DeviceType, req.DeviceToken)
-	_, error := deviceRepo.InsertDevice(service.DB, device)
+	device, error := deviceRepo.InsertDevice(service.DB, req)
 
 	switch {
 	case error == nil:
 		res.Status = "success"
 		res.Data = &pb.UserDeviceData{
 			Device: &pb.Device{
-				DeviceId:         device.Id,
+				DeviceId:         device.DeviceId,
 				UserId:           device.UserId,
 				ExternalDeviceId: device.ExternalDeviceId,
 				DeviceType:       device.DeviceType,
@@ -39,13 +37,13 @@ func (service *DeviceService) AddDevice(ctx context.Context, req *pb.AddDeviceRe
 }
 
 func (service *DeviceService) GetUserDevice(ctx context.Context, req *pb.GetUserDeviceRequest, res *pb.DeviceResponse) error {
-	device, error := deviceRepo.FindDevice(service.DB, req)
+	device, error := deviceRepo.FindDeviceByDeviceId(service.DB, req)
 
 	if error == nil {
 		res.Status = "success"
 		res.Data = &pb.UserDeviceData{
 			Device: &pb.Device{
-				DeviceId:         device.Id,
+				DeviceId:         device.DeviceId,
 				UserId:           device.UserId,
 				ExternalDeviceId: device.ExternalDeviceId,
 				DeviceType:       device.DeviceType,
