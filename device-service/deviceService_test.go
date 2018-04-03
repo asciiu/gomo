@@ -59,7 +59,7 @@ func TestInsertDevice(t *testing.T) {
 		DeviceId: response.Data.Device.DeviceId,
 	}
 
-	responseDel := pb.Response{}
+	responseDel := pb.DeviceResponse{}
 	service.RemoveDevice(context.Background(), &requestRemove, &responseDel)
 
 	if responseDel.Status != "success" {
