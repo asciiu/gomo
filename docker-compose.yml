@@ -6,6 +6,9 @@ services:
   api:
     build: ./api
 
+  device-service:
+    build: ./device-service
+
   user-service:
     build: ./user-service
 
