@@ -74,7 +74,7 @@ func (service *DeviceService) GetUserDevices(ctx context.Context, req *pb.GetUse
 	return error
 }
 
-func (service *DeviceService) RemoveDevice(ctx context.Context, req *pb.RemoveDeviceRequest, res *pb.Response) error {
+func (service *DeviceService) RemoveDevice(ctx context.Context, req *pb.RemoveDeviceRequest, res *pb.DeviceResponse) error {
 	error := deviceRepo.DeleteDevice(service.DB, req.DeviceId)
 	if error == nil {
 		res.Status = "success"

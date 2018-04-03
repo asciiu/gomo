@@ -41,11 +41,6 @@ message UpdateDeviceRequest {
 }
 
 // Responses
-message Response {
-  string status = 1;
-  string message = 2;
-}
-
 message Device {
   string deviceId = 1;
   string userId = 2;

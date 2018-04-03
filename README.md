@@ -20,6 +20,12 @@ Apply the migrations from the "migrations" directory.
 ```
 $ goose postgres "user=postgres dbname=gomo_dev sslmode=disable" up
 ```
+
+Note: When running from docker-compose up you need to migrate the dockerized postgres DB via:
+```
+$ goose postgres "user=fomo dbname=fomo_dev sslmode=disable port=6432 password=fomornd" up
+```
+
 Clean DB
 ```
 $ goose postgres "user=postgres dbname=gomo_dev sslmode=disable" down-to 0 
