@@ -1,6 +1,6 @@
 syntax = "proto3";
 
-package go.micro.srv.user; 
+package go.micro.srv.device; 
 
 service DeviceService {
   rpc AddDevice(AddDeviceRequest) returns (DeviceResponse) {}
