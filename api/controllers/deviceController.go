@@ -60,6 +60,9 @@ func NewDeviceController(db *sql.DB) *DeviceController {
 //
 // Get a device by ID (protected)
 //
+// Get a user's device by the device's ID.
+//
+// responses:
 //  200: responseDeviceSuccess "data" will contain device stuffs with "status": "success"
 //  500: responseError the message will state what the internal server error was with "status": "error"
 func (controller *DeviceController) HandleGetDevice(c echo.Context) error {
@@ -103,8 +106,11 @@ func (controller *DeviceController) HandleGetDevice(c echo.Context) error {
 
 // swagger:route GET /devices devices getAllDevices
 //
-// Get all registered devices for logged in user. (protected)
+// All registered devices. (protected)
 //
+// Returns a list of registered devices for logged in user.
+//
+// responses:
 //  200: responseDevicesSuccess "data" will contain array of devices with "status": "success"
 //  500: responseError the message will state what the internal server error was with "status": "error"
 func (controller *DeviceController) HandleListDevices(c echo.Context) error {
@@ -149,6 +155,8 @@ func (controller *DeviceController) HandleListDevices(c echo.Context) error {
 }
 
 // swagger:route POST /devices devices addDevice
+//
+// Add new device. (protected)
 //
 // Registers a new device for a user so they may receive push notifications. (protected)
 //
@@ -226,6 +234,9 @@ func (controller *DeviceController) HandlePostDevice(c echo.Context) error {
 //
 // Update a registered device. (protected)
 //
+// Updates a user's device.
+//
+// responses:
 //  200: responseDeviceSuccess "data" will contain updated device info with "status": "success"
 //  500: responseError the message will state what the internal server error was with "status": "error"
 func (controller *DeviceController) HandleUpdateDevice(c echo.Context) error {
@@ -300,7 +311,10 @@ func (controller *DeviceController) HandleUpdateDevice(c echo.Context) error {
 //
 // Removes a user's device. (protected)
 //
-//  200: responseSuccess "status": "success"
+// Removes device by ID.
+//
+// responses:
+//  200: responseSuccess data will be null with "status": "success"
 //  500: responseError the message will state what the internal server error was with "status": "error"
 func (controller *DeviceController) HandleDeleteDevice(c echo.Context) error {
 	token := c.Get("user").(*jwt.Token)

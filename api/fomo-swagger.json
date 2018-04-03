@@ -19,46 +19,180 @@
   "paths": {
     "/devices": {
       "get": {
-        "description": "...",
+        "description": "Returns a list of registered devices for logged in user.",
         "tags": [
           "devices"
         ],
-        "summary": "not implemented (protected)",
-        "operationId": "getAllDevices"
+        "summary": "All registered devices. (protected)",
+        "operationId": "getAllDevices",
+        "responses": {
+          "200": {
+            "description": "\"data\" will contain array of devices with \"status\": \"success\"",
+            "schema": {
+              "$ref": "#/definitions/responseDevicesSuccess"
+            }
+          },
+          "500": {
+            "description": "the message will state what the internal server error was with \"status\": \"error\"",
+            "schema": {
+              "$ref": "#/definitions/responseError"
+            }
+          }
+        }
       },
       "post": {
-        "description": "...",
+        "description": "Registers a new device for a user so they may receive push notifications. (protected)",
         "tags": [
           "devices"
         ],
-        "summary": "not implemented (protected)",
-        "operationId": "addDevice"
+        "summary": "Add new device. (protected)",
+        "operationId": "addDevice",
+        "parameters": [
+          {
+            "x-go-name": "DeviceType",
+            "description": "Required.",
+            "name": "deviceType",
+            "in": "body",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "x-go-name": "DeviceToken",
+            "description": "Required.",
+            "name": "deviceToken",
+            "in": "body",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "x-go-name": "ExternalDeviceId",
+            "description": "Required.",
+            "name": "externalDeviceId",
+            "in": "body",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "\"data\" will be non null with \"status\": \"success\"",
+            "schema": {
+              "$ref": "#/definitions/responseDeviceSuccess"
+            }
+          },
+          "400": {
+            "description": "missing params",
+            "schema": {
+              "$ref": "#/definitions/responseError"
+            }
+          },
+          "500": {
+            "description": "the message will state what the internal server error was with \"status\": \"error\"",
+            "schema": {
+              "$ref": "#/definitions/responseError"
+            }
+          }
+        }
       }
     },
     "/devices/:deviceId": {
       "get": {
-        "description": "...",
+        "description": "Get a user's device by the device's ID.",
         "tags": [
           "devices"
         ],
-        "summary": "not implemented (protected)",
-        "operationId": "getDevice"
+        "summary": "Get a device by ID (protected)",
+        "operationId": "getDevice",
+        "responses": {
+          "200": {
+            "description": "\"data\" will contain device stuffs with \"status\": \"success\"",
+            "schema": {
+              "$ref": "#/definitions/responseDeviceSuccess"
+            }
+          },
+          "500": {
+            "description": "the message will state what the internal server error was with \"status\": \"error\"",
+            "schema": {
+              "$ref": "#/definitions/responseError"
+            }
+          }
+        }
       },
       "put": {
-        "description": "...",
+        "description": "Updates a user's device.",
         "tags": [
           "devices"
         ],
-        "summary": "not implemented (protected)",
-        "operationId": "updateDevice"
+        "summary": "Update a registered device. (protected)",
+        "operationId": "updateDevice",
+        "parameters": [
+          {
+            "x-go-name": "DeviceType",
+            "description": "Required.",
+            "name": "deviceType",
+            "in": "body",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "x-go-name": "DeviceToken",
+            "description": "Required.",
+            "name": "deviceToken",
+            "in": "body",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "x-go-name": "ExternalDeviceId",
+            "description": "Required.",
+            "name": "externalDeviceId",
+            "in": "body",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "\"data\" will contain updated device info with \"status\": \"success\"",
+            "schema": {
+              "$ref": "#/definitions/responseDeviceSuccess"
+            }
+          },
+          "500": {
+            "description": "the message will state what the internal server error was with \"status\": \"error\"",
+            "schema": {
+              "$ref": "#/definitions/responseError"
+            }
+          }
+        }
       },
       "delete": {
-        "description": "...",
+        "description": "Removes device by ID.",
         "tags": [
           "devices"
         ],
-        "summary": "not implemented (protected)",
-        "operationId": "deleteDevice"
+        "summary": "Removes a user's device. (protected)",
+        "operationId": "deleteDevice",
+        "responses": {
+          "200": {
+            "description": "data will be null with \"status\": \"success\"",
+            "schema": {
+              "$ref": "#/definitions/responseSuccess"
+            }
+          },
+          "500": {
+            "description": "the message will state what the internal server error was with \"status\": \"error\"",
+            "schema": {
+              "$ref": "#/definitions/responseError"
+            }
+          }
+        }
       }
     },
     "/keys": {
@@ -489,6 +623,70 @@
       "title": "DB is a database handle representing a pool of zero or more\nunderlying connections. It's safe for concurrent use by multiple\ngoroutines.",
       "x-go-package": "database/sql"
     },
+    "Device": {
+      "description": "Responses",
+      "type": "object",
+      "properties": {
+        "deviceId": {
+          "type": "string",
+          "x-go-name": "DeviceId"
+        },
+        "deviceToken": {
+          "type": "string",
+          "x-go-name": "DeviceToken"
+        },
+        "deviceType": {
+          "type": "string",
+          "x-go-name": "DeviceType"
+        },
+        "externalDeviceId": {
+          "type": "string",
+          "x-go-name": "ExternalDeviceId"
+        },
+        "userId": {
+          "type": "string",
+          "x-go-name": "UserId"
+        }
+      },
+      "x-go-package": "github.com/asciiu/gomo/device-service/proto/device"
+    },
+    "DeviceController": {
+      "type": "object",
+      "properties": {
+        "Client": {
+          "$ref": "#/definitions/DeviceServiceClient"
+        },
+        "DB": {
+          "$ref": "#/definitions/DB"
+        }
+      },
+      "x-go-package": "github.com/asciiu/gomo/api/controllers"
+    },
+    "DeviceRequest": {
+      "type": "object",
+      "properties": {
+        "deviceToken": {
+          "description": "Required.\nin: body",
+          "type": "string",
+          "x-go-name": "DeviceToken"
+        },
+        "deviceType": {
+          "description": "Required.\nin: body",
+          "type": "string",
+          "x-go-name": "DeviceType"
+        },
+        "externalDeviceId": {
+          "description": "Required.\nin: body",
+          "type": "string",
+          "x-go-name": "ExternalDeviceId"
+        }
+      },
+      "x-go-package": "github.com/asciiu/gomo/api/controllers"
+    },
+    "DeviceServiceClient": {
+      "type": "object",
+      "x-go-package": "github.com/asciiu/gomo/device-service/proto/device"
+    },
     "JwtClaims": {
       "type": "object",
       "properties": {
@@ -586,6 +784,28 @@
       },
       "x-go-package": "github.com/asciiu/gomo/api/controllers"
     },
+    "UserDeviceData": {
+      "type": "object",
+      "properties": {
+        "device": {
+          "$ref": "#/definitions/Device"
+        }
+      },
+      "x-go-package": "github.com/asciiu/gomo/device-service/proto/device"
+    },
+    "UserDevicesData": {
+      "type": "object",
+      "properties": {
+        "device": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/Device"
+          },
+          "x-go-name": "Device"
+        }
+      },
+      "x-go-package": "github.com/asciiu/gomo/device-service/proto/device"
+    },
     "UserInfo": {
       "type": "object",
       "properties": {
@@ -611,6 +831,36 @@
     "UserServiceClient": {
       "type": "object",
       "x-go-package": "github.com/asciiu/gomo/user-service/proto/user"
+    },
+    "responseDeviceSuccess": {
+      "type": "object",
+      "title": "A ResponseDeviceSuccess will always contain a status of \"successful\".",
+      "properties": {
+        "data": {
+          "$ref": "#/definitions/UserDeviceData"
+        },
+        "status": {
+          "type": "string",
+          "x-go-name": "Status"
+        }
+      },
+      "x-go-name": "ResponseDeviceSuccess",
+      "x-go-package": "github.com/asciiu/gomo/api/controllers"
+    },
+    "responseDevicesSuccess": {
+      "type": "object",
+      "title": "A ResponseDevicesSuccess will always contain a status of \"successful\".",
+      "properties": {
+        "data": {
+          "$ref": "#/definitions/UserDevicesData"
+        },
+        "status": {
+          "type": "string",
+          "x-go-name": "Status"
+        }
+      },
+      "x-go-name": "ResponseDevicesSuccess",
+      "x-go-package": "github.com/asciiu/gomo/api/controllers"
     },
     "responseError": {
       "description": "This response may or may not include data encapsulating the user information.",
