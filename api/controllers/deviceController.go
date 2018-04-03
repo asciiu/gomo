@@ -3,7 +3,6 @@ package controllers
 import (
 	"database/sql"
 	"encoding/json"
-	"log"
 	"net/http"
 
 	pb "github.com/asciiu/gomo/device-service/proto/device"
@@ -56,19 +55,42 @@ func NewDeviceController(db *sql.DB) *DeviceController {
 //
 // ...
 func (controller *DeviceController) HandleGetDevice(c echo.Context) error {
-	user := c.Get("user")
-	token := user.(*jwt.Token)
-	_, ok := token.Claims.(jwt.MapClaims)
-	if !ok {
-		log.Println("ERROR!")
-	}
-
 	deviceId := c.Param("deviceId")
 
-	return c.JSON(http.StatusOK, map[string]string{
-		"status":   "not implemented",
-		"deviceId": deviceId,
-	})
+	getRequest := pb.GetUserDeviceRequest{
+		DeviceId: deviceId,
+	}
+
+	r, err := controller.Client.GetUserDevice(context.Background(), &getRequest)
+	if err != nil {
+		response := &ResponseError{
+			Status:  "error",
+			Message: "the device-service is not available",
+		}
+
+		return c.JSON(http.StatusGone, response)
+	}
+
+	if r.Status != "success" {
+		response := &ResponseError{
+			Status:  r.Status,
+			Message: r.Message,
+		}
+
+		if r.Status == "fail" {
+			return c.JSON(http.StatusBadRequest, response)
+		}
+		if r.Status == "error" {
+			return c.JSON(http.StatusInternalServerError, response)
+		}
+	}
+
+	response := &ResponseDeviceSuccess{
+		Status: "success",
+		Data:   r.Data,
+	}
+
+	return c.JSON(http.StatusOK, response)
 }
 
 // swagger:route GET /devices devices getAllDevices
