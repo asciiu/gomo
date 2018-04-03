@@ -26,7 +26,12 @@ func TestInsertDevice(t *testing.T) {
 	checkErr(error)
 	defer db.Close()
 
-	device := pb.AddDeviceRequest{user.Id, "ios", "device-1234", "tokie-tokie"}
+	device := pb.AddDeviceRequest{
+		UserId:           user.Id,
+		DeviceType:       "ios",
+		ExternalDeviceId: "device-1234",
+		DeviceToken:      "tokie-tokie",
+	}
 	deviceAdded, error := sql.InsertDevice(db, &device)
 	checkErr(error)
 
@@ -79,7 +84,12 @@ func TestUpdateDevice(t *testing.T) {
 	checkErr(error)
 	defer db.Close()
 
-	device := pb.AddDeviceRequest{user.Id, "ios", "device-1234", "tokie-tokie"}
+	device := pb.AddDeviceRequest{
+		UserId:           user.Id,
+		DeviceType:       "ios",
+		ExternalDeviceId: "device-1234",
+		DeviceToken:      "tokie-tokie",
+	}
 	deviceAdded, error := sql.InsertDevice(db, &device)
 	checkErr(error)
 
