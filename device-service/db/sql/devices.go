@@ -24,8 +24,8 @@ func FindDeviceByDeviceId(db *sql.DB, req *pb.GetUserDeviceRequest) (*pb.Device,
 	return &d, nil
 }
 
-func FindDevicesByUserId(db *sql.DB, req *pb.GetUserDevicesRequest) ([]pb.Device, error) {
-	results := make([]pb.Device, 0)
+func FindDevicesByUserId(db *sql.DB, req *pb.GetUserDevicesRequest) ([]*pb.Device, error) {
+	results := make([]*pb.Device, 0)
 
 	rows, err := db.Query("SELECT id, user_id, device_id, device_type, device_token FROM user_devices WHERE user_id = $1", req.UserId)
 	if err != nil {
@@ -33,14 +33,14 @@ func FindDevicesByUserId(db *sql.DB, req *pb.GetUserDevicesRequest) ([]pb.Device
 		return nil, err
 	}
 	defer rows.Close()
-	var d pb.Device
 	for rows.Next() {
+		var d pb.Device
 		err := rows.Scan(&d.DeviceId, &d.UserId, &d.ExternalDeviceId, &d.DeviceType, &d.DeviceToken)
 		if err != nil {
 			log.Fatal(err)
 			return nil, err
 		}
-		results = append(results, d)
+		results = append(results, &d)
 	}
 	err = rows.Err()
 	if err != nil {
