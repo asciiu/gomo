@@ -41,7 +41,7 @@
         }
       },
       "post": {
-        "description": "Registers a new device for a user so they may receive push notifications. (protected)",
+        "description": "Registers a new device for a user so they may receive push notifications.",
         "tags": [
           "devices"
         ],

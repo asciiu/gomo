@@ -158,7 +158,7 @@ func (controller *DeviceController) HandleListDevices(c echo.Context) error {
 //
 // Add new device. (protected)
 //
-// Registers a new device for a user so they may receive push notifications. (protected)
+// Registers a new device for a user so they may receive push notifications.
 //
 // responses:
 //  200: responseDeviceSuccess "data" will be non null with "status": "success"
