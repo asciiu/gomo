@@ -12,26 +12,28 @@ import (
 	"log"
 	"os"
 	"os/signal"
+	"sync"
+	"time"
 
 	"github.com/gorilla/websocket"
 )
 
-func main() {
-	flag.Parse()
-	log.SetFlags(0)
+type BinanceConnection struct {
+	channel <-chan bool
+	group   *sync.WaitGroup
+}
 
-	interrupt := make(chan os.Signal, 1)
-	signal.Notify(interrupt, os.Interrupt)
-
-	url := fmt.Sprintf("wss://stream.binance.com:9443/ws/%s@aggTrade", "bnbbtc")
+func (bconn *BinanceConnection) Open(market string) {
+	bconn.group.Add(1)
+	url := fmt.Sprintf("wss://stream.binance.com:9443/ws/%s@aggTrade", market)
 	log.Printf("connecting to %s", url)
 
 	conn, _, err := websocket.DefaultDialer.Dial(url, nil)
 	if err != nil {
 		log.Fatal("dial:", err)
 	}
-	// close connection when main exits
-	defer conn.Close()
+
+	defer bconn.group.Done()
 
 	// create channel for done
 	done := make(chan struct{})
@@ -41,31 +43,74 @@ func main() {
 		for {
 			_, message, err := conn.ReadMessage()
 			if err != nil {
-				log.Println("read:", err)
+				log.Printf("%s websocket client read: %s", market, err)
 				return
 			}
 			log.Printf("recv: %s", message)
 		}
 	}()
 
-	//ticker := time.NewTicker(time.Second)
-	//defer ticker.Stop()
-
 	// loop indefinitely until one of the following happens
 	for {
 		select {
-
 		case <-done:
-			log.Println("exiting...")
+			conn.Close()
+			log.Println("unexpected close of market: ", market)
 			return
-		case <-interrupt:
-			// Cleanly close the connection by sending a close message and then
-			// waiting (with timeout) for the server to close the connection.
+		case <-bconn.channel:
+			//Cleanly close the connection by sending a close message and then
+			//waiting (with timeout) for the server to close the connection.
 			err := conn.WriteMessage(websocket.CloseMessage, websocket.FormatCloseMessage(websocket.CloseNormalClosure, ""))
 			if err != nil {
 				log.Println("write close:", err)
 				return
 			}
+
+			// wait on the above go routine to exit
+			select {
+			case <-done:
+			case <-time.After(time.Second):
+			}
+			conn.Close()
+			return
+		}
+	}
+}
+func main() {
+	flag.Parse()
+	log.SetFlags(0)
+
+	interrupt := make(chan os.Signal, 1)
+	signal.Notify(interrupt, os.Interrupt)
+
+	var wg sync.WaitGroup
+	var channels []chan bool
+	markets := [2]string{
+		"adabtc",
+		"bnbbtc",
+	}
+
+	for i := 0; i < len(markets); i++ {
+		c := make(chan bool)
+		bconn := BinanceConnection{
+			channel: c,
+			group:   &wg,
+		}
+		channels = append(channels, c)
+		go bconn.Open(markets[i])
+	}
+
+	for {
+		select {
+		case <-interrupt:
+
+			for j := 0; j < len(channels); j++ {
+				close(channels[j])
+			}
+			wg.Wait()
+			log.Println("bye!")
+
+			return
 		}
 	}
 }
