@@ -5,6 +5,9 @@ services:
 
   api:
     build: ./api
+  
+  apikey-service:
+    build: ./apikey-service
 
   device-service:
     build: ./device-service
