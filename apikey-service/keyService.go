@@ -92,8 +92,8 @@ func (service *KeyService) RemoveApiKey(ctx context.Context, req *keyProto.Remov
 	}
 }
 
-func (service *KeyService) UpdateApiKey(ctx context.Context, req *keyProto.ApiKeyRequest, res *keyProto.ApiKeyResponse) error {
-	apiKey, error := keyRepo.UpdateApiKey(service.DB, req)
+func (service *KeyService) UpdateApiKeyDescription(ctx context.Context, req *keyProto.ApiKeyRequest, res *keyProto.ApiKeyResponse) error {
+	apiKey, error := keyRepo.UpdateApiKeyDescription(service.DB, req)
 	switch {
 	case error == nil:
 		res.Status = "success"

@@ -7,7 +7,7 @@ service ApiKeyService {
   rpc GetUserApiKey(GetUserApiKeyRequest) returns (ApiKeyResponse) {}
   rpc GetUserApiKeys(GetUserApiKeysRequest) returns (ApiKeyListResponse) {}
   rpc RemoveApiKey(RemoveApiKeyRequest) returns (ApiKeyResponse) {}
-  rpc UpdateApiKey(ApiKeyRequest) returns (ApiKeyResponse) {}
+  rpc UpdateApiKeyDescription(ApiKeyRequest) returns (ApiKeyResponse) {}
 }
 
 // Requests

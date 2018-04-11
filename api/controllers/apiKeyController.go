@@ -4,7 +4,6 @@ import (
 	"database/sql"
 	"encoding/json"
 	"fmt"
-	"log"
 	"net/http"
 
 	keyProto "github.com/asciiu/gomo/apikey-service/proto/apikey"
@@ -35,14 +34,14 @@ type ApiKeyRequest struct {
 	Description string `json:"description"`
 }
 
-// A ResponseApiKeySuccess will always contain a status of "successful".
+// A ResponseKeySuccess will always contain a status of "successful".
 // swagger:model responseKeySuccess
 type ResponseKeySuccess struct {
 	Status string                   `json:"status"`
 	Data   *keyProto.UserApiKeyData `json:"data"`
 }
 
-// A ResponseApiKeysSuccess will always contain a status of "successful".
+// A ResponseKeysSuccess will always contain a status of "successful".
 // swagger:model responseKeysSuccess
 type ResponseKeysSuccess struct {
 	Status string                    `json:"status"`
@@ -63,34 +62,103 @@ func NewApiKeyController(db *sql.DB) *ApiKeyController {
 
 // swagger:route GET /keys/:keyId keys getKey
 //
-// not implemented (protected)
+// Get a key (protected)
 //
-// ...
+// Gets a user's key by the key ID.
+//
+// responses:
+//  200: responseKeySuccess "data" will contain key stuffs with "status": "success"
+//  500: responseError the message will state what the internal server error was with "status": "error"
 func (controller *ApiKeyController) HandleGetKey(c echo.Context) error {
-	user := c.Get("user")
-	token := user.(*jwt.Token)
-	_, ok := token.Claims.(jwt.MapClaims)
-	if !ok {
-		log.Println("ERROR!")
-	}
-
+	token := c.Get("user").(*jwt.Token)
+	claims := token.Claims.(jwt.MapClaims)
+	userId := claims["jti"].(string)
 	keyId := c.Param("keyId")
 
-	return c.JSON(http.StatusOK, map[string]string{
-		"status":   "not implemented",
-		"deviceId": keyId,
-	})
+	getRequest := keyProto.GetUserApiKeyRequest{
+		ApiKeyId: keyId,
+		UserId:   userId,
+	}
+
+	r, err := controller.Client.GetUserApiKey(context.Background(), &getRequest)
+	if err != nil {
+		response := &ResponseError{
+			Status:  "error",
+			Message: err.Error(),
+		}
+
+		return c.JSON(http.StatusInternalServerError, response)
+	}
+
+	if r.Status != "success" {
+		response := &ResponseError{
+			Status:  r.Status,
+			Message: r.Message,
+		}
+
+		if r.Status == "fail" {
+			return c.JSON(http.StatusBadRequest, response)
+		}
+		if r.Status == "error" {
+			return c.JSON(http.StatusInternalServerError, response)
+		}
+	}
+
+	response := &ResponseKeySuccess{
+		Status: "success",
+		Data:   r.Data,
+	}
+
+	return c.JSON(http.StatusOK, response)
 }
 
 // swagger:route GET /keys keys getAllKey
 //
-// not implemented (protected)
+// Get all user keys (protected)
 //
-// ...
+// Get all the user keys for this user.
+// responses:
+//  200: responseKeysSuccess "data" will contain a list of key info with "status": "success"
+//  500: responseError the message will state what the internal server error was with "status": "error"
 func (controller *ApiKeyController) HandleListKeys(c echo.Context) error {
-	return c.JSON(http.StatusOK, map[string]string{
-		"status": "not implemented",
-	})
+	token := c.Get("user").(*jwt.Token)
+	claims := token.Claims.(jwt.MapClaims)
+	userId := claims["jti"].(string)
+
+	getRequest := keyProto.GetUserApiKeysRequest{
+		UserId: userId,
+	}
+
+	r, err := controller.Client.GetUserApiKeys(context.Background(), &getRequest)
+	if err != nil {
+		response := &ResponseError{
+			Status:  "error",
+			Message: err.Error(),
+		}
+
+		return c.JSON(http.StatusGone, response)
+	}
+
+	if r.Status != "success" {
+		response := &ResponseError{
+			Status:  r.Status,
+			Message: r.Message,
+		}
+
+		if r.Status == "fail" {
+			return c.JSON(http.StatusBadRequest, response)
+		}
+		if r.Status == "error" {
+			return c.JSON(http.StatusInternalServerError, response)
+		}
+	}
+
+	response := &ResponseKeysSuccess{
+		Status: "success",
+		Data:   r.Data,
+	}
+
+	return c.JSON(http.StatusOK, response)
 }
 
 // swagger:route POST /keys keys postKey
@@ -141,7 +209,7 @@ func (controller *ApiKeyController) HandlePostKey(c echo.Context) error {
 		fmt.Println(err)
 		response := &ResponseError{
 			Status:  "error",
-			Message: "the apikey-service is not available",
+			Message: err.Error(),
 		}
 
 		return c.JSON(http.StatusGone, response)
@@ -199,7 +267,7 @@ func (controller *ApiKeyController) HandleUpdateKey(c echo.Context) error {
 		Description: keyRequest.Description,
 	}
 
-	r, err := controller.Client.UpdateApiKey(context.Background(), &updateRequest)
+	r, err := controller.Client.UpdateApiKeyDescription(context.Background(), &updateRequest)
 	if err != nil {
 		response := &ResponseError{
 			Status:  "error",
