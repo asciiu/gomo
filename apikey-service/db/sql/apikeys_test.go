@@ -2,6 +2,13 @@ package sql_test
 
 import (
 	"log"
+	"testing"
+
+	keyRepo "github.com/asciiu/gomo/apikey-service/db/sql"
+	pb "github.com/asciiu/gomo/apikey-service/proto/apikey"
+	"github.com/asciiu/gomo/common/db"
+	userRepo "github.com/asciiu/gomo/user-service/db/sql"
+	user "github.com/asciiu/gomo/user-service/models"
 )
 
 func checkErr(err error) {
@@ -11,149 +18,66 @@ func checkErr(err error) {
 	}
 }
 
-// func TestInsertDevice(t *testing.T) {
-// 	db, _ := db.NewDB("postgres://postgres@localhost/gomo_test?&sslmode=disable")
+func TestInsertDevice(t *testing.T) {
+	db, _ := db.NewDB("postgres://postgres@localhost/gomo_test?&sslmode=disable")
 
-// 	user := user.NewUser("first", "last", "test@email", "hash")
-// 	_, error := userRepo.InsertUser(db, user)
-// 	checkErr(error)
-// 	defer db.Close()
+	user := user.NewUser("first", "last", "test@email", "hash")
+	_, error := userRepo.InsertUser(db, user)
+	checkErr(error)
+	defer db.Close()
 
-// 	device := pb.AddDeviceRequest{
-// 		UserId:           user.Id,
-// 		DeviceType:       "ios",
-// 		ExternalDeviceId: "device-1234",
-// 		DeviceToken:      "tokie-tokie",
-// 	}
-// 	deviceAdded, error := sql.InsertDevice(db, &device)
-// 	checkErr(error)
+	key := pb.ApiKeyRequest{
+		ApiKeyId:    user.Id,
+		UserId:      user.Id,
+		Exchange:    "test",
+		Key:         "key",
+		Secret:      "secret",
+		Description: "Hey this worked!",
+	}
+	_, error = keyRepo.InsertApiKey(db, &key)
+	checkErr(error)
 
-// 	error = sql.DeleteDevice(db, deviceAdded.DeviceId)
-// 	checkErr(error)
+	error = keyRepo.DeleteApiKey(db, key.ApiKeyId)
+	checkErr(error)
 
-// 	error = userRepo.DeleteUserHard(db, user.Id)
-// 	checkErr(error)
-// }
+	error = userRepo.DeleteUserHard(db, user.Id)
+	checkErr(error)
+}
 
-// func TestFindDevice(t *testing.T) {
-// 	db, _ := db.NewDB("postgres://postgres@localhost/gomo_test?&sslmode=disable")
+func TestFindApiKey(t *testing.T) {
+	db, _ := db.NewDB("postgres://postgres@localhost/gomo_test?&sslmode=disable")
 
-// 	user := user.NewUser("first", "last", "test@email", "hash")
-// 	_, error := userRepo.InsertUser(db, user)
-// 	checkErr(error)
-// 	defer db.Close()
+	user := user.NewUser("first", "last", "test@email", "hash")
+	_, error := userRepo.InsertUser(db, user)
+	checkErr(error)
+	defer db.Close()
 
-// 	device := pb.AddDeviceRequest{
-// 		UserId:           user.Id,
-// 		DeviceType:       "ios",
-// 		ExternalDeviceId: "device-1234",
-// 		DeviceToken:      "tokie-tokie",
-// 	}
-// 	deviceAdded, error := sql.InsertDevice(db, &device)
-// 	checkErr(error)
+	key := pb.ApiKeyRequest{
+		UserId:      user.Id,
+		Exchange:    "test",
+		Key:         "key",
+		Secret:      "secret",
+		Description: "Hey this worked!",
+	}
+	apiKey, error := keyRepo.InsertApiKey(db, &key)
+	checkErr(error)
 
-// 	request := pb.GetUserDeviceRequest{
-// 		DeviceId: deviceAdded.DeviceId,
-// 		UserId:   user.Id,
-// 	}
-// 	device2, err := sql.FindDeviceByDeviceId(db, &request)
-// 	checkErr(err)
-// 	if deviceAdded.DeviceId != device2.DeviceId {
-// 		t.Errorf("no id match!")
-// 	}
+	request := pb.GetUserApiKeyRequest{
+		ApiKeyId: apiKey.ApiKeyId,
+		UserId:   user.Id,
+	}
+	apiKey2, err := keyRepo.FindApiKeyById(db, &request)
+	checkErr(err)
+	if apiKey.ApiKeyId != apiKey2.ApiKeyId {
+		t.Errorf("no id match!")
+	}
+	if apiKey2.Exchange != "test" {
+		t.Errorf("no exchange matchie!")
+	}
+	if apiKey2.Description != "Hey this worked!" {
+		t.Errorf("whaaa?!")
+	}
 
-// 	error = sql.DeleteDevice(db, deviceAdded.DeviceId)
-// 	checkErr(error)
-
-// 	error = userRepo.DeleteUserHard(db, user.Id)
-// 	checkErr(error)
-// }
-
-// func TestUpdateDevice(t *testing.T) {
-// 	db, _ := db.NewDB("postgres://postgres@localhost/gomo_test?&sslmode=disable")
-
-// 	user := user.NewUser("first", "last", "test@email", "hash")
-// 	_, error := userRepo.InsertUser(db, user)
-// 	checkErr(error)
-// 	defer db.Close()
-
-// 	device := pb.AddDeviceRequest{
-// 		UserId:           user.Id,
-// 		DeviceType:       "ios",
-// 		ExternalDeviceId: "device-1234",
-// 		DeviceToken:      "tokie-tokie",
-// 	}
-// 	deviceAdded, error := sql.InsertDevice(db, &device)
-// 	checkErr(error)
-
-// 	deviceAdded.DeviceType = "android"
-
-// 	request := pb.UpdateDeviceRequest{
-// 		DeviceId:         deviceAdded.DeviceId,
-// 		UserId:           deviceAdded.UserId,
-// 		ExternalDeviceId: "1234",
-// 		DeviceType:       "android",
-// 		DeviceToken:      "tokie",
-// 	}
-// 	_, error = sql.UpdateDevice(db, &request)
-// 	checkErr(error)
-
-// 	requestFind := pb.GetUserDeviceRequest{
-// 		DeviceId: deviceAdded.DeviceId,
-// 		UserId:   user.Id,
-// 	}
-// 	device2, err := sql.FindDeviceByDeviceId(db, &requestFind)
-// 	checkErr(err)
-// 	if device2.DeviceType != "android" {
-// 		t.Errorf("did not update!")
-// 	}
-
-// 	error = sql.DeleteDevice(db, device2.DeviceId)
-// 	checkErr(error)
-
-// 	error = userRepo.DeleteUserHard(db, user.Id)
-// 	checkErr(error)
-// }
-
-// func TestFindDevices(t *testing.T) {
-// 	db, _ := db.NewDB("postgres://postgres@localhost/gomo_test?&sslmode=disable")
-
-// 	user := user.NewUser("first", "last", "test@email", "hash")
-// 	_, error := userRepo.InsertUser(db, user)
-// 	checkErr(error)
-// 	defer db.Close()
-
-// 	device := pb.AddDeviceRequest{
-// 		UserId:           user.Id,
-// 		DeviceType:       "ios",
-// 		ExternalDeviceId: "device-1234",
-// 		DeviceToken:      "tokie-tokie",
-// 	}
-// 	_, error = sql.InsertDevice(db, &device)
-// 	checkErr(error)
-
-// 	device = pb.AddDeviceRequest{
-// 		UserId:           user.Id,
-// 		DeviceType:       "android",
-// 		ExternalDeviceId: "device-5678",
-// 		DeviceToken:      "token",
-// 	}
-// 	_, error = sql.InsertDevice(db, &device)
-// 	checkErr(error)
-
-// 	request := pb.GetUserDevicesRequest{
-// 		UserId: user.Id,
-// 	}
-// 	devices, err := sql.FindDevicesByUserId(db, &request)
-// 	checkErr(err)
-
-// 	if len(devices) != 2 {
-// 		t.Errorf("there should be two devices!")
-// 	}
-// 	if devices[0].DeviceType != "ios" && devices[1].DeviceType != "android" {
-// 		t.Errorf("should have found ios and android")
-// 	}
-
-// 	error = userRepo.DeleteUserHard(db, user.Id)
-// 	checkErr(error)
-// }
+	error = userRepo.DeleteUserHard(db, user.Id)
+	checkErr(error)
+}

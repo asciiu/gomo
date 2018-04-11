@@ -13,7 +13,7 @@ func DeleteApiKey(db *sql.DB, apiKeyId string) error {
 	return err
 }
 
-func FindDeviceByDeviceId(db *sql.DB, req *pb.GetUserApiKeyRequest) (*pb.ApiKey, error) {
+func FindApiKeyById(db *sql.DB, req *pb.GetUserApiKeyRequest) (*pb.ApiKey, error) {
 	var k pb.ApiKey
 	err := db.QueryRow("SELECT id, user_id, exchange_name, api_key, secret, description, status FROM user_keys WHERE id = $1", req.ApiKeyId).
 		Scan(&k.ApiKeyId, &k.UserId, &k.Exchange, &k.Key, &k.Secret, &k.Description, &k.Status)
