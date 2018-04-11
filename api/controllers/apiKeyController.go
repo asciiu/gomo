@@ -64,7 +64,7 @@ func NewApiKeyController(db *sql.DB) *ApiKeyController {
 //
 // Get a key (protected)
 //
-// Gets a user's key by the key ID.
+// Gets a user's key by the key ID. The secret will not be returned in the response data.
 //
 // responses:
 //  200: responseKeySuccess "data" will contain key stuffs with "status": "success"
@@ -125,7 +125,8 @@ func (controller *ApiKeyController) HandleGetKey(c echo.Context) error {
 //
 // Get all user keys (protected)
 //
-// Get all the user keys for this user.
+// Get all the user keys for this user. The api secrets will not be returned in the response data.
+//
 // responses:
 //  200: responseKeysSuccess "data" will contain a list of key info with "status": "success"
 //  500: responseError the message will state what the internal server error was with "status": "error"
@@ -189,10 +190,11 @@ func (controller *ApiKeyController) HandleListKeys(c echo.Context) error {
 //
 // Add an api key (protected)
 //
-// Associate a new exchange api key to a user's account.
+// Associate a new exchange api key to a user's account. Secrets will not be returned in response data.
+//
 // responses:
 //  200: responseKeySuccess "data" will contain key info with "status": "success"
-//  400: responseError missing params
+//  400: responseError missing params with "status": "fail"
 //  500: responseError the message will state what the internal server error was with "status": "error"
 func (controller *ApiKeyController) HandlePostKey(c echo.Context) error {
 	token := c.Get("user").(*jwt.Token)
@@ -263,9 +265,14 @@ func (controller *ApiKeyController) HandlePostKey(c echo.Context) error {
 
 // swagger:route PUT /keys/:keyId keys updateKey
 //
-// not implemented (protected)
+// Update a user api key. (protected)
 //
-// ..
+// The user can only update the description of an added key. The secret will not be returned.
+//
+// responses:
+//  200: responseKeySuccess "data" will contain key info with "status": "success"
+//  400: responseError missing params with "status": "fail"
+//  500: responseError the message will state what the internal server error was with "status": "error"
 func (controller *ApiKeyController) HandleUpdateKey(c echo.Context) error {
 	token := c.Get("user").(*jwt.Token)
 	claims := token.Claims.(jwt.MapClaims)
@@ -328,6 +335,8 @@ func (controller *ApiKeyController) HandleUpdateKey(c echo.Context) error {
 // Remove user api key (protected)
 //
 // This will remove the api key from the system.
+//
+// responses:
 //  200: responseKeySuccess data will be null with "status": "success"
 //  500: responseError the message will state what the internal server error was with "status": "error"
 func (controller *ApiKeyController) HandleDeleteKey(c echo.Context) error {
@@ -365,7 +374,7 @@ func (controller *ApiKeyController) HandleDeleteKey(c echo.Context) error {
 		}
 	}
 
-	response := &ResponseSuccess{
+	response := &ResponseKeySuccess{
 		Status: "success",
 	}
 

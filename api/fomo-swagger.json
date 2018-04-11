@@ -197,46 +197,166 @@
     },
     "/keys": {
       "get": {
-        "description": "...",
+        "description": "Get all the user keys for this user. The api secrets will not be returned in the response data.",
         "tags": [
           "keys"
         ],
-        "summary": "not implemented (protected)",
-        "operationId": "getAllKey"
+        "summary": "Get all user keys (protected)",
+        "operationId": "getAllKey",
+        "responses": {
+          "200": {
+            "description": "\"data\" will contain a list of key info with \"status\": \"success\"",
+            "schema": {
+              "$ref": "#/definitions/responseKeysSuccess"
+            }
+          },
+          "500": {
+            "description": "the message will state what the internal server error was with \"status\": \"error\"",
+            "schema": {
+              "$ref": "#/definitions/responseError"
+            }
+          }
+        }
       },
       "post": {
-        "description": "..",
+        "description": "Associate a new exchange api key to a user's account. Secrets will not be returned in response data.",
         "tags": [
           "keys"
         ],
-        "summary": "not implemented (protected)",
-        "operationId": "postKey"
+        "summary": "Add an api key (protected)",
+        "operationId": "postKey",
+        "parameters": [
+          {
+            "x-go-name": "Exchange",
+            "description": "Required.",
+            "name": "exchange",
+            "in": "body",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "x-go-name": "Key",
+            "description": "Required.",
+            "name": "key",
+            "in": "body",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "x-go-name": "Secret",
+            "description": "Required.",
+            "name": "secret",
+            "in": "body",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "x-go-name": "Description",
+            "description": "Optional.",
+            "name": "description",
+            "in": "body",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "\"data\" will contain key info with \"status\": \"success\"",
+            "schema": {
+              "$ref": "#/definitions/responseKeySuccess"
+            }
+          },
+          "400": {
+            "description": "missing params with \"status\": \"fail\"",
+            "schema": {
+              "$ref": "#/definitions/responseError"
+            }
+          },
+          "500": {
+            "description": "the message will state what the internal server error was with \"status\": \"error\"",
+            "schema": {
+              "$ref": "#/definitions/responseError"
+            }
+          }
+        }
       }
     },
     "/keys/:keyId": {
       "get": {
-        "description": "...",
+        "description": "Gets a user's key by the key ID. The secret will not be returned in the response data.",
         "tags": [
           "keys"
         ],
-        "summary": "not implemented (protected)",
-        "operationId": "getKey"
+        "summary": "Get a key (protected)",
+        "operationId": "getKey",
+        "responses": {
+          "200": {
+            "description": "\"data\" will contain key stuffs with \"status\": \"success\"",
+            "schema": {
+              "$ref": "#/definitions/responseKeySuccess"
+            }
+          },
+          "500": {
+            "description": "the message will state what the internal server error was with \"status\": \"error\"",
+            "schema": {
+              "$ref": "#/definitions/responseError"
+            }
+          }
+        }
       },
       "put": {
-        "description": "..",
+        "description": "The user can only update the description of a added key.",
         "tags": [
           "keys"
         ],
-        "summary": "not implemented (protected)",
-        "operationId": "updateKey"
+        "summary": "Update a user api key. (protected)",
+        "operationId": "updateKey",
+        "responses": {
+          "200": {
+            "description": "\"data\" will contain key info with \"status\": \"success\"",
+            "schema": {
+              "$ref": "#/definitions/responseKeySuccess"
+            }
+          },
+          "400": {
+            "description": "missing params with \"status\": \"fail\"",
+            "schema": {
+              "$ref": "#/definitions/responseError"
+            }
+          },
+          "500": {
+            "description": "the message will state what the internal server error was with \"status\": \"error\"",
+            "schema": {
+              "$ref": "#/definitions/responseError"
+            }
+          }
+        }
       },
       "delete": {
-        "description": "...",
+        "description": "This will remove the api key from the system.",
         "tags": [
           "keys"
         ],
-        "summary": "not implemented (protected)",
-        "operationId": "deleteKey"
+        "summary": "Remove user api key (protected)",
+        "operationId": "deleteKey",
+        "responses": {
+          "200": {
+            "description": "data will be null with \"status\": \"success\"",
+            "schema": {
+              "$ref": "#/definitions/responseKeySuccess"
+            }
+          },
+          "500": {
+            "description": "the message will state what the internal server error was with \"status\": \"error\"",
+            "schema": {
+              "$ref": "#/definitions/responseError"
+            }
+          }
+        }
       }
     },
     "/login": {
@@ -605,6 +725,83 @@
     }
   },
   "definitions": {
+    "ApiKey": {
+      "description": "Responses",
+      "type": "object",
+      "properties": {
+        "apiKeyId": {
+          "type": "string",
+          "x-go-name": "ApiKeyId"
+        },
+        "description": {
+          "type": "string",
+          "x-go-name": "Description"
+        },
+        "exchange": {
+          "type": "string",
+          "x-go-name": "Exchange"
+        },
+        "key": {
+          "type": "string",
+          "x-go-name": "Key"
+        },
+        "secret": {
+          "type": "string",
+          "x-go-name": "Secret"
+        },
+        "status": {
+          "type": "string",
+          "x-go-name": "Status"
+        },
+        "userId": {
+          "type": "string",
+          "x-go-name": "UserId"
+        }
+      },
+      "x-go-package": "github.com/asciiu/gomo/apikey-service/proto/apikey"
+    },
+    "ApiKeyController": {
+      "type": "object",
+      "properties": {
+        "Client": {
+          "$ref": "#/definitions/ApiKeyServiceClient"
+        },
+        "DB": {
+          "$ref": "#/definitions/DB"
+        }
+      },
+      "x-go-package": "github.com/asciiu/gomo/api/controllers"
+    },
+    "ApiKeyRequest": {
+      "type": "object",
+      "properties": {
+        "description": {
+          "description": "Optional.\nin: body",
+          "type": "string",
+          "x-go-name": "Description"
+        },
+        "exchange": {
+          "description": "Required.\nin: body",
+          "type": "string",
+          "x-go-name": "Exchange"
+        },
+        "key": {
+          "description": "Required.\nin: body",
+          "type": "string",
+          "x-go-name": "Key"
+        },
+        "secret": {
+          "description": "Required.\nin: body",
+          "type": "string",
+          "x-go-name": "Secret"
+        }
+      },
+      "x-go-package": "github.com/asciiu/gomo/api/controllers"
+    },
+    "ApiKeyServiceClient": {
+      "type": "object",
+      "x-go-package": "github.com/asciiu/gomo/apikey-service/proto/apikey"
+    },
     "AuthController": {
       "type": "object",
       "properties": {
@@ -775,6 +972,28 @@
       },
       "x-go-package": "github.com/asciiu/gomo/api/controllers"
     },
+    "UserApiKeyData": {
+      "type": "object",
+      "properties": {
+        "apiKey": {
+          "$ref": "#/definitions/ApiKey"
+        }
+      },
+      "x-go-package": "github.com/asciiu/gomo/apikey-service/proto/apikey"
+    },
+    "UserApiKeysData": {
+      "type": "object",
+      "properties": {
+        "apiKey": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/ApiKey"
+          },
+          "x-go-name": "ApiKey"
+        }
+      },
+      "x-go-package": "github.com/asciiu/gomo/apikey-service/proto/apikey"
+    },
     "UserData": {
       "type": "object",
       "properties": {
@@ -877,6 +1096,36 @@
         }
       },
       "x-go-name": "ResponseError",
+      "x-go-package": "github.com/asciiu/gomo/api/controllers"
+    },
+    "responseKeySuccess": {
+      "type": "object",
+      "title": "A ResponseKeySuccess will always contain a status of \"successful\".",
+      "properties": {
+        "data": {
+          "$ref": "#/definitions/UserApiKeyData"
+        },
+        "status": {
+          "type": "string",
+          "x-go-name": "Status"
+        }
+      },
+      "x-go-name": "ResponseKeySuccess",
+      "x-go-package": "github.com/asciiu/gomo/api/controllers"
+    },
+    "responseKeysSuccess": {
+      "type": "object",
+      "title": "A ResponseKeysSuccess will always contain a status of \"successful\".",
+      "properties": {
+        "data": {
+          "$ref": "#/definitions/UserApiKeysData"
+        },
+        "status": {
+          "type": "string",
+          "x-go-name": "Status"
+        }
+      },
+      "x-go-name": "ResponseKeysSuccess",
       "x-go-package": "github.com/asciiu/gomo/api/controllers"
     },
     "responseSuccess": {
