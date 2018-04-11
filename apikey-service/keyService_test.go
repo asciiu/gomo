@@ -1,7 +1,14 @@
 package main
 
 import (
+	"context"
 	"log"
+	"testing"
+
+	keyProto "github.com/asciiu/gomo/apikey-service/proto/apikey"
+	"github.com/asciiu/gomo/common/db"
+	userRepo "github.com/asciiu/gomo/user-service/db/sql"
+	user "github.com/asciiu/gomo/user-service/models"
 )
 
 func checkErr(err error) {
@@ -11,51 +18,54 @@ func checkErr(err error) {
 	}
 }
 
-// func setupService() (*DeviceService, *user.User) {
-// 	dbUrl := "postgres://postgres@localhost:5432/gomo_test?&sslmode=disable"
-// 	db, _ := db.NewDB(dbUrl)
-// 	service := DeviceService{db}
+func setupService() (*KeyService, *user.User) {
+	dbUrl := "postgres://postgres@localhost:5432/gomo_test?&sslmode=disable"
+	db, _ := db.NewDB(dbUrl)
+	service := KeyService{db}
 
-// 	user := user.NewUser("first", "last", "test@email", "hash")
-// 	_, error := userRepo.InsertUser(db, user)
-// 	checkErr(error)
+	user := user.NewUser("first", "last", "test@email", "hash")
+	_, error := userRepo.InsertUser(db, user)
+	checkErr(error)
 
-// 	return &service, user
-// }
+	return &service, user
+}
 
-// func TestInsertDevice(t *testing.T) {
-// 	service, user := setupService()
+func TestInsertApiKey(t *testing.T) {
+	service, user := setupService()
 
-// 	defer service.DB.Close()
+	defer service.DB.Close()
 
-// 	request := pb.AddDeviceRequest{
-// 		UserId:           user.Id,
-// 		DeviceToken:      "tokie tokie tokie",
-// 		DeviceType:       "test",
-// 		ExternalDeviceId: "1234",
-// 	}
+	key := keyProto.ApiKeyRequest{
+		UserId:      user.Id,
+		Exchange:    "monex",
+		Key:         "key",
+		Secret:      "sssh",
+		Description: "shit dwog!",
+	}
 
-// 	response := pb.DeviceResponse{}
+	response := keyProto.ApiKeyResponse{}
 
-// 	service.AddDevice(context.Background(), &request, &response)
+	service.AddApiKey(context.Background(), &key, &response)
 
-// 	if response.Status != "success" {
-// 		t.Errorf(response.Message)
-// 	}
+	if response.Status != "success" {
+		t.Errorf(response.Message)
+	}
 
-// 	if response.Data.Device.UserId != request.UserId {
-// 		t.Errorf("user IDs do not match")
-// 	}
+	if response.Data.ApiKey.UserId != key.UserId {
+		t.Errorf("user IDs do not match")
+	}
 
-// 	requestRemove := pb.RemoveDeviceRequest{
-// 		UserId:   user.Id,
-// 		DeviceId: response.Data.Device.DeviceId,
-// 	}
+	requestRemove := keyProto.RemoveApiKeyRequest{
+		UserId:   user.Id,
+		ApiKeyId: response.Data.ApiKey.ApiKeyId,
+	}
 
-// 	responseDel := pb.DeviceResponse{}
-// 	service.RemoveDevice(context.Background(), &requestRemove, &responseDel)
+	responseDel := keyProto.ApiKeyResponse{}
+	service.RemoveApiKey(context.Background(), &requestRemove, &responseDel)
 
-// 	if responseDel.Status != "success" {
-// 		t.Errorf(responseDel.Message)
-// 	}
-// }
+	if responseDel.Status != "success" {
+		t.Errorf(responseDel.Message)
+	}
+
+	userRepo.DeleteUserHard(service.DB, user.Id)
+}
