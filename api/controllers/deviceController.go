@@ -58,7 +58,7 @@ func NewDeviceController(db *sql.DB) *DeviceController {
 
 // swagger:route GET /devices/:deviceId devices getDevice
 //
-// Get a device by ID (protected)
+// get a device by ID (protected)
 //
 // Get a user's device by the device's ID.
 //
@@ -106,7 +106,7 @@ func (controller *DeviceController) HandleGetDevice(c echo.Context) error {
 
 // swagger:route GET /devices devices getAllDevices
 //
-// All registered devices. (protected)
+// all registered devices (protected)
 //
 // Returns a list of registered devices for logged in user.
 //
@@ -156,7 +156,7 @@ func (controller *DeviceController) HandleListDevices(c echo.Context) error {
 
 // swagger:route POST /devices devices addDevice
 //
-// Add new device. (protected)
+// add new device (protected)
 //
 // Registers a new device for a user so they may receive push notifications.
 //
@@ -232,7 +232,7 @@ func (controller *DeviceController) HandlePostDevice(c echo.Context) error {
 
 // swagger:route PUT /devices/:deviceId devices updateDevice
 //
-// Update a registered device. (protected)
+// update a registered device (protected)
 //
 // Updates a user's device.
 //
@@ -309,7 +309,7 @@ func (controller *DeviceController) HandleUpdateDevice(c echo.Context) error {
 
 // swagger:route DELETE /devices/:deviceId devices deleteDevice
 //
-// Removes a user's device. (protected)
+// removes a user's device (protected)
 //
 // Removes device by ID.
 //

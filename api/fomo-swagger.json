@@ -23,7 +23,7 @@
         "tags": [
           "devices"
         ],
-        "summary": "All registered devices. (protected)",
+        "summary": "all registered devices (protected)",
         "operationId": "getAllDevices",
         "responses": {
           "200": {
@@ -45,7 +45,7 @@
         "tags": [
           "devices"
         ],
-        "summary": "Add new device. (protected)",
+        "summary": "add new device (protected)",
         "operationId": "addDevice",
         "parameters": [
           {
@@ -104,7 +104,7 @@
         "tags": [
           "devices"
         ],
-        "summary": "Get a device by ID (protected)",
+        "summary": "get a device by ID (protected)",
         "operationId": "getDevice",
         "responses": {
           "200": {
@@ -126,7 +126,7 @@
         "tags": [
           "devices"
         ],
-        "summary": "Update a registered device. (protected)",
+        "summary": "update a registered device (protected)",
         "operationId": "updateDevice",
         "parameters": [
           {
@@ -177,7 +177,7 @@
         "tags": [
           "devices"
         ],
-        "summary": "Removes a user's device. (protected)",
+        "summary": "removes a user's device (protected)",
         "operationId": "deleteDevice",
         "responses": {
           "200": {
@@ -201,7 +201,7 @@
         "tags": [
           "keys"
         ],
-        "summary": "Get all user keys (protected)",
+        "summary": "get all user keys (protected)",
         "operationId": "getAllKey",
         "responses": {
           "200": {
@@ -223,7 +223,7 @@
         "tags": [
           "keys"
         ],
-        "summary": "Add an api key (protected)",
+        "summary": "add an api key (protected)",
         "operationId": "postKey",
         "parameters": [
           {
@@ -291,7 +291,7 @@
         "tags": [
           "keys"
         ],
-        "summary": "Get a key (protected)",
+        "summary": "get a key (protected)",
         "operationId": "getKey",
         "responses": {
           "200": {
@@ -309,12 +309,23 @@
         }
       },
       "put": {
-        "description": "The user can only update the description of a added key.",
+        "description": "The user can only update the description of an added key. The secret will not be returned.",
         "tags": [
           "keys"
         ],
-        "summary": "Update a user api key. (protected)",
+        "summary": "update a user api key (protected)",
         "operationId": "updateKey",
+        "parameters": [
+          {
+            "x-go-name": "Description",
+            "description": "Required.",
+            "name": "description",
+            "in": "body",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
         "responses": {
           "200": {
             "description": "\"data\" will contain key info with \"status\": \"success\"",
@@ -341,7 +352,7 @@
         "tags": [
           "keys"
         ],
-        "summary": "Remove user api key (protected)",
+        "summary": "remove user api key (protected)",
         "operationId": "deleteKey",
         "responses": {
           "200": {
@@ -968,6 +979,17 @@
           "description": "Required. We need password requirements.\nin: body",
           "type": "string",
           "x-go-name": "Password"
+        }
+      },
+      "x-go-package": "github.com/asciiu/gomo/api/controllers"
+    },
+    "UpdateKeyRequest": {
+      "type": "object",
+      "properties": {
+        "description": {
+          "description": "Required.\nin: body",
+          "type": "string",
+          "x-go-name": "Description"
         }
       },
       "x-go-package": "github.com/asciiu/gomo/api/controllers"

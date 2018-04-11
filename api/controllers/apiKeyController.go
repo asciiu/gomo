@@ -34,6 +34,13 @@ type ApiKeyRequest struct {
 	Description string `json:"description"`
 }
 
+// swagger:parameters updateKey
+type UpdateKeyRequest struct {
+	// Required.
+	// in: body
+	Description string `json:"description"`
+}
+
 // A ResponseKeySuccess will always contain a status of "successful".
 // swagger:model responseKeySuccess
 type ResponseKeySuccess struct {
@@ -62,7 +69,7 @@ func NewApiKeyController(db *sql.DB) *ApiKeyController {
 
 // swagger:route GET /keys/:keyId keys getKey
 //
-// Get a key (protected)
+// get a key (protected)
 //
 // Gets a user's key by the key ID. The secret will not be returned in the response data.
 //
@@ -123,7 +130,7 @@ func (controller *ApiKeyController) HandleGetKey(c echo.Context) error {
 
 // swagger:route GET /keys keys getAllKey
 //
-// Get all user keys (protected)
+// get all user keys (protected)
 //
 // Get all the user keys for this user. The api secrets will not be returned in the response data.
 //
@@ -188,7 +195,7 @@ func (controller *ApiKeyController) HandleListKeys(c echo.Context) error {
 
 // swagger:route POST /keys keys postKey
 //
-// Add an api key (protected)
+// add an api key (protected)
 //
 // Associate a new exchange api key to a user's account. Secrets will not be returned in response data.
 //
@@ -265,7 +272,7 @@ func (controller *ApiKeyController) HandlePostKey(c echo.Context) error {
 
 // swagger:route PUT /keys/:keyId keys updateKey
 //
-// Update a user api key. (protected)
+// update a user api key (protected)
 //
 // The user can only update the description of an added key. The secret will not be returned.
 //
@@ -279,7 +286,7 @@ func (controller *ApiKeyController) HandleUpdateKey(c echo.Context) error {
 	userId := claims["jti"].(string)
 	keyId := c.Param("keyId")
 
-	keyRequest := ApiKeyRequest{}
+	keyRequest := UpdateKeyRequest{}
 
 	err := json.NewDecoder(c.Request().Body).Decode(&keyRequest)
 	if err != nil {
@@ -332,7 +339,7 @@ func (controller *ApiKeyController) HandleUpdateKey(c echo.Context) error {
 
 // swagger:route DELETE /keys/:keyId keys deleteKey
 //
-// Remove user api key (protected)
+// remove user api key (protected)
 //
 // This will remove the api key from the system.
 //
