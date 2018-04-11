@@ -13,6 +13,7 @@ services:
       GOMO_JWT: "jyVadHV5Z+tihp4ptuEvD2xXu6iWrFaSebYovtmzl0Cg4RDi1udp7qyme8ZZQl+A"
 
   apikey-service:
+    build: ./apikey-service
     ports:
       - 5001:5000
     environment:

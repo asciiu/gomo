@@ -95,9 +95,13 @@ func (controller *ApiKeyController) HandleListKeys(c echo.Context) error {
 
 // swagger:route POST /keys keys postKey
 //
-// not implemented (protected)
+// Add an api key (protected)
 //
-// ..
+// Associate a new exchange api key to a user's account.
+// responses:
+//  200: responseKeySuccess "data" will contain key info with "status": "success"
+//  400: responseError missing params
+//  500: responseError the message will state what the internal server error was with "status": "error"
 func (controller *ApiKeyController) HandlePostKey(c echo.Context) error {
 	token := c.Get("user").(*jwt.Token)
 	claims := token.Claims.(jwt.MapClaims)
@@ -171,16 +175,69 @@ func (controller *ApiKeyController) HandlePostKey(c echo.Context) error {
 //
 // ..
 func (controller *ApiKeyController) HandleUpdateKey(c echo.Context) error {
-	return c.JSON(http.StatusOK, map[string]string{
-		"status": "not implemented",
-	})
+	token := c.Get("user").(*jwt.Token)
+	claims := token.Claims.(jwt.MapClaims)
+	userId := claims["jti"].(string)
+	keyId := c.Param("keyId")
+
+	keyRequest := ApiKeyRequest{}
+
+	err := json.NewDecoder(c.Request().Body).Decode(&keyRequest)
+	if err != nil {
+		response := &ResponseError{
+			Status:  "fail",
+			Message: err.Error(),
+		}
+
+		return c.JSON(http.StatusBadRequest, response)
+	}
+
+	// client can only update description
+	updateRequest := keyProto.ApiKeyRequest{
+		ApiKeyId:    keyId,
+		UserId:      userId,
+		Description: keyRequest.Description,
+	}
+
+	r, err := controller.Client.UpdateApiKey(context.Background(), &updateRequest)
+	if err != nil {
+		response := &ResponseError{
+			Status:  "error",
+			Message: err.Error(),
+		}
+
+		return c.JSON(http.StatusGone, response)
+	}
+
+	if r.Status != "success" {
+		response := &ResponseError{
+			Status:  r.Status,
+			Message: r.Message,
+		}
+
+		if r.Status == "fail" {
+			return c.JSON(http.StatusBadRequest, response)
+		}
+		if r.Status == "error" {
+			return c.JSON(http.StatusInternalServerError, response)
+		}
+	}
+
+	response := &ResponseKeySuccess{
+		Status: "success",
+		Data:   r.Data,
+	}
+
+	return c.JSON(http.StatusOK, response)
 }
 
 // swagger:route DELETE /keys/:keyId keys deleteKey
 //
-// not implemented (protected)
+// Remove user api key (protected)
 //
-// ...
+// This will remove the api key from the system.
+//  200: responseKeySuccess data will be null with "status": "success"
+//  500: responseError the message will state what the internal server error was with "status": "error"
 func (controller *ApiKeyController) HandleDeleteKey(c echo.Context) error {
 	token := c.Get("user").(*jwt.Token)
 	claims := token.Claims.(jwt.MapClaims)
