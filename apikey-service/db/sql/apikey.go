@@ -73,7 +73,7 @@ func InsertApiKey(db *sql.DB, req *pb.ApiKeyRequest) (*pb.ApiKey, error) {
 }
 
 func UpdateApiKeyDescription(db *sql.DB, req *pb.ApiKeyRequest) (*pb.ApiKey, error) {
-	sqlStatement := `UPDATE user_keys SET description = $1 WHERE id = $3 and user_id = $4 RETURNING exchange_name, api_key, description, status`
+	sqlStatement := `UPDATE user_keys SET description = $1 WHERE id = $2 and user_id = $3 RETURNING exchange_name, api_key, description, status`
 
 	var k pb.ApiKey
 	err := db.QueryRow(sqlStatement, req.Description, req.ApiKeyId, req.UserId).

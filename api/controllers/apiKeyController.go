@@ -106,7 +106,16 @@ func (controller *ApiKeyController) HandleGetKey(c echo.Context) error {
 
 	response := &ResponseKeySuccess{
 		Status: "success",
-		Data:   r.Data,
+		Data: &keyProto.UserApiKeyData{
+			ApiKey: &keyProto.ApiKey{
+				ApiKeyId:    r.Data.ApiKey.ApiKeyId,
+				UserId:      r.Data.ApiKey.UserId,
+				Exchange:    r.Data.ApiKey.Exchange,
+				Key:         r.Data.ApiKey.Key,
+				Description: r.Data.ApiKey.Description,
+				Status:      r.Data.ApiKey.Status,
+			},
+		},
 	}
 
 	return c.JSON(http.StatusOK, response)
@@ -153,9 +162,24 @@ func (controller *ApiKeyController) HandleListKeys(c echo.Context) error {
 		}
 	}
 
+	data := make([]*keyProto.ApiKey, len(r.Data.ApiKey))
+	for i := range data {
+		// api removes the secret
+		data[i] = &keyProto.ApiKey{
+			ApiKeyId:    r.Data.ApiKey[i].ApiKeyId,
+			UserId:      r.Data.ApiKey[i].UserId,
+			Exchange:    r.Data.ApiKey[i].Exchange,
+			Key:         r.Data.ApiKey[i].Key,
+			Description: r.Data.ApiKey[i].Description,
+			Status:      r.Data.ApiKey[i].Status,
+		}
+	}
+
 	response := &ResponseKeysSuccess{
 		Status: "success",
-		Data:   r.Data,
+		Data: &keyProto.UserApiKeysData{
+			ApiKey: data,
+		},
 	}
 
 	return c.JSON(http.StatusOK, response)
