@@ -1,0 +1,67 @@
+syntax = "proto3";
+
+package go.micro.srv.apikey; 
+
+service ApiKeyService {
+  rpc AddApiKey(ApiKeyRequest) returns (ApiKeyResponse) {}
+  rpc GetUserApiKey(GetUserApiKeyRequest) returns (ApiKeyResponse) {}
+  rpc GetUserApiKeys(GetUserApiKeysRequest) returns (ApiKeyListResponse) {}
+  rpc RemoveApiKey(RemoveApiKeyRequest) returns (ApiKeyResponse) {}
+  rpc UpdateApiKey(ApiKeyRequest) returns (ApiKeyResponse) {}
+}
+
+// Requests
+message ApiKeyRequest {
+  string apiKeyId = 1;
+  string userId = 2;
+  string exchange = 3;
+  string key = 4;
+  string secret = 5;
+  string description = 6;
+  string status = 7;
+}
+
+message GetUserApiKeyRequest {
+  string userId = 1;
+  string apiKeyId = 2;
+}
+
+message GetUserApiKeysRequest {
+    string userId = 1;
+}
+
+message RemoveApiKeyRequest {
+  string userId = 1;
+  string apiKeyId = 2;
+}
+
+// Responses
+message ApiKey {
+  string apiKeyId = 1;
+  string userId = 2;
+  string exchange = 3;
+  string key = 4;
+  string secret = 5;
+  string status = 6;
+  string description = 7;
+}
+
+message UserApiKeyData {
+  ApiKey apiKey = 1;
+}
+
+message UserApiKeysData {
+  repeated ApiKey apiKey = 1;
+}
+
+message ApiKeyResponse {
+  string status = 1;
+  string message = 2;
+  UserApiKeyData data = 3;
+}
+
+message ApiKeyListResponse {
+  string status = 1;
+  string message = 2;
+  UserApiKeysData data = 3;
+}
