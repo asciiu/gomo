@@ -182,7 +182,43 @@ func (controller *ApiKeyController) HandleUpdateKey(c echo.Context) error {
 //
 // ...
 func (controller *ApiKeyController) HandleDeleteKey(c echo.Context) error {
-	return c.JSON(http.StatusOK, map[string]string{
-		"status": "not implemented",
-	})
+	token := c.Get("user").(*jwt.Token)
+	claims := token.Claims.(jwt.MapClaims)
+	userId := claims["jti"].(string)
+	keyId := c.Param("keyId")
+
+	removeRequest := keyProto.RemoveApiKeyRequest{
+		ApiKeyId: keyId,
+		UserId:   userId,
+	}
+
+	r, err := controller.Client.RemoveApiKey(context.Background(), &removeRequest)
+	if err != nil {
+		response := &ResponseError{
+			Status:  "error",
+			Message: "the apikey-service is not available",
+		}
+
+		return c.JSON(http.StatusGone, response)
+	}
+
+	if r.Status != "success" {
+		response := &ResponseError{
+			Status:  r.Status,
+			Message: r.Message,
+		}
+
+		if r.Status == "fail" {
+			return c.JSON(http.StatusBadRequest, response)
+		}
+		if r.Status == "error" {
+			return c.JSON(http.StatusInternalServerError, response)
+		}
+	}
+
+	response := &ResponseSuccess{
+		Status: "success",
+	}
+
+	return c.JSON(http.StatusOK, response)
 }
