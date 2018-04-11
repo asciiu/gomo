@@ -1,0 +1,83 @@
+syntax = "proto3";
+
+package go.micro.srv.order; 
+
+service OrderService {
+  rpc AddOrder(OrderRequest) returns (OrderResponse) {}
+  rpc GetUserOrder(GetUserOrderRequest) returns (OrderResponse) {}
+  rpc GetUserOrders(GetUserOrdersRequest) returns (OrderListResponse) {}
+  rpc RemoveOrder(RemoveOrderRequest) returns (OrderResponse) {}
+  rpc UpdateOrder(OrderRequest) returns (OrderResponse) {}
+  rpc UpdateOrderStatus(OrderStatusRequest) returns (OrderResponse) {}
+}
+
+// Requests
+message OrderRequest {
+  string orderId = 1;
+  string userId = 2;
+  string apiKeyId = 3;
+  string exchange = 4;
+  string marketName = 5;
+  string side = 6;
+  string orderType = 7;
+  float price = 8;
+  float qty = 9;
+  string conditions = 10;
+}
+
+message GetUserOrderRequest {
+  string orderId = 1;
+  string userId = 2;
+}
+
+message GetUserOrdersRequest {
+    string userId = 1;
+}
+
+message RemoveOrderRequest {
+  string orderId = 1;
+  string userId = 2;
+}
+
+message OrderStatusRequest {
+  string orderId = 1;
+  string status = 2;
+}
+
+// Responses
+message Order {
+  string orderId = 1;
+  string userId = 2;
+  string apiKeyId = 3;
+  string exchange = 4;
+  string exchangeOrderId = 5;
+  string exchangeMarketName = 6;
+  string marketName = 7;
+  string side = 8;
+  string orderType = 9;
+  float price = 10;
+  float qty = 11;
+  float qtyRemaining = 12;
+  string status = 13;
+  string conditions = 14;
+}
+
+message UserOrderData {
+  Order order = 1;
+}
+
+message UserOrdersData {
+  repeated Order order = 1;
+}
+
+message OrderResponse {
+  string status = 1;
+  string message = 2;
+  UserOrderData data = 3;
+}
+
+message OrderListResponse {
+  string status = 1;
+  string message = 2;
+  UserOrdersData data = 3;
+}
