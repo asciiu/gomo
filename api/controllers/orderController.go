@@ -4,7 +4,6 @@ import (
 	"database/sql"
 	"encoding/json"
 	"fmt"
-	"log"
 	"net/http"
 
 	orderProto "github.com/asciiu/gomo/order-service/proto/order"
@@ -84,25 +83,54 @@ func NewOrderController(db *sql.DB) *OrderController {
 
 // swagger:route GET /orders/:orderId orders getOrder
 //
-// not implemented (protected)
+// show order (protected)
 //
-// ...
+// Get info about an order.
+//
+// responses:
+//  200: responseOrderSuccess "data" will contain order stuffs with "status": "success"
+//  500: responseError the message will state what the internal server error was with "status": "error"
 func (controller *OrderController) HandleGetOrder(c echo.Context) error {
-	user := c.Get("user")
-	token := user.(*jwt.Token)
-	claims, ok := token.Claims.(jwt.MapClaims)
-	if !ok {
-		log.Println("ERROR!")
+	token := c.Get("user").(*jwt.Token)
+	claims := token.Claims.(jwt.MapClaims)
+	userId := claims["jti"].(string)
+	orderId := c.Param("orderId")
+
+	getRequest := orderProto.GetUserOrderRequest{
+		OrderId: orderId,
+		UserId:  userId,
 	}
 
-	log.Println("User name: ", claims["name"], "User ID: ", claims["jti"])
-	// User ID from path `users/:id`
-	id := c.Param("orderId")
+	r, err := controller.Client.GetUserOrder(context.Background(), &getRequest)
+	if err != nil {
+		response := &ResponseError{
+			Status:  "error",
+			Message: err.Error(),
+		}
 
-	return c.JSON(http.StatusOK, map[string]string{
-		"id":           id,
-		"exchangeName": "amigonex",
-	})
+		return c.JSON(http.StatusInternalServerError, response)
+	}
+
+	if r.Status != "success" {
+		response := &ResponseError{
+			Status:  r.Status,
+			Message: r.Message,
+		}
+
+		if r.Status == "fail" {
+			return c.JSON(http.StatusBadRequest, response)
+		}
+		if r.Status == "error" {
+			return c.JSON(http.StatusInternalServerError, response)
+		}
+	}
+
+	response := &ResponseOrderSuccess{
+		Status: "success",
+		Data:   r.Data,
+	}
+
+	return c.JSON(http.StatusOK, response)
 }
 
 // swagger:route GET /orders orders getAllOrders
