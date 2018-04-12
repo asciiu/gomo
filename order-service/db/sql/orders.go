@@ -60,8 +60,11 @@ func InsertOrder(db *sql.DB, req *orderProto.OrderRequest) (*orderProto.Order, e
 		return nil, err
 	}
 
-	sqlStatement := `insert into orders (id, user_id, user_key_id, exchange_name, market_name, side, type, price, quantity, quantity_remaining, status, conditions) values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)`
-	_, err = db.Exec(sqlStatement, newId, req.UserId, req.ApiKeyId, req.Exchange, req.MarketName, req.Side, req.OrderType, req.Price, req.Qty, req.Qty, "pending", jsonCond)
+	// the exchange_order_id and exchange_market_name must be "" and not null
+	// when scanning in order data null cannot be set on a type string. Therefore,
+	// just default those cols to "".
+	sqlStatement := `insert into orders (id, user_id, user_key_id, exchange_name, exchange_order_id, exchange_market_name, market_name, side, type, price, quantity, quantity_remaining, status, conditions) values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)`
+	_, err = db.Exec(sqlStatement, newId, req.UserId, req.ApiKeyId, req.Exchange, "", "", req.MarketName, req.Side, req.OrderType, req.Price, req.Qty, req.Qty, "pending", jsonCond)
 
 	if err != nil {
 		return nil, err

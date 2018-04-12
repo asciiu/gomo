@@ -54,7 +54,7 @@ func (service *OrderService) GetUserOrders(ctx context.Context, req *pb.GetUserO
 	case error == nil:
 		res.Status = "success"
 		res.Data = &pb.UserOrdersData{
-			Order: orders,
+			Orders: orders,
 		}
 		return nil
 	default:
