@@ -461,46 +461,241 @@
     },
     "/orders": {
       "get": {
-        "description": "...",
+        "description": "Currently returns all orders. Eventually going to add params to filter orders.",
         "tags": [
           "orders"
         ],
-        "summary": "not implemented (protected)",
-        "operationId": "getAllOrders"
+        "summary": "get all orders (protected)",
+        "operationId": "getAllOrders",
+        "responses": {
+          "200": {
+            "description": "\"data\" will contain a list of order info with \"status\": \"success\"",
+            "schema": {
+              "$ref": "#/definitions/responseOrdersSuccess"
+            }
+          },
+          "500": {
+            "description": "the message will state what the internal server error was with \"status\": \"error\"",
+            "schema": {
+              "$ref": "#/definitions/responseError"
+            }
+          }
+        }
       },
       "post": {
-        "description": "...",
+        "description": "This will create a new order in the system.",
         "tags": [
           "orders"
         ],
-        "summary": "not implemented (protected)",
-        "operationId": "addOrder"
+        "summary": "create a new order  (protected)",
+        "operationId": "addOrder",
+        "parameters": [
+          {
+            "x-go-name": "ApiKeyId",
+            "description": "Required.",
+            "name": "apiKeyId",
+            "in": "body",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "type": "string",
+            "x-go-name": "ExchangeMarketName",
+            "name": "exchangeMarketName",
+            "in": "query"
+          },
+          {
+            "x-go-name": "MarketName",
+            "description": "Required.",
+            "name": "marketName",
+            "in": "body",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "x-go-name": "Side",
+            "description": "Required.",
+            "name": "side",
+            "in": "body",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "x-go-name": "OrderType",
+            "description": "Required.",
+            "name": "orderType",
+            "in": "body",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "x-go-name": "Price",
+            "description": "Required.",
+            "name": "price",
+            "in": "body",
+            "schema": {
+              "type": "number",
+              "format": "double"
+            }
+          },
+          {
+            "x-go-name": "Qauntity",
+            "description": "Required.",
+            "name": "quantity",
+            "in": "body",
+            "schema": {
+              "type": "number",
+              "format": "double"
+            }
+          },
+          {
+            "x-go-name": "Conditions",
+            "description": "Required.",
+            "name": "conditions",
+            "in": "body",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "\"data\" will contain order info with \"status\": \"success\"",
+            "schema": {
+              "$ref": "#/definitions/responseOrderSuccess"
+            }
+          },
+          "400": {
+            "description": "missing params with \"status\": \"fail\"",
+            "schema": {
+              "$ref": "#/definitions/responseError"
+            }
+          },
+          "500": {
+            "description": "the message will state what the internal server error was with \"status\": \"error\"",
+            "schema": {
+              "$ref": "#/definitions/responseError"
+            }
+          }
+        }
       }
     },
     "/orders/:orderId": {
       "get": {
-        "description": "...",
+        "description": "Get info about an order.",
         "tags": [
           "orders"
         ],
-        "summary": "not implemented (protected)",
-        "operationId": "getOrder"
+        "summary": "show order (protected)",
+        "operationId": "getOrder",
+        "responses": {
+          "200": {
+            "description": "\"data\" will contain order stuffs with \"status\": \"success\"",
+            "schema": {
+              "$ref": "#/definitions/responseOrderSuccess"
+            }
+          },
+          "500": {
+            "description": "the message will state what the internal server error was with \"status\": \"error\"",
+            "schema": {
+              "$ref": "#/definitions/responseError"
+            }
+          }
+        }
       },
       "put": {
-        "description": "...",
+        "description": "You can only update pending orders.",
         "tags": [
           "orders"
         ],
-        "summary": "not implemented (protected)",
-        "operationId": "updateOrder"
+        "summary": "update and order (protected)",
+        "operationId": "updateOrder",
+        "parameters": [
+          {
+            "x-go-name": "OrderType",
+            "description": "Optional.",
+            "name": "orderType",
+            "in": "body",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "x-go-name": "Price",
+            "description": "Optional.",
+            "name": "price",
+            "in": "body",
+            "schema": {
+              "type": "number",
+              "format": "double"
+            }
+          },
+          {
+            "x-go-name": "Qauntity",
+            "description": "Optional.",
+            "name": "quantity",
+            "in": "body",
+            "schema": {
+              "type": "number",
+              "format": "double"
+            }
+          },
+          {
+            "x-go-name": "Conditions",
+            "description": "Optional.",
+            "name": "conditions",
+            "in": "body",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "\"data\" will contain order info with \"status\": \"success\"",
+            "schema": {
+              "$ref": "#/definitions/responseOrderSuccess"
+            }
+          },
+          "400": {
+            "description": "missing params with \"status\": \"fail\"",
+            "schema": {
+              "$ref": "#/definitions/responseError"
+            }
+          },
+          "500": {
+            "description": "the message will state what the internal server error was with \"status\": \"error\"",
+            "schema": {
+              "$ref": "#/definitions/responseError"
+            }
+          }
+        }
       },
       "delete": {
-        "description": "...",
+        "description": "Cannot remove orders that have already executed.",
         "tags": [
           "orders"
         ],
-        "summary": "not implemented (protected)",
-        "operationId": "deleteOrder"
+        "summary": "Remove and order (protected)",
+        "operationId": "deleteOrder",
+        "responses": {
+          "200": {
+            "description": "data will be null with \"status\": \"success\"",
+            "schema": {
+              "$ref": "#/definitions/responseOrderSuccess"
+            }
+          },
+          "500": {
+            "description": "the message will state what the internal server error was with \"status\": \"error\"",
+            "schema": {
+              "$ref": "#/definitions/responseError"
+            }
+          }
+        }
       }
     },
     "/session": {
@@ -957,6 +1152,139 @@
       },
       "x-go-package": "github.com/asciiu/gomo/api/controllers"
     },
+    "Order": {
+      "description": "Responses",
+      "type": "object",
+      "properties": {
+        "apiKeyId": {
+          "type": "string",
+          "x-go-name": "ApiKeyId"
+        },
+        "conditions": {
+          "type": "string",
+          "x-go-name": "Conditions"
+        },
+        "exchange": {
+          "type": "string",
+          "x-go-name": "Exchange"
+        },
+        "exchangeMarketName": {
+          "type": "string",
+          "x-go-name": "ExchangeMarketName"
+        },
+        "exchangeOrderId": {
+          "type": "string",
+          "x-go-name": "ExchangeOrderId"
+        },
+        "marketName": {
+          "type": "string",
+          "x-go-name": "MarketName"
+        },
+        "orderId": {
+          "type": "string",
+          "x-go-name": "OrderId"
+        },
+        "orderType": {
+          "type": "string",
+          "x-go-name": "OrderType"
+        },
+        "price": {
+          "type": "number",
+          "format": "double",
+          "x-go-name": "Price"
+        },
+        "qty": {
+          "type": "number",
+          "format": "double",
+          "x-go-name": "Qty"
+        },
+        "qtyRemaining": {
+          "type": "number",
+          "format": "double",
+          "x-go-name": "QtyRemaining"
+        },
+        "side": {
+          "type": "string",
+          "x-go-name": "Side"
+        },
+        "status": {
+          "type": "string",
+          "x-go-name": "Status"
+        },
+        "userId": {
+          "type": "string",
+          "x-go-name": "UserId"
+        }
+      },
+      "x-go-package": "github.com/asciiu/gomo/order-service/proto/order"
+    },
+    "OrderController": {
+      "type": "object",
+      "properties": {
+        "Client": {
+          "$ref": "#/definitions/OrderServiceClient"
+        },
+        "DB": {
+          "$ref": "#/definitions/DB"
+        }
+      },
+      "x-go-package": "github.com/asciiu/gomo/api/controllers"
+    },
+    "OrderRequest": {
+      "type": "object",
+      "properties": {
+        "apiKeyId": {
+          "description": "Required.\nin: body",
+          "type": "string",
+          "x-go-name": "ApiKeyId"
+        },
+        "conditions": {
+          "description": "Required.\nin: body",
+          "type": "string",
+          "x-go-name": "Conditions"
+        },
+        "exchangeMarketName": {
+          "type": "string",
+          "x-go-name": "ExchangeMarketName"
+        },
+        "marketName": {
+          "description": "Required.\nin: body",
+          "type": "string",
+          "x-go-name": "MarketName"
+        },
+        "orderType": {
+          "description": "Required.\nin: body",
+          "type": "string",
+          "x-go-name": "OrderType"
+        },
+        "price": {
+          "description": "Required.\nin: body",
+          "type": "number",
+          "format": "double",
+          "x-go-name": "Price"
+        },
+        "quantity": {
+          "description": "Required.\nin: body",
+          "type": "number",
+          "format": "double",
+          "x-go-name": "Qauntity"
+        },
+        "side": {
+          "description": "Required.\nin: body",
+          "type": "string",
+          "x-go-name": "Side"
+        }
+      },
+      "x-go-package": "github.com/asciiu/gomo/api/controllers"
+    },
+    "OrderServiceClient": {
+      "type": "object",
+      "x-go-package": "github.com/asciiu/gomo/order-service/proto/order"
+    },
+    "OrderTemp": {
+      "type": "object",
+      "x-go-package": "github.com/asciiu/gomo/api/controllers"
+    },
     "SignupRequest": {
       "type": "object",
       "properties": {
@@ -990,6 +1318,34 @@
           "description": "Required.\nin: body",
           "type": "string",
           "x-go-name": "Description"
+        }
+      },
+      "x-go-package": "github.com/asciiu/gomo/api/controllers"
+    },
+    "UpdateOrderRequest": {
+      "type": "object",
+      "properties": {
+        "conditions": {
+          "description": "Optional.\nin: body",
+          "type": "string",
+          "x-go-name": "Conditions"
+        },
+        "orderType": {
+          "description": "Optional.\nin: body",
+          "type": "string",
+          "x-go-name": "OrderType"
+        },
+        "price": {
+          "description": "Optional.\nin: body",
+          "type": "number",
+          "format": "double",
+          "x-go-name": "Price"
+        },
+        "quantity": {
+          "description": "Optional.\nin: body",
+          "type": "number",
+          "format": "double",
+          "x-go-name": "Qauntity"
         }
       },
       "x-go-package": "github.com/asciiu/gomo/api/controllers"
@@ -1068,6 +1424,28 @@
         }
       },
       "x-go-package": "github.com/asciiu/gomo/user-service/models"
+    },
+    "UserOrderData": {
+      "type": "object",
+      "properties": {
+        "order": {
+          "$ref": "#/definitions/Order"
+        }
+      },
+      "x-go-package": "github.com/asciiu/gomo/order-service/proto/order"
+    },
+    "UserOrdersData": {
+      "type": "object",
+      "properties": {
+        "order": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/Order"
+          },
+          "x-go-name": "Order"
+        }
+      },
+      "x-go-package": "github.com/asciiu/gomo/order-service/proto/order"
     },
     "UserServiceClient": {
       "type": "object",
@@ -1148,6 +1526,36 @@
         }
       },
       "x-go-name": "ResponseKeysSuccess",
+      "x-go-package": "github.com/asciiu/gomo/api/controllers"
+    },
+    "responseOrderSuccess": {
+      "type": "object",
+      "title": "A ResponseKeySuccess will always contain a status of \"successful\".",
+      "properties": {
+        "data": {
+          "$ref": "#/definitions/UserOrderData"
+        },
+        "status": {
+          "type": "string",
+          "x-go-name": "Status"
+        }
+      },
+      "x-go-name": "ResponseOrderSuccess",
+      "x-go-package": "github.com/asciiu/gomo/api/controllers"
+    },
+    "responseOrdersSuccess": {
+      "type": "object",
+      "title": "A ResponseKeysSuccess will always contain a status of \"successful\".",
+      "properties": {
+        "data": {
+          "$ref": "#/definitions/UserOrdersData"
+        },
+        "status": {
+          "type": "string",
+          "x-go-name": "Status"
+        }
+      },
+      "x-go-name": "ResponseOrdersSuccess",
       "x-go-package": "github.com/asciiu/gomo/api/controllers"
     },
     "responseSuccess": {

@@ -18,7 +18,7 @@ type OrderController struct {
 	Client orderProto.OrderServiceClient
 }
 
-type Order struct {
+type OrderTemp struct {
 	orderID            string
 	apiKeyId           string //Key id used for the order? Remember why we have this?
 	exchangeOrderID    string
@@ -44,15 +44,47 @@ type Order struct {
 	createdAt          int64  //integer
 }
 
+// swagger:parameters addOrder
 type OrderRequest struct {
-	ApiKeyId           string  `json:"apiKeyId"`
-	ExchangeMarketName string  `json:"exchangeMarketName"`
-	MarketName         string  `json:"marketName"`
-	Side               string  `json:"side"`
-	OrderType          string  `json:"orderType"`
-	Price              float64 `json:"price"`
-	Qauntity           float64 `json:"quantity"`
-	Conditions         string  `json:"conditions"`
+	// Required.
+	// in: body
+	ApiKeyId string `json:"apiKeyId"`
+
+	ExchangeMarketName string `json:"exchangeMarketName"`
+	// Required.
+	// in: body
+	MarketName string `json:"marketName"`
+	// Required.
+	// in: body
+	Side string `json:"side"`
+	// Required.
+	// in: body
+	OrderType string `json:"orderType"`
+	// Required.
+	// in: body
+	Price float64 `json:"price"`
+	// Required.
+	// in: body
+	Qauntity float64 `json:"quantity"`
+	// Required.
+	// in: body
+	Conditions string `json:"conditions"`
+}
+
+// swagger:parameters updateOrder
+type UpdateOrderRequest struct {
+	// Optional.
+	// in: body
+	OrderType string `json:"orderType"`
+	// Optional.
+	// in: body
+	Price float64 `json:"price"`
+	// Optional.
+	// in: body
+	Qauntity float64 `json:"quantity"`
+	// Optional.
+	// in: body
+	Conditions string `json:"conditions"`
 }
 
 // A ResponseKeySuccess will always contain a status of "successful".
@@ -272,7 +304,7 @@ func (controller *OrderController) HandleUpdateOrder(c echo.Context) error {
 	userId := claims["jti"].(string)
 	orderId := c.Param("orderId")
 
-	orderRequest := OrderRequest{}
+	orderRequest := UpdateOrderRequest{}
 
 	err := json.NewDecoder(c.Request().Body).Decode(&orderRequest)
 	if err != nil {

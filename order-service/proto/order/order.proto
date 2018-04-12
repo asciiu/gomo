@@ -67,7 +67,7 @@ message UserOrderData {
 }
 
 message UserOrdersData {
-  repeated Order order = 1;
+  repeated Order orders = 1;
 }
 
 message OrderResponse {
