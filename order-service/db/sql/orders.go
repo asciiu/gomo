@@ -84,7 +84,7 @@ func InsertOrder(db *sql.DB, req *orderProto.OrderRequest) (*orderProto.Order, e
 }
 
 func UpdateOrder(db *sql.DB, req *orderProto.OrderRequest) (*orderProto.Order, error) {
-	sqlStatement := `UPDATE orders SET conditions = $1, price = $2, quantity = $3 WHERE id = $4 and user_id = $5 RETURNING exchange_name, api_key, status`
+	sqlStatement := `UPDATE orders SET conditions = $1, price = $2, quantity = $3 WHERE id = $4 and user_id = $5 RETURNING exchange_name, user_key_id, status`
 
 	var o orderProto.Order
 	err := db.QueryRow(sqlStatement, req.Conditions, req.Price, req.Qty, req.OrderId, req.UserId).

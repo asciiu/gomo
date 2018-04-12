@@ -300,7 +300,7 @@ func (controller *OrderController) HandleUpdateOrder(c echo.Context) error {
 			Message: err.Error(),
 		}
 
-		return c.JSON(http.StatusGone, response)
+		return c.JSON(http.StatusInternalServerError, response)
 	}
 
 	if r.Status != "success" {
