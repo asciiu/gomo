@@ -135,14 +135,52 @@ func (controller *OrderController) HandleGetOrder(c echo.Context) error {
 
 // swagger:route GET /orders orders getAllOrders
 //
-// not implemented (protected)
+// get all orders (protected)
 //
-// ...
+// Currently returns all orders. Eventually going to add params to filter orders.
+//
+// responses:
+//  200: responseOrdersSuccess "data" will contain a list of order info with "status": "success"
+//  500: responseError the message will state what the internal server error was with "status": "error"
 func (controller *OrderController) HandleListOrders(c echo.Context) error {
-	// Get team and member from the query string
-	team := c.QueryParam("team")
-	member := c.QueryParam("member")
-	return c.String(http.StatusOK, "team:"+team+", member:"+member)
+	token := c.Get("user").(*jwt.Token)
+	claims := token.Claims.(jwt.MapClaims)
+	userId := claims["jti"].(string)
+
+	getRequest := orderProto.GetUserOrdersRequest{
+		UserId: userId,
+	}
+
+	r, err := controller.Client.GetUserOrders(context.Background(), &getRequest)
+	if err != nil {
+		response := &ResponseError{
+			Status:  "error",
+			Message: err.Error(),
+		}
+
+		return c.JSON(http.StatusInternalServerError, response)
+	}
+
+	if r.Status != "success" {
+		response := &ResponseError{
+			Status:  r.Status,
+			Message: r.Message,
+		}
+
+		if r.Status == "fail" {
+			return c.JSON(http.StatusBadRequest, response)
+		}
+		if r.Status == "error" {
+			return c.JSON(http.StatusInternalServerError, response)
+		}
+	}
+
+	response := &ResponseOrdersSuccess{
+		Status: "success",
+		Data:   r.Data,
+	}
+
+	return c.JSON(http.StatusOK, response)
 }
 
 // swagger:route POST /orders orders addOrder
@@ -220,18 +258,120 @@ func (controller *OrderController) HandlePostOrder(c echo.Context) error {
 
 // swagger:route PUT /orders/:orderId orders updateOrder
 //
-// not implemented (protected)
+// update and order (protected)
 //
-// ...
+// You can only update pending orders.
+//
+// responses:
+//  200: responseOrderSuccess "data" will contain order info with "status": "success"
+//  400: responseError missing params with "status": "fail"
+//  500: responseError the message will state what the internal server error was with "status": "error"
 func (controller *OrderController) HandleUpdateOrder(c echo.Context) error {
-	return c.String(http.StatusOK, "update it!")
+	token := c.Get("user").(*jwt.Token)
+	claims := token.Claims.(jwt.MapClaims)
+	userId := claims["jti"].(string)
+	orderId := c.Param("orderId")
+
+	orderRequest := OrderRequest{}
+
+	err := json.NewDecoder(c.Request().Body).Decode(&orderRequest)
+	if err != nil {
+		response := &ResponseError{
+			Status:  "fail",
+			Message: err.Error(),
+		}
+
+		return c.JSON(http.StatusBadRequest, response)
+	}
+
+	// client can only update description
+	updateRequest := orderProto.OrderRequest{
+		OrderId:    orderId,
+		UserId:     userId,
+		Conditions: orderRequest.Conditions,
+		Price:      orderRequest.Price,
+		Qty:        orderRequest.Qauntity,
+	}
+
+	r, err := controller.Client.UpdateOrder(context.Background(), &updateRequest)
+	if err != nil {
+		response := &ResponseError{
+			Status:  "error",
+			Message: err.Error(),
+		}
+
+		return c.JSON(http.StatusGone, response)
+	}
+
+	if r.Status != "success" {
+		response := &ResponseError{
+			Status:  r.Status,
+			Message: r.Message,
+		}
+
+		if r.Status == "fail" {
+			return c.JSON(http.StatusBadRequest, response)
+		}
+		if r.Status == "error" {
+			return c.JSON(http.StatusInternalServerError, response)
+		}
+	}
+
+	response := &ResponseOrderSuccess{
+		Status: "success",
+		Data:   r.Data,
+	}
+
+	return c.JSON(http.StatusOK, response)
 }
 
 // swagger:route DELETE /orders/:orderId orders deleteOrder
 //
-// not implemented (protected)
+// Remove and order (protected)
 //
-// ...
+// Cannot remove orders that have already executed.
+//
+// responses:
+//  200: responseOrderSuccess data will be null with "status": "success"
+//  500: responseError the message will state what the internal server error was with "status": "error"
 func (controller *OrderController) HandleDeleteOrder(c echo.Context) error {
-	return c.String(http.StatusOK, "delete it!")
+	token := c.Get("user").(*jwt.Token)
+	claims := token.Claims.(jwt.MapClaims)
+	userId := claims["jti"].(string)
+	orderId := c.Param("orderId")
+
+	removeRequest := orderProto.RemoveOrderRequest{
+		OrderId: orderId,
+		UserId:  userId,
+	}
+
+	r, err := controller.Client.RemoveOrder(context.Background(), &removeRequest)
+	if err != nil {
+		response := &ResponseError{
+			Status:  "error",
+			Message: err.Error(),
+		}
+
+		return c.JSON(http.StatusInternalServerError, response)
+	}
+
+	if r.Status != "success" {
+		response := &ResponseError{
+			Status:  r.Status,
+			Message: r.Message,
+		}
+
+		if r.Status == "fail" {
+			return c.JSON(http.StatusBadRequest, response)
+		}
+		if r.Status == "error" {
+			return c.JSON(http.StatusInternalServerError, response)
+		}
+	}
+
+	response := &ResponseOrderSuccess{
+		Status: "success",
+	}
+
+	return c.JSON(http.StatusOK, response)
 }
