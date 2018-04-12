@@ -30,10 +30,19 @@ services:
       MICRO_ADDRESS: ":5001"
       MICRO_REGISTRY: "mdns"
 
+  order-service:
+    build: ./order-service
+    ports:
+      - 5003:5000
+    environment:
+      DB_URL: "postgres://fomo:fomornd@docker.for.mac.host.internal:6432/fomo_dev?&sslmode=disable"
+      MICRO_ADDRESS: ":5001"
+      MICRO_REGISTRY: "mdns"
+
   user-service:
     build: ./user-service
     ports:
-      - 5003:5000
+      - 5004:5000
     environment:
       DB_URL: "postgres://fomo:fomornd@docker.for.mac.host.internal:6432/fomo_dev?&sslmode=disable"
       MICRO_ADDRESS: ":5001"

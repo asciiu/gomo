@@ -106,7 +106,7 @@ func UpdateOrder(db *sql.DB, req *orderProto.OrderRequest) (*orderProto.Order, e
 	return order, nil
 }
 
-func UpdateApiKeyStatus(db *sql.DB, req *orderProto.OrderStatusRequest) (*orderProto.Order, error) {
+func UpdateOrderStatus(db *sql.DB, req *orderProto.OrderStatusRequest) (*orderProto.Order, error) {
 	sqlStatement := `UPDATE orders SET status = $1 WHERE id = $2 RETURNING user_id, exchange_name, market_name, user_key, side, price, quantity, status, conditions`
 
 	var o orderProto.Order

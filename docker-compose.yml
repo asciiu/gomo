@@ -12,6 +12,9 @@ services:
   device-service:
     build: ./device-service
 
+  order-service:
+    build: ./order-service
+
   user-service:
     build: ./user-service
 
