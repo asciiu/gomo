@@ -3,15 +3,20 @@ package controllers
 import (
 	"database/sql"
 	"encoding/json"
+	"fmt"
 	"log"
 	"net/http"
 
+	orderProto "github.com/asciiu/gomo/order-service/proto/order"
 	jwt "github.com/dgrijalva/jwt-go"
 	"github.com/labstack/echo"
+	micro "github.com/micro/go-micro"
+	"golang.org/x/net/context"
 )
 
 type OrderController struct {
-	DB *sql.DB
+	DB     *sql.DB
+	Client orderProto.OrderServiceClient
 }
 
 type Order struct {
@@ -46,14 +51,33 @@ type OrderRequest struct {
 	MarketName         string  `json:"marketName"`
 	Side               string  `json:"side"`
 	OrderType          string  `json:"orderType"`
-	UnitPrice          float64 `json:"unitPrice"`
+	Price              float64 `json:"price"`
 	Qauntity           float64 `json:"quantity"`
 	Conditions         string  `json:"conditions"`
 }
 
+// A ResponseKeySuccess will always contain a status of "successful".
+// swagger:model responseOrderSuccess
+type ResponseOrderSuccess struct {
+	Status string                    `json:"status"`
+	Data   *orderProto.UserOrderData `json:"data"`
+}
+
+// A ResponseKeysSuccess will always contain a status of "successful".
+// swagger:model responseOrdersSuccess
+type ResponseOrdersSuccess struct {
+	Status string                     `json:"status"`
+	Data   *orderProto.UserOrdersData `json:"data"`
+}
+
 func NewOrderController(db *sql.DB) *OrderController {
+	// Create a new service. Optionally include some options here.
+	service := micro.NewService(micro.Name("apikey.client"))
+	service.Init()
+
 	controller := OrderController{
-		DB: db,
+		DB:     db,
+		Client: orderProto.NewOrderServiceClient("go.srv.order-service", service.Client()),
 	}
 	return &controller
 }
@@ -95,25 +119,75 @@ func (controller *OrderController) HandleListOrders(c echo.Context) error {
 
 // swagger:route POST /orders orders addOrder
 //
-// not implemented (protected)
+// create a new order  (protected)
 //
-// ...
+// This will create a new order in the system.
+//
+// responses:
+//  200: responseOrderSuccess "data" will contain order info with "status": "success"
+//  400: responseError missing params with "status": "fail"
+//  500: responseError the message will state what the internal server error was with "status": "error"
 func (controller *OrderController) HandlePostOrder(c echo.Context) error {
-	user := c.Get("user").(*jwt.Token)
-	claims := user.Claims.(jwt.MapClaims)
-	name := claims["name"].(string)
+	token := c.Get("user").(*jwt.Token)
+	claims := token.Claims.(jwt.MapClaims)
+	userId := claims["jti"].(string)
 
 	order := OrderRequest{}
 
 	defer c.Request().Body.Close()
 	err := json.NewDecoder(c.Request().Body).Decode(&order)
 	if err != nil {
-		log.Printf("failed reading the request %s", err)
-		return c.String(http.StatusInternalServerError, "")
+		response := &ResponseError{
+			Status:  "fail",
+			Message: err.Error(),
+		}
+
+		return c.JSON(http.StatusBadRequest, response)
 	}
 
-	log.Printf("this is your order: %#v", order)
-	return c.String(http.StatusOK, "Welcome "+name+" your order has posted!")
+	createRequest := orderProto.OrderRequest{
+		UserId:     userId,
+		Exchange:   "exchange",
+		ApiKeyId:   order.ApiKeyId,
+		MarketName: order.MarketName,
+		Side:       order.Side,
+		Conditions: order.Conditions,
+		OrderType:  order.OrderType,
+		Price:      order.Price,
+		Qty:        order.Qauntity,
+	}
+
+	r, err := controller.Client.AddOrder(context.Background(), &createRequest)
+	if err != nil {
+		fmt.Println(err)
+		response := &ResponseError{
+			Status:  "error",
+			Message: err.Error(),
+		}
+
+		return c.JSON(http.StatusGone, response)
+	}
+
+	if r.Status != "success" {
+		response := &ResponseError{
+			Status:  r.Status,
+			Message: r.Message,
+		}
+
+		if r.Status == "fail" {
+			return c.JSON(http.StatusBadRequest, response)
+		}
+		if r.Status == "error" {
+			return c.JSON(http.StatusInternalServerError, response)
+		}
+	}
+
+	response := &ResponseOrderSuccess{
+		Status: "success",
+		Data:   r.Data,
+	}
+
+	return c.JSON(http.StatusOK, response)
 }
 
 // swagger:route PUT /orders/:orderId orders updateOrder
