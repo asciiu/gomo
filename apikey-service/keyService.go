@@ -3,15 +3,21 @@ package main
 import (
 	"context"
 	"database/sql"
+	"encoding/json"
 	"log"
 
 	keyRepo "github.com/asciiu/gomo/apikey-service/db/sql"
 	keyProto "github.com/asciiu/gomo/apikey-service/proto/apikey"
+	"github.com/asciiu/gomo/common/db"
 	enums "github.com/asciiu/gomo/common/enums"
+	micro "github.com/micro/go-micro"
+	"github.com/micro/go-micro/broker"
+	"github.com/micro/go-plugins/broker/rabbitmq"
 )
 
 type KeyService struct {
-	DB *sql.DB
+	DB     *sql.DB
+	PubSub broker.Broker
 }
 
 type ExchangeKey struct {
@@ -21,10 +27,66 @@ type ExchangeKey struct {
 	Exchange enums.Exchange
 }
 
-// This private function is responsible for verifying the integrity of an exchange key
-// It will update the status of a key to 'verified'.
-func (service *KeyService) verifyKey(key ExchangeKey) {
-	log.Printf("keyId: %s key: %s secret: %s exchange: %s", key.ApiKeyId, key.ApiKey, key.Secret, key.Exchange)
+const TopicNewKey = "new.key"
+
+func NewKeyService(name, dbUrl string) micro.Service {
+	broker := rabbitmq.NewBroker()
+
+	// Create a new service. Include some options here.
+	srv := micro.NewService(
+		// This name must match the package name given in your protobuf definition
+		micro.Name(name),
+		micro.Broker(broker),
+		micro.Version("latest"),
+	)
+
+	// Init will parse the command line flags.
+	srv.Init()
+	//publisher := micro.NewPublisher("user.created", srv.Client())
+
+	pubsub := srv.Server().Options().Broker
+
+	gomoDB, err := db.NewDB(dbUrl)
+
+	// TODO read secret from env var
+	//dbUrl := fmt.Sprintf("%s", os.Getenv("DB_URL"))
+	if err != nil {
+		log.Fatalf(err.Error())
+	}
+
+	// Register our service with the gRPC server, this will tie our
+	// implementation into the auto-generated interface code for our
+	// protobuf definition.
+	keyProto.RegisterApiKeyServiceHandler(srv.Server(), &KeyService{gomoDB, pubsub})
+
+	return srv
+}
+
+func (srv *KeyService) publishEvent(key ExchangeKey) error {
+
+	// Marshal to JSON string
+	body, err := json.Marshal(key)
+	if err != nil {
+		return err
+	}
+
+	// Create a broker message
+	msg := &broker.Message{
+		Header: map[string]string{
+			"UserKeyId": key.ApiKeyId,
+		},
+		Body: body,
+	}
+
+	log.Printf("UserKeyId: %s key: %s secret: %s exchange: %s", key.ApiKeyId, key.ApiKey, key.Secret, key.Exchange)
+	log.Printf("%s", msg)
+
+	// Publish message to broker
+	if err := srv.PubSub.Publish(TopicNewKey, msg); err != nil {
+		log.Printf("[pub] failed: %v", err)
+	}
+
+	return nil
 }
 
 func (service *KeyService) AddApiKey(ctx context.Context, req *keyProto.ApiKeyRequest, res *keyProto.ApiKeyResponse) error {
@@ -33,7 +95,7 @@ func (service *KeyService) AddApiKey(ctx context.Context, req *keyProto.ApiKeyRe
 	switch {
 	case error == nil:
 		// verify the key in another process
-		go service.verifyKey(ExchangeKey{
+		go service.publishEvent(ExchangeKey{
 			ApiKeyId: apiKey.ApiKeyId,
 			ApiKey:   apiKey.Key,
 			Secret:   apiKey.Secret,
