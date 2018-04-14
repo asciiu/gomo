@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"database/sql"
+	"fmt"
 
 	keyRepo "github.com/asciiu/gomo/apikey-service/db/sql"
 	keyProto "github.com/asciiu/gomo/apikey-service/proto/apikey"
@@ -17,6 +18,10 @@ func (service *KeyService) AddApiKey(ctx context.Context, req *keyProto.ApiKeyRe
 
 	switch {
 	case error == nil:
+		go func(key, secret, exchange string) {
+			fmt.Printf("key: %s secret: %s exchange: %s", key, secret, exchange)
+		}("key", "secret", "feDex")
+
 		res.Status = "success"
 		res.Data = &keyProto.UserApiKeyData{
 			ApiKey: &keyProto.ApiKey{
