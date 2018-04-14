@@ -3,14 +3,28 @@ package main
 import (
 	"context"
 	"database/sql"
-	"fmt"
+	"log"
 
 	keyRepo "github.com/asciiu/gomo/apikey-service/db/sql"
 	keyProto "github.com/asciiu/gomo/apikey-service/proto/apikey"
+	enums "github.com/asciiu/gomo/common/enums"
 )
 
 type KeyService struct {
 	DB *sql.DB
+}
+
+type ExchangeKey struct {
+	ApiKeyId string
+	ApiKey   string
+	Secret   string
+	Exchange enums.Exchange
+}
+
+// This private function is responsible for verifying the integrity of an exchange key
+// It will update the status of a key to 'verified'.
+func (service *KeyService) verifyKey(key ExchangeKey) {
+	log.Printf("keyId: %s key: %s secret: %s exchange: %s", key.ApiKeyId, key.ApiKey, key.Secret, key.Exchange)
 }
 
 func (service *KeyService) AddApiKey(ctx context.Context, req *keyProto.ApiKeyRequest, res *keyProto.ApiKeyResponse) error {
@@ -18,9 +32,13 @@ func (service *KeyService) AddApiKey(ctx context.Context, req *keyProto.ApiKeyRe
 
 	switch {
 	case error == nil:
-		go func(key, secret, exchange string) {
-			fmt.Printf("key: %s secret: %s exchange: %s", key, secret, exchange)
-		}("key", "secret", "feDex")
+		// verify the key in another process
+		go service.verifyKey(ExchangeKey{
+			ApiKeyId: apiKey.ApiKeyId,
+			ApiKey:   apiKey.Key,
+			Secret:   apiKey.Secret,
+			Exchange: enums.NewExchange(apiKey.Exchange),
+		})
 
 		res.Status = "success"
 		res.Data = &keyProto.UserApiKeyData{

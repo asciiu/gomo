@@ -1,4 +1,4 @@
-package models
+package enums
 
 import (
 	"testing"
