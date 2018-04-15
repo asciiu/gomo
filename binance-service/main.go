@@ -1,34 +1,22 @@
 package main
 
 import (
-	"fmt"
 	"log"
 
-	//"github.com/go-kit/kit/log"
-
-	"github.com/micro/go-micro/broker"
-	"github.com/micro/go-micro/cmd"
-	_ "github.com/micro/go-plugins/broker/rabbitmq"
+	msg "github.com/asciiu/gomo/apikey-service/models"
+	micro "github.com/micro/go-micro"
 )
 
 func main() {
-	cmd.Init()
-	if err := broker.Init(); err != nil {
-		log.Fatalf("Broker Init error: %v", err)
-	}
-	if err := broker.Connect(); err != nil {
-		log.Fatalf("Broker Connect error: %v", err)
-	}
+	srv := micro.NewService(
+		micro.Name("go.micro.srv.binance"),
+	)
 
-	_, err := broker.Subscribe("new.key", func(p broker.Publication) error {
-		VerifyKey(p.Message().Body)
-		//fmt.Println("[sub] received message:", string(p.Message().Body), "header", p.Message().Header)
-		return nil
-	})
-	if err != nil {
-		fmt.Println(err)
-	}
+	srv.Init()
 
-	forever := make(chan struct{})
-	<-forever
+	// subscribe to new key topic with a key validator
+	micro.RegisterSubscriber(msg.TopicNewKey, srv.Server(), new(KeyValidator))
+	if err := srv.Run(); err != nil {
+		log.Fatal(err)
+	}
 }

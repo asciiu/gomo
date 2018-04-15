@@ -20,12 +20,6 @@ services:
       DB_URL: "postgres://fomo:fomornd@docker.for.mac.host.internal:6432/fomo_dev?&sslmode=disable"
       MICRO_ADDRESS: ":5001"
       MICRO_REGISTRY: "mdns"
-      MICRO_REGISTRY_ADDRESS: "consul:8500"
-      MICRO_BROKER_ADDRESS: "amqp://admin:password@rabbit:5672/"
-      MICRO_BROKER: "rabbitmq"
-    depends_on:
-      - consul
-      - rabbit
 
   binance-service: 
     build: ./binance-service
@@ -33,12 +27,8 @@ services:
       - 5005:5000
     environment:
       DB_URL: "postgres://fomo:fomornd@docker.for.mac.host.internal:6432/fomo_dev?&sslmode=disable"
-      MICRO_REGISTRY_ADDRESS: "consul:8500"
-      MICRO_BROKER_ADDRESS: "amqp://admin:password@rabbit:5672/"
-      MICRO_BROKER: "rabbitmq"
-    depends_on:
-      - consul
-      - rabbit
+      MICRO_ADDRESS: ":5001"
+      MICRO_REGISTRY: "mdns"
 
   device-service:
     build: ./device-service
@@ -74,17 +64,3 @@ services:
       POSTGRES_PASSWORD: fomornd 
       POSTGRES_DB: "fomo_dev"
       POSTGRES_USER: "fomo"
-
-  consul:
-    image: progrium/consul:latest
-    command: -server -bootstrap -rejoin
-    ports:
-      - "8500"
-
-  rabbit:
-    image: rabbitmq:3-management
-    ports:
-      - "5672"
-    environment:
-      RABBITMQ_DEFAULT_USER: admin
-      RABBITMQ_DEFAULT_PASS: password
