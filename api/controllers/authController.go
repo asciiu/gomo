@@ -24,7 +24,7 @@ import (
 )
 
 const refreshDuration = 720 * time.Hour
-const jwtDuration = 60 * time.Minute
+const jwtDuration = 1440 * time.Minute
 
 type AuthController struct {
 	DB     *sql.DB
@@ -235,7 +235,8 @@ func (controller *AuthController) HandleLogin(c echo.Context) error {
 
 	default:
 		if bcrypt.CompareHashAndPassword([]byte(user.PasswordHash), []byte(loginRequest.Password)) == nil {
-			accessToken, err := createJwtToken(user.Id, 5*time.Minute)
+
+			accessToken, err := createJwtToken(user.Id, jwtDuration)
 			if err != nil {
 				response := &ResponseError{
 					Status:  "error",
