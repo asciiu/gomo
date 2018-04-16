@@ -5,7 +5,7 @@ import (
 	"database/sql"
 	"fmt"
 
-	balProto "github.com/asciiu/gomo/balance-service/proto/balance"
+	bp "github.com/asciiu/gomo/balance-service/proto/balance"
 	micro "github.com/micro/go-micro"
 )
 
@@ -14,7 +14,7 @@ type BalancerUpdater struct {
 	Micro micro.Service
 }
 
-func (service *BalancerUpdater) Process(ctx context.Context, balances *balProto.AccountBalances) error {
+func (service *BalancerUpdater) Process(ctx context.Context, balances *bp.AccountBalances) error {
 	fmt.Println(balances)
 	return nil
 }

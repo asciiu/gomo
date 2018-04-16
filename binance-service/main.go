@@ -24,8 +24,16 @@ func main() {
 		log.Fatalf(err.Error())
 	}
 
+	verifiedPub := micro.NewPublisher(msg.TopicKeyVerified, srv.Client())
+	balancePub := micro.NewPublisher(msg.TopicBalanceUpdate, srv.Client())
+	keyValidator := KeyValidator{
+		DB:             gomoDB,
+		KeyVerifiedPub: verifiedPub,
+		BalancePub:     balancePub,
+	}
+
 	// subscribe to new key topic with a key validator
-	micro.RegisterSubscriber(msg.TopicNewKey, srv.Server(), &KeyValidator{gomoDB, srv})
+	micro.RegisterSubscriber(msg.TopicNewKey, srv.Server(), &keyValidator)
 	if err := srv.Run(); err != nil {
 		log.Fatal(err)
 	}

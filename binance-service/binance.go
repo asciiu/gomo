@@ -10,14 +10,14 @@ import (
 	binance "github.com/asciiu/go-binance"
 	kp "github.com/asciiu/gomo/apikey-service/proto/apikey"
 	bp "github.com/asciiu/gomo/balance-service/proto/balance"
-	msg "github.com/asciiu/gomo/common/messages"
 	"github.com/go-kit/kit/log"
 	micro "github.com/micro/go-micro"
 )
 
 type KeyValidator struct {
-	DB    *sql.DB
-	Micro micro.Service
+	DB             *sql.DB
+	KeyVerifiedPub micro.Publisher
+	BalancePub     micro.Publisher
 }
 
 func (service *KeyValidator) Process(ctx context.Context, key *kp.ApiKey) error {
@@ -56,13 +56,10 @@ func (service *KeyValidator) Process(ctx context.Context, key *kp.ApiKey) error 
 		key.Status = "verified"
 
 		// publish verify key event
-		// publish a new key event
-		keyPublisher := micro.NewPublisher(msg.TopicKeyVerified, service.Micro.Client())
-		if err := keyPublisher.Publish(context.Background(), key); err != nil {
+		if err := service.KeyVerifiedPub.Publish(context.Background(), key); err != nil {
 			logger.Log("could not publish verified key event: ", err)
 		}
 
-		balPublisher := micro.NewPublisher(msg.TopicBalanceUpdate, service.Micro.Client())
 		balances := make([]*bp.Balance, 0)
 		for _, balance := range account.Balances {
 			bal := bp.Balance{
@@ -79,14 +76,15 @@ func (service *KeyValidator) Process(ctx context.Context, key *kp.ApiKey) error 
 			Exchange: key.Exchange,
 			Balances: balances,
 		}
-		if err := balPublisher.Publish(context.Background(), &accountBalances); err != nil {
+
+		if err := service.BalancePub.Publish(context.Background(), &accountBalances); err != nil {
 			logger.Log("could not publish account balances event: ", err)
 		}
 
 		// publish balances here an an event
-		for i, balance := range account.Balances {
-			fmt.Printf("%d %s :: FREE: %f LOCKED %f\n", i, balance.Asset, balance.Free, balance.Locked)
-		}
+		//for i, balance := range account.Balances {
+		//	fmt.Printf("%d %s :: FREE: %f LOCKED %f\n", i, balance.Asset, balance.Free, balance.Locked)
+		//}
 
 		logger.Log("verified keyId: ", key.ApiKeyId)
 	}()
