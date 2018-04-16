@@ -1,0 +1,19 @@
+syntax = "proto3";
+
+package go.micro.srv.balance; 
+
+service OrderService {}
+
+// Requests
+message AccountBalances{
+  string userId = 1;
+  string apiKeyId = 2;
+  string exchange = 3;
+  repeated Balance balances = 4;
+}
+
+message Balance {
+  string currency = 1;
+  double free = 2;
+  double locked = 3;
+}

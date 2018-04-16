@@ -9,6 +9,7 @@ import (
 
 	binance "github.com/asciiu/go-binance"
 	kp "github.com/asciiu/gomo/apikey-service/proto/apikey"
+	bp "github.com/asciiu/gomo/balance-service/proto/balance"
 	msg "github.com/asciiu/gomo/common/messages"
 	"github.com/go-kit/kit/log"
 	micro "github.com/micro/go-micro"
@@ -26,7 +27,7 @@ func (service *KeyValidator) Process(ctx context.Context, key *kp.ApiKey) error 
 
 	go func() {
 		var logger log.Logger
-		logger = log.NewLogfmtLogger(log.NewSyncWriter(os.Stderr))
+		logger = log.NewLogfmtLogger(os.Stdout)
 		logger = log.With(logger, "time", log.DefaultTimestampUTC, "caller", log.DefaultCaller)
 
 		hmacSigner := &binance.HmacSigner{
@@ -56,15 +57,38 @@ func (service *KeyValidator) Process(ctx context.Context, key *kp.ApiKey) error 
 
 		// publish verify key event
 		// publish a new key event
-		publisher := micro.NewPublisher(msg.TopicKeyVerified, service.Micro.Client())
-		if err := publisher.Publish(context.Background(), key); err != nil {
-			logger.Log("could not publish event key verified: ", err)
+		keyPublisher := micro.NewPublisher(msg.TopicKeyVerified, service.Micro.Client())
+		if err := keyPublisher.Publish(context.Background(), key); err != nil {
+			logger.Log("could not publish verified key event: ", err)
+		}
+
+		balPublisher := micro.NewPublisher(msg.TopicBalanceUpdate, service.Micro.Client())
+		balances := make([]*bp.Balance, 0)
+		for _, balance := range account.Balances {
+			bal := bp.Balance{
+				Currency: balance.Asset,
+				Free:     balance.Free,
+				Locked:   balance.Locked,
+			}
+			balances = append(balances, &bal)
+		}
+
+		accountBalances := bp.AccountBalances{
+			ApiKeyId: key.ApiKeyId,
+			UserId:   key.UserId,
+			Exchange: key.Exchange,
+			Balances: balances,
+		}
+		if err := balPublisher.Publish(context.Background(), &accountBalances); err != nil {
+			logger.Log("could not publish account balances event: ", err)
 		}
 
 		// publish balances here an an event
 		for i, balance := range account.Balances {
 			fmt.Printf("%d %s :: FREE: %f LOCKED %f\n", i, balance.Asset, balance.Free, balance.Locked)
 		}
+
+		logger.Log("verified keyId: ", key.ApiKeyId)
 	}()
 	return nil
 }

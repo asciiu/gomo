@@ -21,6 +21,15 @@ services:
       MICRO_ADDRESS: ":5001"
       MICRO_REGISTRY: "mdns"
 
+  balance-service:
+    build: ./balance-service
+    ports:
+      - 5006:5000
+    environment:
+      DB_URL: "postgres://fomo:fomornd@docker.for.mac.host.internal:6432/fomo_dev?&sslmode=disable"
+      MICRO_ADDRESS: ":5001"
+      MICRO_REGISTRY: "mdns"
+
   binance-service: 
     build: ./binance-service
     ports:
