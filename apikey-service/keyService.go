@@ -3,52 +3,16 @@ package main
 import (
 	"context"
 	"database/sql"
-	"fmt"
 	"log"
 
 	keyRepo "github.com/asciiu/gomo/apikey-service/db/sql"
 	keyProto "github.com/asciiu/gomo/apikey-service/proto/apikey"
-	"github.com/asciiu/gomo/common/db"
-	msg "github.com/asciiu/gomo/common/messages"
 	micro "github.com/micro/go-micro"
 )
 
 type KeyService struct {
 	DB     *sql.DB
 	KeyPub micro.Publisher
-}
-
-func NewKeyService(name, dbUrl string) micro.Service {
-	// Create a new service. Include some options here.
-	srv := micro.NewService(
-		// This name must match the package name given in your protobuf definition
-		micro.Name(name),
-		//micro.Broker(broker),
-		micro.Version("latest"),
-	)
-
-	// Init will parse the command line flags.
-	srv.Init()
-
-	gomoDB, err := db.NewDB(dbUrl)
-
-	// TODO read secret from env var
-	//dbUrl := fmt.Sprintf("%s", os.Getenv("DB_URL"))
-	if err != nil {
-		log.Fatalf(err.Error())
-	}
-	publisher := micro.NewPublisher(msg.TopicNewKey, srv.Client())
-	keyService := KeyService{gomoDB, publisher}
-
-	// Register our service with the gRPC server, this will tie our
-	// implementation into the auto-generated interface code for our
-	// protobuf definition.
-	keyProto.RegisterApiKeyServiceHandler(srv.Server(), &keyService)
-
-	// handles key verified events
-	micro.RegisterSubscriber(msg.TopicKeyVerified, srv.Server(), &keyService)
-
-	return srv
 }
 
 func (service *KeyService) AddApiKey(ctx context.Context, req *keyProto.ApiKeyRequest, res *keyProto.ApiKeyResponse) error {
@@ -157,10 +121,4 @@ func (service *KeyService) UpdateApiKeyDescription(ctx context.Context, req *key
 		res.Message = error.Error()
 		return error
 	}
-}
-
-func (service *KeyService) Process(ctx context.Context, key *keyProto.ApiKey) error {
-	fmt.Println(key)
-	_, error := keyRepo.UpdateApiKeyStatus(service.DB, key)
-	return error
 }
