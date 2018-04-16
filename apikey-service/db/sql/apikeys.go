@@ -93,7 +93,7 @@ func UpdateApiKeyDescription(db *sql.DB, req *pb.ApiKeyRequest) (*pb.ApiKey, err
 	return apikey, nil
 }
 
-func UpdateApiKeyStatus(db *sql.DB, req *pb.ApiKeyRequest) (*pb.ApiKey, error) {
+func UpdateApiKeyStatus(db *sql.DB, req *pb.ApiKey) (*pb.ApiKey, error) {
 	sqlStatement := `UPDATE user_keys SET status = $1 WHERE id = $2 and user_id = $3 RETURNING exchange_name, api_key, description, status`
 
 	var k pb.ApiKey

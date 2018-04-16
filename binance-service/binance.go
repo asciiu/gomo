@@ -77,14 +77,10 @@ func (service *KeyValidator) Process(ctx context.Context, key *kp.ApiKey) error 
 			Balances: balances,
 		}
 
+		// publish account balances
 		if err := service.BalancePub.Publish(context.Background(), &accountBalances); err != nil {
 			logger.Log("could not publish account balances event: ", err)
 		}
-
-		// publish balances here an an event
-		//for i, balance := range account.Balances {
-		//	fmt.Printf("%d %s :: FREE: %f LOCKED %f\n", i, balance.Asset, balance.Free, balance.Locked)
-		//}
 
 		logger.Log("verified keyId: ", key.ApiKeyId)
 	}()

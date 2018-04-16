@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"database/sql"
+	"fmt"
 	"log"
 
 	keyRepo "github.com/asciiu/gomo/apikey-service/db/sql"
@@ -13,13 +14,11 @@ import (
 )
 
 type KeyService struct {
-	DB    *sql.DB
-	Micro micro.Service
+	DB     *sql.DB
+	KeyPub micro.Publisher
 }
 
 func NewKeyService(name, dbUrl string) micro.Service {
-	//broker := rabbitmq.NewBroker()
-
 	// Create a new service. Include some options here.
 	srv := micro.NewService(
 		// This name must match the package name given in your protobuf definition
@@ -38,11 +37,16 @@ func NewKeyService(name, dbUrl string) micro.Service {
 	if err != nil {
 		log.Fatalf(err.Error())
 	}
+	publisher := micro.NewPublisher(msg.TopicNewKey, srv.Client())
+	keyService := KeyService{gomoDB, publisher}
 
 	// Register our service with the gRPC server, this will tie our
 	// implementation into the auto-generated interface code for our
 	// protobuf definition.
-	keyProto.RegisterApiKeyServiceHandler(srv.Server(), &KeyService{gomoDB, srv})
+	keyProto.RegisterApiKeyServiceHandler(srv.Server(), &keyService)
+
+	// handles key verified events
+	micro.RegisterSubscriber(msg.TopicKeyVerified, srv.Server(), &keyService)
 
 	return srv
 }
@@ -53,8 +57,7 @@ func (service *KeyService) AddApiKey(ctx context.Context, req *keyProto.ApiKeyRe
 	switch {
 	case error == nil:
 		// publish a new key event
-		publisher := micro.NewPublisher(msg.TopicNewKey, service.Micro.Client())
-		if err := publisher.Publish(context.Background(), apiKey); err != nil {
+		if err := service.KeyPub.Publish(context.Background(), apiKey); err != nil {
 			log.Println("could not publish event new.key: ", err)
 		}
 
@@ -154,4 +157,10 @@ func (service *KeyService) UpdateApiKeyDescription(ctx context.Context, req *key
 		res.Message = error.Error()
 		return error
 	}
+}
+
+func (service *KeyService) Process(ctx context.Context, key *keyProto.ApiKey) error {
+	fmt.Println(key)
+	_, error := keyRepo.UpdateApiKeyStatus(service.DB, key)
+	return error
 }
