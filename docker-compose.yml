@@ -12,6 +12,12 @@ services:
   balance-service:
     build: ./balance-service
 
+  binance-service: 
+    build: ./binance-service
+
+  bittrex-service:
+    build: ./bittrex-service
+
   device-service:
     build: ./device-service
 
