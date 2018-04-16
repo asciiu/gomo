@@ -6,9 +6,9 @@ import (
 	"log"
 
 	keyRepo "github.com/asciiu/gomo/apikey-service/db/sql"
-	msg "github.com/asciiu/gomo/apikey-service/models"
 	keyProto "github.com/asciiu/gomo/apikey-service/proto/apikey"
 	"github.com/asciiu/gomo/common/db"
+	msg "github.com/asciiu/gomo/common/messages"
 	micro "github.com/micro/go-micro"
 )
 

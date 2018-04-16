@@ -5,8 +5,8 @@ import (
 	"log"
 	"os"
 
-	msg "github.com/asciiu/gomo/apikey-service/models"
 	"github.com/asciiu/gomo/common/db"
+	msg "github.com/asciiu/gomo/common/messages"
 	micro "github.com/micro/go-micro"
 )
 
@@ -25,7 +25,7 @@ func main() {
 	}
 
 	// subscribe to new key topic with a key validator
-	micro.RegisterSubscriber(msg.TopicNewKey, srv.Server(), &KeyValidator{gomoDB})
+	micro.RegisterSubscriber(msg.TopicNewKey, srv.Server(), &KeyValidator{gomoDB, srv})
 	if err := srv.Run(); err != nil {
 		log.Fatal(err)
 	}

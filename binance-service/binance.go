@@ -9,14 +9,17 @@ import (
 
 	binance "github.com/asciiu/go-binance"
 	kp "github.com/asciiu/gomo/apikey-service/proto/apikey"
+	msg "github.com/asciiu/gomo/common/messages"
 	"github.com/go-kit/kit/log"
+	micro "github.com/micro/go-micro"
 )
 
 type KeyValidator struct {
-	DB *sql.DB
+	DB    *sql.DB
+	Micro micro.Service
 }
 
-func (sub *KeyValidator) Process(ctx context.Context, key *kp.ApiKey) error {
+func (service *KeyValidator) Process(ctx context.Context, key *kp.ApiKey) error {
 	if key.Exchange != "Binance" {
 		return nil
 	}
@@ -48,7 +51,15 @@ func (sub *KeyValidator) Process(ctx context.Context, key *kp.ApiKey) error {
 			fmt.Printf("error encountered: %s", error)
 		}
 
+		// TODO this should be enum
+		key.Status = "verified"
+
 		// publish verify key event
+		// publish a new key event
+		publisher := micro.NewPublisher(msg.TopicKeyVerified, service.Micro.Client())
+		if err := publisher.Publish(context.Background(), key); err != nil {
+			logger.Log("could not publish event key verified: ", err)
+		}
 
 		// publish balances here an an event
 		for i, balance := range account.Balances {
