@@ -1,5 +1,12 @@
 package sql
 
+import (
+	"database/sql"
+
+	bp "github.com/asciiu/gomo/balance-service/proto/balance"
+	"github.com/google/uuid"
+)
+
 //func DeleteOrder(db *sql.DB, orderId string) error {
 //	_, err := db.Exec("DELETE FROM orders WHERE id = $1", orderId)
 //	return err
@@ -42,40 +49,35 @@ package sql
 //
 //	return results, nil
 //}
-//
-//func InsertOrder(db *sql.DB, req *orderProto.OrderRequest) (*orderProto.Order, error) {
-//	newId := uuid.New()
-//
-//	jsonCond, err := json.Marshal(req.Conditions)
-//	if err != nil {
-//		return nil, err
-//	}
-//
-//	// the exchange_order_id and exchange_market_name must be "" and not null
-//	// when scanning in order data null cannot be set on a type string. Therefore,
-//	// just default those cols to "".
-//	sqlStatement := `insert into orders (id, user_id, user_key_id, exchange_name, exchange_order_id, exchange_market_name, market_name, side, type, price, quantity, quantity_remaining, status, conditions) values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)`
-//	_, err = db.Exec(sqlStatement, newId, req.UserId, req.ApiKeyId, req.Exchange, "", "", req.MarketName, req.Side, req.OrderType, req.Price, req.Qty, req.Qty, "pending", jsonCond)
-//
-//	if err != nil {
-//		return nil, err
-//	}
-//	order := &orderProto.Order{
-//		OrderId:      newId.String(),
-//		ApiKeyId:     req.ApiKeyId,
-//		UserId:       req.UserId,
-//		Exchange:     req.Exchange,
-//		MarketName:   req.MarketName,
-//		Side:         req.Side,
-//		OrderType:    req.OrderType,
-//		Price:        req.Price,
-//		Qty:          req.Qty,
-//		QtyRemaining: req.Qty,
-//		Status:       "pending",
-//		Conditions:   req.Conditions,
-//	}
-//	return order, nil
-//}
+
+// return count of inserts
+func UpsertBalances(db *sql.DB, req *bp.AccountBalances) (int, error) {
+	sqlStatement := `INSERT INTO user_balances (id, user_id, user_key_id, exchange_name, currency_name, 
+		available, locked, exchange_total, exchange_available, exchange_locked) VALUES 
+		($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) ON CONFLICT (user_key_id, currency_name) 
+		DO UPDATE SET available = $6, locked = $7, exchange_total = $8, exchange_available = $9,
+		exchange_locked = $10;`
+
+	count := 0
+
+	for _, balance := range req.Balances {
+		newId := uuid.New()
+		available := balance.Free
+		locked := balance.Locked
+		total := available + locked
+
+		_, err := db.Exec(sqlStatement, newId, req.UserId, req.ApiKeyId, req.Exchange,
+			balance.Currency, available, locked, total, available, locked)
+
+		if err != nil {
+			return count, err
+		}
+		count += 1
+	}
+
+	return count, nil
+}
+
 //
 //func UpdateOrder(db *sql.DB, req *orderProto.OrderRequest) (*orderProto.Order, error) {
 //	sqlStatement := `UPDATE orders SET conditions = $1, price = $2, quantity = $3 WHERE id = $4 and user_id = $5 RETURNING exchange_name, user_key_id, status`

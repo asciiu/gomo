@@ -13,7 +13,8 @@ CREATE TABLE user_balances (
  exchange_available decimal NOT NULL default 0,
  exchange_locked decimal NOT NULL default 0,
  created_on TIMESTAMP DEFAULT now(),
- updated_on TIMESTAMP default current_timestamp
+ updated_on TIMESTAMP default current_timestamp,
+ UNIQUE (user_key_id, currency_name)
 );
 
 -- +goose Down
