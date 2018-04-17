@@ -5,6 +5,11 @@ package go.micro.srv.balance;
 service OrderService {}
 
 // Requests
+message GetUserBalancesRequest {
+  string userId = 1;
+  string apiKeyId = 2;
+}
+
 message AccountBalances{
   string userId = 1;
   string apiKeyId = 2;

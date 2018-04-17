@@ -2,6 +2,7 @@ package sql
 
 import (
 	"database/sql"
+	"log"
 
 	bp "github.com/asciiu/gomo/balance-service/proto/balance"
 	"github.com/google/uuid"
@@ -23,32 +24,40 @@ import (
 //	return &o, nil
 //}
 
-//func FindOrdersByUserId(db *sql.DB, req *orderProto.GetUserOrdersRequest) ([]*orderProto.Order, error) {
-//	results := make([]*orderProto.Order, 0)
-//
-//	rows, err := db.Query("SELECT id, user_id, user_key_id, exchange_name, exchange_order_id, exchange_market_name, market_name, side, type, price, quantity, quantity_remaining, status, conditions  FROM orders WHERE user_id = $1", req.UserId)
-//	if err != nil {
-//		log.Fatal(err)
-//		return nil, err
-//	}
-//	defer rows.Close()
-//	for rows.Next() {
-//		var o orderProto.Order
-//		err := rows.Scan(&o.OrderId, &o.UserId, &o.ApiKeyId, &o.Exchange, &o.ExchangeOrderId, &o.ExchangeMarketName, &o.MarketName, &o.Side, &o.OrderType, &o.Price, &o.Qty, &o.QtyRemaining, &o.Status, &o.Conditions)
-//		if err != nil {
-//			log.Fatal(err)
-//			return nil, err
-//		}
-//		results = append(results, &o)
-//	}
-//	err = rows.Err()
-//	if err != nil {
-//		log.Fatal(err)
-//		return nil, err
-//	}
-//
-//	return results, nil
-//}
+func FindBalancesByUserId(db *sql.DB, req *bp.GetUserBalancesRequest) (*bp.AccountBalances, error) {
+	balances := make([]*bp.Balance, 0)
+	var exchange string
+
+	rows, err := db.Query(`SELECT id, exchange_name, currency_name, available, locked, exchange_total, 
+		exchange_available, exchange_locked FROM user_balances WHERE user_key_id = $1 and user_id = $2`,
+		req.ApiKeyId, req.UserId)
+
+	if err != nil {
+		log.Fatal(err)
+		return nil, err
+	}
+	defer rows.Close()
+	for rows.Next() {
+		var b bp.Balance
+		var id string
+		var exchangeTotal, exchangeAvailable, exchangeLocked float64
+
+		err := rows.Scan(&id, &exchange, &b.Currency, &b.Free, &b.Locked, &exchangeTotal, &exchangeAvailable, &exchangeLocked)
+		if err != nil {
+			log.Fatal(err)
+			return nil, err
+		}
+		balances = append(balances, &b)
+	}
+	accBalances := bp.AccountBalances{
+		UserId:   req.UserId,
+		ApiKeyId: req.ApiKeyId,
+		Exchange: exchange,
+		Balances: balances,
+	}
+
+	return &accBalances, nil
+}
 
 // return count of inserts
 func UpsertBalances(db *sql.DB, req *bp.AccountBalances) (int, error) {
