@@ -11,6 +11,11 @@ services:
       MICRO_SERVER_ADDRESS: ":5001"
       MICRO_REGISTRY: "mdns"
       GOMO_JWT: "jyVadHV5Z+tihp4ptuEvD2xXu6iWrFaSebYovtmzl0Cg4RDi1udp7qyme8ZZQl+A"
+    depends_on:
+      - apikey-service
+      - device-service
+      - order-service 
+      - user-service 
 
   apikey-service:
     build: ./apikey-service
