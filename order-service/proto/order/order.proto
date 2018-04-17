@@ -20,9 +20,8 @@ message OrderRequest {
   string marketName = 5;
   string side = 6;
   string orderType = 7;
-  double price = 8;
-  double qty = 9;
-  string conditions = 10;
+  double qty = 8;
+  string conditions = 9;
 }
 
 message GetUserOrderRequest {
@@ -55,11 +54,10 @@ message Order {
   string marketName = 7;
   string side = 8;
   string orderType = 9;
-  double price = 10;
-  double qty = 11;
-  double qtyRemaining = 12;
-  string status = 13;
-  string conditions = 14;
+  double qty = 10;
+  double qtyRemaining = 11;
+  string status = 12;
+  string conditions = 13;
 }
 
 message UserOrderData {

@@ -51,7 +51,6 @@ func TestInsertOrder(t *testing.T) {
 		ApiKeyId:   apikey.ApiKeyId,
 		Exchange:   apikey.Exchange,
 		MarketName: "ShitCoin!",
-		Price:      1.1,
 		Qty:        500.10,
 		Conditions: "{price <= 0.0004}",
 		Side:       "buy",

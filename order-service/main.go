@@ -5,7 +5,7 @@ import (
 	"log"
 	"os"
 
-	bp "github.com/asciiu/gomo/balance-service/proto/"
+	bp "github.com/asciiu/gomo/balance-service/proto/balance"
 	"github.com/asciiu/gomo/common/db"
 	op "github.com/asciiu/gomo/order-service/proto/order"
 

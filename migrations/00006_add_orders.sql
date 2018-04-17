@@ -10,7 +10,7 @@ CREATE TABLE orders (
  market_name text NOT NULL,
  side text NOT NULL,
  "type" text NOT NULL,
- price decimal NOT NULL,
+ price decimal,
  quantity decimal NOT NULL,
  quantity_remaining decimal NOT NULL,
  status text NOT NULL,

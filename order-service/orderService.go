@@ -16,6 +16,23 @@ type OrderService struct {
 
 func (service *OrderService) AddOrder(ctx context.Context, req *pb.OrderRequest, res *pb.OrderResponse) error {
 
+	// is there enough balance
+	//balRequest := bp.GetUserBalanceRequest{
+	//	UserId:   req.UserId,
+	//	ApiKeyId: req.ApiKeyId,
+	//	Currency: req.MarketName,
+	//}
+
+	//balance, err := service.Client.GetUserBalance(ctx, &balRequest)
+	//if err != nil {
+	//	res.Status = "error"
+	//	res.Message = err.Error()
+	//	return err
+	//}
+
+	//// do we have enough of base currency to make this order?
+	//if balance.Data.Balance.Available >= req.
+
 	order, error := orderRepo.InsertOrder(service.DB, req)
 
 	switch {

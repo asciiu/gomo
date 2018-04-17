@@ -49,20 +49,15 @@ type OrderRequest struct {
 	// Required.
 	// in: body
 	ApiKeyId string `json:"apiKeyId"`
-
-	ExchangeMarketName string `json:"exchangeMarketName"`
 	// Required.
 	// in: body
 	MarketName string `json:"marketName"`
 	// Required.
 	// in: body
 	Side string `json:"side"`
-	// Required.
+	// Optional.
 	// in: body
 	OrderType string `json:"orderType"`
-	// Required.
-	// in: body
-	Price float64 `json:"price"`
 	// Required.
 	// in: body
 	Qauntity float64 `json:"quantity"`
@@ -245,13 +240,11 @@ func (controller *OrderController) HandlePostOrder(c echo.Context) error {
 
 	createRequest := orderProto.OrderRequest{
 		UserId:     userId,
-		Exchange:   "exchange",
 		ApiKeyId:   order.ApiKeyId,
 		MarketName: order.MarketName,
 		Side:       order.Side,
 		Conditions: order.Conditions,
 		OrderType:  order.OrderType,
-		Price:      order.Price,
 		Qty:        order.Qauntity,
 	}
 
