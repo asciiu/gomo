@@ -2,9 +2,17 @@ syntax = "proto3";
 
 package go.micro.srv.balance; 
 
-service OrderService {}
+service BalanceService {
+  rpc GetUserBalance(GetUserBalanceRequest) returns (BalanceResponse) {}
+}
 
 // Requests
+message GetUserBalanceRequest {
+  string userId = 1;
+  string apiKeyId = 2;
+  string currency = 3;
+}
+
 message GetUserBalancesRequest {
   string userId = 1;
   string apiKeyId = 2;
@@ -21,4 +29,28 @@ message Balance {
   string currency = 1;
   double free = 2;
   double locked = 3;
+}
+
+// Responses
+message BalanceDerp {
+  string Id = 1;
+  string userId = 2;
+  double userKeyId = 3;
+  double exchange = 4;
+  string currency = 5;
+  double available = 6;
+  double locked = 7;
+  double exchangeTotal = 8;
+  double exchangeAvailable = 9;
+  double exchangedLocked = 10; 
+}
+
+message UserBalanceData {
+  BalanceDerp balance = 1;
+}
+
+message BalanceResponse {
+  string status = 1;
+  string message = 2;
+  UserBalanceData data = 3;
 }

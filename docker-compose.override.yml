@@ -65,6 +65,8 @@ services:
       DB_URL: "postgres://fomo:fomornd@docker.for.mac.host.internal:6432/fomo_dev?&sslmode=disable"
       MICRO_ADDRESS: ":5001"
       MICRO_REGISTRY: "mdns"
+    depends_on:
+      - balance-service 
 
   user-service:
     build: ./user-service

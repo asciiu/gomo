@@ -4,15 +4,18 @@ import (
 	"context"
 	"database/sql"
 
+	bp "github.com/asciiu/gomo/balance-service/proto/balance"
 	orderRepo "github.com/asciiu/gomo/order-service/db/sql"
 	pb "github.com/asciiu/gomo/order-service/proto/order"
 )
 
 type OrderService struct {
-	DB *sql.DB
+	DB     *sql.DB
+	Client bp.BalanceServiceClient
 }
 
 func (service *OrderService) AddOrder(ctx context.Context, req *pb.OrderRequest, res *pb.OrderResponse) error {
+
 	order, error := orderRepo.InsertOrder(service.DB, req)
 
 	switch {

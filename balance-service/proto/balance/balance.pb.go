@@ -8,9 +8,13 @@ It is generated from these files:
 	proto/balance/balance.proto
 
 It has these top-level messages:
+	GetUserBalanceRequest
 	GetUserBalancesRequest
 	AccountBalances
 	Balance
+	BalanceDerp
+	UserBalanceData
+	BalanceResponse
 */
 package go_micro_srv_balance
 
@@ -36,6 +40,38 @@ var _ = math.Inf
 const _ = proto.ProtoPackageIsVersion2 // please upgrade the proto package
 
 // Requests
+type GetUserBalanceRequest struct {
+	UserId   string `protobuf:"bytes,1,opt,name=userId" json:"userId,omitempty"`
+	ApiKeyId string `protobuf:"bytes,2,opt,name=apiKeyId" json:"apiKeyId,omitempty"`
+	Currency string `protobuf:"bytes,3,opt,name=currency" json:"currency,omitempty"`
+}
+
+func (m *GetUserBalanceRequest) Reset()                    { *m = GetUserBalanceRequest{} }
+func (m *GetUserBalanceRequest) String() string            { return proto.CompactTextString(m) }
+func (*GetUserBalanceRequest) ProtoMessage()               {}
+func (*GetUserBalanceRequest) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{0} }
+
+func (m *GetUserBalanceRequest) GetUserId() string {
+	if m != nil {
+		return m.UserId
+	}
+	return ""
+}
+
+func (m *GetUserBalanceRequest) GetApiKeyId() string {
+	if m != nil {
+		return m.ApiKeyId
+	}
+	return ""
+}
+
+func (m *GetUserBalanceRequest) GetCurrency() string {
+	if m != nil {
+		return m.Currency
+	}
+	return ""
+}
+
 type GetUserBalancesRequest struct {
 	UserId   string `protobuf:"bytes,1,opt,name=userId" json:"userId,omitempty"`
 	ApiKeyId string `protobuf:"bytes,2,opt,name=apiKeyId" json:"apiKeyId,omitempty"`
@@ -44,7 +80,7 @@ type GetUserBalancesRequest struct {
 func (m *GetUserBalancesRequest) Reset()                    { *m = GetUserBalancesRequest{} }
 func (m *GetUserBalancesRequest) String() string            { return proto.CompactTextString(m) }
 func (*GetUserBalancesRequest) ProtoMessage()               {}
-func (*GetUserBalancesRequest) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{0} }
+func (*GetUserBalancesRequest) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{1} }
 
 func (m *GetUserBalancesRequest) GetUserId() string {
 	if m != nil {
@@ -70,7 +106,7 @@ type AccountBalances struct {
 func (m *AccountBalances) Reset()                    { *m = AccountBalances{} }
 func (m *AccountBalances) String() string            { return proto.CompactTextString(m) }
 func (*AccountBalances) ProtoMessage()               {}
-func (*AccountBalances) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{1} }
+func (*AccountBalances) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{2} }
 
 func (m *AccountBalances) GetUserId() string {
 	if m != nil {
@@ -109,7 +145,7 @@ type Balance struct {
 func (m *Balance) Reset()                    { *m = Balance{} }
 func (m *Balance) String() string            { return proto.CompactTextString(m) }
 func (*Balance) ProtoMessage()               {}
-func (*Balance) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{2} }
+func (*Balance) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{3} }
 
 func (m *Balance) GetCurrency() string {
 	if m != nil {
@@ -132,10 +168,151 @@ func (m *Balance) GetLocked() float64 {
 	return 0
 }
 
+// Responses
+type BalanceDerp struct {
+	Id                string  `protobuf:"bytes,1,opt,name=Id" json:"Id,omitempty"`
+	UserId            string  `protobuf:"bytes,2,opt,name=userId" json:"userId,omitempty"`
+	UserKeyId         float64 `protobuf:"fixed64,3,opt,name=userKeyId" json:"userKeyId,omitempty"`
+	Exchange          float64 `protobuf:"fixed64,4,opt,name=exchange" json:"exchange,omitempty"`
+	Currency          string  `protobuf:"bytes,5,opt,name=currency" json:"currency,omitempty"`
+	Available         float64 `protobuf:"fixed64,6,opt,name=available" json:"available,omitempty"`
+	Locked            float64 `protobuf:"fixed64,7,opt,name=locked" json:"locked,omitempty"`
+	ExchangeTotal     float64 `protobuf:"fixed64,8,opt,name=exchangeTotal" json:"exchangeTotal,omitempty"`
+	ExchangeAvailable float64 `protobuf:"fixed64,9,opt,name=exchangeAvailable" json:"exchangeAvailable,omitempty"`
+	ExchangedLocked   float64 `protobuf:"fixed64,10,opt,name=exchangedLocked" json:"exchangedLocked,omitempty"`
+}
+
+func (m *BalanceDerp) Reset()                    { *m = BalanceDerp{} }
+func (m *BalanceDerp) String() string            { return proto.CompactTextString(m) }
+func (*BalanceDerp) ProtoMessage()               {}
+func (*BalanceDerp) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{4} }
+
+func (m *BalanceDerp) GetId() string {
+	if m != nil {
+		return m.Id
+	}
+	return ""
+}
+
+func (m *BalanceDerp) GetUserId() string {
+	if m != nil {
+		return m.UserId
+	}
+	return ""
+}
+
+func (m *BalanceDerp) GetUserKeyId() float64 {
+	if m != nil {
+		return m.UserKeyId
+	}
+	return 0
+}
+
+func (m *BalanceDerp) GetExchange() float64 {
+	if m != nil {
+		return m.Exchange
+	}
+	return 0
+}
+
+func (m *BalanceDerp) GetCurrency() string {
+	if m != nil {
+		return m.Currency
+	}
+	return ""
+}
+
+func (m *BalanceDerp) GetAvailable() float64 {
+	if m != nil {
+		return m.Available
+	}
+	return 0
+}
+
+func (m *BalanceDerp) GetLocked() float64 {
+	if m != nil {
+		return m.Locked
+	}
+	return 0
+}
+
+func (m *BalanceDerp) GetExchangeTotal() float64 {
+	if m != nil {
+		return m.ExchangeTotal
+	}
+	return 0
+}
+
+func (m *BalanceDerp) GetExchangeAvailable() float64 {
+	if m != nil {
+		return m.ExchangeAvailable
+	}
+	return 0
+}
+
+func (m *BalanceDerp) GetExchangedLocked() float64 {
+	if m != nil {
+		return m.ExchangedLocked
+	}
+	return 0
+}
+
+type UserBalanceData struct {
+	Balance *BalanceDerp `protobuf:"bytes,1,opt,name=balance" json:"balance,omitempty"`
+}
+
+func (m *UserBalanceData) Reset()                    { *m = UserBalanceData{} }
+func (m *UserBalanceData) String() string            { return proto.CompactTextString(m) }
+func (*UserBalanceData) ProtoMessage()               {}
+func (*UserBalanceData) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{5} }
+
+func (m *UserBalanceData) GetBalance() *BalanceDerp {
+	if m != nil {
+		return m.Balance
+	}
+	return nil
+}
+
+type BalanceResponse struct {
+	Status  string           `protobuf:"bytes,1,opt,name=status" json:"status,omitempty"`
+	Message string           `protobuf:"bytes,2,opt,name=message" json:"message,omitempty"`
+	Data    *UserBalanceData `protobuf:"bytes,3,opt,name=data" json:"data,omitempty"`
+}
+
+func (m *BalanceResponse) Reset()                    { *m = BalanceResponse{} }
+func (m *BalanceResponse) String() string            { return proto.CompactTextString(m) }
+func (*BalanceResponse) ProtoMessage()               {}
+func (*BalanceResponse) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{6} }
+
+func (m *BalanceResponse) GetStatus() string {
+	if m != nil {
+		return m.Status
+	}
+	return ""
+}
+
+func (m *BalanceResponse) GetMessage() string {
+	if m != nil {
+		return m.Message
+	}
+	return ""
+}
+
+func (m *BalanceResponse) GetData() *UserBalanceData {
+	if m != nil {
+		return m.Data
+	}
+	return nil
+}
+
 func init() {
+	proto.RegisterType((*GetUserBalanceRequest)(nil), "go.micro.srv.balance.GetUserBalanceRequest")
 	proto.RegisterType((*GetUserBalancesRequest)(nil), "go.micro.srv.balance.GetUserBalancesRequest")
 	proto.RegisterType((*AccountBalances)(nil), "go.micro.srv.balance.AccountBalances")
 	proto.RegisterType((*Balance)(nil), "go.micro.srv.balance.Balance")
+	proto.RegisterType((*BalanceDerp)(nil), "go.micro.srv.balance.BalanceDerp")
+	proto.RegisterType((*UserBalanceData)(nil), "go.micro.srv.balance.UserBalanceData")
+	proto.RegisterType((*BalanceResponse)(nil), "go.micro.srv.balance.BalanceResponse")
 }
 
 // Reference imports to suppress errors if they are not otherwise used.
@@ -143,60 +320,89 @@ var _ context.Context
 var _ client.Option
 var _ server.Option
 
-// Client API for OrderService service
+// Client API for BalanceService service
 
-type OrderServiceClient interface {
+type BalanceServiceClient interface {
+	GetUserBalance(ctx context.Context, in *GetUserBalanceRequest, opts ...client.CallOption) (*BalanceResponse, error)
 }
 
-type orderServiceClient struct {
+type balanceServiceClient struct {
 	c           client.Client
 	serviceName string
 }
 
-func NewOrderServiceClient(serviceName string, c client.Client) OrderServiceClient {
+func NewBalanceServiceClient(serviceName string, c client.Client) BalanceServiceClient {
 	if c == nil {
 		c = client.NewClient()
 	}
 	if len(serviceName) == 0 {
 		serviceName = "go.micro.srv.balance"
 	}
-	return &orderServiceClient{
+	return &balanceServiceClient{
 		c:           c,
 		serviceName: serviceName,
 	}
 }
 
-// Server API for OrderService service
-
-type OrderServiceHandler interface {
+func (c *balanceServiceClient) GetUserBalance(ctx context.Context, in *GetUserBalanceRequest, opts ...client.CallOption) (*BalanceResponse, error) {
+	req := c.c.NewRequest(c.serviceName, "BalanceService.GetUserBalance", in)
+	out := new(BalanceResponse)
+	err := c.c.Call(ctx, req, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
 }
 
-func RegisterOrderServiceHandler(s server.Server, hdlr OrderServiceHandler, opts ...server.HandlerOption) {
-	s.Handle(s.NewHandler(&OrderService{hdlr}, opts...))
+// Server API for BalanceService service
+
+type BalanceServiceHandler interface {
+	GetUserBalance(context.Context, *GetUserBalanceRequest, *BalanceResponse) error
 }
 
-type OrderService struct {
-	OrderServiceHandler
+func RegisterBalanceServiceHandler(s server.Server, hdlr BalanceServiceHandler, opts ...server.HandlerOption) {
+	s.Handle(s.NewHandler(&BalanceService{hdlr}, opts...))
+}
+
+type BalanceService struct {
+	BalanceServiceHandler
+}
+
+func (h *BalanceService) GetUserBalance(ctx context.Context, in *GetUserBalanceRequest, out *BalanceResponse) error {
+	return h.BalanceServiceHandler.GetUserBalance(ctx, in, out)
 }
 
 func init() { proto.RegisterFile("proto/balance/balance.proto", fileDescriptor0) }
 
 var fileDescriptor0 = []byte{
-	// 243 bytes of a gzipped FileDescriptorProto
-	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x9c, 0x90, 0xc1, 0x4a, 0xc3, 0x40,
-	0x10, 0x86, 0x59, 0x5b, 0x6a, 0x1d, 0x45, 0x61, 0x91, 0x12, 0x14, 0xa1, 0xe4, 0xd4, 0xd3, 0x0a,
-	0xf5, 0xe4, 0x51, 0x2f, 0x52, 0x14, 0xc4, 0x15, 0x1f, 0x20, 0x9d, 0xfc, 0xd6, 0x60, 0xcd, 0xd6,
-	0xd9, 0xa4, 0xd8, 0x77, 0xf1, 0x61, 0x25, 0x9b, 0x4d, 0x4e, 0x9e, 0x7a, 0x4a, 0xbe, 0xff, 0x5f,
-	0x66, 0xbf, 0x59, 0xba, 0xdc, 0x88, 0xab, 0xdc, 0xf5, 0x32, 0x5b, 0x67, 0x25, 0xa3, 0xfb, 0x9a,
-	0x90, 0xea, 0xf3, 0x95, 0x33, 0x5f, 0x05, 0x8b, 0x33, 0x5e, 0xb6, 0x26, 0x76, 0xe9, 0x13, 0x4d,
-	0x1e, 0x50, 0xbd, 0x79, 0xc8, 0x7d, 0x9b, 0x78, 0x8b, 0xef, 0x1a, 0xbe, 0xd2, 0x13, 0x1a, 0xd5,
-	0x1e, 0xb2, 0xc8, 0x13, 0x35, 0x55, 0xb3, 0x23, 0x1b, 0x49, 0x5f, 0xd0, 0x38, 0xdb, 0x14, 0x8f,
-	0xd8, 0x2d, 0xf2, 0xe4, 0x20, 0x34, 0x3d, 0xa7, 0xbf, 0x8a, 0xce, 0xee, 0x98, 0x5d, 0x5d, 0x56,
-	0xdd, 0xb8, 0x7d, 0xe6, 0x34, 0x1d, 0x7e, 0xf8, 0x23, 0x2b, 0x57, 0x48, 0x06, 0x6d, 0xd7, 0xb1,
-	0xbe, 0xa5, 0x71, 0x94, 0xf7, 0xc9, 0x70, 0x3a, 0x98, 0x1d, 0xcf, 0xaf, 0xcc, 0x7f, 0xab, 0x99,
-	0x68, 0x60, 0xfb, 0xe3, 0xe9, 0x0b, 0x1d, 0xc6, 0xb0, 0xb9, 0x81, 0x6b, 0x11, 0x94, 0xbc, 0x8b,
-	0x5e, 0x3d, 0x6b, 0x4d, 0xc3, 0x77, 0x01, 0x82, 0x95, 0xb2, 0xe1, 0xbf, 0xd9, 0x62, 0xed, 0xf8,
-	0x13, 0x79, 0xf0, 0x51, 0x36, 0xd2, 0xfc, 0x94, 0x4e, 0x9e, 0x25, 0x87, 0xbc, 0x42, 0xb6, 0x05,
-	0x63, 0x39, 0x0a, 0x8f, 0x7d, 0xf3, 0x17, 0x00, 0x00, 0xff, 0xff, 0x83, 0xb8, 0xaa, 0x6e, 0x8b,
-	0x01, 0x00, 0x00,
+	// 461 bytes of a gzipped FileDescriptorProto
+	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xa4, 0x54, 0xdd, 0x6a, 0xd4, 0x40,
+	0x14, 0x36, 0xe9, 0xba, 0x3f, 0x67, 0x71, 0x17, 0x07, 0x2d, 0xa1, 0x56, 0xa8, 0x83, 0x85, 0x05,
+	0x25, 0x42, 0xbc, 0x2a, 0x5e, 0x55, 0x0a, 0xb2, 0x58, 0x04, 0xa3, 0x3e, 0xc0, 0xec, 0xe4, 0x34,
+	0x06, 0xd3, 0x4c, 0x9c, 0x99, 0x2c, 0xed, 0x8d, 0x4f, 0xe2, 0xbb, 0xf8, 0x6a, 0x92, 0xc9, 0x4c,
+	0x9a, 0xac, 0x61, 0x2f, 0xec, 0x55, 0xe6, 0x7c, 0x67, 0xe6, 0x9c, 0xef, 0xfb, 0xce, 0x4c, 0xe0,
+	0x59, 0x29, 0x85, 0x16, 0x6f, 0x36, 0x2c, 0x67, 0x05, 0x47, 0xf7, 0x0d, 0x0d, 0x4a, 0x9e, 0xa4,
+	0x22, 0xbc, 0xce, 0xb8, 0x14, 0xa1, 0x92, 0xdb, 0xd0, 0xe6, 0x68, 0x0a, 0x4f, 0x3f, 0xa0, 0xfe,
+	0xa6, 0x50, 0xbe, 0x6f, 0x90, 0x18, 0x7f, 0x56, 0xa8, 0x34, 0x39, 0x84, 0x71, 0xa5, 0x50, 0xae,
+	0x93, 0xc0, 0x3b, 0xf1, 0x56, 0xb3, 0xd8, 0x46, 0xe4, 0x08, 0xa6, 0xac, 0xcc, 0x3e, 0xe2, 0xed,
+	0x3a, 0x09, 0x7c, 0x93, 0x69, 0xe3, 0x3a, 0xc7, 0x2b, 0x29, 0xb1, 0xe0, 0xb7, 0xc1, 0x41, 0x93,
+	0x73, 0x31, 0xbd, 0x84, 0xc3, 0x7e, 0x23, 0x75, 0x8f, 0x4e, 0xf4, 0xb7, 0x07, 0xcb, 0x73, 0xce,
+	0x45, 0x55, 0x68, 0x57, 0xee, 0x7f, 0x19, 0xe3, 0x0d, 0xff, 0xce, 0x8a, 0x14, 0x1d, 0x63, 0x17,
+	0x93, 0x33, 0x98, 0x5a, 0x97, 0x54, 0x30, 0x3a, 0x39, 0x58, 0xcd, 0xa3, 0xe7, 0xe1, 0x90, 0x87,
+	0xa1, 0x73, 0xae, 0xdd, 0x4e, 0x3f, 0xc3, 0xc4, 0x82, 0x3d, 0x4f, 0xbc, 0xbe, 0x27, 0x84, 0xc0,
+	0xe8, 0x4a, 0x22, 0x1a, 0x56, 0x5e, 0x6c, 0xd6, 0xb5, 0x8a, 0x5c, 0xf0, 0x1f, 0x98, 0x18, 0x3e,
+	0x5e, 0x6c, 0x23, 0xfa, 0xc7, 0x87, 0xb9, 0xad, 0x79, 0x81, 0xb2, 0x24, 0x0b, 0xf0, 0x5b, 0xa5,
+	0xfe, 0x3a, 0xe9, 0xa8, 0xf7, 0x7b, 0xea, 0x8f, 0x61, 0x56, 0xaf, 0x1a, 0xf9, 0x4d, 0xc9, 0x3b,
+	0xa0, 0xa7, 0x7f, 0x64, 0x92, 0x77, 0xfa, 0xbb, 0xcc, 0x1f, 0xee, 0x30, 0x3f, 0x86, 0x19, 0xdb,
+	0xb2, 0x2c, 0x67, 0x9b, 0x1c, 0x83, 0x71, 0x53, 0xb5, 0x05, 0x3a, 0x1a, 0x26, 0x5d, 0x0d, 0xe4,
+	0x25, 0x3c, 0x72, 0xd5, 0xbf, 0x0a, 0xcd, 0xf2, 0x60, 0x6a, 0xd2, 0x7d, 0x90, 0xbc, 0x86, 0xc7,
+	0x0e, 0x38, 0x6f, 0x7b, 0xcc, 0xcc, 0xce, 0x7f, 0x13, 0x64, 0x05, 0x4b, 0x07, 0x26, 0x97, 0x4d,
+	0x53, 0x30, 0x7b, 0x77, 0x61, 0xfa, 0x09, 0x96, 0x9d, 0xeb, 0x77, 0xc1, 0x34, 0x23, 0xef, 0x60,
+	0x62, 0x67, 0x66, 0x9c, 0x9c, 0x47, 0x2f, 0xf6, 0x4e, 0xb8, 0x36, 0x3e, 0x76, 0x27, 0xe8, 0x2f,
+	0x58, 0xb6, 0x6f, 0x46, 0x95, 0xa2, 0x50, 0x46, 0xb8, 0xd2, 0x4c, 0x57, 0xca, 0x5d, 0xc1, 0x26,
+	0x22, 0x01, 0x4c, 0xae, 0x51, 0x29, 0x96, 0xa2, 0x9d, 0x8e, 0x0b, 0xc9, 0x19, 0x8c, 0x12, 0xa6,
+	0x99, 0x99, 0xcc, 0x3c, 0x3a, 0x1d, 0x6e, 0xbf, 0x43, 0x3b, 0x36, 0x47, 0xa2, 0x1b, 0x58, 0x58,
+	0xf0, 0x0b, 0xca, 0x6d, 0xc6, 0x91, 0x5c, 0xc1, 0xa2, 0xff, 0xc6, 0xc8, 0xab, 0xe1, 0x82, 0x83,
+	0x4f, 0xfe, 0xe8, 0x74, 0xff, 0xf5, 0xb6, 0x22, 0xe9, 0x83, 0xcd, 0xd8, 0xfc, 0x51, 0xde, 0xfe,
+	0x0d, 0x00, 0x00, 0xff, 0xff, 0x26, 0x23, 0x3c, 0x8d, 0x70, 0x04, 0x00, 0x00,
 }

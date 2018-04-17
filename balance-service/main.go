@@ -5,6 +5,7 @@ import (
 	"log"
 	"os"
 
+	bp "github.com/asciiu/gomo/balance-service/proto/balance"
 	"github.com/asciiu/gomo/common/db"
 	msg "github.com/asciiu/gomo/common/messages"
 	micro "github.com/micro/go-micro"
@@ -23,6 +24,8 @@ func main() {
 	if err != nil {
 		log.Fatalf(err.Error())
 	}
+
+	bp.RegisterBalanceServiceHandler(srv.Server(), &BalanceService{gomoDB})
 
 	// subscribe to new key topic with a key validator
 	micro.RegisterSubscriber(msg.TopicBalanceUpdate, srv.Server(), &BalancerUpdater{gomoDB, srv})

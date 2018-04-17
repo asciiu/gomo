@@ -1,12 +1,7 @@
 package sql_test
 
 import (
-	"database/sql"
 	"log"
-
-	"github.com/asciiu/gomo/common/db"
-	userRepo "github.com/asciiu/gomo/user-service/db/sql"
-	user "github.com/asciiu/gomo/user-service/models"
 )
 
 func checkErr(err error) {
@@ -16,54 +11,29 @@ func checkErr(err error) {
 	}
 }
 
-func setupService() (*sql.DB, *user.User) {
-	dbUrl := "postgres://postgres@localhost:5432/gomo_test?&sslmode=disable"
-	db, _ := db.NewDB(dbUrl)
+// func setupService() *sql.DB {
+// 	dbUrl := "postgres://fomo:fomornd@127.0.0.1:6432/fomo_dev?&sslmode=disable"
+// 	db, error := db.NewDB(dbUrl)
 
-	user := user.NewUser("first", "last", "test@email", "hash")
-	_, error := userRepo.InsertUser(db, user)
-	checkErr(error)
+// 	//user := user.NewUser("first", "last", "test@email", "hash")
+// 	//_, error := userRepo.InsertUser(db, user)
+// 	checkErr(error)
 
-	return db, user
-}
+// 	return db
+// }
 
-// func TestInsertOrder(t *testing.T) {
-// 	db, user := setupService()
+// func TestFindBalances(t *testing.T) {
+// 	db := setupService()
 // 	defer db.Close()
 
-// 	key := keyProto.ApiKeyRequest{
-// 		UserId:      user.Id,
-// 		Exchange:    "test",
-// 		Key:         "key",
-// 		Secret:      "secret",
-// 		Description: "Hey this worked!",
-// 	}
-// 	apikey, error := keyRepo.InsertApiKey(db, &key)
-// 	checkErr(error)
-
-// 	orderReq := orderProto.OrderRequest{
-// 		UserId:     user.Id,
-// 		ApiKeyId:   apikey.ApiKeyId,
-// 		Exchange:   apikey.Exchange,
-// 		MarketName: "ShitCoin!",
-// 		Price:      1.1,
-// 		Qty:        500.10,
-// 		Conditions: "{price <= 0.0004}",
-// 		Side:       "buy",
-// 		OrderType:  "limit",
+// 	ding := bp.GetUserBalancesRequest{
+// 		UserId:   "bf68c122-37b2-4e63-9605-bcae7b82b04f",
+// 		ApiKeyId: "71672e76-8515-4785-b931-bdbf6157b198",
 // 	}
 
-// 	order, error := orderRepo.InsertOrder(db, &orderReq)
-// 	checkErr(error)
-
-// 	if order.UserId != user.Id {
-// 		t.Errorf("user IDs do not match")
+// 	balances, error := balRepo.FindBalancesByUserId(db, &ding)
+// 	if error != nil {
+// 		fmt.Println(error)
 // 	}
-// 	if order.Status != "pending" {
-// 		t.Errorf("Should be pending")
-// 	}
-
-// 	// cleanup
-// 	error = userRepo.DeleteUserHard(db, user.Id)
-// 	checkErr(error)
+// 	fmt.Println(balances)
 // }

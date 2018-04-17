@@ -5,8 +5,10 @@ import (
 	"log"
 	"os"
 
+	bp "github.com/asciiu/gomo/balance-service/proto/"
 	"github.com/asciiu/gomo/common/db"
-	pb "github.com/asciiu/gomo/order-service/proto/order"
+	op "github.com/asciiu/gomo/order-service/proto/order"
+
 	micro "github.com/micro/go-micro"
 )
 
@@ -29,10 +31,15 @@ func NewOrderService(name, dbUrl string) micro.Service {
 		log.Fatalf(err.Error())
 	}
 
+	orderService := OrderService{
+		DB:     gomoDB,
+		Client: bp.NewBalanceServiceClient("go.micro.srv.balance", srv.Client()),
+	}
+
 	// Register our service with the gRPC server, this will tie our
 	// implementation into the auto-generated interface code for our
 	// protobuf definition.
-	pb.RegisterOrderServiceHandler(srv.Server(), &OrderService{gomoDB})
+	op.RegisterOrderServiceHandler(srv.Server(), &orderService)
 
 	return srv
 }

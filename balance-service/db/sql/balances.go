@@ -13,16 +13,19 @@ import (
 //	return err
 //}
 
-//func FindOrderById(db *sql.DB, req *orderProto.GetUserOrderRequest) (*orderProto.Order, error) {
-//	var o orderProto.Order
-//	err := db.QueryRow("SELECT id, user_id, user_key_id, exchange_name, exchange_order_id, exchange_market_name, market_name, side, type, price, quantity, quantity_remaining, status, conditions  FROM orders WHERE id = $1", req.OrderId).
-//		Scan(&o.OrderId, &o.UserId, &o.ApiKeyId, &o.Exchange, &o.ExchangeOrderId, &o.ExchangeMarketName, &o.MarketName, &o.Side, &o.OrderType, &o.Price, &o.Qty, &o.QtyRemaining, &o.Status, &o.Conditions)
-//
-//	if err != nil {
-//		return nil, err
-//	}
-//	return &o, nil
-//}
+func FindBalance(db *sql.DB, req *bp.GetUserBalanceRequest) (*bp.BalanceDerp, error) {
+	var b bp.BalanceDerp
+	err := db.QueryRow(`SELECT id, exchange_name, available, locked, exchange_total, exchange_available,
+		exchange_locked FROM user_balances WHERE user_id = $1 and user_key_id = $2 and currency = $3`,
+		req.UserId, req.ApiKeyId, req.Currency).
+		Scan(&b.Id, &b.Exchange, &b.Available, &b.Locked, &b.ExchangeTotal, &b.ExchangeAvailable,
+			&b.ExchangedLocked)
+
+	if err != nil {
+		return nil, err
+	}
+	return &b, nil
+}
 
 func FindBalancesByUserId(db *sql.DB, req *bp.GetUserBalancesRequest) (*bp.AccountBalances, error) {
 	balances := make([]*bp.Balance, 0)
