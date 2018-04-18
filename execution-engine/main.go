@@ -17,7 +17,12 @@ type TradeEngine struct {
 	DB *sql.DB
 }
 
-func (engine *TradeEngine) Process(ctx context.Context, event *evt.ExchangeEvent) error {
+func (engine *TradeEngine) ProcessExchangeEvent(ctx context.Context, event *evt.ExchangeEvent) error {
+	fmt.Println("new event ", event)
+	return nil
+}
+
+func (engine *TradeEngine) ProcessGeneric(ctx context.Context, event *evt.ExchangeEvent) error {
 	fmt.Println("new event ", event)
 	return nil
 }
@@ -35,8 +40,12 @@ func main() {
 		log.Fatalf(err.Error())
 	}
 
+	engine := TradeEngine{gomoDB}
+
 	// subscribe to new key topic with a key validator
-	micro.RegisterSubscriber(msg.TopicAggTrade, srv.Server(), &TradeEngine{gomoDB})
+	micro.RegisterSubscriber(msg.TopicAggTrade, srv.Server(), &engine)
+	micro.RegisterSubscriber(msg.TopicNewOrder, srv.Server(), &engine)
+
 	if err := srv.Run(); err != nil {
 		log.Fatal(err)
 	}

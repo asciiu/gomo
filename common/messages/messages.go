@@ -11,3 +11,6 @@ const TopicBalanceUpdate = "balance.updated"
 
 // emitted after trade event
 const TopicAggTrade = "exchange.aggTrade"
+
+// new order
+const TopicNewOrder = "new.order"
