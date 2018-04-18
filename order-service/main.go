@@ -7,6 +7,7 @@ import (
 
 	bp "github.com/asciiu/gomo/balance-service/proto/balance"
 	"github.com/asciiu/gomo/common/db"
+	msg "github.com/asciiu/gomo/common/messages"
 	op "github.com/asciiu/gomo/order-service/proto/order"
 
 	micro "github.com/micro/go-micro"
@@ -32,8 +33,9 @@ func NewOrderService(name, dbUrl string) micro.Service {
 	}
 
 	orderService := OrderService{
-		DB:     gomoDB,
-		Client: bp.NewBalanceServiceClient("go.micro.srv.balance", srv.Client()),
+		DB:          gomoDB,
+		Client:      bp.NewBalanceServiceClient("go.micro.srv.balance", srv.Client()),
+		NewOrderPub: micro.NewPublisher(msg.TopicNewOrder, srv.Client()),
 	}
 
 	// Register our service with the gRPC server, this will tie our

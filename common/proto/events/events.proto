@@ -21,4 +21,15 @@ message Auth {
 
 message OrderEvent {
   string exchange = 1;
+  string orderId = 2;
+  string userId = 3;
+  string apiKeyId = 4;
+  string marketName = 5;
+  string side = 6;
+  double baseQuantity = 7;
+  double baseQuantityRemainder = 8;
+  string conditions = 9;
+  string exchangeOrderId = 10;
+  string exchangeMarketName = 11;
+  string status = 12;
 }

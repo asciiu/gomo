@@ -3,16 +3,20 @@ package main
 import (
 	"context"
 	"database/sql"
+	"log"
 	"strings"
 
 	bp "github.com/asciiu/gomo/balance-service/proto/balance"
+	evt "github.com/asciiu/gomo/common/proto/events"
 	orderRepo "github.com/asciiu/gomo/order-service/db/sql"
 	pb "github.com/asciiu/gomo/order-service/proto/order"
+	micro "github.com/micro/go-micro"
 )
 
 type OrderService struct {
-	DB     *sql.DB
-	Client bp.BalanceServiceClient
+	DB          *sql.DB
+	Client      bp.BalanceServiceClient
+	NewOrderPub micro.Publisher
 }
 
 func (service *OrderService) AddOrder(ctx context.Context, req *pb.OrderRequest, response *pb.OrderResponse) error {
@@ -43,12 +47,27 @@ func (service *OrderService) AddOrder(ctx context.Context, req *pb.OrderRequest,
 		return nil
 	}
 
-	// process order here
-
 	order, error := orderRepo.InsertOrder(service.DB, req)
 
 	switch {
 	case error == nil:
+		// process order here
+		orderEvent := evt.OrderEvent{
+			Exchange:     "Binance",
+			OrderId:      order.OrderId,
+			UserId:       order.UserId,
+			ApiKeyId:     order.ApiKeyId,
+			MarketName:   order.MarketName,
+			BaseQuantity: order.BaseQuantity,
+			Side:         order.Side,
+			Conditions:   order.Conditions,
+			Status:       "pending",
+		}
+
+		if err := service.NewOrderPub.Publish(context.Background(), &orderEvent); err != nil {
+			log.Println("publish warning: ", err, orderEvent)
+		}
+
 		response.Status = "success"
 		response.Data = &pb.UserOrderData{
 			Order: order,

@@ -22,8 +22,8 @@ func (engine *TradeEngine) ProcessExchangeEvent(ctx context.Context, event *evt.
 	return nil
 }
 
-func (engine *TradeEngine) ProcessGeneric(ctx context.Context, event *evt.ExchangeEvent) error {
-	fmt.Println("new event ", event)
+func (engine *TradeEngine) ProcessOrder(ctx context.Context, event *evt.OrderEvent) error {
+	fmt.Println("new order ", event)
 	return nil
 }
 
