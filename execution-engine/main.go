@@ -13,16 +13,20 @@ import (
 	micro "github.com/micro/go-micro"
 )
 
-type TradeEngine struct {
+type TradeProcessor struct {
 	DB *sql.DB
 }
 
-func (engine *TradeEngine) ProcessExchangeEvent(ctx context.Context, event *evt.ExchangeEvent) error {
+func (engine *TradeProcessor) ProcessEvent(ctx context.Context, event *evt.ExchangeEvent) error {
 	fmt.Println("new event ", event)
 	return nil
 }
 
-func (engine *TradeEngine) ProcessOrder(ctx context.Context, event *evt.OrderEvent) error {
+type OrderProcessor struct {
+	DB *sql.DB
+}
+
+func (engine *OrderProcessor) ProcessEvent(ctx context.Context, event *evt.OrderEvent) error {
 	fmt.Println("new order ", event)
 	return nil
 }
@@ -40,11 +44,12 @@ func main() {
 		log.Fatalf(err.Error())
 	}
 
-	engine := TradeEngine{gomoDB}
+	tradeProcess := TradeProcessor{gomoDB}
+	orderProcess := OrderProcessor{gomoDB}
 
 	// subscribe to new key topic with a key validator
-	micro.RegisterSubscriber(msg.TopicAggTrade, srv.Server(), &engine)
-	micro.RegisterSubscriber(msg.TopicNewOrder, srv.Server(), &engine)
+	micro.RegisterSubscriber(msg.TopicAggTrade, srv.Server(), &tradeProcess)
+	micro.RegisterSubscriber(msg.TopicNewOrder, srv.Server(), &orderProcess)
 
 	if err := srv.Run(); err != nil {
 		log.Fatal(err)
