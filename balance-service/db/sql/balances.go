@@ -16,7 +16,7 @@ import (
 func FindBalance(db *sql.DB, req *bp.GetUserBalanceRequest) (*bp.BalanceDerp, error) {
 	var b bp.BalanceDerp
 	err := db.QueryRow(`SELECT id, exchange_name, available, locked, exchange_total, exchange_available,
-		exchange_locked FROM user_balances WHERE user_id = $1 and user_key_id = $2 and currency = $3`,
+		exchange_locked FROM user_balances WHERE user_id = $1 and user_key_id = $2 and currency_name = $3`,
 		req.UserId, req.ApiKeyId, req.Currency).
 		Scan(&b.Id, &b.Exchange, &b.Available, &b.Locked, &b.ExchangeTotal, &b.ExchangeAvailable,
 			&b.ExchangedLocked)

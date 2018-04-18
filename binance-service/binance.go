@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"database/sql"
 	"fmt"
 	"os"
 	"time"
@@ -15,7 +14,6 @@ import (
 )
 
 type KeyValidator struct {
-	DB             *sql.DB
 	KeyVerifiedPub micro.Publisher
 	BalancePub     micro.Publisher
 }

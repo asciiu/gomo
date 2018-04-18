@@ -60,7 +60,7 @@ type OrderRequest struct {
 	OrderType string `json:"orderType"`
 	// Required.
 	// in: body
-	Qauntity float64 `json:"quantity"`
+	BaseQauntity float64 `json:"baseQuantity"`
 	// Required.
 	// in: body
 	Conditions string `json:"conditions"`
@@ -239,13 +239,13 @@ func (controller *OrderController) HandlePostOrder(c echo.Context) error {
 	}
 
 	createRequest := orderProto.OrderRequest{
-		UserId:     userId,
-		ApiKeyId:   order.ApiKeyId,
-		MarketName: order.MarketName,
-		Side:       order.Side,
-		Conditions: order.Conditions,
-		OrderType:  order.OrderType,
-		Qty:        order.Qauntity,
+		UserId:       userId,
+		ApiKeyId:     order.ApiKeyId,
+		MarketName:   order.MarketName,
+		Side:         order.Side,
+		Conditions:   order.Conditions,
+		OrderType:    order.OrderType,
+		BaseQuantity: order.BaseQauntity,
 	}
 
 	r, err := controller.Client.AddOrder(context.Background(), &createRequest)
@@ -253,10 +253,10 @@ func (controller *OrderController) HandlePostOrder(c echo.Context) error {
 		fmt.Println(err)
 		response := &ResponseError{
 			Status:  "error",
-			Message: err.Error(),
+			Message: r.Message,
 		}
 
-		return c.JSON(http.StatusGone, response)
+		return c.JSON(http.StatusInternalServerError, response)
 	}
 
 	if r.Status != "success" {
@@ -314,7 +314,6 @@ func (controller *OrderController) HandleUpdateOrder(c echo.Context) error {
 		OrderId:    orderId,
 		UserId:     userId,
 		Conditions: orderRequest.Conditions,
-		Price:      orderRequest.Price,
 		Qty:        orderRequest.Qauntity,
 	}
 

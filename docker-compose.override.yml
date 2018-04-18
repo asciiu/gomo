@@ -16,6 +16,7 @@ services:
       - device-service
       - order-service 
       - user-service 
+      - database
 
   apikey-service:
     build: ./apikey-service
@@ -25,6 +26,8 @@ services:
       DB_URL: "postgres://fomo:fomornd@docker.for.mac.host.internal:6432/fomo_dev?&sslmode=disable"
       MICRO_ADDRESS: ":5001"
       MICRO_REGISTRY: "mdns"
+    depends_on:
+      - database
 
   balance-service:
     build: ./balance-service
@@ -34,13 +37,14 @@ services:
       DB_URL: "postgres://fomo:fomornd@docker.for.mac.host.internal:6432/fomo_dev?&sslmode=disable"
       MICRO_ADDRESS: ":5001"
       MICRO_REGISTRY: "mdns"
+    depends_on:
+      - database
 
   binance-service: 
     build: ./binance-service
     ports:
       - 5005:5000
     environment:
-      DB_URL: "postgres://fomo:fomornd@docker.for.mac.host.internal:6432/fomo_dev?&sslmode=disable"
       MICRO_ADDRESS: ":5001"
       MICRO_REGISTRY: "mdns"
 
@@ -49,7 +53,6 @@ services:
     ports:
       - 5007:5000
     environment:
-      DB_URL: "postgres://fomo:fomornd@docker.for.mac.host.internal:6432/fomo_dev?&sslmode=disable"
       MICRO_ADDRESS: ":5001"
       MICRO_REGISTRY: "mdns"
 
@@ -61,6 +64,8 @@ services:
       DB_URL: "postgres://fomo:fomornd@docker.for.mac.host.internal:6432/fomo_dev?&sslmode=disable"
       MICRO_ADDRESS: ":5001"
       MICRO_REGISTRY: "mdns"
+    depends_on:
+      - database
 
   order-service:
     build: ./order-service
@@ -72,6 +77,7 @@ services:
       MICRO_REGISTRY: "mdns"
     depends_on:
       - balance-service 
+      - database
 
   user-service:
     build: ./user-service
@@ -81,6 +87,8 @@ services:
       DB_URL: "postgres://fomo:fomornd@docker.for.mac.host.internal:6432/fomo_dev?&sslmode=disable"
       MICRO_ADDRESS: ":5001"
       MICRO_REGISTRY: "mdns"
+    depends_on:
+      - database
 
   database:
     ports:

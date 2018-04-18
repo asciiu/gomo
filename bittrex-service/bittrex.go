@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"database/sql"
 	"fmt"
 
 	kp "github.com/asciiu/gomo/apikey-service/proto/apikey"
@@ -10,7 +9,6 @@ import (
 )
 
 type KeyValidator struct {
-	DB             *sql.DB
 	KeyVerifiedPub micro.Publisher
 	BalancePub     micro.Publisher
 }

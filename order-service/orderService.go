@@ -3,6 +3,8 @@ package main
 import (
 	"context"
 	"database/sql"
+	"errors"
+	"strings"
 
 	bp "github.com/asciiu/gomo/balance-service/proto/balance"
 	orderRepo "github.com/asciiu/gomo/order-service/db/sql"
@@ -16,22 +18,29 @@ type OrderService struct {
 
 func (service *OrderService) AddOrder(ctx context.Context, req *pb.OrderRequest, res *pb.OrderResponse) error {
 
+	// we will always assume the market trading pairs will be
+	// the currency-base currency: e.g. ADA-BTC
+	baseCurrency := strings.Split(req.MarketName, "-")[1]
+
 	// is there enough balance
-	//balRequest := bp.GetUserBalanceRequest{
-	//	UserId:   req.UserId,
-	//	ApiKeyId: req.ApiKeyId,
-	//	Currency: req.MarketName,
-	//}
+	balRequest := bp.GetUserBalanceRequest{
+		UserId:   req.UserId,
+		ApiKeyId: req.ApiKeyId,
+		Currency: baseCurrency,
+	}
 
-	//balance, err := service.Client.GetUserBalance(ctx, &balRequest)
-	//if err != nil {
-	//	res.Status = "error"
-	//	res.Message = err.Error()
-	//	return err
-	//}
+	response, err := service.Client.GetUserBalance(ctx, &balRequest)
+	if err != nil {
+		res.Status = "error"
+		res.Message = "ecountered error from GetUserBalance: " + err.Error()
+		return err
+	}
 
-	//// do we have enough of base currency to make this order?
-	//if balance.Data.Balance.Available >= req.
+	if response.Data.Balance.Available < req.BaseQuantity {
+		res.Status = "fail"
+		res.Message = "insufficient balance " + baseCurrency
+		return errors.New(res.Message)
+	}
 
 	order, error := orderRepo.InsertOrder(service.DB, req)
 
@@ -45,7 +54,7 @@ func (service *OrderService) AddOrder(ctx context.Context, req *pb.OrderRequest,
 
 	default:
 		res.Status = "error"
-		res.Message = error.Error()
+		res.Message = "ecountered error on Insert: " + error.Error()
 		return error
 	}
 }

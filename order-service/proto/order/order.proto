@@ -20,7 +20,7 @@ message OrderRequest {
   string marketName = 5;
   string side = 6;
   string orderType = 7;
-  double qty = 8;
+  double baseQuantity = 8;
   string conditions = 9;
 }
 
@@ -54,8 +54,8 @@ message Order {
   string marketName = 7;
   string side = 8;
   string orderType = 9;
-  double qty = 10;
-  double qtyRemaining = 11;
+  double baseQuantity = 10;
+  double baseQuantityRemainder = 11;
   string status = 12;
   string conditions = 13;
 }
