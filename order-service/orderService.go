@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"errors"
+	"fmt"
 	"strings"
 
 	bp "github.com/asciiu/gomo/balance-service/proto/balance"
@@ -29,6 +30,7 @@ func (service *OrderService) AddOrder(ctx context.Context, req *pb.OrderRequest,
 		Currency: baseCurrency,
 	}
 
+	fmt.Println(balRequest)
 	response, err := service.Client.GetUserBalance(ctx, &balRequest)
 	if err != nil {
 		res.Status = "error"

@@ -60,7 +60,7 @@ type OrderRequest struct {
 	OrderType string `json:"orderType"`
 	// Required.
 	// in: body
-	BaseQauntity float64 `json:"baseQuantity"`
+	BaseQuantity float64 `json:"baseQuantity"`
 	// Required.
 	// in: body
 	Conditions string `json:"conditions"`
@@ -76,7 +76,7 @@ type UpdateOrderRequest struct {
 	Price float64 `json:"price"`
 	// Optional.
 	// in: body
-	Qauntity float64 `json:"quantity"`
+	BaseQuantity float64 `json:"baseQuantity"`
 	// Optional.
 	// in: body
 	Conditions string `json:"conditions"`
@@ -245,7 +245,7 @@ func (controller *OrderController) HandlePostOrder(c echo.Context) error {
 		Side:         order.Side,
 		Conditions:   order.Conditions,
 		OrderType:    order.OrderType,
-		BaseQuantity: order.BaseQauntity,
+		BaseQuantity: order.BaseQuantity,
 	}
 
 	r, err := controller.Client.AddOrder(context.Background(), &createRequest)
@@ -311,10 +311,10 @@ func (controller *OrderController) HandleUpdateOrder(c echo.Context) error {
 
 	// client can only update description
 	updateRequest := orderProto.OrderRequest{
-		OrderId:    orderId,
-		UserId:     userId,
-		Conditions: orderRequest.Conditions,
-		Qty:        orderRequest.Qauntity,
+		OrderId:      orderId,
+		UserId:       userId,
+		Conditions:   orderRequest.Conditions,
+		BaseQuantity: orderRequest.BaseQuantity,
 	}
 
 	r, err := controller.Client.UpdateOrder(context.Background(), &updateRequest)

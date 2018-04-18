@@ -35,8 +35,8 @@ message Balance {
 message BalanceDerp {
   string Id = 1;
   string userId = 2;
-  double userKeyId = 3;
-  double exchange = 4;
+  string userKeyId = 3;
+  string exchange = 4;
   string currency = 5;
   double available = 6;
   double locked = 7;
