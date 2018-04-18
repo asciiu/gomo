@@ -3,7 +3,6 @@ package main
 import (
 	"context"
 	"database/sql"
-	"errors"
 	"strings"
 
 	bp "github.com/asciiu/gomo/balance-service/proto/balance"
@@ -16,8 +15,7 @@ type OrderService struct {
 	Client bp.BalanceServiceClient
 }
 
-func (service *OrderService) AddOrder(ctx context.Context, req *pb.OrderRequest, res *pb.OrderResponse) error {
-
+func (service *OrderService) AddOrder(ctx context.Context, req *pb.OrderRequest, response *pb.OrderResponse) error {
 	// we will always assume the market trading pairs will be
 	// the currency-base currency: e.g. ADA-BTC
 	baseCurrency := strings.Split(req.MarketName, "-")[1]
@@ -29,33 +27,36 @@ func (service *OrderService) AddOrder(ctx context.Context, req *pb.OrderRequest,
 		Currency: baseCurrency,
 	}
 
-	response, err := service.Client.GetUserBalance(ctx, &balRequest)
+	balResponse, err := service.Client.GetUserBalance(ctx, &balRequest)
 	if err != nil {
-		res.Status = "error"
-		res.Message = "ecountered error from GetUserBalance: " + err.Error()
-		return err
+		response.Status = "error"
+		response.Message = "ecountered error from GetUserBalance: " + err.Error()
+		// we need to return nil here in order to pass the appropriate status
+		// and message to the client. If we return the err the response in
+		// the client will be nil.
+		return nil
 	}
 
-	if response.Data.Balance.Available < req.BaseQuantity {
-		res.Status = "fail"
-		res.Message = "insufficient balance " + baseCurrency
-		return errors.New(res.Message)
+	if balResponse.Data.Balance.Available < req.BaseQuantity {
+		response.Status = "fail"
+		response.Message = "insufficient balance " + baseCurrency
+		return nil
 	}
 
 	order, error := orderRepo.InsertOrder(service.DB, req)
 
 	switch {
 	case error == nil:
-		res.Status = "success"
-		res.Data = &pb.UserOrderData{
+		response.Status = "success"
+		response.Data = &pb.UserOrderData{
 			Order: order,
 		}
 		return nil
 
 	default:
-		res.Status = "error"
-		res.Message = "ecountered error on Insert: " + error.Error()
-		return error
+		response.Status = "error"
+		response.Message = "ecountered error on Insert: " + error.Error()
+		return nil
 	}
 }
 

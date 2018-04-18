@@ -3,6 +3,7 @@ package controllers
 import (
 	"database/sql"
 	"encoding/json"
+	"fmt"
 	"net/http"
 
 	orderProto "github.com/asciiu/gomo/order-service/proto/order"
@@ -258,6 +259,7 @@ func (controller *OrderController) HandlePostOrder(c echo.Context) error {
 	}
 
 	r, err := controller.Client.AddOrder(context.Background(), &createRequest)
+	fmt.Println(r)
 	if err != nil {
 		response := &ResponseError{
 			Status:  r.Status,
