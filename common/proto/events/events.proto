@@ -1,0 +1,15 @@
+syntax = "proto3";
+
+package common.events; 
+
+// Events 
+message ExchangeEvent {
+  string exchange = 1;
+  string type = 2;
+  uint64 eventTime = 3;
+  string marketName = 4;
+  uint64 tradeId = 5;
+  string price = 6;
+  string quantity = 7;
+  uint64 tradeTime = 8;
+}

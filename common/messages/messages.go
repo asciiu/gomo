@@ -8,3 +8,6 @@ const TopicKeyVerified = "key.verified"
 
 // update balance from exchange has arrived
 const TopicBalanceUpdate = "balance.updated"
+
+// emitted after trade event
+const TopicAggTrade = "exchange.aggTrade"

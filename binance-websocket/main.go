@@ -1,12 +1,8 @@
-// Copyright 2015 The Gorilla WebSocket Authors. All rights reserved.
-// Use of this source code is governed by a BSD-style
-// license that can be found in the LICENSE file.
-
-// +build ignore
-
 package main
 
 import (
+	"context"
+	"encoding/json"
 	"flag"
 	"fmt"
 	"log"
@@ -15,12 +11,30 @@ import (
 	"sync"
 	"time"
 
+	msg "github.com/asciiu/gomo/common/messages"
+	ep "github.com/asciiu/gomo/common/proto/events"
 	"github.com/gorilla/websocket"
+	micro "github.com/micro/go-micro"
 )
 
 type BinanceConnection struct {
-	channel <-chan bool
-	group   *sync.WaitGroup
+	channel   <-chan bool
+	group     *sync.WaitGroup
+	Publisher micro.Publisher
+}
+
+type BinanceAggTrade struct {
+	Type         string `json:"e"`
+	EventTime    uint64 `json:"E"`
+	Symbol       string `json:"s"`
+	TradeId      uint64 `json:"a"`
+	Price        string `json:"p"`
+	Quantity     string `json:"q"`
+	FirstTradeId uint64 `json:"f"`
+	LastTradeId  uint64 `json:"l"`
+	TradeTime    uint64 `json:"T"`
+	IsBuyerMaker bool   `json:"m"`
+	Ignore       bool   `json:"M"`
 }
 
 func (bconn *BinanceConnection) Open(market string) {
@@ -43,10 +57,29 @@ func (bconn *BinanceConnection) Open(market string) {
 		for {
 			_, message, err := conn.ReadMessage()
 			if err != nil {
-				log.Printf("%s websocket client read: %s", market, err)
+				log.Println("websocket err: ", err)
 				return
 			}
-			log.Printf("recv: %s", message)
+
+			aggTrade := BinanceAggTrade{}
+			if err = json.Unmarshal(message, &aggTrade); err != nil {
+				log.Println("nope")
+			}
+
+			exchangeEvent := ep.ExchangeEvent{
+				Exchange:   "Binance",
+				Type:       aggTrade.Type,
+				EventTime:  aggTrade.EventTime,
+				MarketName: aggTrade.Symbol,
+				TradeId:    aggTrade.TradeId,
+				Price:      aggTrade.Price,
+				Quantity:   aggTrade.Quantity,
+				TradeTime:  aggTrade.TradeTime,
+			}
+
+			if err := bconn.Publisher.Publish(context.Background(), &exchangeEvent); err != nil {
+				log.Println("could not publish binance trade event: ", err)
+			}
 		}
 	}()
 
@@ -77,6 +110,13 @@ func (bconn *BinanceConnection) Open(market string) {
 	}
 }
 func main() {
+	srv := micro.NewService(
+		micro.Name("go.micro.srv.binance.websocket"),
+	)
+
+	srv.Init()
+	tradePublisher := micro.NewPublisher(msg.TopicAggTrade, srv.Client())
+
 	flag.Parse()
 	log.SetFlags(0)
 
@@ -93,8 +133,9 @@ func main() {
 	for i := 0; i < len(markets); i++ {
 		c := make(chan bool)
 		bconn := BinanceConnection{
-			channel: c,
-			group:   &wg,
+			channel:   c,
+			group:     &wg,
+			Publisher: tradePublisher,
 		}
 		channels = append(channels, c)
 		go bconn.Open(markets[i])

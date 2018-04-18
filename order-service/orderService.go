@@ -43,6 +43,8 @@ func (service *OrderService) AddOrder(ctx context.Context, req *pb.OrderRequest,
 		return nil
 	}
 
+	// process order here
+
 	order, error := orderRepo.InsertOrder(service.DB, req)
 
 	switch {
