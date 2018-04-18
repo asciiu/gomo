@@ -2,7 +2,6 @@ package sql
 
 import (
 	"database/sql"
-	"fmt"
 	"log"
 
 	bp "github.com/asciiu/gomo/balance-service/proto/balance"
@@ -15,9 +14,6 @@ import (
 //}
 
 func FindBalance(db *sql.DB, req *bp.GetUserBalanceRequest) (*bp.BalanceDerp, error) {
-
-	fmt.Println(req)
-
 	var b bp.BalanceDerp
 	err := db.QueryRow(`SELECT id, exchange_name, available, locked, exchange_total, exchange_available,
 		exchange_locked FROM user_balances WHERE user_id = $1 and user_key_id = $2 and currency_name = $3`,
@@ -25,7 +21,6 @@ func FindBalance(db *sql.DB, req *bp.GetUserBalanceRequest) (*bp.BalanceDerp, er
 		Scan(&b.Id, &b.Exchange, &b.Available, &b.Locked, &b.ExchangeTotal, &b.ExchangeAvailable,
 			&b.ExchangedLocked)
 
-	fmt.Println(err)
 	if err != nil {
 		return nil, err
 	}

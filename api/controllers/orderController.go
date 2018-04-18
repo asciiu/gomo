@@ -3,7 +3,6 @@ package controllers
 import (
 	"database/sql"
 	"encoding/json"
-	"fmt"
 	"net/http"
 
 	orderProto "github.com/asciiu/gomo/order-service/proto/order"
@@ -238,6 +237,16 @@ func (controller *OrderController) HandlePostOrder(c echo.Context) error {
 		return c.JSON(http.StatusBadRequest, response)
 	}
 
+	// verify that all params are present
+	if order.BaseQuantity == 0.0 || order.MarketName == "" || order.ApiKeyId == "" {
+		response := &ResponseError{
+			Status:  "fail",
+			Message: "baseQuantity, marketName, and apiKeyId required!",
+		}
+
+		return c.JSON(http.StatusBadRequest, response)
+	}
+
 	createRequest := orderProto.OrderRequest{
 		UserId:       userId,
 		ApiKeyId:     order.ApiKeyId,
@@ -250,9 +259,8 @@ func (controller *OrderController) HandlePostOrder(c echo.Context) error {
 
 	r, err := controller.Client.AddOrder(context.Background(), &createRequest)
 	if err != nil {
-		fmt.Println(err)
 		response := &ResponseError{
-			Status:  "error",
+			Status:  r.Status,
 			Message: r.Message,
 		}
 
