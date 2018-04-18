@@ -78,7 +78,7 @@ func (bconn *BinanceConnection) Open(market string) {
 			}
 
 			if err := bconn.Publisher.Publish(context.Background(), &exchangeEvent); err != nil {
-				log.Println("could not publish binance trade event: ", err)
+				log.Println("publish warning: ", err, exchangeEvent)
 			}
 		}
 	}()
@@ -111,7 +111,7 @@ func (bconn *BinanceConnection) Open(market string) {
 }
 func main() {
 	srv := micro.NewService(
-		micro.Name("go.micro.srv.binance.websocket"),
+		micro.Name("micro.binance.websocket"),
 	)
 
 	srv.Init()

@@ -48,6 +48,14 @@ services:
       MICRO_ADDRESS: ":5001"
       MICRO_REGISTRY: "mdns"
 
+  binance-websocket: 
+    build: ./binance-websocket
+    ports:
+      - 5008:5000
+    environment:
+      MICRO_ADDRESS: ":5001"
+      MICRO_REGISTRY: "mdns"
+
   bittrex-service: 
     build: ./bittrex-service
     ports:
@@ -60,6 +68,17 @@ services:
     build: ./device-service
     ports:
       - 5002:5000
+    environment:
+      DB_URL: "postgres://fomo:fomornd@docker.for.mac.host.internal:6432/fomo_dev?&sslmode=disable"
+      MICRO_ADDRESS: ":5001"
+      MICRO_REGISTRY: "mdns"
+    depends_on:
+      - database
+  
+  execution-engine:
+    build: ./execution-engine
+    ports:
+      - 5009:5000
     environment:
       DB_URL: "postgres://fomo:fomornd@docker.for.mac.host.internal:6432/fomo_dev?&sslmode=disable"
       MICRO_ADDRESS: ":5001"
