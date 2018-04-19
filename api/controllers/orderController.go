@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"encoding/json"
 	"net/http"
+	"strings"
 
 	orderProto "github.com/asciiu/gomo/order-service/proto/order"
 	jwt "github.com/dgrijalva/jwt-go"
@@ -246,7 +247,6 @@ func (controller *OrderController) HandlePostOrder(c echo.Context) error {
 			Status:  "fail",
 			Message: "side, marketName, and apiKeyId required!",
 		}
-
 		return c.JSON(http.StatusBadRequest, response)
 	}
 
@@ -256,9 +256,7 @@ func (controller *OrderController) HandlePostOrder(c echo.Context) error {
 			Status:  "fail",
 			Message: "buy requires a baseQuantity",
 		}
-
 		return c.JSON(http.StatusBadRequest, response)
-
 	}
 
 	// if the side is sell we need a currency quantity
@@ -267,30 +265,32 @@ func (controller *OrderController) HandlePostOrder(c echo.Context) error {
 			Status:  "fail",
 			Message: "sell requires a currencyQuantity",
 		}
-
 		return c.JSON(http.StatusBadRequest, response)
+	}
 
+	// market name should be formatted as
+	// currency-base (e.g. ADA-BTC)
+	if !strings.Contains(order.MarketName, "-") {
+		response := &ResponseError{
+			Status:  "fail",
+			Message: "markName invalid",
+		}
+		return c.JSON(http.StatusBadRequest, response)
 	}
 
 	createRequest := orderProto.OrderRequest{
-		UserId:       userId,
-		ApiKeyId:     order.ApiKeyId,
-		MarketName:   order.MarketName,
-		Side:         order.Side,
-		Conditions:   order.Conditions,
-		OrderType:    order.OrderType,
-		BaseQuantity: order.BaseQuantity,
+		UserId:           userId,
+		ApiKeyId:         order.ApiKeyId,
+		MarketName:       order.MarketName,
+		Side:             order.Side,
+		Conditions:       order.Conditions,
+		OrderType:        order.OrderType,
+		BaseQuantity:     order.BaseQuantity,
+		CurrencyQuantity: order.CurrencyQuantity,
 	}
 
-	r, err := controller.Client.AddOrder(context.Background(), &createRequest)
-	if err != nil {
-		response := &ResponseError{
-			Status:  r.Status,
-			Message: r.Message,
-		}
-
-		return c.JSON(http.StatusInternalServerError, response)
-	}
+	// add order returns nil for error
+	r, _ := controller.Client.AddOrder(context.Background(), &createRequest)
 
 	if r.Status != "success" {
 		response := &ResponseError{
