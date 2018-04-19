@@ -1,12 +1,19 @@
 package enums
 
 type Exchange int
+type Side int
 
 const (
-	Binance  Exchange = 0
-	Bittrex  Exchange = 1
-	Poloniex Exchange = 2
-	Unknown  Exchange = 3
+	Binance         Exchange = 0
+	Bittrex         Exchange = 1
+	Poloniex        Exchange = 2
+	UnknownExchange Exchange = 3
+)
+
+const (
+	Buy         Side = 0
+	Sell        Side = 1
+	UnknownSide Side = 2
 )
 
 func NewExchange(ex string) Exchange {
@@ -18,7 +25,7 @@ func NewExchange(ex string) Exchange {
 	case "Poloniex":
 		return Poloniex
 	default:
-		return Unknown
+		return UnknownExchange
 	}
 }
 
@@ -42,4 +49,15 @@ func (exchange Exchange) String() string {
 	// constant from the names array
 	// above.
 	return names[exchange]
+}
+
+func NewSideFromString(side string) Side {
+	switch side {
+	case "buy":
+		return Buy
+	case "sell":
+		return Sell
+	default:
+		return UnknownSide
+	}
 }
