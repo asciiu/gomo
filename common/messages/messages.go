@@ -1,16 +1,18 @@
 package messages
 
 // when a new key is added
-const TopicNewKey = "new.key"
+const TopicNewKey = "NewKey"
 
 // when a key has been validated
-const TopicKeyVerified = "key.verified"
+const TopicKeyVerified = "KeyVerified"
 
 // update balance from exchange has arrived
-const TopicBalanceUpdate = "balance.updated"
+const TopicBalanceUpdate = "BalanceUpdated"
 
 // emitted after trade event
-const TopicAggTrade = "exchange.aggTrade"
+const TopicAggTrade = "ExchangeAggTrade"
 
-// new order
-const TopicNewOrder = "new.order"
+// new orders
+const TopicNewBuyOrder = "NewBuyOrder"
+
+const TopicNewSellOrder = "NewSellOrder"

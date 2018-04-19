@@ -15,9 +15,10 @@ import (
 )
 
 type OrderService struct {
-	DB          *sql.DB
-	Client      bp.BalanceServiceClient
-	NewOrderPub micro.Publisher
+	DB      *sql.DB
+	Client  bp.BalanceServiceClient
+	NewBuy  micro.Publisher
+	NewSell micro.Publisher
 }
 
 // Add a buy order
@@ -64,7 +65,7 @@ func (service *OrderService) addBuyOrder(ctx context.Context, req *pb.OrderReque
 			Status:       "pending",
 		}
 
-		if err := service.NewOrderPub.Publish(context.Background(), &orderEvent); err != nil {
+		if err := service.NewBuy.Publish(context.Background(), &orderEvent); err != nil {
 			log.Println("publish warning: ", err, orderEvent)
 		}
 
@@ -125,7 +126,7 @@ func (service *OrderService) addSellOrder(ctx context.Context, req *pb.OrderRequ
 			Status:       "pending",
 		}
 
-		if err := service.NewOrderPub.Publish(context.Background(), &orderEvent); err != nil {
+		if err := service.NewSell.Publish(context.Background(), &orderEvent); err != nil {
 			log.Println("publish warning: ", err, orderEvent)
 		}
 

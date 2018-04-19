@@ -22,11 +22,20 @@ func (engine *TradeProcessor) ProcessEvent(ctx context.Context, event *evt.Excha
 	return nil
 }
 
-type OrderProcessor struct {
+type BuyOrderProcessor struct {
 	DB *sql.DB
 }
 
-func (engine *OrderProcessor) ProcessEvent(ctx context.Context, event *evt.OrderEvent) error {
+func (engine *BuyOrderProcessor) ProcessEvent(ctx context.Context, event *evt.OrderEvent) error {
+	fmt.Println("new order ", event)
+	return nil
+}
+
+type SellOrderProcessor struct {
+	DB *sql.DB
+}
+
+func (engine *SellOrderProcessor) ProcessEvent(ctx context.Context, event *evt.OrderEvent) error {
 	fmt.Println("new order ", event)
 	return nil
 }
@@ -45,11 +54,13 @@ func main() {
 	}
 
 	tradeProcess := TradeProcessor{gomoDB}
-	orderProcess := OrderProcessor{gomoDB}
+	buyProcess := BuyOrderProcessor{gomoDB}
+	sellProcess := SellOrderProcessor{gomoDB}
 
 	// subscribe to new key topic with a key validator
 	micro.RegisterSubscriber(msg.TopicAggTrade, srv.Server(), &tradeProcess)
-	micro.RegisterSubscriber(msg.TopicNewOrder, srv.Server(), &orderProcess)
+	micro.RegisterSubscriber(msg.TopicNewBuyOrder, srv.Server(), &buyProcess)
+	micro.RegisterSubscriber(msg.TopicNewSellOrder, srv.Server(), &sellProcess)
 
 	if err := srv.Run(); err != nil {
 		log.Fatal(err)

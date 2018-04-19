@@ -33,10 +33,11 @@ func NewOrderService(name, dbUrl string) micro.Service {
 	}
 
 	orderService := OrderService{
-		DB:          gomoDB,
-		Client:      bp.NewBalanceServiceClient("go.micro.srv.balance", srv.Client()),
-		NewOrderPub: micro.NewPublisher(msg.TopicNewOrder, srv.Client()),
-	}
+		DB:      gomoDB,
+		Client:  bp.NewBalanceServiceClient("go.micro.srv.balance", srv.Client()),
+		NewBuy:  micro.NewPublisher(msg.TopicNewBuyOrder, srv.Client()),
+		NewSell: micro.NewPublisher(msg.TopicNewSellOrder, srv.Client()),
+		kkk}
 
 	// Register our service with the gRPC server, this will tie our
 	// implementation into the auto-generated interface code for our
