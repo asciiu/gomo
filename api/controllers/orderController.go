@@ -57,9 +57,12 @@ type OrderRequest struct {
 	// Optional.
 	// in: body
 	OrderType string `json:"orderType"`
-	// Required.
+	// Required for buy side.
 	// in: body
 	BaseQuantity float64 `json:"baseQuantity"`
+	// Required for sell side.
+	// in: body
+	CurrencyQuantity float64 `json:"currencyQuantity"`
 	// Required.
 	// in: body
 	Conditions string `json:"conditions"`
@@ -237,14 +240,36 @@ func (controller *OrderController) HandlePostOrder(c echo.Context) error {
 		return c.JSON(http.StatusBadRequest, response)
 	}
 
-	// verify that all params are present
-	if order.BaseQuantity == 0.0 || order.MarketName == "" || order.ApiKeyId == "" {
+	// side, market name, and api key are required
+	if order.Side == "" || order.MarketName == "" || order.ApiKeyId == "" {
 		response := &ResponseError{
 			Status:  "fail",
-			Message: "baseQuantity, marketName, and apiKeyId required!",
+			Message: "side, marketName, and apiKeyId required!",
 		}
 
 		return c.JSON(http.StatusBadRequest, response)
+	}
+
+	// if the side is buy we need a base quantity
+	if order.Side == "buy" && order.BaseQuantity == 0.0 {
+		response := &ResponseError{
+			Status:  "fail",
+			Message: "buy requires a baseQuantity",
+		}
+
+		return c.JSON(http.StatusBadRequest, response)
+
+	}
+
+	// if the side is sell we need a currency quantity
+	if order.Side == "sell" && order.CurrencyQuantity == 0.0 {
+		response := &ResponseError{
+			Status:  "fail",
+			Message: "sell requires a currencyQuantity",
+		}
+
+		return c.JSON(http.StatusBadRequest, response)
+
 	}
 
 	createRequest := orderProto.OrderRequest{
