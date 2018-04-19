@@ -22,12 +22,11 @@ func (process *SellProcessor) ProcessEvent(ctx context.Context, event *evt.Excha
 	for i, sellOrder := range sellOrders {
 
 		marketName := strings.Replace(sellOrder.MarketName, "-", "", 1)
-		if marketName != event.MarketName {
+		if marketName != event.MarketName || sellOrder.Exchange != event.Exchange {
 			continue
 		}
 
 		conditions := strings.Replace(sellOrder.Conditions, "price", event.Price, -1)
-		fmt.Println(conditions)
 
 		result, err := process.Env.Execute(conditions)
 		if err != nil {
