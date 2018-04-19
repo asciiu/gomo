@@ -21,7 +21,8 @@ message OrderRequest {
   string side = 6;
   string orderType = 7;
   double baseQuantity = 8;
-  string conditions = 9;
+  double currencyQuantity = 9;
+  string conditions = 10;
 }
 
 message GetUserOrderRequest {
