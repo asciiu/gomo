@@ -24,21 +24,26 @@ type TradeProcessor struct {
 }
 
 func (engine *TradeProcessor) ProcessEvent(ctx context.Context, event *evt.ExchangeEvent) error {
+	buyOrders := engine.BuyReceiver.Orders
 
-	for _, buyOrder := range engine.BuyReceiver.Orders {
-		fmt.Println(buyOrder)
+	for i, buyOrder := range buyOrders {
+
+		marketName := strings.Replace(buyOrder.MarketName, "-", "", 1)
+		if marketName != event.MarketName {
+			continue
+		}
 
 		conditions := strings.Replace(buyOrder.Conditions, "price", event.Price, -1)
-
 		fmt.Println(conditions)
 
-		v, err := engine.Env.Execute(conditions)
-
+		result, err := engine.Env.Execute(conditions)
 		if err != nil {
 			panic(err)
 		}
 
-		if v == true {
+		if result == true {
+			// remove order
+			engine.BuyReceiver.Orders = append(buyOrders[:i], buyOrders[i+1:]...)
 			fmt.Println("BUY NOW!!")
 		}
 	}
