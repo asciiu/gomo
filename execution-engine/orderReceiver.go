@@ -11,18 +11,20 @@ import (
 	"github.com/mattn/anko/vm"
 )
 
-// order has conditions
+// Order has conditions
 type Order struct {
 	EventOrigin *evt.OrderEvent
 	Conditions  []ConditionFunc
 }
 
+// OrderReceiver will receive and prep an order conditions
 type OrderReceiver struct {
 	DB     *sql.DB
 	Orders []*Order
 	Env    *vm.Env
 }
 
+// ProcessEvent handles buy OrderEvents. These events are published by a micro publisher.
 func (receiver *OrderReceiver) ProcessEvent(ctx context.Context, buy *evt.OrderEvent) error {
 	// convert OrderEvent to Order with conditions here
 	strConditions := strings.Split(buy.Conditions, " or ")

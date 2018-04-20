@@ -19,8 +19,8 @@ func main() {
 
 	srv.Init()
 
-	dbUrl := fmt.Sprintf("%s", os.Getenv("DB_URL"))
-	gomoDB, err := db.NewDB(dbUrl)
+	dbURL := fmt.Sprintf("%s", os.Getenv("DB_URL"))
+	gomoDB, err := db.NewDB(dbURL)
 	if err != nil {
 		log.Fatalf(err.Error())
 	}

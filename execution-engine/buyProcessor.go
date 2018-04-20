@@ -13,6 +13,7 @@ import (
 	micro "github.com/micro/go-micro"
 )
 
+// BuyProcessor will handle all buys
 type BuyProcessor struct {
 	DB        *sql.DB
 	Env       *vm.Env
@@ -20,6 +21,7 @@ type BuyProcessor struct {
 	Publisher micro.Publisher
 }
 
+// ProcessEvent will process ExchangeEvents. These events are published from the exchange sockets.
 func (process *BuyProcessor) ProcessEvent(ctx context.Context, event *evt.ExchangeEvent) error {
 	buyOrders := process.Receiver.Orders
 

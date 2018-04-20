@@ -12,6 +12,7 @@ import (
 	micro "github.com/micro/go-micro"
 )
 
+// SellProcessor will process and handle sell orders.
 type SellProcessor struct {
 	DB        *sql.DB
 	Env       *vm.Env
@@ -19,6 +20,8 @@ type SellProcessor struct {
 	Publisher micro.Publisher
 }
 
+// ProcessEvent will process ExchangeEvents. These events are published from the exchange sockets and
+// are used as the order trigger.
 func (process *SellProcessor) ProcessEvent(ctx context.Context, event *evt.ExchangeEvent) error {
 	sellOrders := process.Receiver.Orders
 

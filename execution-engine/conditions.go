@@ -7,8 +7,10 @@ import (
 	"github.com/mattn/anko/vm"
 )
 
+// ConditionFunc is a func pointer to a condition eval func
 type ConditionFunc func(price float64) bool
 
+// PriceCondition used for simple price compares
 type PriceCondition struct {
 	Statement string
 	Env       *vm.Env
@@ -27,6 +29,7 @@ func (cond *PriceCondition) evaluate(price float64) bool {
 	return result == true
 }
 
+// TrailingStopPoint based upon difference in points
 type TrailingStopPoint struct {
 	Top    float64
 	Points float64
@@ -48,6 +51,7 @@ func (cond *TrailingStopPoint) evaluate(price float64) bool {
 	return (cond.Top - cond.Points) > price
 }
 
+// TrailingStopPercent based upon difference in percent
 type TrailingStopPercent struct {
 	Top     float64
 	Percent float64
