@@ -28,10 +28,10 @@ func (process *BuyProcessor) ProcessEvent(ctx context.Context, event *evt.Exchan
 		}
 
 		conditions := buyOrder.Conditions
-		for _, cond := range conditions {
+		for _, evaluate := range conditions {
 			f, _ := strconv.ParseFloat(event.Price, 64)
 
-			if cond(f) {
+			if evaluate(f) {
 				process.Receiver.Orders = append(buyOrders[:i], buyOrders[i+1:]...)
 				fmt.Println("BUY NOW!!")
 				fmt.Println(buyOrder)

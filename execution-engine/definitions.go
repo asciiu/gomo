@@ -31,15 +31,23 @@ func (cond *PriceCondition) evaluate(price float64) bool {
 	return result == true
 }
 
-type TrailingStopPts struct {
+type TrailingStopPoint struct {
 	Top    float64
 	Points float64
 }
 
-func (cond *TrailingStopPts) evaluate(price float64) bool {
+func (cond *TrailingStopPoint) evaluate(price float64) bool {
+	if cond.Top <= 0.0 {
+		cond.Top = price
+		fmt.Printf("setting initial top: %.8f\n", cond.Top)
+		return false
+	} else {
+		fmt.Printf("top: %.8f price: %.8f\n", cond.Top, price)
+	}
 	// we have a new top when the price
 	// is greater than the top
 	if price > cond.Top {
+		fmt.Printf("setting a new top: %.8f\n", price)
 		cond.Top = price
 	}
 
@@ -63,13 +71,4 @@ func (cond *TrailingStopPercent) evaluate(price float64) bool {
 	// trailing stop is true when the price is less than the
 	// condition top minus the pts
 	return (cond.Top - (cond.Top * cond.Percent)) > price
-}
-
-func DeclareConditions(env *vm.Env) {
-	env.Define("TrailingStopPts", func(top, pts float64) *TrailingStopPts {
-		return &TrailingStopPts{top, pts}
-	})
-	env.Define("TrailingStopPercent", func(top, percent float64) *TrailingStopPercent {
-		return &TrailingStopPercent{top, percent}
-	})
 }

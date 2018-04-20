@@ -47,8 +47,6 @@ func main() {
 		Receiver: &sellReceiver,
 	}
 
-	DeclareConditions(env)
-
 	// subscribe to new key topic with a key validator
 	micro.RegisterSubscriber(msg.TopicNewBuyOrder, srv.Server(), &buyReceiver)
 	micro.RegisterSubscriber(msg.TopicNewSellOrder, srv.Server(), &sellReceiver)

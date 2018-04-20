@@ -3,6 +3,8 @@ package main
 import (
 	"context"
 	"database/sql"
+	"regexp"
+	"strconv"
 	"strings"
 
 	evt "github.com/asciiu/gomo/common/proto/events"
@@ -26,16 +28,28 @@ func (receiver *OrderReceiver) ProcessEvent(ctx context.Context, buy *evt.OrderE
 	strConditions := strings.Split(buy.Conditions, " or ")
 	conditions := make([]ConditionFunc, 0)
 
-	//var extractParams = """^.*?TrailingStop\((0\.\d{2,}),\s(\d+\.\d+).*?""".r
-	//var rNum = regexp.MustCompile(`\d`)  // Has digit(s)
-	//var rAbc = regexp.MustCompile(`abc`) // Contains "abc"
+	trailing := regexp.MustCompile(`^.*?TrailingStopPoint\((0\.\d{2,}),\s(\d+\.\d+).*?`)
 
 	for _, str := range strConditions {
-		priceCond := PriceCondition{
-			Env:       receiver.Env,
-			Statement: str,
+		switch {
+		case trailing.MatchString(str):
+			rs := trailing.FindStringSubmatch(str)
+			top, _ := strconv.ParseFloat(rs[1], 64)
+			points, _ := strconv.ParseFloat(rs[2], 64)
+
+			ts := TrailingStopPoint{
+				Top:    top,
+				Points: points,
+			}
+			conditions = append(conditions, (&ts).evaluate)
+
+		default:
+			priceCond := PriceCondition{
+				Env:       receiver.Env,
+				Statement: str,
+			}
+			conditions = append(conditions, (&priceCond).evaluate)
 		}
-		conditions = append(conditions, priceCond.evaluate)
 	}
 
 	order := Order{
