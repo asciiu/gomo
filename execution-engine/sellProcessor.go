@@ -9,12 +9,14 @@ import (
 
 	evt "github.com/asciiu/gomo/common/proto/events"
 	"github.com/mattn/anko/vm"
+	micro "github.com/micro/go-micro"
 )
 
 type SellProcessor struct {
-	DB       *sql.DB
-	Env      *vm.Env
-	Receiver *OrderReceiver
+	DB        *sql.DB
+	Env       *vm.Env
+	Receiver  *OrderReceiver
+	Publisher micro.Publisher
 }
 
 func (process *SellProcessor) ProcessEvent(ctx context.Context, event *evt.ExchangeEvent) error {

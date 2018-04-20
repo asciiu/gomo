@@ -39,12 +39,14 @@ func main() {
 		Env:    env,
 	}
 	buyProcessor := BuyProcessor{
-		DB:       gomoDB,
-		Receiver: &buyReceiver,
+		DB:        gomoDB,
+		Receiver:  &buyReceiver,
+		Publisher: micro.NewPublisher(msg.TopicOrderFilled, srv.Client()),
 	}
 	sellProcessor := SellProcessor{
-		DB:       gomoDB,
-		Receiver: &sellReceiver,
+		DB:        gomoDB,
+		Receiver:  &sellReceiver,
+		Publisher: micro.NewPublisher(msg.TopicOrderFilled, srv.Client()),
 	}
 
 	// subscribe to new key topic with a key validator

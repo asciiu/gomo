@@ -1,18 +1,22 @@
 package messages
 
-// when a new key is added
+// TopicNewKey when a new key is added
 const TopicNewKey = "NewKey"
 
-// when a key has been validated
+// TopicKeyVerified when a key has been validated
 const TopicKeyVerified = "KeyVerified"
 
-// update balance from exchange has arrived
+// TopicBalanceUpdate update balance from exchange has arrived
 const TopicBalanceUpdate = "BalanceUpdated"
 
-// emitted after trade event
+// TopicAggTrade emitted after trade event
 const TopicAggTrade = "ExchangeAggTrade"
 
-// new orders
+// TopicNewBuyOrder new orders
 const TopicNewBuyOrder = "NewBuyOrder"
 
+// TopicNewSellOrder new sell order
 const TopicNewSellOrder = "NewSellOrder"
+
+// TopicOrderFilled when order has filled
+const TopicOrderFilled = "OrderFilled"
