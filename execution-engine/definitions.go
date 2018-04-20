@@ -58,13 +58,17 @@ type TrailingStopPercent struct {
 }
 
 func (cond *TrailingStopPercent) evaluate(price float64) bool {
+	if cond.Top <= 0.0 {
+		cond.Top = price
+		return false
+	}
+
 	// we have a new top when the price
 	// is greater than the top
 	if price > cond.Top {
 		cond.Top = price
 	}
 
-	// trailing stop is true when the price is less than the
-	// condition top minus the pts
-	return (cond.Top - (cond.Top * cond.Percent)) > price
+	// trailing stop is true when the price is less than percent from top
+	return (cond.Top * (1 - cond.Percent)) > price
 }
