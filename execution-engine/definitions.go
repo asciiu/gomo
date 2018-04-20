@@ -39,15 +39,11 @@ type TrailingStopPoint struct {
 func (cond *TrailingStopPoint) evaluate(price float64) bool {
 	if cond.Top <= 0.0 {
 		cond.Top = price
-		fmt.Printf("setting initial top: %.8f\n", cond.Top)
 		return false
-	} else {
-		fmt.Printf("top: %.8f price: %.8f\n", cond.Top, price)
 	}
 	// we have a new top when the price
 	// is greater than the top
 	if price > cond.Top {
-		fmt.Printf("setting a new top: %.8f\n", price)
 		cond.Top = price
 	}
 
