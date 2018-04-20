@@ -33,13 +33,13 @@ func (process *SellProcessor) ProcessEvent(ctx context.Context, event *evt.Excha
 		}
 
 		conditions := sellOrder.Conditions
-		for _, cond := range conditions {
+		for _, evaluateFunc := range conditions {
 			f, _ := strconv.ParseFloat(event.Price, 64)
 
-			if cond(f) {
+			if isValid, desc := evaluateFunc(f); isValid {
 				process.Receiver.Orders = append(sellOrders[:i], sellOrders[i+1:]...)
 				fmt.Println("SELL NOW!!")
-				fmt.Println(sellOrder)
+				fmt.Println(desc)
 			}
 		}
 	}

@@ -35,11 +35,11 @@ func (process *BuyProcessor) ProcessEvent(ctx context.Context, event *evt.Exchan
 
 		conditions := buyOrder.Conditions
 		// eval all conditions for this order
-		for _, evaluate := range conditions {
+		for _, evaluateFunc := range conditions {
 			f, _ := strconv.ParseFloat(event.Price, 64)
 
 			// does condition of order eval to true?
-			if evaluate(f) {
+			if isValid, desc := evaluateFunc(f); isValid {
 				// remove this order from the process
 				process.Receiver.Orders = append(buyOrders[:i], buyOrders[i+1:]...)
 
@@ -52,6 +52,7 @@ func (process *BuyProcessor) ProcessEvent(ctx context.Context, event *evt.Exchan
 				evt.ExchangeOrderId = "simulated"
 				evt.ExchangeMarketName = evt.MarketName
 				evt.Status = "filled"
+				evt.Condition = desc
 
 				if err := process.Publisher.Publish(ctx, &evt); err != nil {
 					log.Println("publish warning: ", err, evt)
