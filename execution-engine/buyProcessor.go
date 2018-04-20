@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"strconv"
 	"strings"
 
 	evt "github.com/asciiu/gomo/common/proto/events"
@@ -21,23 +22,20 @@ func (process *BuyProcessor) ProcessEvent(ctx context.Context, event *evt.Exchan
 
 	for i, buyOrder := range buyOrders {
 
-		marketName := strings.Replace(buyOrder.MarketName, "-", "", 1)
-		if marketName != event.MarketName || buyOrder.Exchange != event.Exchange {
+		marketName := strings.Replace(buyOrder.EventOrigin.MarketName, "-", "", 1)
+		if marketName != event.MarketName || buyOrder.EventOrigin.Exchange != event.Exchange {
 			continue
 		}
 
-		conditions := strings.Replace(buyOrder.Conditions, "price", event.Price, -1)
+		conditions := buyOrder.Conditions
+		for _, cond := range conditions {
+			f, _ := strconv.ParseFloat(event.Price, 64)
 
-		result, err := process.Env.Execute(conditions)
-		if err != nil {
-			panic(err)
-		}
-
-		if result == true {
-			// remove order
-			process.Receiver.Orders = append(buyOrders[:i], buyOrders[i+1:]...)
-			fmt.Println("BUY NOW!!")
-			fmt.Println(buyOrder)
+			if cond(f) {
+				process.Receiver.Orders = append(buyOrders[:i], buyOrders[i+1:]...)
+				fmt.Println("BUY NOW!!")
+				fmt.Println(buyOrder)
+			}
 		}
 	}
 	//fmt.Println("buy recv: ", event)
