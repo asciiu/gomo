@@ -42,9 +42,6 @@ func (process *BuyProcessor) ProcessEvent(ctx context.Context, event *evt.Exchan
 				// remove this order from the process
 				process.Receiver.Orders = append(buyOrders[:i], buyOrders[i+1:]...)
 
-				// trigger buy order event
-				log.Printf("%+v\n", buyOrder)
-				log.Println("condition: ", desc)
 				// if non simulated trigger buy event - exchange service subscribes to these events
 
 				// if it is a simulated order trigger an update order event
@@ -54,7 +51,9 @@ func (process *BuyProcessor) ProcessEvent(ctx context.Context, event *evt.Exchan
 				evt.Status = "filled"
 				evt.Condition = desc
 
-				if err := process.Publisher.Publish(ctx, &evt); err != nil {
+				log.Printf("buy order triggered: %+v\n", evt)
+
+				if err := process.Publisher.Publish(ctx, evt); err != nil {
 					log.Println("publish warning: ", err, evt)
 				}
 			}

@@ -17,7 +17,7 @@ type PriceCondition struct {
 }
 
 func (cond *PriceCondition) evaluate(price float64) (bool, string) {
-	p := fmt.Sprintf("%.18f", price)
+	p := fmt.Sprintf("%.8f", price)
 	// replace all occurences of price in the statement
 	c := strings.Replace(cond.Statement, "price", p, -1)
 
@@ -42,7 +42,7 @@ type TrailingStopPoint struct {
 func (cond *TrailingStopPoint) evaluate(price float64) (bool, string) {
 	if cond.Top <= 0.0 {
 		cond.Top = price
-		return false, fmt.Sprintf("new top: %.12f", price)
+		return false, fmt.Sprintf("new top: %.8f", price)
 	}
 	// we have a new top when the price
 	// is greater than the top
@@ -53,7 +53,7 @@ func (cond *TrailingStopPoint) evaluate(price float64) (bool, string) {
 	// trailing stop is true when the price is less than the
 	// condition top minus the pts
 	if (cond.Top - cond.Points) > price {
-		return true, fmt.Sprintf("{condition: TrailingStopPoint, top:%.12f, points:%.12f, price:%.12f}",
+		return true, fmt.Sprintf("{condition: TrailingStopPoint, top:%.8f, points:%.8f, price:%.8f}",
 			cond.Top, cond.Points, price)
 	}
 	return false, "evaluated as false"
@@ -68,7 +68,7 @@ type TrailingStopPercent struct {
 func (cond *TrailingStopPercent) evaluate(price float64) (bool, string) {
 	if cond.Top <= 0.0 {
 		cond.Top = price
-		return false, fmt.Sprintf("new top: %.12f", price)
+		return false, fmt.Sprintf("new top: %.8f", price)
 	}
 
 	// we have a new top when the price
@@ -79,7 +79,7 @@ func (cond *TrailingStopPercent) evaluate(price float64) (bool, string) {
 
 	// trailing stop is true when the price is less than percent from top
 	if (cond.Top * (1 - cond.Percent)) > price {
-		return true, fmt.Sprintf("{condition: TrailingStopPercent, top:%.12f, percent:%.12f, price:%.12f}",
+		return true, fmt.Sprintf("{condition: TrailingStopPercent, top:%.8f, percent:%.8f, price:%.8f}",
 			cond.Top, cond.Percent, price)
 	}
 

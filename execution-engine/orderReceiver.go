@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"database/sql"
+	"log"
 	"regexp"
 	"strconv"
 	"strings"
@@ -30,12 +31,13 @@ func (receiver *OrderReceiver) ProcessEvent(ctx context.Context, buy *evt.OrderE
 	strConditions := strings.Split(buy.Conditions, " or ")
 	conditions := make([]ConditionFunc, 0)
 
-	trailing := regexp.MustCompile(`^.*?TrailingStopPoint\((0\.\d{2,}),\s(\d+\.\d+).*?`)
+	trailingPoint := regexp.MustCompile(`^.*?TrailingStopPoint\((0\.\d{2,}),\s(\d+\.\d+).*?`)
+	trailingPercent := regexp.MustCompile(`^.*?TrailingStopPercent\((0\.\d{2,}),\s(\d+\.\d+).*?`)
 
 	for _, str := range strConditions {
 		switch {
-		case trailing.MatchString(str):
-			rs := trailing.FindStringSubmatch(str)
+		case trailingPoint.MatchString(str):
+			rs := trailingPoint.FindStringSubmatch(str)
 			top, _ := strconv.ParseFloat(rs[1], 64)
 			points, _ := strconv.ParseFloat(rs[2], 64)
 
@@ -45,7 +47,19 @@ func (receiver *OrderReceiver) ProcessEvent(ctx context.Context, buy *evt.OrderE
 			}
 			conditions = append(conditions, (&ts).evaluate)
 
+		case trailingPercent.MatchString(str):
+			rs := trailingPercent.FindStringSubmatch(str)
+			top, _ := strconv.ParseFloat(rs[1], 64)
+			percent, _ := strconv.ParseFloat(rs[2], 64)
+
+			ts := TrailingStopPercent{
+				Top:     top,
+				Percent: percent,
+			}
+			conditions = append(conditions, (&ts).evaluate)
+
 		default:
+
 			priceCond := PriceCondition{
 				Env:       receiver.Env,
 				Statement: str,
@@ -59,6 +73,7 @@ func (receiver *OrderReceiver) ProcessEvent(ctx context.Context, buy *evt.OrderE
 		Conditions:  conditions,
 	}
 	receiver.Orders = append(receiver.Orders, &order)
+	log.Printf("buy order received: %+v\n", order)
 
 	return nil
 }
