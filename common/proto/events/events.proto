@@ -28,8 +28,9 @@ message OrderEvent {
   string side = 6;
   double baseQuantity = 7;
   double baseQuantityRemainder = 8;
-  string conditions = 9;
-  string exchangeOrderId = 10;
-  string exchangeMarketName = 11;
-  string status = 12;
+  string condition = 9;
+  string conditions = 10;
+  string exchangeOrderId = 11;
+  string exchangeMarketName = 12;
+  string status = 13;
 }
