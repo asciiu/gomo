@@ -9,10 +9,6 @@ import (
 
 type ConditionFunc func(price float64) bool
 
-type Condition interface {
-	evaluate(price float64) bool
-}
-
 type PriceCondition struct {
 	Statement string
 	Env       *vm.Env
