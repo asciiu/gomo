@@ -3,7 +3,6 @@ package main
 import (
 	"context"
 	"database/sql"
-	"fmt"
 	"log"
 	"strconv"
 	"strings"
@@ -44,7 +43,8 @@ func (process *BuyProcessor) ProcessEvent(ctx context.Context, event *evt.Exchan
 				process.Receiver.Orders = append(buyOrders[:i], buyOrders[i+1:]...)
 
 				// trigger buy order event
-				fmt.Println("BUY NOW!! ", buyOrder)
+				log.Printf("%+v\n", buyOrder)
+				log.Println("condition: ", desc)
 				// if non simulated trigger buy event - exchange service subscribes to these events
 
 				// if it is a simulated order trigger an update order event

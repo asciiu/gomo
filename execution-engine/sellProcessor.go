@@ -3,7 +3,7 @@ package main
 import (
 	"context"
 	"database/sql"
-	"fmt"
+	"log"
 	"strconv"
 	"strings"
 
@@ -38,8 +38,8 @@ func (process *SellProcessor) ProcessEvent(ctx context.Context, event *evt.Excha
 
 			if isValid, desc := evaluateFunc(f); isValid {
 				process.Receiver.Orders = append(sellOrders[:i], sellOrders[i+1:]...)
-				fmt.Println("SELL NOW!!")
-				fmt.Println(desc)
+				log.Printf("%+v\n", sellOrder)
+				log.Println("condition: ", desc)
 			}
 		}
 	}
