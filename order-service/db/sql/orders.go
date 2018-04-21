@@ -82,7 +82,7 @@ func InsertOrder(db *sql.DB, req *orderProto.OrderRequest) (*orderProto.Order, e
 		exchange_market_name, market_name, side, type, base_quantity, base_quantity_remainder, status, 
 		conditions, parent_order_id) values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)`
 	_, err = db.Exec(sqlStatement, newId, req.UserId, req.ApiKeyId, req.Exchange, "", "", req.MarketName,
-		req.Side, req.OrderType, req.BaseQuantity, req.BaseQuantity, "pending", jsonCond, req.NextOrderId)
+		req.Side, req.OrderType, req.BaseQuantity, req.BaseQuantity, "pending", jsonCond, req.ParentOrderId)
 
 	if err != nil {
 		return nil, err
