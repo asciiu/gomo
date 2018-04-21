@@ -60,7 +60,7 @@ message Order {
   string status = 14;
   string conditions = 15;
   string condition = 16;
-  string nextOrderId = 13;
+  string parentOrderId = 13;
 }
 
 message UserOrderData {
