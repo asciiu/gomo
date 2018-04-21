@@ -24,7 +24,7 @@ func FindOrderById(db *sql.DB, req *orderProto.GetUserOrderRequest) (*orderProto
 		 conditions, condition, parent_order_id FROM order WHERE id = $1`, req.OrderId).
 		Scan(&o.OrderId, &o.UserId, &o.ApiKeyId, &o.Exchange, &o.ExchangeOrderId, &o.ExchangeMarketName,
 			&o.MarketName, &o.Side, &o.OrderType, &o.BaseQuantity, &o.BaseQuantityRemainder, &o.CurrencyQuantity,
-			&o.Status, &o.Conditions, &o.Condition, &o.NextOrderId)
+			&o.Status, &o.Conditions, &o.Condition, &o.ParentOrderId)
 
 	if err != nil {
 		return nil, err
@@ -50,7 +50,7 @@ func FindOrdersByUserId(db *sql.DB, req *orderProto.GetUserOrdersRequest) ([]*or
 		var o orderProto.Order
 		err := rows.Scan(&o.OrderId, &o.UserId, &o.ApiKeyId, &o.Exchange, &o.ExchangeOrderId, &o.ExchangeMarketName,
 			&o.MarketName, &o.Side, &o.OrderType, &o.BaseQuantity, &o.BaseQuantityRemainder, &o.CurrencyQuantity,
-			&o.Status, &o.Conditions, &o.Condition, &o.NextOrderId)
+			&o.Status, &o.Conditions, &o.Condition, &o.ParentOrderId)
 
 		if err != nil {
 			log.Fatal(err)
@@ -99,6 +99,7 @@ func InsertOrder(db *sql.DB, req *orderProto.OrderRequest) (*orderProto.Order, e
 		BaseQuantityRemainder: req.BaseQuantity,
 		Status:                "pending",
 		Conditions:            req.Conditions,
+		ParentOrderId:         req.ParentOrderId,
 	}
 	return order, nil
 }
@@ -116,7 +117,7 @@ func UpdateOrder(db *sql.DB, req *orderProto.OrderRequest) (*orderProto.Order, e
 	var o orderProto.Order
 	err = db.QueryRow(sqlStatement, jsonCond, req.BaseQuantity, req.BaseQuantity, req.OrderId, req.UserId).
 		Scan(&o.OrderId, &o.UserId, &o.Exchange, &o.MarketName, &o.ApiKeyId,
-			&o.Side, &o.BaseQuantity, &o.BaseQuantityRemainder, &o.Status, &o.Conditions, &o.NextOrderId)
+			&o.Side, &o.BaseQuantity, &o.BaseQuantityRemainder, &o.Status, &o.Conditions, &o.ParentOrderId)
 
 	if err != nil {
 		return nil, err
