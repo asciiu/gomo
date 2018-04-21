@@ -14,6 +14,7 @@ import (
 	micro "github.com/micro/go-micro"
 )
 
+// OrderService ...
 type OrderService struct {
 	DB      *sql.DB
 	Client  bp.BalanceServiceClient
@@ -207,22 +208,6 @@ func (service *OrderService) RemoveOrder(ctx context.Context, req *pb.RemoveOrde
 
 func (service *OrderService) UpdateOrder(ctx context.Context, req *pb.OrderRequest, res *pb.OrderResponse) error {
 	order, error := orderRepo.UpdateOrder(service.DB, req)
-	switch {
-	case error == nil:
-		res.Status = "success"
-		res.Data = &pb.UserOrderData{
-			Order: order,
-		}
-		return nil
-	default:
-		res.Status = "error"
-		res.Message = error.Error()
-		return error
-	}
-}
-
-func (service *OrderService) UpdateOrderStatus(ctx context.Context, req *pb.OrderStatusRequest, res *pb.OrderResponse) error {
-	order, error := orderRepo.UpdateOrderStatus(service.DB, req)
 	switch {
 	case error == nil:
 		res.Status = "success"

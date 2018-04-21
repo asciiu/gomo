@@ -54,8 +54,8 @@ func NewOrderService(name, dbUrl string) micro.Service {
 }
 
 func main() {
-	dbUrl := fmt.Sprintf("%s", os.Getenv("DB_URL"))
-	srv := NewOrderService("go.srv.order-service", dbUrl)
+	dbURL := fmt.Sprintf("%s", os.Getenv("DB_URL"))
+	srv := NewOrderService("go.srv.order-service", dbURL)
 
 	if err := srv.Run(); err != nil {
 		log.Fatal(err)

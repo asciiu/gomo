@@ -8,7 +8,6 @@ service OrderService {
   rpc GetUserOrders(GetUserOrdersRequest) returns (OrderListResponse) {}
   rpc RemoveOrder(RemoveOrderRequest) returns (OrderResponse) {}
   rpc UpdateOrder(OrderRequest) returns (OrderResponse) {}
-  rpc UpdateOrderStatus(OrderStatusRequest) returns (OrderResponse) {}
 }
 
 // Requests
@@ -37,11 +36,6 @@ message GetUserOrdersRequest {
 message RemoveOrderRequest {
   string orderId = 1;
   string userId = 2;
-}
-
-message OrderStatusRequest {
-  string orderId = 1;
-  string status = 2;
 }
 
 // Responses

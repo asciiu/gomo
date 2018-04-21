@@ -6,6 +6,7 @@ import (
 	"fmt"
 
 	evt "github.com/asciiu/gomo/common/proto/events"
+	orderRepo "github.com/asciiu/gomo/order-service/db/sql"
 )
 
 // OrderFilledReceiver handles order filled events
@@ -15,7 +16,15 @@ type OrderFilledReceiver struct {
 
 // ProcessEvent handles OrderEvents. These events are published by when an order was filled.
 func (receiver *OrderFilledReceiver) ProcessEvent(ctx context.Context, orderEvent *evt.OrderEvent) error {
-	fmt.Println(orderEvent)
 
-	return nil
+	order, error := orderRepo.UpdateOrderStatus(receiver.DB, orderEvent)
+	switch {
+	case error == nil:
+		// load the next order in the chain if there is one
+		fmt.Println("Load the next order if there is one ", order)
+
+		return nil
+	default:
+		return error
+	}
 }

@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"log"
 
+	evt "github.com/asciiu/gomo/common/proto/events"
 	orderProto "github.com/asciiu/gomo/order-service/proto/order"
 	"github.com/google/uuid"
 )
@@ -119,12 +120,14 @@ func UpdateOrder(db *sql.DB, req *orderProto.OrderRequest) (*orderProto.Order, e
 	return &o, nil
 }
 
-func UpdateOrderStatus(db *sql.DB, req *orderProto.OrderStatusRequest) (*orderProto.Order, error) {
-	sqlStatement := `UPDATE orders SET status = $1 WHERE id = $2 RETURNING id, user_id, exchange_name, 
-	market_name, user_key, side, base_quantity, base_quantity_remainder, status, conditions`
+func UpdateOrderStatus(db *sql.DB, evt *evt.OrderEvent) (*orderProto.Order, error) {
+	sqlStatement := `UPDATE orders SET status = $1, condition = $2, exchange_order_id = $3, exchange_market_name = $4 
+	WHERE id = $5 RETURNING id, user_id, exchange_name, market_name, user_key, side, base_quantity, 
+	base_quantity_remainder, status, conditions`
 
 	var o orderProto.Order
-	err := db.QueryRow(sqlStatement, req.Status, req.OrderId).
+	err := db.QueryRow(sqlStatement, evt.Status, evt.Condition, evt.ExchangeOrderId,
+		evt.ExchangeMarketName, evt.OrderId).
 		Scan(&o.OrderId, &o.UserId, &o.Exchange, &o.MarketName, &o.ApiKeyId,
 			&o.Side, &o.BaseQuantity, &o.BaseQuantityRemainder, &o.Status, &o.Conditions)
 
