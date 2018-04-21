@@ -10,11 +10,13 @@ CREATE TABLE orders (
  market_name text NOT NULL,
  side text NOT NULL,
  "type" text NOT NULL,
- price decimal,
  base_quantity decimal NOT NULL,
  base_quantity_remainder decimal NOT NULL,
+ currency_quantity decimal NOT NULL,
  status text NOT NULL,
  conditions jsonb NOT NULL,
+ condition text NOT NULL,
+ parent_order_id UUID NOT NULL, 
  created_on TIMESTAMP DEFAULT now(),
  updated_on TIMESTAMP DEFAULT current_timestamp
 );
