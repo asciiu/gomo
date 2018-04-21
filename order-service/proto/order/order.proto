@@ -3,7 +3,7 @@ syntax = "proto3";
 package go.micro.srv.order; 
 
 service OrderService {
-  rpc AddOrders(OrderRequests) returns (OrderResponse) {}
+  rpc AddOrders(OrderRequests) returns (OrderListResponse) {}
   rpc GetUserOrder(GetUserOrderRequest) returns (OrderResponse) {}
   rpc GetUserOrders(GetUserOrdersRequest) returns (OrderListResponse) {}
   rpc RemoveOrder(RemoveOrderRequest) returns (OrderResponse) {}
