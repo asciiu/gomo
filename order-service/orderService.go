@@ -3,11 +3,11 @@ package main
 import (
 	"context"
 	"database/sql"
+	"fmt"
 	"log"
 	"strings"
 
 	bp "github.com/asciiu/gomo/balance-service/proto/balance"
-	"github.com/asciiu/gomo/common/enums"
 	evt "github.com/asciiu/gomo/common/proto/events"
 	orderRepo "github.com/asciiu/gomo/order-service/db/sql"
 	pb "github.com/asciiu/gomo/order-service/proto/order"
@@ -144,19 +144,50 @@ func (service *OrderService) addSellOrder(ctx context.Context, req *pb.OrderRequ
 	}
 }
 
-func (service *OrderService) AddOrder(ctx context.Context, req *pb.OrderRequest, response *pb.OrderResponse) error {
-	side := enums.NewSideFromString(req.Side)
+//func (service *OrderService) AddOrders(ctx context.Context, req *pb.OrdersRequest, response *pb.OrdersResponse) error {
+//	side := enums.NewSideFromString(req.Side)
+//
+//	switch side {
+//	case enums.Buy:
+//		return service.addBuyOrder(ctx, req, response)
+//	case enums.Sell:
+//		return service.addSellOrder(ctx, req, response)
+//	default:
+//		response.Status = "fail"
+//		response.Message = "side unknown: " + req.Side
+//		return nil
+//	}
+//}
+func (service *OrderService) AddOrders(ctx context.Context, req *pb.OrdersRequest, response *pb.OrderListResponse) error {
+	orders := make([]*pb.Order, 0)
+	parentOrderId := req.Orders[0].ParentOrderId
 
-	switch side {
-	case enums.Buy:
-		return service.addBuyOrder(ctx, req, response)
-	case enums.Sell:
-		return service.addSellOrder(ctx, req, response)
-	default:
-		response.Status = "fail"
-		response.Message = "side unknown: " + req.Side
-		return nil
+	// assume the first order is the parent
+	for _, order := range req.Orders {
+
+		order.ParentOrderId = parentOrderId
+		o, error := orderRepo.InsertOrder(service.DB, order)
+
+		if error != nil {
+			fmt.Println("nope! ", error)
+		}
+
+		parentOrderId = o.OrderId
+		orders = append(orders, o)
 	}
+
+	//switch side {
+	//case enums.Buy:
+	//	return service.addBuyOrder(ctx, req, response)
+	//case enums.Sell:
+	//	return service.addSellOrder(ctx, req, response)
+	//default:
+	response.Status = "success"
+	response.Data = &pb.UserOrdersData{
+		Orders: orders,
+	}
+	return nil
+	//}
 }
 
 func (service *OrderService) GetUserOrder(ctx context.Context, req *pb.GetUserOrderRequest, res *pb.OrderResponse) error {

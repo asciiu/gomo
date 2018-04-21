@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"log"
 
 	evt "github.com/asciiu/gomo/common/proto/events"
 	orderRepo "github.com/asciiu/gomo/order-service/db/sql"
@@ -25,6 +26,7 @@ func (receiver *OrderFilledReceiver) ProcessEvent(ctx context.Context, orderEven
 
 		return nil
 	default:
+		log.Println("order fill: ", error)
 		return error
 	}
 }
