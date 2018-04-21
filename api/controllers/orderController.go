@@ -67,6 +67,11 @@ type OrderRequest struct {
 	// Required.
 	// in: body
 	Conditions string `json:"conditions"`
+
+	// Optional
+	ParentOrderId string `json:"parentOrderId"`
+	// Optional
+	PaperMode bool `json:"paperMode"`
 }
 
 // swagger:parameters updateOrder
@@ -213,6 +218,15 @@ func (controller *OrderController) HandleListOrders(c echo.Context) error {
 	return c.JSON(http.StatusOK, response)
 }
 
+func fail(c echo.Context, msg string) error {
+	response := &ResponseError{
+		Status:  "fail",
+		Message: msg,
+	}
+
+	return c.JSON(http.StatusBadRequest, response)
+}
+
 // swagger:route POST /orders orders addOrder
 //
 // create a new order  (protected)
@@ -220,77 +234,81 @@ func (controller *OrderController) HandleListOrders(c echo.Context) error {
 // This will create a new order in the system.
 //
 // responses:
-//  200: responseOrderSuccess "data" will contain order info with "status": "success"
+//  200: responseOrdersSuccess "data" will contain list of orders with "status": "success"
 //  400: responseError missing params with "status": "fail"
 //  500: responseError the message will state what the internal server error was with "status": "error"
 func (controller *OrderController) HandlePostOrder(c echo.Context) error {
+	defer c.Request().Body.Close()
 	token := c.Get("user").(*jwt.Token)
 	claims := token.Claims.(jwt.MapClaims)
 	userId := claims["jti"].(string)
 
-	order := OrderRequest{}
+	orders := make([]*OrderRequest, 0)
+	requests := make([]*orderProto.OrderRequest, 0)
+	dec := json.NewDecoder(c.Request().Body)
 
-	defer c.Request().Body.Close()
-	err := json.NewDecoder(c.Request().Body).Decode(&order)
+	_, err := dec.Token()
 	if err != nil {
-		response := &ResponseError{
-			Status:  "fail",
-			Message: err.Error(),
-		}
-
-		return c.JSON(http.StatusBadRequest, response)
+		return fail(c, err.Error())
 	}
 
-	// side, market name, and api key are required
-	if order.Side == "" || order.MarketName == "" || order.ApiKeyId == "" {
-		response := &ResponseError{
-			Status:  "fail",
-			Message: "side, marketName, and apiKeyId required!",
+	// read all orders from array
+	for dec.More() {
+		var o OrderRequest
+
+		if err := dec.Decode(&o); err != nil {
+			return fail(c, "expected an array")
 		}
-		return c.JSON(http.StatusBadRequest, response)
+		orders = append(orders, &o)
 	}
 
-	// if the side is buy we need a base quantity
-	if order.Side == "buy" && order.BaseQuantity == 0.0 {
-		response := &ResponseError{
-			Status:  "fail",
-			Message: "buy requires a baseQuantity",
+	// error check all orders
+	for _, order := range orders {
+		// side, market name, and api key are required
+		if order.Side == "" || order.MarketName == "" || order.ApiKeyId == "" {
+			return fail(c, "side, marketName, and apiKeyId required!")
 		}
-		return c.JSON(http.StatusBadRequest, response)
+
+		// if the side is buy we need a base quantity
+		if order.Side == "buy" && order.BaseQuantity == 0.0 {
+			return fail(c, "buy requires a baseQuantity")
+		}
+
+		// if the side is sell we need a currency quantity
+		if order.Side == "sell" && order.CurrencyQuantity == 0.0 {
+			return fail(c, "sell requires a currencyQuantity")
+		}
+
+		// market name should be formatted as
+		// currency-base (e.g. ADA-BTC)
+		if !strings.Contains(order.MarketName, "-") {
+			return fail(c, "marketName must be currency-base: e.g. ADA-BTC")
+		}
+
+		if order.ParentOrderId == "" {
+			order.ParentOrderId = "00000000-0000-0000-0000-000000000000"
+		}
+
+		request := orderProto.OrderRequest{
+			UserId:           userId,
+			ApiKeyId:         order.ApiKeyId,
+			MarketName:       order.MarketName,
+			Side:             order.Side,
+			Conditions:       order.Conditions,
+			OrderType:        order.OrderType,
+			BaseQuantity:     order.BaseQuantity,
+			CurrencyQuantity: order.CurrencyQuantity,
+			ParentOrderId:    order.ParentOrderId,
+		}
+		requests = append(requests, &request)
 	}
 
-	// if the side is sell we need a currency quantity
-	if order.Side == "sell" && order.CurrencyQuantity == 0.0 {
-		response := &ResponseError{
-			Status:  "fail",
-			Message: "sell requires a currencyQuantity",
-		}
-		return c.JSON(http.StatusBadRequest, response)
-	}
-
-	// market name should be formatted as
-	// currency-base (e.g. ADA-BTC)
-	if !strings.Contains(order.MarketName, "-") {
-		response := &ResponseError{
-			Status:  "fail",
-			Message: "markName invalid",
-		}
-		return c.JSON(http.StatusBadRequest, response)
-	}
-
-	createRequest := orderProto.OrderRequest{
-		UserId:           userId,
-		ApiKeyId:         order.ApiKeyId,
-		MarketName:       order.MarketName,
-		Side:             order.Side,
-		Conditions:       order.Conditions,
-		OrderType:        order.OrderType,
-		BaseQuantity:     order.BaseQuantity,
-		CurrencyQuantity: order.CurrencyQuantity,
+	orderRequests := orderProto.OrdersRequest{
+		Orders: requests,
 	}
 
 	// add order returns nil for error
-	r, _ := controller.Client.AddOrder(context.Background(), &createRequest)
+	r, _ := controller.Client.AddOrders(context.Background(), &orderRequests)
 
 	if r.Status != "success" {
 		response := &ResponseError{
@@ -306,7 +324,7 @@ func (controller *OrderController) HandlePostOrder(c echo.Context) error {
 		}
 	}
 
-	response := &ResponseOrderSuccess{
+	response := &ResponseOrdersSuccess{
 		Status: "success",
 		Data:   r.Data,
 	}
