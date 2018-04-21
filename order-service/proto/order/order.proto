@@ -3,7 +3,7 @@ syntax = "proto3";
 package go.micro.srv.order; 
 
 service OrderService {
-  rpc AddOrder(OrderRequest) returns (OrderResponse) {}
+  rpc AddOrders(OrderRequests) returns (OrderResponse) {}
   rpc GetUserOrder(GetUserOrderRequest) returns (OrderResponse) {}
   rpc GetUserOrders(GetUserOrdersRequest) returns (OrderListResponse) {}
   rpc RemoveOrder(RemoveOrderRequest) returns (OrderResponse) {}
@@ -11,6 +11,10 @@ service OrderService {
 }
 
 // Requests
+message OrderRequests {
+  repeated OrderRequest orders = 1; 
+}
+
 message OrderRequest {
   string orderId = 1;
   string userId = 2;
@@ -22,6 +26,7 @@ message OrderRequest {
   double baseQuantity = 8;
   double currencyQuantity = 9;
   string conditions = 10;
+  string nextOrderId = 11;
 }
 
 message GetUserOrderRequest {
@@ -51,8 +56,11 @@ message Order {
   string orderType = 9;
   double baseQuantity = 10;
   double baseQuantityRemainder = 11;
-  string status = 12;
-  string conditions = 13;
+  double currencyQuantity = 12;
+  string status = 14;
+  string conditions = 15;
+  string condition = 16;
+  string nextOrderId = 13;
 }
 
 message UserOrderData {
