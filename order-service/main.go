@@ -39,6 +39,12 @@ func NewOrderService(name, dbUrl string) micro.Service {
 		NewSell: micro.NewPublisher(msg.TopicNewSellOrder, srv.Client()),
 	}
 
+	filledReceiver := OrderFilledReceiver{
+		DB: gomoDB,
+	}
+
+	micro.RegisterSubscriber(msg.TopicOrderFilled, srv.Server(), &filledReceiver)
+
 	// Register our service with the gRPC server, this will tie our
 	// implementation into the auto-generated interface code for our
 	// protobuf definition.
