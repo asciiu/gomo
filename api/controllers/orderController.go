@@ -58,12 +58,18 @@ type OrderRequest struct {
 	// Optional.
 	// in: body
 	OrderType string `json:"orderType"`
-	// Required for buy side.
+	// Required for buy side when order is first in chain
 	// in: body
 	BaseQuantity float64 `json:"baseQuantity"`
-	// Required for sell side.
+	// Required for buy side on chained orders
+	// in: body
+	BasePercent float64 `json:"basePercent"`
+	// Required for sell side when an order is first in a chain
 	// in: body
 	CurrencyQuantity float64 `json:"currencyQuantity"`
+	// Required for sell side for all orders that are chained
+	// in: body
+	CurrencyPercent float64 `json:"currencyPercent"`
 	// Required.
 	// in: body
 	Conditions string `json:"conditions"`
@@ -263,20 +269,32 @@ func (controller *OrderController) HandlePostOrder(c echo.Context) error {
 	}
 
 	// error check all orders
-	for _, order := range orders {
+	for i, order := range orders {
 		// side, market name, and api key are required
 		if order.Side == "" || order.MarketName == "" || order.ApiKeyId == "" {
 			return fail(c, "side, marketName, and apiKeyId required!")
 		}
 
-		// if the side is buy we need a base quantity
-		if order.Side == "buy" && order.BaseQuantity == 0.0 {
-			return fail(c, "buy requires a baseQuantity")
+		// assume the first order is head of a chain if the ParentOrderId is empty
+		// this means that a new chain of orders has been submitted because the
+		// ParentOrderId has not been assigned yet.
+		if i == 0 && order.ParentOrderId == "" && order.Side == "buy" && order.BaseQuantity == 0.0 {
+			return fail(c, "head buy in chain requires a baseQuantity")
 		}
 
 		// if the side is sell we need a currency quantity
-		if order.Side == "sell" && order.CurrencyQuantity == 0.0 {
-			return fail(c, "sell requires a currencyQuantity")
+		if i == 0 && order.ParentOrderId == "" && order.Side == "sell" && order.CurrencyQuantity == 0.0 {
+			return fail(c, "head sell in chain requires a currencyQuantity")
+		}
+
+		// need to use basePercent for chained buys
+		if i != 0 && order.Side == "buy" && order.BasePercent == 0.0 {
+			return fail(c, "chained buys require a basePercent")
+		}
+
+		// need to use currencyPercent for chained buys
+		if i != 0 && order.Side == "sell" && order.CurrencyQuantity == 0.0 {
+			return fail(c, "chained sells require a currencyPercent")
 		}
 
 		// market name should be formatted as
@@ -297,7 +315,9 @@ func (controller *OrderController) HandlePostOrder(c echo.Context) error {
 			Conditions:       order.Conditions,
 			OrderType:        order.OrderType,
 			BaseQuantity:     order.BaseQuantity,
+			BasePercent:      order.BasePercent,
 			CurrencyQuantity: order.CurrencyQuantity,
+			CurrencyPercent:  order.CurrencyPercent,
 			ParentOrderId:    order.ParentOrderId,
 		}
 		requests = append(requests, &request)

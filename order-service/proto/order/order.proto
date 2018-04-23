@@ -57,12 +57,13 @@ message Order {
   string side = 8;
   string orderType = 9;
   double baseQuantity = 10;
-  double baseQuantityRemainder = 11;
+  double basePercent = 11;
   double currencyQuantity = 12;
+  double currencyPercent = 13;
   string status = 14;
   string conditions = 15;
   string condition = 16;
-  string parentOrderId = 13;
+  string parentOrderId = 17;
 }
 
 message UserOrderData {

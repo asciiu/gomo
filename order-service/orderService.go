@@ -160,6 +160,8 @@ func (service *OrderService) addSellOrder(ctx context.Context, req *pb.OrderRequ
 //}
 func (service *OrderService) AddOrders(ctx context.Context, req *pb.OrdersRequest, response *pb.OrderListResponse) error {
 	orders := make([]*pb.Order, 0)
+
+	// assume the first order has a parentOrderId
 	parentOrderId := req.Orders[0].ParentOrderId
 
 	// assume the first order is the parent
