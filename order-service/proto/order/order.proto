@@ -24,9 +24,11 @@ message OrderRequest {
   string side = 6;
   string orderType = 7;
   double baseQuantity = 8;
-  double currencyQuantity = 9;
-  string conditions = 10;
-  string parentOrderId = 11;
+  double basePercent = 9;
+  double currencyQuantity = 10;
+  double currencyPercent = 11;
+  string conditions = 12;
+  string parentOrderId = 13;
 }
 
 message GetUserOrderRequest {
