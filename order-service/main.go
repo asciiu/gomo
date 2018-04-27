@@ -38,7 +38,8 @@ func NewOrderService(name, dbUrl string) micro.Service {
 	}
 
 	filledReceiver := OrderFilledReceiver{
-		DB: gomoDB,
+		DB:      gomoDB,
+		Service: &orderService,
 	}
 
 	micro.RegisterSubscriber(msg.TopicOrderFilled, srv.Server(), &filledReceiver)

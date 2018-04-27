@@ -12,7 +12,8 @@ import (
 
 // OrderFilledReceiver handles order filled events
 type OrderFilledReceiver struct {
-	DB *sql.DB
+	DB      *sql.DB
+	Service *OrderService
 }
 
 // ProcessEvent handles OrderEvents. These events are published by when an order was filled.

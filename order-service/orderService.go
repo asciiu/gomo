@@ -4,7 +4,6 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
-	"log"
 	"strings"
 
 	bp "github.com/asciiu/gomo/balance-service/proto/balance"
@@ -22,126 +21,76 @@ type OrderService struct {
 	NewSell micro.Publisher
 }
 
-// Add a buy order
-func (service *OrderService) addBuyOrder(ctx context.Context, req *pb.OrderRequest, response *pb.OrderResponse) error {
-	currencies := strings.Split(req.MarketName, "-")
-	baseCurrency := currencies[1]
-
-	balRequest := bp.GetUserBalanceRequest{
-		UserId:   req.UserId,
-		ApiKeyId: req.ApiKeyId,
-		Currency: baseCurrency,
+// These are all private functions
+func (service *OrderService) publishOrder(publisher micro.Publisher, order *pb.Order) error {
+	// process order here
+	orderEvent := evt.OrderEvent{
+		Exchange:     "Binance",
+		OrderId:      order.OrderId,
+		UserId:       order.UserId,
+		ApiKeyId:     order.ApiKeyId,
+		MarketName:   order.MarketName,
+		BaseQuantity: order.BaseQuantity,
+		Side:         order.Side,
+		Conditions:   order.Conditions,
+		Status:       "pending",
 	}
 
-	balResponse, err := service.Client.GetUserBalance(ctx, &balRequest)
-	if err != nil {
-		response.Status = "error"
-		response.Message = "ecountered error from GetUserBalance: " + err.Error()
-		// we need to return nil here in order to pass the appropriate status
-		// and message to the client. If we return the err the response in
-		// the client will be nil.
-		return nil
+	if err := publisher.Publish(context.Background(), &orderEvent); err != nil {
+		return fmt.Errorf("publish error: %s %s", err, orderEvent)
 	}
-
-	if balResponse.Data.Balance.Available < req.BaseQuantity {
-		response.Status = "fail"
-		response.Message = "insufficient available balance: " + baseCurrency
-		return nil
-	}
-
-	order, error := orderRepo.InsertOrder(service.DB, req)
-
-	switch {
-	case error == nil:
-		// process order here
-		orderEvent := evt.OrderEvent{
-			Exchange:     "Binance",
-			OrderId:      order.OrderId,
-			UserId:       order.UserId,
-			ApiKeyId:     order.ApiKeyId,
-			MarketName:   order.MarketName,
-			BaseQuantity: order.BaseQuantity,
-			Side:         order.Side,
-			Conditions:   order.Conditions,
-			Status:       "pending",
-		}
-
-		if err := service.NewBuy.Publish(context.Background(), &orderEvent); err != nil {
-			log.Println("publish warning: ", err, orderEvent)
-		}
-
-		response.Status = "success"
-		response.Data = &pb.UserOrderData{
-			Order: order,
-		}
-		return nil
-
-	default:
-		response.Status = "error"
-		response.Message = "ecountered error on Insert: " + error.Error()
-		return nil
-	}
+	return nil
 }
 
-// add a sell order
-func (service *OrderService) addSellOrder(ctx context.Context, req *pb.OrderRequest, response *pb.OrderResponse) error {
-	currencies := strings.Split(req.MarketName, "-")
-	currency := currencies[0]
-
+// private: validateBalance
+func (service *OrderService) validateBalance(ctx context.Context, currency, userID, apikeyID string, balance float64) error {
 	balRequest := bp.GetUserBalanceRequest{
-		UserId:   req.UserId,
-		ApiKeyId: req.ApiKeyId,
+		UserId:   userID,
+		ApiKeyId: apikeyID,
 		Currency: currency,
 	}
-
 	balResponse, err := service.Client.GetUserBalance(ctx, &balRequest)
 	if err != nil {
-		response.Status = "error"
-		response.Message = "ecountered error from GetUserBalance: " + err.Error()
-		// we need to return nil here in order to pass the appropriate status
-		// and message to the client. If we return the err the response in
-		// the client will be nil.
-		return nil
+		return fmt.Errorf("ecountered error from GetUserBalance: %s", err.Error())
 	}
 
-	if balResponse.Data.Balance.Available < req.CurrencyQuantity {
-		response.Status = "fail"
-		response.Message = "sell quantity is greater than available balance for " + currency
-		return nil
+	if balResponse.Data.Balance.Available < balance {
+		return fmt.Errorf("insufficient %s balance", currency)
+	}
+	return nil
+}
+
+// LoadBuyOrder ...
+func (service *OrderService) LoadBuyOrder(ctx context.Context, order *pb.Order) error {
+
+	currencies := strings.Split(order.MarketName, "-")
+	baseCurrency := currencies[1]
+
+	if err := service.validateBalance(ctx, baseCurrency, order.UserId, order.ApiKeyId, order.BaseQuantity); err != nil {
+		return err
 	}
 
-	order, error := orderRepo.InsertOrder(service.DB, req)
-
-	switch {
-	case error == nil:
-		// process order here
-		orderEvent := evt.OrderEvent{
-			Exchange:     "Binance",
-			OrderId:      order.OrderId,
-			UserId:       order.UserId,
-			ApiKeyId:     order.ApiKeyId,
-			MarketName:   order.MarketName,
-			BaseQuantity: order.BaseQuantity,
-			Side:         order.Side,
-			Conditions:   order.Conditions,
-			Status:       "pending",
-		}
-
-		if err := service.NewSell.Publish(context.Background(), &orderEvent); err != nil {
-			log.Println("publish warning: ", err, orderEvent)
-		}
-
-		response.Status = "success"
-		response.Data = &pb.UserOrderData{
-			Order: order,
-		}
-		return nil
-
-	default:
-		response.Status = "error"
-		response.Message = "ecountered error on Insert: " + error.Error()
-		return nil
+	if err := service.publishOrder(service.NewBuy, order); err != nil {
+		return err
 	}
+
+	return nil
+}
+
+// LoadSellOrder ...
+func (service *OrderService) LoadSellOrder(ctx context.Context, order *pb.Order) error {
+	currencies := strings.Split(order.MarketName, "-")
+	currency := currencies[0]
+
+	if err := service.validateBalance(ctx, currency, order.UserId, order.ApiKeyId, order.CurrencyQuantity); err != nil {
+		return err
+	}
+
+	if err := service.publishOrder(service.NewSell, order); err != nil {
+		return err
+	}
+
+	return nil
 }
 
 //func (service *OrderService) AddOrders(ctx context.Context, req *pb.OrdersRequest, response *pb.OrdersResponse) error {
@@ -160,36 +109,86 @@ func (service *OrderService) addSellOrder(ctx context.Context, req *pb.OrderRequ
 //}
 func (service *OrderService) AddOrders(ctx context.Context, req *pb.OrdersRequest, response *pb.OrderListResponse) error {
 	orders := make([]*pb.Order, 0)
+	requestOrders := req.Orders
 
-	// assume the first order has a parentOrderId
-	parentOrderId := req.Orders[0].ParentOrderId
+	// begin with head order
+	order := requestOrders[0]
 
-	// assume the first order is the parent
-	for _, order := range req.Orders {
+	parentOrderID := order.ParentOrderId
 
-		order.ParentOrderId = parentOrderId
+	// if zero for parentOrderId we have must load this order immediately
+	if parentOrderID == "00000000-0000-0000-0000-000000000000" {
+
+		currencies := strings.Split(order.MarketName, "-")
+		var currency string
+		var quantity float64
+
+		if order.Side == "buy" {
+			// base currency will be second
+			currency = currencies[1]
+			quantity = order.BaseQuantity
+		} else {
+			currency = currencies[0]
+			quantity = order.CurrencyQuantity
+		}
+
+		if err := service.validateBalance(ctx, currency, order.UserId, order.ApiKeyId, quantity); err != nil {
+			response.Status = "error"
+			response.Message = "ecountered error from validateBalance: " + err.Error()
+			return nil
+		}
+
 		o, error := orderRepo.InsertOrder(service.DB, order)
 
 		if error != nil {
-			fmt.Println("nope! ", error)
+			response.Status = "error"
+			response.Message = "ecountered error on Insert: " + error.Error()
+			return nil
 		}
 
-		parentOrderId = o.OrderId
 		orders = append(orders, o)
+		var pub micro.Publisher
+
+		if o.Side == "buy" {
+			pub = service.NewBuy
+		} else {
+			pub = service.NewSell
+		}
+
+		if err := service.publishOrder(pub, o); err != nil {
+			response.Status = "error"
+			response.Message = "could not publish order: " + err.Error()
+			return nil
+		}
+
+		requestOrders = requestOrders[1:]
+		parentOrderID = o.OrderId
 	}
 
-	//switch side {
-	//case enums.Buy:
-	//	return service.addBuyOrder(ctx, req, response)
-	//case enums.Sell:
-	//	return service.addSellOrder(ctx, req, response)
-	//default:
+	// loop through and insert the rest of the chain
+	for i := 0; i < len(requestOrders); i++ {
+		order = requestOrders[i]
+
+		// assign the parent order id for following orders
+		order.ParentOrderId = parentOrderID
+
+		o, error := orderRepo.InsertOrder(service.DB, order)
+
+		if error != nil {
+			response.Status = "error"
+			response.Message = "could not insert order: " + error.Error()
+			return nil
+		}
+
+		orders = append(orders, o)
+		parentOrderID = o.OrderId
+	}
+
 	response.Status = "success"
 	response.Data = &pb.UserOrdersData{
 		Orders: orders,
 	}
 	return nil
-	//}
 }
 
 func (service *OrderService) GetUserOrder(ctx context.Context, req *pb.GetUserOrderRequest, res *pb.OrderResponse) error {

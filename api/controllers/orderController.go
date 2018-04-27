@@ -282,20 +282,20 @@ func (controller *OrderController) HandlePostOrder(c echo.Context) error {
 			return fail(c, "head buy in chain requires a baseQuantity")
 		}
 
-		// if the side is sell we need a currency quantity
+		// if the head order side is sell we need a currency quantity
 		if i == 0 && order.ParentOrderId == "" && order.Side == "sell" && order.CurrencyQuantity == 0.0 {
 			return fail(c, "head sell in chain requires a currencyQuantity")
 		}
 
 		// need to use basePercent for chained buys
-		if i != 0 && order.Side == "buy" && order.BasePercent == 0.0 {
-			return fail(c, "chained buys require a basePercent")
-		}
+		//if i != 0 && order.Side == "buy" && order.BasePercent == 0.0 {
+		//	return fail(c, "chained buys require a basePercent")
+		//}
 
-		// need to use currencyPercent for chained buys
-		if i != 0 && order.Side == "sell" && order.CurrencyQuantity == 0.0 {
-			return fail(c, "chained sells require a currencyPercent")
-		}
+		//// need to use currencyPercent for chained buys
+		//if i != 0 && order.Side == "sell" && order.CurrencyQuantity == 0.0 {
+		//	return fail(c, "chained sells require a currencyPercent")
+		//}
 
 		// market name should be formatted as
 		// currency-base (e.g. ADA-BTC)
