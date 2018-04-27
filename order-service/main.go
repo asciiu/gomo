@@ -26,8 +26,6 @@ func NewOrderService(name, dbUrl string) micro.Service {
 
 	gomoDB, err := db.NewDB(dbUrl)
 
-	// TODO read secret from env var
-	//dbUrl := fmt.Sprintf("%s", os.Getenv("DB_URL"))
 	if err != nil {
 		log.Fatalf(err.Error())
 	}
@@ -55,7 +53,40 @@ func NewOrderService(name, dbUrl string) micro.Service {
 
 func main() {
 	dbURL := fmt.Sprintf("%s", os.Getenv("DB_URL"))
-	srv := NewOrderService("go.srv.order-service", dbURL)
+
+	// Create a new service. Include some options here.
+	srv := micro.NewService(
+		// This name must match the package name given in your protobuf definition
+		micro.Name("go.srv.order-service"),
+		micro.Version("latest"),
+	)
+
+	// Init will parse the command line flags.
+	srv.Init()
+
+	gomoDB, err := db.NewDB(dbURL)
+
+	if err != nil {
+		log.Fatalf(err.Error())
+	}
+
+	orderService := OrderService{
+		DB:      gomoDB,
+		Client:  bp.NewBalanceServiceClient("go.micro.srv.balance", srv.Client()),
+		NewBuy:  micro.NewPublisher(msg.TopicNewBuyOrder, srv.Client()),
+		NewSell: micro.NewPublisher(msg.TopicNewSellOrder, srv.Client()),
+	}
+
+	filledReceiver := OrderFilledReceiver{
+		DB: gomoDB,
+	}
+
+	micro.RegisterSubscriber(msg.TopicOrderFilled, srv.Server(), &filledReceiver)
+
+	// Register our service with the gRPC server, this will tie our
+	// implementation into the auto-generated interface code for our
+	// protobuf definition.
+	op.RegisterOrderServiceHandler(srv.Server(), &orderService)
 
 	if err := srv.Run(); err != nil {
 		log.Fatal(err)
