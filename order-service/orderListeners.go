@@ -3,7 +3,6 @@ package main
 import (
 	"context"
 	"database/sql"
-	"fmt"
 	"log"
 
 	evt "github.com/asciiu/gomo/common/proto/events"
@@ -22,8 +21,16 @@ func (receiver *OrderFilledReceiver) ProcessEvent(ctx context.Context, orderEven
 	order, error := orderRepo.UpdateOrderStatus(receiver.DB, orderEvent)
 	switch {
 	case error == nil:
-		// load the next order in the chain if there is one
-		fmt.Println("Load the next order if there is one ", order)
+		order, error = orderRepo.FindOrderWithParentId(receiver.DB, order.OrderId)
+
+		switch {
+		case error != nil:
+			log.Println("FindOrderWithParentId error ", error.Error())
+		case order.Side == "buy":
+			receiver.Service.LoadBuyOrder(ctx, order)
+		case order.Side == "sell":
+			receiver.Service.LoadSellOrder(ctx, order)
+		}
 
 		return nil
 	default:

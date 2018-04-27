@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"log"
 	"strings"
 
 	bp "github.com/asciiu/gomo/balance-service/proto/balance"
@@ -12,6 +13,9 @@ import (
 	pb "github.com/asciiu/gomo/order-service/proto/order"
 	micro "github.com/micro/go-micro"
 )
+
+// MinBalance needed to submit order
+const MinBalance = 0.00001000
 
 // OrderService ...
 type OrderService struct {
@@ -39,11 +43,12 @@ func (service *OrderService) publishOrder(publisher micro.Publisher, order *pb.O
 	if err := publisher.Publish(context.Background(), &orderEvent); err != nil {
 		return fmt.Errorf("publish error: %s %s", err, orderEvent)
 	}
+	log.Printf("publishOrder: %v", orderEvent)
 	return nil
 }
 
 // private: validateBalance
-func (service *OrderService) validateBalance(ctx context.Context, currency, userID, apikeyID string, balance float64) error {
+func (service *OrderService) validateBalance(ctx context.Context, currency, userID, apikeyID string) error {
 	balRequest := bp.GetUserBalanceRequest{
 		UserId:   userID,
 		ApiKeyId: apikeyID,
@@ -54,8 +59,8 @@ func (service *OrderService) validateBalance(ctx context.Context, currency, user
 		return fmt.Errorf("ecountered error from GetUserBalance: %s", err.Error())
 	}
 
-	if balResponse.Data.Balance.Available < balance {
-		return fmt.Errorf("insufficient %s balance", currency)
+	if balResponse.Data.Balance.Available < MinBalance {
+		return fmt.Errorf("insufficient %s balance %.8f required", currency, MinBalance)
 	}
 	return nil
 }
@@ -66,7 +71,7 @@ func (service *OrderService) LoadBuyOrder(ctx context.Context, order *pb.Order) 
 	currencies := strings.Split(order.MarketName, "-")
 	baseCurrency := currencies[1]
 
-	if err := service.validateBalance(ctx, baseCurrency, order.UserId, order.ApiKeyId, order.BaseQuantity); err != nil {
+	if err := service.validateBalance(ctx, baseCurrency, order.UserId, order.ApiKeyId); err != nil {
 		return err
 	}
 
@@ -82,7 +87,7 @@ func (service *OrderService) LoadSellOrder(ctx context.Context, order *pb.Order)
 	currencies := strings.Split(order.MarketName, "-")
 	currency := currencies[0]
 
-	if err := service.validateBalance(ctx, currency, order.UserId, order.ApiKeyId, order.CurrencyQuantity); err != nil {
+	if err := service.validateBalance(ctx, currency, order.UserId, order.ApiKeyId); err != nil {
 		return err
 	}
 
@@ -93,20 +98,7 @@ func (service *OrderService) LoadSellOrder(ctx context.Context, order *pb.Order)
 	return nil
 }
 
-//func (service *OrderService) AddOrders(ctx context.Context, req *pb.OrdersRequest, response *pb.OrdersResponse) error {
-//	side := enums.NewSideFromString(req.Side)
-//
-//	switch side {
-//	case enums.Buy:
-//		return service.addBuyOrder(ctx, req, response)
-//	case enums.Sell:
-//		return service.addSellOrder(ctx, req, response)
-//	default:
-//		response.Status = "fail"
-//		response.Message = "side unknown: " + req.Side
-//		return nil
-//	}
-//}
+// AddOrders ...
 func (service *OrderService) AddOrders(ctx context.Context, req *pb.OrdersRequest, response *pb.OrderListResponse) error {
 	orders := make([]*pb.Order, 0)
 	requestOrders := req.Orders
@@ -121,20 +113,17 @@ func (service *OrderService) AddOrders(ctx context.Context, req *pb.OrdersReques
 
 		currencies := strings.Split(order.MarketName, "-")
 		var currency string
-		var quantity float64
 
 		if order.Side == "buy" {
 			// base currency will be second
 			currency = currencies[1]
-			quantity = order.BaseQuantity
 		} else {
 			currency = currencies[0]
-			quantity = order.CurrencyQuantity
 		}
 
-		if err := service.validateBalance(ctx, currency, order.UserId, order.ApiKeyId, quantity); err != nil {
-			response.Status = "error"
-			response.Message = "ecountered error from validateBalance: " + err.Error()
+		if err := service.validateBalance(ctx, currency, order.UserId, order.ApiKeyId); err != nil {
+			response.Status = "fail"
+			response.Message = err.Error()
 			return nil
 		}
 

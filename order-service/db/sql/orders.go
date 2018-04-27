@@ -32,6 +32,21 @@ func FindOrderById(db *sql.DB, req *orderProto.GetUserOrderRequest) (*orderProto
 	return &o, nil
 }
 
+func FindOrderWithParentId(db *sql.DB, parentOrderId string) (*orderProto.Order, error) {
+	var o orderProto.Order
+	err := db.QueryRow(`SELECT id, user_id, user_key_id, exchange_name, exchange_order_id, exchange_market_name,
+		 market_name, side, type, base_quantity, base_percent, currency_quantity, currency_percent, status, 
+		 conditions, condition, parent_order_id FROM order WHERE parent_order_id = $1`, parentOrderId).
+		Scan(&o.OrderId, &o.UserId, &o.ApiKeyId, &o.Exchange, &o.ExchangeOrderId, &o.ExchangeMarketName,
+			&o.MarketName, &o.Side, &o.OrderType, &o.BaseQuantity, &o.BasePercent, &o.CurrencyQuantity,
+			&o.CurrencyPercent, &o.Status, &o.Conditions, &o.Condition, &o.ParentOrderId)
+
+	if err != nil {
+		return nil, err
+	}
+	return &o, nil
+}
+
 func FindOrdersByUserId(db *sql.DB, req *orderProto.GetUserOrdersRequest) ([]*orderProto.Order, error) {
 	results := make([]*orderProto.Order, 0)
 
