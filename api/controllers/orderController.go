@@ -278,13 +278,13 @@ func (controller *OrderController) HandlePostOrder(c echo.Context) error {
 		// assume the first order is head of a chain if the ParentOrderId is empty
 		// this means that a new chain of orders has been submitted because the
 		// ParentOrderId has not been assigned yet.
-		if i == 0 && order.ParentOrderId == "" && order.Side == "buy" && order.BaseQuantity == 0.0 {
-			return fail(c, "head buy in chain requires a baseQuantity")
+		if i == 0 && order.ParentOrderId == "" && order.Side == "buy" && order.BasePercent == 0.0 {
+			return fail(c, "head buy in chain requires a basePercent")
 		}
 
 		// if the head order side is sell we need a currency quantity
-		if i == 0 && order.ParentOrderId == "" && order.Side == "sell" && order.CurrencyQuantity == 0.0 {
-			return fail(c, "head sell in chain requires a currencyQuantity")
+		if i == 0 && order.ParentOrderId == "" && order.Side == "sell" && order.CurrencyPercent == 0.0 {
+			return fail(c, "head sell in chain requires a currencyPercent")
 		}
 
 		// need to use basePercent for chained buys
