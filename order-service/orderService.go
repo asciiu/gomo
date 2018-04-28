@@ -54,6 +54,7 @@ func (service *OrderService) validateBalance(ctx context.Context, currency, user
 		ApiKeyId: apikeyID,
 		Currency: currency,
 	}
+
 	balResponse, err := service.Client.GetUserBalance(ctx, &balRequest)
 	if err != nil {
 		return fmt.Errorf("ecountered error from GetUserBalance: %s", err.Error())
