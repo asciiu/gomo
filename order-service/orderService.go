@@ -41,9 +41,9 @@ func (service *OrderService) publishOrder(publisher micro.Publisher, order *pb.O
 	}
 
 	if err := publisher.Publish(context.Background(), &orderEvent); err != nil {
-		return fmt.Errorf("publish error: %s %s", err, orderEvent)
+		return fmt.Errorf("publish error -- %s -- %+v", err, &orderEvent)
 	}
-	log.Printf("publishOrder: %v", orderEvent)
+	log.Printf("publish order -- %+v\n", &orderEvent)
 	return nil
 }
 

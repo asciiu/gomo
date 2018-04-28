@@ -29,6 +29,11 @@ func FindOrderById(db *sql.DB, req *orderProto.GetUserOrderRequest) (*orderProto
 	if err != nil {
 		return nil, err
 	}
+
+	if err := json.Unmarshal([]byte(o.Conditions), &o.Conditions); err != nil {
+		return nil, err
+	}
+
 	return &o, nil
 }
 
@@ -45,6 +50,11 @@ func FindOrderWithParentId(db *sql.DB, parentOrderId string) (*orderProto.Order,
 	if err != nil {
 		return nil, err
 	}
+
+	if err := json.Unmarshal([]byte(o.Conditions), &o.Conditions); err != nil {
+		return nil, err
+	}
+
 	return &o, nil
 }
 
@@ -70,6 +80,10 @@ func FindOrdersByUserId(db *sql.DB, req *orderProto.GetUserOrdersRequest) ([]*or
 
 		if err != nil {
 			log.Fatal(err)
+			return nil, err
+		}
+
+		if err := json.Unmarshal([]byte(o.Conditions), &o.Conditions); err != nil {
 			return nil, err
 		}
 		results = append(results, &o)
@@ -144,6 +158,11 @@ func UpdateOrder(db *sql.DB, req *orderProto.OrderRequest) (*orderProto.Order, e
 	if err != nil {
 		return nil, err
 	}
+
+	if err := json.Unmarshal([]byte(o.Conditions), &o.Conditions); err != nil {
+		return nil, err
+	}
+
 	return &o, nil
 }
 
@@ -160,5 +179,10 @@ func UpdateOrderStatus(db *sql.DB, evt *evt.OrderEvent) (*orderProto.Order, erro
 	if err != nil {
 		return nil, err
 	}
+
+	if err := json.Unmarshal([]byte(o.Conditions), &o.Conditions); err != nil {
+		return nil, err
+	}
+
 	return &o, nil
 }
