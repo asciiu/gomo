@@ -38,8 +38,20 @@ func (process *SellProcessor) ProcessEvent(ctx context.Context, event *evt.Excha
 
 			if isValid, desc := evaluateFunc(f); isValid {
 				process.Receiver.Orders = append(sellOrders[:i], sellOrders[i+1:]...)
-				log.Printf("%+v\n", sellOrder)
-				log.Println("condition: ", desc)
+				// if non simulated trigger buy event - exchange service subscribes to these events
+
+				// if it is a simulated order trigger an update order event
+				evt := sellOrder.EventOrigin
+				evt.ExchangeOrderId = "paper"
+				evt.ExchangeMarketName = "paper"
+				evt.Status = "filled"
+				evt.Condition = desc
+
+				log.Printf("sell order triggered -- %+v\n", evt)
+
+				if err := process.Publisher.Publish(ctx, evt); err != nil {
+					log.Println("publish warning -- ", err)
+				}
 			}
 		}
 	}

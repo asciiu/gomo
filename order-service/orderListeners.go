@@ -26,6 +26,9 @@ func (receiver *OrderFilledReceiver) ProcessEvent(ctx context.Context, orderEven
 		childOrder, error := orderRepo.FindOrderWithParentId(receiver.DB, parentOrder.OrderId)
 
 		switch {
+		case error == sql.ErrNoRows:
+			return nil
+
 		case error != nil:
 			log.Println("order filled error -- ", error.Error())
 

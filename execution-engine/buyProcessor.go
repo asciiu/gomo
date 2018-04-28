@@ -51,7 +51,7 @@ func (process *BuyProcessor) ProcessEvent(ctx context.Context, event *evt.Exchan
 				evt.Status = "filled"
 				evt.Condition = desc
 
-				log.Printf("buy order triggered: %+v\n", evt)
+				log.Printf("buy order triggered -- %+v\n", evt)
 
 				if err := process.Publisher.Publish(ctx, evt); err != nil {
 					log.Println("publish warning: ", err, evt)
