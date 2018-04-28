@@ -27,16 +27,23 @@ func (receiver *OrderFilledReceiver) ProcessEvent(ctx context.Context, orderEven
 
 		switch {
 		case error != nil:
-			log.Println("FindOrderWithParentId error ", error.Error())
+			log.Println("order filled error -- ", error.Error())
+
 		case childOrder.Side == "buy":
-			receiver.Service.LoadBuyOrder(ctx, childOrder)
+			if err := receiver.Service.LoadBuyOrder(ctx, childOrder); err != nil {
+				log.Println("order filled error -- ", err.Error())
+			}
+
 		case childOrder.Side == "sell":
-			receiver.Service.LoadSellOrder(ctx, childOrder)
+			if err := receiver.Service.LoadSellOrder(ctx, childOrder); err != nil {
+				log.Println("order filled error -- ", err.Error())
+			}
 		}
 
 		return nil
+
 	default:
-		log.Println("order fill error: ", error)
+		log.Println("order filled error -- ", error)
 		return error
 	}
 }
