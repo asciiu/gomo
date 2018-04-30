@@ -60,18 +60,23 @@ func (service *KeyValidator) Process(ctx context.Context, key *kp.ApiKey) error 
 
 		balances := make([]*bp.Balance, 0)
 		for _, balance := range account.Balances {
+			total := balance.Free + balance.Locked
+
 			bal := bp.Balance{
-				Currency: balance.Asset,
-				Free:     balance.Free,
-				Locked:   balance.Locked,
+				UserKeyId:         key.ApiKeyId,
+				UserId:            key.UserId,
+				ExchangeName:      key.Exchange,
+				CurrencyName:      balance.Asset,
+				Available:         balance.Free,
+				Locked:            balance.Locked,
+				ExchangeTotal:     total,
+				ExchangeAvailable: balance.Free,
+				ExchangedLocked:   balance.Locked,
 			}
 			balances = append(balances, &bal)
 		}
 
 		accountBalances := bp.AccountBalances{
-			ApiKeyId: key.ApiKeyId,
-			UserId:   key.UserId,
-			Exchange: key.Exchange,
 			Balances: balances,
 		}
 

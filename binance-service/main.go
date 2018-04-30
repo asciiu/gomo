@@ -23,6 +23,7 @@ func main() {
 
 	// subscribe to new key topic with a key validator
 	micro.RegisterSubscriber(msg.TopicNewKey, srv.Server(), &keyValidator)
+
 	if err := srv.Run(); err != nil {
 		log.Fatal(err)
 	}
