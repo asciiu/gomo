@@ -8,12 +8,11 @@ import (
 
 	balRepo "github.com/asciiu/gomo/balance-service/db/sql"
 	bp "github.com/asciiu/gomo/balance-service/proto/balance"
-	micro "github.com/micro/go-micro"
 )
 
 type BalanceUpdateListener struct {
-	DB    *sql.DB
-	Micro micro.Service
+	DB      *sql.DB
+	Service *BalanceService
 }
 
 func (service *BalanceUpdateListener) Process(ctx context.Context, balances *bp.AccountBalances) error {
