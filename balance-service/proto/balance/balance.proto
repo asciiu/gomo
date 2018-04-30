@@ -4,6 +4,7 @@ package go.micro.srv.balance;
 
 service BalanceService {
   rpc GetUserBalance(GetUserBalanceRequest) returns (BalanceResponse) {}
+  rpc GetUserBalances(GetUserBalancesRequest) returns (BalancesResponse) {}
 }
 
 // Requests
@@ -49,8 +50,18 @@ message UserBalanceData {
   BalanceDerp balance = 1;
 }
 
+message UserBalancesData {
+  repeated BalanceDerp balances = 1;
+}
+
 message BalanceResponse {
   string status = 1;
   string message = 2;
   UserBalanceData data = 3;
+}
+
+message BalancesResponse {
+  string status = 1;
+  string message = 2;
+  UserBalancesData data = 3;
 }
