@@ -13,8 +13,8 @@ import (
 //	return err
 //}
 
-func FindBalance(db *sql.DB, req *bp.GetUserBalanceRequest) (*bp.BalanceDerp, error) {
-	var b bp.BalanceDerp
+func FindBalance(db *sql.DB, req *bp.GetUserBalanceRequest) (*bp.Balance, error) {
+	var b bp.Balance
 	err := db.QueryRow(`SELECT id, exchange_name, available, locked, exchange_total, exchange_available,
 		exchange_locked FROM user_balances WHERE user_id = $1 and user_key_id = $2 and currency_name = $3`,
 		req.UserId, req.ApiKeyId, req.Currency).
@@ -31,8 +31,9 @@ func FindBalancesByUserId(db *sql.DB, req *bp.GetUserBalancesRequest) (*bp.Accou
 	balances := make([]*bp.Balance, 0)
 	var exchange string
 
-	rows, err := db.Query(`SELECT id, exchange_name, currency_name, available, locked, exchange_total, 
-		exchange_available, exchange_locked FROM user_balances WHERE user_key_id = $1 and user_id = $2`,
+	rows, err := db.Query(`SELECT id, user_id, user_key_id, exchange_name, currency_name, available, 
+		locked, exchange_total, exchange_available, exchange_locked FROM user_balances 
+		WHERE user_key_id = $1 and user_id = $2`,
 		req.ApiKeyId, req.UserId)
 
 	if err != nil {
@@ -42,10 +43,9 @@ func FindBalancesByUserId(db *sql.DB, req *bp.GetUserBalancesRequest) (*bp.Accou
 	defer rows.Close()
 	for rows.Next() {
 		var b bp.Balance
-		var id string
-		var exchangeTotal, exchangeAvailable, exchangeLocked float64
 
-		err := rows.Scan(&id, &exchange, &b.Currency, &b.Free, &b.Locked, &exchangeTotal, &exchangeAvailable, &exchangeLocked)
+		err := rows.Scan(&b.Id, &b.UserId, &b.Exchange, &b.Currency, &b.Available,
+			&b.Locked, &b.ExchangeTotal, &b.ExchangeAvailable, &b.ExchangedLocked)
 		if err != nil {
 			log.Fatal(err)
 			return nil, err
@@ -74,12 +74,12 @@ func UpsertBalances(db *sql.DB, req *bp.AccountBalances) (int, error) {
 
 	for _, balance := range req.Balances {
 		newId := uuid.New()
-		available := balance.Free
+		available := balance.Available
 		locked := balance.Locked
 		total := available + locked
 
 		_, err := db.Exec(sqlStatement, newId, req.UserId, req.ApiKeyId, req.Exchange,
-			balance.Currency, available, locked, total, available, locked)
+			balance.Currency, available, locked, total, balance.ExchangeAvailable, balance.ExchangedLocked)
 
 		if err != nil {
 			return count, err

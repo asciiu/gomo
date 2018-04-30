@@ -25,10 +25,12 @@ func main() {
 		log.Fatalf(err.Error())
 	}
 
-	bp.RegisterBalanceServiceHandler(srv.Server(), &BalanceService{gomoDB})
+	balanceService := BalanceService{gomoDB}
+	balanceListener := BalanceUpdateListener{gomoDB, srv}
+	bp.RegisterBalanceServiceHandler(srv.Server(), &balanceService)
 
 	// subscribe to new key topic with a key validator
-	micro.RegisterSubscriber(msg.TopicBalanceUpdate, srv.Server(), &BalancerUpdater{gomoDB, srv})
+	micro.RegisterSubscriber(msg.TopicBalanceUpdate, srv.Server(), &balanceListener)
 	if err := srv.Run(); err != nil {
 		log.Fatal(err)
 	}

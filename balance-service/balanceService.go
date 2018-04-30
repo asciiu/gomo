@@ -27,3 +27,8 @@ func (service *BalanceService) GetUserBalance(ctx context.Context, req *bp.GetUs
 
 	return error
 }
+
+// GetUserBalances retrieves all nonzero balances
+func (service *BalanceService) GetUserBalances(ctx context.Context, req *bp.GetUserBalancesRequest, res *bp.BalancesResponse) error {
+	return nil
+}

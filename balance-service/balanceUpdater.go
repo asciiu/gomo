@@ -11,12 +11,12 @@ import (
 	micro "github.com/micro/go-micro"
 )
 
-type BalancerUpdater struct {
+type BalanceUpdateListener struct {
 	DB    *sql.DB
 	Micro micro.Service
 }
 
-func (service *BalancerUpdater) Process(ctx context.Context, balances *bp.AccountBalances) error {
+func (service *BalanceUpdateListener) Process(ctx context.Context, balances *bp.AccountBalances) error {
 
 	count, err := balRepo.UpsertBalances(service.DB, balances)
 	if err != nil {
