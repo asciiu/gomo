@@ -34,8 +34,8 @@ func (service *BalanceService) GetUserBalances(ctx context.Context, req *bp.GetU
 
 	if error == nil {
 		res.Status = "success"
-		res.Data = &balances
-	} else error != nil {
+		res.Data = balances
+	} else {
 		res.Status = "error"
 		res.Message = error.Error()
 	}

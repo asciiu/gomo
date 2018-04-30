@@ -12,9 +12,20 @@ import (
 //	_, err := db.Exec("DELETE FROM orders WHERE id = $1", orderId)
 //	return err
 //}
+func NewBalance() *bp.Balance {
+	balance := bp.Balance{
+		Available:         0.0,
+		Locked:            0.0,
+		ExchangeTotal:     0.0,
+		ExchangeAvailable: 0.0,
+	}
+
+	return &balance
+}
 
 func FindBalance(db *sql.DB, req *bp.GetUserBalanceRequest) (*bp.Balance, error) {
-	var b bp.Balance
+	b := NewBalance()
+
 	err := db.QueryRow(`SELECT id, exchange_name, available, locked, exchange_total, exchange_available,
 		exchange_locked FROM user_balances WHERE user_id = $1 and user_key_id = $2 and currency_name = $3`,
 		req.UserId, req.ApiKeyId, req.Currency).
@@ -28,7 +39,7 @@ func FindBalance(db *sql.DB, req *bp.GetUserBalanceRequest) (*bp.Balance, error)
 	if err != nil {
 		return nil, err
 	}
-	return &b, nil
+	return b, nil
 }
 
 func FindBalancesByUserId(db *sql.DB, req *bp.GetUserBalancesRequest) (*bp.AccountBalances, error) {
@@ -45,7 +56,7 @@ func FindBalancesByUserId(db *sql.DB, req *bp.GetUserBalancesRequest) (*bp.Accou
 	}
 	defer rows.Close()
 	for rows.Next() {
-		var b bp.Balance
+		b := NewBalance()
 
 		err := rows.Scan(&b.Id, &b.UserId, &b.UserKeyId, &b.ExchangeName, &b.CurrencyName, &b.Available,
 			&b.Locked, &b.ExchangeTotal, &b.ExchangeAvailable, &b.ExchangedLocked)
@@ -53,7 +64,7 @@ func FindBalancesByUserId(db *sql.DB, req *bp.GetUserBalancesRequest) (*bp.Accou
 			log.Fatal(err)
 			return nil, err
 		}
-		balances = append(balances, &b)
+		balances = append(balances, b)
 	}
 	accBalances := bp.AccountBalances{
 		Balances: balances,
