@@ -20,9 +20,6 @@ message GetUserBalancesRequest {
 }
 
 message AccountBalances{
-  string userId = 1;
-  string apiKeyId = 2;
-  string exchange = 3;
   repeated Balance balances = 4;
 }
 
@@ -31,8 +28,8 @@ message Balance {
   string Id = 1;
   string userId = 2;
   string userKeyId = 3;
-  string exchange = 4;
-  string currency = 5;
+  string exchangeName = 4;
+  string currencyName = 5;
   double available = 6;
   double locked = 7;
   double exchangeTotal = 8;
@@ -44,10 +41,6 @@ message UserBalanceData {
   Balance balance = 1;
 }
 
-message UserBalancesData {
-  repeated Balance balances = 1;
-}
-
 message BalanceResponse {
   string status = 1;
   string message = 2;
@@ -57,5 +50,5 @@ message BalanceResponse {
 message BalancesResponse {
   string status = 1;
   string message = 2;
-  UserBalancesData data = 3;
+  AccountBalances data = 3;
 }

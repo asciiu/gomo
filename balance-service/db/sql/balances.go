@@ -18,8 +18,12 @@ func FindBalance(db *sql.DB, req *bp.GetUserBalanceRequest) (*bp.Balance, error)
 	err := db.QueryRow(`SELECT id, exchange_name, available, locked, exchange_total, exchange_available,
 		exchange_locked FROM user_balances WHERE user_id = $1 and user_key_id = $2 and currency_name = $3`,
 		req.UserId, req.ApiKeyId, req.Currency).
-		Scan(&b.Id, &b.Exchange, &b.Available, &b.Locked, &b.ExchangeTotal, &b.ExchangeAvailable,
+		Scan(&b.Id, &b.ExchangeName, &b.Available, &b.Locked, &b.ExchangeTotal, &b.ExchangeAvailable,
 			&b.ExchangedLocked)
+
+	b.UserId = req.UserId
+	b.UserKeyId = req.ApiKeyId
+	b.CurrencyName = req.Currency
 
 	if err != nil {
 		return nil, err
@@ -29,12 +33,11 @@ func FindBalance(db *sql.DB, req *bp.GetUserBalanceRequest) (*bp.Balance, error)
 
 func FindBalancesByUserId(db *sql.DB, req *bp.GetUserBalancesRequest) (*bp.AccountBalances, error) {
 	balances := make([]*bp.Balance, 0)
-	var exchange string
 
 	rows, err := db.Query(`SELECT id, user_id, user_key_id, exchange_name, currency_name, available, 
 		locked, exchange_total, exchange_available, exchange_locked FROM user_balances 
-		WHERE user_key_id = $1 and user_id = $2`,
-		req.ApiKeyId, req.UserId)
+		WHERE user_id = $1`,
+		req.UserId)
 
 	if err != nil {
 		log.Fatal(err)
@@ -44,7 +47,7 @@ func FindBalancesByUserId(db *sql.DB, req *bp.GetUserBalancesRequest) (*bp.Accou
 	for rows.Next() {
 		var b bp.Balance
 
-		err := rows.Scan(&b.Id, &b.UserId, &b.Exchange, &b.Currency, &b.Available,
+		err := rows.Scan(&b.Id, &b.UserId, &b.UserKeyId, &b.ExchangeName, &b.CurrencyName, &b.Available,
 			&b.Locked, &b.ExchangeTotal, &b.ExchangeAvailable, &b.ExchangedLocked)
 		if err != nil {
 			log.Fatal(err)
@@ -53,9 +56,6 @@ func FindBalancesByUserId(db *sql.DB, req *bp.GetUserBalancesRequest) (*bp.Accou
 		balances = append(balances, &b)
 	}
 	accBalances := bp.AccountBalances{
-		UserId:   req.UserId,
-		ApiKeyId: req.ApiKeyId,
-		Exchange: exchange,
 		Balances: balances,
 	}
 
@@ -78,8 +78,8 @@ func UpsertBalances(db *sql.DB, req *bp.AccountBalances) (int, error) {
 		locked := balance.Locked
 		total := available + locked
 
-		_, err := db.Exec(sqlStatement, newId, req.UserId, req.ApiKeyId, req.Exchange,
-			balance.Currency, available, locked, total, balance.ExchangeAvailable, balance.ExchangedLocked)
+		_, err := db.Exec(sqlStatement, newId, balance.UserId, balance.UserKeyId, balance.ExchangeName,
+			balance.CurrencyName, available, locked, total, balance.ExchangeAvailable, balance.ExchangedLocked)
 
 		if err != nil {
 			return count, err
