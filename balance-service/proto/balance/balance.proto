@@ -26,14 +26,8 @@ message AccountBalances{
   repeated Balance balances = 4;
 }
 
-message Balance {
-  string currency = 1;
-  double free = 2;
-  double locked = 3;
-}
-
 // Responses
-message BalanceDerp {
+message Balance {
   string Id = 1;
   string userId = 2;
   string userKeyId = 3;
@@ -47,11 +41,11 @@ message BalanceDerp {
 }
 
 message UserBalanceData {
-  BalanceDerp balance = 1;
+  Balance balance = 1;
 }
 
 message UserBalancesData {
-  repeated BalanceDerp balances = 1;
+  repeated Balance balances = 1;
 }
 
 message BalanceResponse {
