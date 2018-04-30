@@ -37,14 +37,13 @@ type BalanceController struct {
 // }
 
 // A ResponseBalancesSuccess will always contain a status of "successful".
-// swagger:model responseDevicesSuccess
+// swagger:model responseBalancesSuccess
 type ResponseBalancesSuccess struct {
 	Status string               `json:"status"`
 	Data   *bpb.AccountBalances `json:"data"`
 }
 
 func NewBalanceController(db *sql.DB) *BalanceController {
-	// Create a new service. Optionally include some options here.
 	service := micro.NewService(micro.Name("balance.client"))
 	service.Init()
 
@@ -55,14 +54,14 @@ func NewBalanceController(db *sql.DB) *BalanceController {
 	return &controller
 }
 
-// swagger:route GET /devices devices getAllDevices
+// swagger:route GET /balances balances getAllBalances
 //
-// all registered devices (protected)
+// get all balances (protected)
 //
-// Returns a list of registered devices for logged in user.
+// Returns all balances for user.
 //
 // responses:
-//  200: responseDevicesSuccess "data" will contain array of devices with "status": "success"
+//  200: responseBalancesSuccess "data" will contain array of balances with "status": "success"
 //  500: responseError the message will state what the internal server error was with "status": "error"
 func (controller *BalanceController) HandleGetBalances(c echo.Context) error {
 	token := c.Get("user").(*jwt.Token)
@@ -77,7 +76,7 @@ func (controller *BalanceController) HandleGetBalances(c echo.Context) error {
 	if err != nil {
 		response := &ResponseError{
 			Status:  "error",
-			Message: "the device-service is not available",
+			Message: err.Error(),
 		}
 
 		return c.JSON(http.StatusGone, response)

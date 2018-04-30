@@ -119,11 +119,11 @@ type Balance struct {
 	UserKeyId         string  `protobuf:"bytes,3,opt,name=userKeyId" json:"userKeyId,omitempty"`
 	ExchangeName      string  `protobuf:"bytes,4,opt,name=exchangeName" json:"exchangeName,omitempty"`
 	CurrencyName      string  `protobuf:"bytes,5,opt,name=currencyName" json:"currencyName,omitempty"`
-	Available         float64 `protobuf:"fixed64,6,opt,name=available" json:"available,omitempty"`
-	Locked            float64 `protobuf:"fixed64,7,opt,name=locked" json:"locked,omitempty"`
-	ExchangeTotal     float64 `protobuf:"fixed64,8,opt,name=exchangeTotal" json:"exchangeTotal,omitempty"`
-	ExchangeAvailable float64 `protobuf:"fixed64,9,opt,name=exchangeAvailable" json:"exchangeAvailable,omitempty"`
-	ExchangedLocked   float64 `protobuf:"fixed64,10,opt,name=exchangedLocked" json:"exchangedLocked,omitempty"`
+	Available         float64 `protobuf:"fixed64,6,opt,name=available" json:"available"`
+	Locked            float64 `protobuf:"fixed64,7,opt,name=locked" json:"locked"`
+	ExchangeTotal     float64 `protobuf:"fixed64,8,opt,name=exchangeTotal" json:"exchangeTotal"`
+	ExchangeAvailable float64 `protobuf:"fixed64,9,opt,name=exchangeAvailable" json:"exchangeAvailable"`
+	ExchangedLocked   float64 `protobuf:"fixed64,10,opt,name=exchangedLocked" json:"exchangedLocked"`
 }
 
 func (m *Balance) Reset()                    { *m = Balance{} }
