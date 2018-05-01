@@ -30,7 +30,7 @@ func (service *BalanceService) GetUserBalance(ctx context.Context, req *bp.GetUs
 
 // GetUserBalances retrieves all nonzero balances
 func (service *BalanceService) GetUserBalances(ctx context.Context, req *bp.GetUserBalancesRequest, res *bp.BalancesResponse) error {
-	balances, error := repo.FindBalancesByUserId(service.DB, req)
+	balances, error := repo.FindBalancesByUserID(service.DB, req)
 
 	if error == nil {
 		res.Status = "success"

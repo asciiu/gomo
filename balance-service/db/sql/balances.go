@@ -8,47 +8,32 @@ import (
 	"github.com/google/uuid"
 )
 
-//func DeleteOrder(db *sql.DB, orderId string) error {
-//	_, err := db.Exec("DELETE FROM orders WHERE id = $1", orderId)
-//	return err
-//}
-func NewBalance() *bp.Balance {
-	balance := bp.Balance{
-		Available:         0.0,
-		Locked:            0.0,
-		ExchangeTotal:     0.0,
-		ExchangeAvailable: 0.0,
-	}
-
-	return &balance
-}
-
 func FindBalance(db *sql.DB, req *bp.GetUserBalanceRequest) (*bp.Balance, error) {
-	b := NewBalance()
+	b := bp.Balance{}
 
 	err := db.QueryRow(`SELECT id, exchange_name, available, locked, exchange_total, exchange_available,
 		exchange_locked FROM user_balances WHERE user_id = $1 and user_key_id = $2 and currency_name = $3`,
-		req.UserId, req.ApiKeyId, req.Currency).
-		Scan(&b.Id, &b.ExchangeName, &b.Available, &b.Locked, &b.ExchangeTotal, &b.ExchangeAvailable,
+		req.UserID, req.KeyID, req.Currency).
+		Scan(&b.ID, &b.ExchangeName, &b.Available, &b.Locked, &b.ExchangeTotal, &b.ExchangeAvailable,
 			&b.ExchangedLocked)
 
-	b.UserId = req.UserId
-	b.UserKeyId = req.ApiKeyId
+	b.UserID = req.UserID
+	b.KeyID = req.KeyID
 	b.CurrencyName = req.Currency
 
 	if err != nil {
 		return nil, err
 	}
-	return b, nil
+	return &b, nil
 }
 
-func FindBalancesByUserId(db *sql.DB, req *bp.GetUserBalancesRequest) (*bp.AccountBalances, error) {
+func FindBalancesByUserID(db *sql.DB, req *bp.GetUserBalancesRequest) (*bp.AccountBalances, error) {
 	balances := make([]*bp.Balance, 0)
 
 	rows, err := db.Query(`SELECT id, user_id, user_key_id, exchange_name, currency_name, available, 
 		locked, exchange_total, exchange_available, exchange_locked FROM user_balances 
 		WHERE user_id = $1`,
-		req.UserId)
+		req.UserID)
 
 	if err != nil {
 		log.Fatal(err)
@@ -56,15 +41,15 @@ func FindBalancesByUserId(db *sql.DB, req *bp.GetUserBalancesRequest) (*bp.Accou
 	}
 	defer rows.Close()
 	for rows.Next() {
-		b := NewBalance()
+		b := bp.Balance{}
 
-		err := rows.Scan(&b.Id, &b.UserId, &b.UserKeyId, &b.ExchangeName, &b.CurrencyName, &b.Available,
+		err := rows.Scan(&b.ID, &b.UserID, &b.KeyID, &b.ExchangeName, &b.CurrencyName, &b.Available,
 			&b.Locked, &b.ExchangeTotal, &b.ExchangeAvailable, &b.ExchangedLocked)
 		if err != nil {
 			log.Fatal(err)
 			return nil, err
 		}
-		balances = append(balances, b)
+		balances = append(balances, &b)
 	}
 	accBalances := bp.AccountBalances{
 		Balances: balances,
@@ -84,12 +69,12 @@ func UpsertBalances(db *sql.DB, req *bp.AccountBalances) (int, error) {
 	count := 0
 
 	for _, balance := range req.Balances {
-		newId := uuid.New()
+		newID := uuid.New()
 		available := balance.Available
 		locked := balance.Locked
 		total := available + locked
 
-		_, err := db.Exec(sqlStatement, newId, balance.UserId, balance.UserKeyId, balance.ExchangeName,
+		_, err := db.Exec(sqlStatement, newID, balance.UserID, balance.KeyID, balance.ExchangeName,
 			balance.CurrencyName, available, locked, total, balance.ExchangeAvailable, balance.ExchangedLocked)
 
 		if err != nil {
@@ -100,57 +85,3 @@ func UpsertBalances(db *sql.DB, req *bp.AccountBalances) (int, error) {
 
 	return count, nil
 }
-
-//
-//func UpdateOrder(db *sql.DB, req *orderProto.OrderRequest) (*orderProto.Order, error) {
-//	sqlStatement := `UPDATE orders SET conditions = $1, price = $2, quantity = $3 WHERE id = $4 and user_id = $5 RETURNING exchange_name, user_key_id, status`
-//
-//	jsonCond, err := json.Marshal(req.Conditions)
-//	if err != nil {
-//		return nil, err
-//	}
-//
-//	var o orderProto.Order
-//	err = db.QueryRow(sqlStatement, jsonCond, req.Price, req.Qty, req.OrderId, req.UserId).
-//		Scan(&o.Exchange, &o.ApiKeyId, &o.Status)
-//
-//	if err != nil {
-//		return nil, err
-//	}
-//	order := &orderProto.Order{
-//		OrderId:    req.OrderId,
-//		UserId:     req.UserId,
-//		ApiKeyId:   o.ApiKeyId,
-//		Exchange:   o.Exchange,
-//		Status:     o.Status,
-//		Conditions: req.Conditions,
-//		Price:      req.Price,
-//		Qty:        req.Qty,
-//	}
-//	return order, nil
-//}
-//
-//func UpdateOrderStatus(db *sql.DB, req *orderProto.OrderStatusRequest) (*orderProto.Order, error) {
-//	sqlStatement := `UPDATE orders SET status = $1 WHERE id = $2 RETURNING user_id, exchange_name, market_name, user_key, side, price, quantity, status, conditions`
-//
-//	var o orderProto.Order
-//	err := db.QueryRow(sqlStatement, req.Status, req.OrderId).
-//		Scan(&o.UserId, &o.Exchange, &o.MarketName, &o.ApiKeyId, &o.Side, &o.Price, &o.Qty, &o.Status, &o.Conditions)
-//
-//	if err != nil {
-//		return nil, err
-//	}
-//	order := &orderProto.Order{
-//		OrderId:    req.OrderId,
-//		ApiKeyId:   o.ApiKeyId,
-//		UserId:     o.UserId,
-//		Exchange:   o.Exchange,
-//		MarketName: o.MarketName,
-//		Side:       o.Side,
-//		Price:      o.Price,
-//		Qty:        o.Qty,
-//		Status:     o.Status,
-//		Conditions: o.Conditions,
-//	}
-//	return order, nil
-//}

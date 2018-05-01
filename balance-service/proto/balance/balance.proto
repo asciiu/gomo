@@ -9,14 +9,14 @@ service BalanceService {
 
 // Requests
 message GetUserBalanceRequest {
-  string userId = 1;
-  string apiKeyId = 2;
+  string userID = 1;
+  string keyID = 2;
   string currency = 3;
 }
 
 message GetUserBalancesRequest {
-  string userId = 1;
-  string apiKeyId = 2;
+  string userID = 1;
+  string keyID = 2;
 }
 
 message AccountBalances{
@@ -25,9 +25,9 @@ message AccountBalances{
 
 // Responses
 message Balance {
-  string Id = 1;
-  string userId = 2;
-  string userKeyId = 3;
+  string ID = 1;
+  string userID = 2;
+  string keyID = 3;
   string exchangeName = 4;
   string currencyName = 5;
   double available = 6;
