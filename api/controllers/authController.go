@@ -15,7 +15,7 @@ import (
 	devices "github.com/asciiu/gomo/device-service/proto/device"
 	keys "github.com/asciiu/gomo/key-service/proto/key"
 	gsql "github.com/asciiu/gomo/user-service/db/sql"
-	pb "github.com/asciiu/gomo/user-service/proto/user"
+	users "github.com/asciiu/gomo/user-service/proto/user"
 	micro "github.com/micro/go-micro"
 
 	apiModels "github.com/asciiu/gomo/api/models"
@@ -31,7 +31,7 @@ const jwtDuration = 1440 * time.Minute
 
 type AuthController struct {
 	DB       *sql.DB
-	Client   pb.UserServiceClient
+	Users    users.UserServiceClient
 	Balances balances.BalanceServiceClient
 	Keys     keys.KeyServiceClient
 	Devices  devices.DeviceServiceClient
@@ -105,7 +105,7 @@ func NewAuthController(db *sql.DB) *AuthController {
 
 	controller := AuthController{
 		DB:       db,
-		Client:   pb.NewUserServiceClient("go.srv.user-service", service.Client()),
+		Users:    users.NewUserServiceClient("go.srv.user-service", service.Client()),
 		Balances: balances.NewBalanceServiceClient("go.micro.srv.balance", service.Client()),
 		Keys:     keys.NewKeyServiceClient("go.srv.key-service", service.Client()),
 		Devices:  devices.NewDeviceServiceClient("go.srv.device-service", service.Client()),
@@ -398,23 +398,14 @@ func (controller *AuthController) HandleSignup(c echo.Context) error {
 		return c.JSON(http.StatusBadRequest, response)
 	}
 
-	createRequest := pb.CreateUserRequest{
+	createRequest := users.CreateUserRequest{
 		First:    signupRequest.First,
 		Last:     signupRequest.Last,
 		Email:    signupRequest.Email,
 		Password: signupRequest.Password,
 	}
 
-	r, err := controller.Client.CreateUser(context.Background(), &createRequest)
-	if err != nil {
-		response := &ResponseError{
-			Status:  "error",
-			Message: "create user service unavailable",
-		}
-
-		return c.JSON(http.StatusGone, response)
-	}
-
+	r, _ := controller.Users.CreateUser(context.Background(), &createRequest)
 	if r.Status != "success" {
 		response := &ResponseError{
 			Status:  r.Status,

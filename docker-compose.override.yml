@@ -21,7 +21,7 @@ services:
   balance-service:
     build: ./balance-service
     ports:
-      - 5006:5000
+      - 5001:5000
     environment:
       DB_URL: "postgres://fomo:fomornd@docker.for.mac.host.internal:6432/fomo_dev?&sslmode=disable"
       MICRO_ADDRESS: ":5001"
@@ -32,7 +32,7 @@ services:
   binance-service: 
     build: ./binance-service
     ports:
-      - 5005:5000
+      - 5002:5000
     environment:
       MICRO_ADDRESS: ":5001"
       MICRO_REGISTRY: "mdns"
@@ -40,7 +40,7 @@ services:
   binance-websocket: 
     build: ./binance-websocket
     ports:
-      - 5008:5000
+      - 5003:5000
     environment:
       MICRO_ADDRESS: ":5001"
       MICRO_REGISTRY: "mdns"
@@ -48,7 +48,7 @@ services:
   bittrex-service: 
     build: ./bittrex-service
     ports:
-      - 5007:5000
+      - 5004:5000
     environment:
       MICRO_ADDRESS: ":5001"
       MICRO_REGISTRY: "mdns"
@@ -56,7 +56,7 @@ services:
   device-service:
     build: ./device-service
     ports:
-      - 5002:5000
+      - 5005:5000
     environment:
       DB_URL: "postgres://fomo:fomornd@docker.for.mac.host.internal:6432/fomo_dev?&sslmode=disable"
       MICRO_ADDRESS: ":5001"
@@ -67,7 +67,7 @@ services:
   execution-engine:
     build: ./execution-engine
     ports:
-      - 5009:5000
+      - 5006:5000
     environment:
       DB_URL: "postgres://fomo:fomornd@docker.for.mac.host.internal:6432/fomo_dev?&sslmode=disable"
       MICRO_ADDRESS: ":5001"
@@ -78,7 +78,7 @@ services:
   key-service:
     build: ./key-service
     ports:
-      - 5001:5000
+      - 5007:5000
     environment:
       DB_URL: "postgres://fomo:fomornd@docker.for.mac.host.internal:6432/fomo_dev?&sslmode=disable"
       MICRO_ADDRESS: ":5001"
@@ -89,7 +89,7 @@ services:
   order-service:
     build: ./order-service
     ports:
-      - 5003:5000
+      - 5008:5000
     environment:
       DB_URL: "postgres://fomo:fomornd@docker.for.mac.host.internal:6432/fomo_dev?&sslmode=disable"
       MICRO_ADDRESS: ":5001"
@@ -101,7 +101,7 @@ services:
   user-service:
     build: ./user-service
     ports:
-      - 5004:5000
+      - 5009:5000
     environment:
       DB_URL: "postgres://fomo:fomornd@docker.for.mac.host.internal:6432/fomo_dev?&sslmode=disable"
       MICRO_ADDRESS: ":5001"

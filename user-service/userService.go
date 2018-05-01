@@ -16,6 +16,9 @@ type UserService struct {
 	DB *sql.DB
 }
 
+// CreateUser returns error to conform to protobuf def, but the error will always be returned as nil.
+// Can't return an error with a response object - response object is returned as nil when error is non nil.
+// Therefore, return error in response object always.
 func (service *UserService) CreateUser(ctx context.Context, req *pb.CreateUserRequest, res *pb.UserResponse) error {
 	user := models.NewUser(req.First, req.Last, req.Email, req.Password)
 	_, error := userRepo.InsertUser(service.DB, user)
@@ -36,16 +39,18 @@ func (service *UserService) CreateUser(ctx context.Context, req *pb.CreateUserRe
 	case strings.Contains(error.Error(), "violates unique constraint \"users_email_key\""):
 		res.Status = "fail"
 		res.Message = "email already exists"
-		return error
+		return nil
 
 	default:
 		res.Status = "error"
 		res.Message = error.Error()
-		return error
+		return nil
 	}
 }
 
-// Deletes a user
+// DeleteUser returns error to conform to protobuf def, but the error will always be returned as nil.
+// Can't return an error with a response object - response object is returned as nil when error is non nil.
+// Therefore, return error in response object always.
 func (service *UserService) DeleteUser(ctx context.Context, req *pb.DeleteUserRequest, res *pb.Response) error {
 	var err error
 	if req.Hard {
@@ -60,9 +65,12 @@ func (service *UserService) DeleteUser(ctx context.Context, req *pb.DeleteUserRe
 		res.Status = "error"
 		res.Message = err.Error()
 	}
-	return err
+	return nil
 }
 
+// ChangePassword returns error to conform to protobuf def, but the error will always be returned as nil.
+// Can't return an error with a response object - response object is returned as nil when error is non nil.
+// Therefore, return error in response object always.
 // Changes the user's password. Password is updated when the request's
 // old password matches the current user's password hash.
 func (service *UserService) ChangePassword(ctx context.Context, req *pb.ChangePasswordRequest, res *pb.Response) error {
@@ -94,9 +102,12 @@ func (service *UserService) ChangePassword(ctx context.Context, req *pb.ChangePa
 		res.Message = error.Error()
 	}
 
-	return error
+	return nil
 }
 
+// GetUserInfo returns error to conform to protobuf def, but the error will always be returned as nil.
+// Can't return an error with a response object - response object is returned as nil when error is non nil.
+// Therefore, return error in response object always.
 func (service *UserService) GetUserInfo(ctx context.Context, req *pb.GetUserInfoRequest, res *pb.UserResponse) error {
 	user, error := userRepo.FindUserByID(service.DB, req.UserID)
 	if error != nil {
@@ -114,9 +125,12 @@ func (service *UserService) GetUserInfo(ctx context.Context, req *pb.GetUserInfo
 		}
 	}
 
-	return error
+	return nil
 }
 
+// UpdateUser returns error to conform to protobuf def, but the error will always be returned as nil.
+// Can't return an error with a response object - response object is returned as nil when error is non nil.
+// Therefore, return error in response object always.
 func (service *UserService) UpdateUser(ctx context.Context, req *pb.UpdateUserRequest, res *pb.UserResponse) error {
 	user, error := userRepo.FindUserByID(service.DB, req.UserID)
 	switch {
@@ -150,5 +164,5 @@ func (service *UserService) UpdateUser(ctx context.Context, req *pb.UpdateUserRe
 		res.Message = error.Error()
 	}
 
-	return error
+	return nil
 }
