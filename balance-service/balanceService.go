@@ -12,6 +12,9 @@ type BalanceService struct {
 	DB *sql.DB
 }
 
+// GetUserBalance returns error to conform to protobuf def, but the error will always be returned as nil.
+// Can't return an error with a response object - response object is returned as nil when error is non nil.
+// Therefore, return error in response object.
 func (service *BalanceService) GetUserBalance(ctx context.Context, req *bp.GetUserBalanceRequest, res *bp.BalanceResponse) error {
 	balance, error := repo.FindBalance(service.DB, req)
 
@@ -25,10 +28,12 @@ func (service *BalanceService) GetUserBalance(ctx context.Context, req *bp.GetUs
 		res.Message = error.Error()
 	}
 
-	return error
+	return nil
 }
 
-// GetUserBalances retrieves all nonzero balances
+// GetUserBalances returns error to conform to protobuf def, but the error will always be returned as nil.
+// Can't return an error with a response object - response object is returned as nil when error is non nil.
+// Therefore, return error in response object.
 func (service *BalanceService) GetUserBalances(ctx context.Context, req *bp.GetUserBalancesRequest, res *bp.BalancesResponse) error {
 	balances, error := repo.FindBalancesByUserID(service.DB, req)
 
@@ -40,5 +45,5 @@ func (service *BalanceService) GetUserBalances(ctx context.Context, req *bp.GetU
 		res.Message = error.Error()
 	}
 
-	return error
+	return nil
 }

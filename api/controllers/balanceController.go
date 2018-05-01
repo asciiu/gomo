@@ -4,7 +4,7 @@ import (
 	"database/sql"
 	"net/http"
 
-	bpb "github.com/asciiu/gomo/balance-service/proto/balance"
+	balances "github.com/asciiu/gomo/balance-service/proto/balance"
 	jwt "github.com/dgrijalva/jwt-go"
 	"github.com/labstack/echo"
 	micro "github.com/micro/go-micro"
@@ -12,15 +12,15 @@ import (
 )
 
 type BalanceController struct {
-	DB     *sql.DB
-	Client bpb.BalanceServiceClient
+	DB       *sql.DB
+	Balances balances.BalanceServiceClient
 }
 
 // A ResponseBalancesSuccess will always contain a status of "successful".
 // swagger:model responseBalancesSuccess
 type ResponseBalancesSuccess struct {
-	Status string               `json:"status"`
-	Data   *bpb.AccountBalances `json:"data"`
+	Status string                    `json:"status"`
+	Data   *balances.AccountBalances `json:"data"`
 }
 
 func NewBalanceController(db *sql.DB) *BalanceController {
@@ -28,8 +28,8 @@ func NewBalanceController(db *sql.DB) *BalanceController {
 	service.Init()
 
 	controller := BalanceController{
-		DB:     db,
-		Client: bpb.NewBalanceServiceClient("go.micro.srv.balance", service.Client()),
+		DB:       db,
+		Balances: balances.NewBalanceServiceClient("go.micro.srv.balance", service.Client()),
 	}
 	return &controller
 }
@@ -48,11 +48,11 @@ func (controller *BalanceController) HandleGetBalances(c echo.Context) error {
 	claims := token.Claims.(jwt.MapClaims)
 	userID := claims["jti"].(string)
 
-	getRequest := bpb.GetUserBalancesRequest{
+	getRequest := balances.GetUserBalancesRequest{
 		UserID: userID,
 	}
 
-	r, err := controller.Client.GetUserBalances(context.Background(), &getRequest)
+	r, err := controller.Balances.GetUserBalances(context.Background(), &getRequest)
 	if err != nil {
 		response := &ResponseError{
 			Status:  "error",

@@ -7,7 +7,7 @@ import (
 	"log"
 
 	repo "github.com/asciiu/gomo/balance-service/db/sql"
-	bp "github.com/asciiu/gomo/balance-service/proto/balance"
+	balances "github.com/asciiu/gomo/balance-service/proto/balance"
 )
 
 type BalanceUpdateListener struct {
@@ -15,7 +15,7 @@ type BalanceUpdateListener struct {
 	Service *BalanceService
 }
 
-func (service *BalanceUpdateListener) Process(ctx context.Context, balances *bp.AccountBalances) error {
+func (service *BalanceUpdateListener) Process(ctx context.Context, balances *balances.AccountBalances) error {
 
 	count, err := repo.UpsertBalances(service.DB, balances)
 	if err != nil {

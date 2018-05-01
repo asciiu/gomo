@@ -7,10 +7,10 @@ import (
 	"log"
 	"strings"
 
-	bp "github.com/asciiu/gomo/balance-service/proto/balance"
+	balances "github.com/asciiu/gomo/balance-service/proto/balance"
 	evt "github.com/asciiu/gomo/common/proto/events"
 	orderRepo "github.com/asciiu/gomo/order-service/db/sql"
-	pb "github.com/asciiu/gomo/order-service/proto/order"
+	orders "github.com/asciiu/gomo/order-service/proto/order"
 	micro "github.com/micro/go-micro"
 )
 
@@ -20,13 +20,13 @@ const MinBalance = 0.00001000
 // OrderService ...
 type OrderService struct {
 	DB      *sql.DB
-	Client  bp.BalanceServiceClient
+	Client  balances.BalanceServiceClient
 	NewBuy  micro.Publisher
 	NewSell micro.Publisher
 }
 
 // These are all private functions
-func (service *OrderService) publishOrder(publisher micro.Publisher, order *pb.Order) error {
+func (service *OrderService) publishOrder(publisher micro.Publisher, order *orders.Order) error {
 	// process order here
 	orderEvent := evt.OrderEvent{
 		Exchange:     "Binance",
@@ -49,7 +49,7 @@ func (service *OrderService) publishOrder(publisher micro.Publisher, order *pb.O
 
 // private: validateBalance
 func (service *OrderService) validateBalance(ctx context.Context, currency, userID, apikeyID string) error {
-	balRequest := bp.GetUserBalanceRequest{
+	balRequest := balances.GetUserBalanceRequest{
 		UserID:   userID,
 		KeyID:    apikeyID,
 		Currency: currency,
@@ -66,8 +66,9 @@ func (service *OrderService) validateBalance(ctx context.Context, currency, user
 	return nil
 }
 
-// LoadBuyOrder ...
-func (service *OrderService) LoadBuyOrder(ctx context.Context, order *pb.Order) error {
+// LoadBuyOrder should not be invoked by the client. This function was designed to load an
+// order after an order was filled.
+func (service *OrderService) LoadBuyOrder(ctx context.Context, order *orders.Order) error {
 
 	currencies := strings.Split(order.MarketName, "-")
 	baseCurrency := currencies[1]
@@ -83,8 +84,9 @@ func (service *OrderService) LoadBuyOrder(ctx context.Context, order *pb.Order) 
 	return nil
 }
 
-// LoadSellOrder ...
-func (service *OrderService) LoadSellOrder(ctx context.Context, order *pb.Order) error {
+// LoadSellOrder should not be invoked by the client. This function was designed to load an
+// order after an order was filled.
+func (service *OrderService) LoadSellOrder(ctx context.Context, order *orders.Order) error {
 	currencies := strings.Split(order.MarketName, "-")
 	currency := currencies[0]
 
@@ -99,9 +101,11 @@ func (service *OrderService) LoadSellOrder(ctx context.Context, order *pb.Order)
 	return nil
 }
 
-// AddOrders ...
-func (service *OrderService) AddOrders(ctx context.Context, req *pb.OrdersRequest, response *pb.OrderListResponse) error {
-	orders := make([]*pb.Order, 0)
+// AddOrders returns error to conform to protobuf def, but the error will always be returned as nil.
+// Can't return an error with a response object - response object is returned as nil when error is non nil.
+// Therefore, return error in response object.
+func (service *OrderService) AddOrders(ctx context.Context, req *orders.OrdersRequest, response *orders.OrderListResponse) error {
+	ordrs := make([]*orders.Order, 0)
 	requestOrders := req.Orders
 
 	// begin with head order
@@ -136,7 +140,7 @@ func (service *OrderService) AddOrders(ctx context.Context, req *pb.OrdersReques
 			return nil
 		}
 
-		orders = append(orders, o)
+		ordrs = append(ordrs, o)
 		var pub micro.Publisher
 
 		if o.Side == "buy" {
@@ -170,76 +174,84 @@ func (service *OrderService) AddOrders(ctx context.Context, req *pb.OrdersReques
 			return nil
 		}
 
-		orders = append(orders, o)
+		ordrs = append(ordrs, o)
 		parentOrderID = o.OrderID
 	}
 
 	response.Status = "success"
-	response.Data = &pb.UserOrdersData{
-		Orders: orders,
+	response.Data = &orders.UserOrdersData{
+		Orders: ordrs,
 	}
 	return nil
 }
 
-func (service *OrderService) GetUserOrder(ctx context.Context, req *pb.GetUserOrderRequest, res *pb.OrderResponse) error {
+// GetUserOrder returns error to conform to protobuf def, but the error will always be returned as nil.
+// Can't return an error with a response object - response object is returned as nil when error is non nil.
+// Therefore, return error in response object.
+func (service *OrderService) GetUserOrder(ctx context.Context, req *orders.GetUserOrderRequest, res *orders.OrderResponse) error {
 	order, error := orderRepo.FindOrderByID(service.DB, req)
 
 	switch {
 	case error == nil:
 		res.Status = "success"
-		res.Data = &pb.UserOrderData{
+		res.Data = &orders.UserOrderData{
 			Order: order,
 		}
-		return nil
 	default:
 		res.Status = "error"
 		res.Message = error.Error()
-		return error
 	}
+	return nil
 }
 
-func (service *OrderService) GetUserOrders(ctx context.Context, req *pb.GetUserOrdersRequest, res *pb.OrderListResponse) error {
-	orders, error := orderRepo.FindOrdersByUserID(service.DB, req)
+// GetUserOrders returns error to conform to protobuf def, but the error will always be returned as nil.
+// Can't return an error with a response object - response object is returned as nil when error is non nil.
+// Therefore, return error in response object.
+func (service *OrderService) GetUserOrders(ctx context.Context, req *orders.GetUserOrdersRequest, res *orders.OrderListResponse) error {
+	ordrs, error := orderRepo.FindOrdersByUserID(service.DB, req)
 
 	switch {
 	case error == nil:
 		res.Status = "success"
-		res.Data = &pb.UserOrdersData{
-			Orders: orders,
+		res.Data = &orders.UserOrdersData{
+			Orders: ordrs,
 		}
-		return nil
 	default:
 		res.Status = "error"
 		res.Message = error.Error()
-		return error
 	}
+	return nil
 }
 
-func (service *OrderService) RemoveOrder(ctx context.Context, req *pb.RemoveOrderRequest, res *pb.OrderResponse) error {
+// RemoveOrder returns error to conform to protobuf def, but the error will always be returned as nil.
+// Can't return an error with a response object - response object is returned as nil when error is non nil.
+// Therefore, return error in response object.
+func (service *OrderService) RemoveOrder(ctx context.Context, req *orders.RemoveOrderRequest, res *orders.OrderResponse) error {
 	error := orderRepo.DeleteOrder(service.DB, req.OrderID)
 	switch {
 	case error == nil:
 		res.Status = "success"
-		return nil
 	default:
 		res.Status = "error"
 		res.Message = error.Error()
-		return error
 	}
+	return nil
 }
 
-func (service *OrderService) UpdateOrder(ctx context.Context, req *pb.OrderRequest, res *pb.OrderResponse) error {
+// UpdateOrder returns error to conform to protobuf def, but the error will always be returned as nil.
+// Can't return an error with a response object - response object is returned as nil when error is non nil.
+// Therefore, return error in response object.
+func (service *OrderService) UpdateOrder(ctx context.Context, req *orders.OrderRequest, res *orders.OrderResponse) error {
 	order, error := orderRepo.UpdateOrder(service.DB, req)
 	switch {
 	case error == nil:
 		res.Status = "success"
-		res.Data = &pb.UserOrderData{
+		res.Data = &orders.UserOrderData{
 			Order: order,
 		}
-		return nil
 	default:
 		res.Status = "error"
 		res.Message = error.Error()
-		return error
 	}
+	return nil
 }
