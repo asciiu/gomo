@@ -7,8 +7,8 @@ import (
 	"time"
 
 	binance "github.com/asciiu/go-binance"
-	kp "github.com/asciiu/gomo/apikey-service/proto/apikey"
 	bp "github.com/asciiu/gomo/balance-service/proto/balance"
+	kp "github.com/asciiu/gomo/key-service/proto/key"
 	"github.com/go-kit/kit/log"
 	micro "github.com/micro/go-micro"
 )
@@ -18,7 +18,7 @@ type KeyValidator struct {
 	BalancePub     micro.Publisher
 }
 
-func (service *KeyValidator) Process(ctx context.Context, key *kp.ApiKey) error {
+func (service *KeyValidator) Process(ctx context.Context, key *kp.Key) error {
 	if key.Exchange != "Binance" {
 		return nil
 	}
@@ -63,8 +63,8 @@ func (service *KeyValidator) Process(ctx context.Context, key *kp.ApiKey) error 
 			total := balance.Free + balance.Locked
 
 			bal := bp.Balance{
-				UserKeyId:         key.ApiKeyId,
-				UserId:            key.UserId,
+				KeyID:             key.KeyID,
+				UserID:            key.UserID,
 				ExchangeName:      key.Exchange,
 				CurrencyName:      balance.Asset,
 				Available:         balance.Free,
@@ -85,7 +85,7 @@ func (service *KeyValidator) Process(ctx context.Context, key *kp.ApiKey) error 
 			logger.Log("could not publish account balances event: ", err)
 		}
 
-		logger.Log("verified keyId: ", key.ApiKeyId)
+		logger.Log("verified keyID: ", key.KeyID)
 	}()
 	return nil
 }

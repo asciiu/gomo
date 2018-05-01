@@ -27,11 +27,11 @@ type BinanceAggTrade struct {
 	Type         string `json:"e"`
 	EventTime    uint64 `json:"E"`
 	Symbol       string `json:"s"`
-	TradeId      uint64 `json:"a"`
+	TradeID      uint64 `json:"a"`
 	Price        string `json:"p"`
 	Quantity     string `json:"q"`
-	FirstTradeId uint64 `json:"f"`
-	LastTradeId  uint64 `json:"l"`
+	FirstTradeID uint64 `json:"f"`
+	LastTradeID  uint64 `json:"l"`
 	TradeTime    uint64 `json:"T"`
 	IsBuyerMaker bool   `json:"m"`
 	Ignore       bool   `json:"M"`
@@ -71,7 +71,7 @@ func (bconn *BinanceConnection) Open(market string) {
 				Type:       aggTrade.Type,
 				EventTime:  aggTrade.EventTime,
 				MarketName: aggTrade.Symbol,
-				TradeId:    aggTrade.TradeId,
+				TradeID:    aggTrade.TradeID,
 				Price:      aggTrade.Price,
 				Quantity:   aggTrade.Quantity,
 				TradeTime:  aggTrade.TradeTime,
