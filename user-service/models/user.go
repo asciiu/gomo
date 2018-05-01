@@ -8,10 +8,10 @@ import (
 )
 
 func NewUser(first, last, email, password string) *User {
-	newId := uuid.New()
+	newID := uuid.New()
 
 	user := User{
-		Id:            newId.String(),
+		ID:            newID.String(),
 		First:         first,
 		Last:          last,
 		Email:         email,
@@ -39,7 +39,7 @@ func HashAndSalt(pwd []byte) string {
 }
 
 type User struct {
-	Id            string
+	ID            string
 	First         string
 	Last          string
 	Email         string
@@ -49,7 +49,7 @@ type User struct {
 }
 
 type UserInfo struct {
-	Id    string `json:"id"`
+	ID    string `json:"userID"`
 	First string `json:"first"`
 	Last  string `json:"last"`
 	Email string `json:"email"`
@@ -57,7 +57,7 @@ type UserInfo struct {
 
 func (user *User) Info() *UserInfo {
 	return &UserInfo{
-		Id:    user.Id,
+		ID:    user.ID,
 		First: user.First,
 		Last:  user.Last,
 		Email: user.Email,
