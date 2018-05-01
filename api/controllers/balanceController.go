@@ -16,26 +16,6 @@ type BalanceController struct {
 	Client bpb.BalanceServiceClient
 }
 
-// swagger:parameters addDevice updateDevice
-// type DeviceRequest struct {
-// 	// Required.
-// 	// in: body
-// 	DeviceType string `json:"deviceType"`
-// 	// Required.
-// 	// in: body
-// 	DeviceToken string `json:"deviceToken"`
-// 	// Required.
-// 	// in: body
-// 	ExternalDeviceId string `json:"externalDeviceId"`
-// }
-
-// A ResponseDeviceSuccess will always contain a status of "successful".
-// swagger:model responseDeviceSuccess
-// type ResponseDeviceSuccess struct {
-// 	Status string             `json:"status"`
-// 	Data   *pb.UserDeviceData `json:"data"`
-// }
-
 // A ResponseBalancesSuccess will always contain a status of "successful".
 // swagger:model responseBalancesSuccess
 type ResponseBalancesSuccess struct {
@@ -66,10 +46,10 @@ func NewBalanceController(db *sql.DB) *BalanceController {
 func (controller *BalanceController) HandleGetBalances(c echo.Context) error {
 	token := c.Get("user").(*jwt.Token)
 	claims := token.Claims.(jwt.MapClaims)
-	userId := claims["jti"].(string)
+	userID := claims["jti"].(string)
 
 	getRequest := bpb.GetUserBalancesRequest{
-		UserId: userId,
+		UserID: userID,
 	}
 
 	r, err := controller.Client.GetUserBalances(context.Background(), &getRequest)

@@ -43,10 +43,10 @@ func NewSessionController(db *sql.DB) *SessionController {
 func (controller *SessionController) HandleSession(c echo.Context) error {
 	token := c.Get("user").(*jwt.Token)
 	claims := token.Claims.(jwt.MapClaims)
-	userId := claims["jti"].(string)
+	userID := claims["jti"].(string)
 
 	getRequest := pb.GetUserInfoRequest{
-		UserId: userId,
+		UserID: userID,
 	}
 	r, err := controller.Client.GetUserInfo(context.Background(), &getRequest)
 	if err != nil {
@@ -61,10 +61,10 @@ func (controller *SessionController) HandleSession(c echo.Context) error {
 		Status: "success",
 		Data: &UserData{
 			User: &models.UserInfo{
-				Id:    r.Data.User.UserId,
-				First: r.Data.User.First,
-				Last:  r.Data.User.Last,
-				Email: r.Data.User.Email,
+				UserID: r.Data.User.UserID,
+				First:  r.Data.User.First,
+				Last:   r.Data.User.Last,
+				Email:  r.Data.User.Email,
 			},
 		},
 	}

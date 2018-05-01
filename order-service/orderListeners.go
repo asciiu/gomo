@@ -23,7 +23,7 @@ func (receiver *OrderFilledReceiver) ProcessEvent(ctx context.Context, orderEven
 	parentOrder, error := orderRepo.UpdateOrderStatus(receiver.DB, orderEvent)
 	switch {
 	case error == nil:
-		childOrder, error := orderRepo.FindOrderWithParentId(receiver.DB, parentOrder.OrderId)
+		childOrder, error := orderRepo.FindOrderWithParentID(receiver.DB, parentOrder.OrderID)
 
 		switch {
 		case error == sql.ErrNoRows:

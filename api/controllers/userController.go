@@ -61,16 +61,16 @@ func NewUserController(db *sql.DB) *UserController {
 // responses:
 //  200: responseSuccess the status will be "success" with data null.
 //  400: responseError you did something wrong here with status "fail". Hopefully, the message is descriptive enough.
-//  401: responseError the user Id in url param does not match with status "fail".
+//  401: responseError the user ID in url param does not match with status "fail".
 //  410: responseError the user-service is unreachable with status "error"
 //  500: responseError the message will state what the internal server error was with "status": "error"
 func (controller *UserController) HandleChangePassword(c echo.Context) error {
 	token := c.Get("user").(*jwt.Token)
 	claims := token.Claims.(jwt.MapClaims)
-	paramId := c.Param("id")
-	userId := claims["jti"].(string)
+	paramID := c.Param("id")
+	userID := claims["jti"].(string)
 
-	if paramId != userId {
+	if paramID != userID {
 		response := &ResponseError{
 			Status:  "fail",
 			Message: "unauthorized",
@@ -92,7 +92,7 @@ func (controller *UserController) HandleChangePassword(c echo.Context) error {
 	}
 
 	changeRequest := pb.ChangePasswordRequest{
-		UserId:      userId,
+		UserID:      userID,
 		OldPassword: passwordRequest.OldPassword,
 		NewPassword: passwordRequest.NewPassword,
 	}
@@ -144,10 +144,10 @@ func (controller *UserController) HandleChangePassword(c echo.Context) error {
 func (controller *UserController) HandleUpdateUser(c echo.Context) error {
 	token := c.Get("user").(*jwt.Token)
 	claims := token.Claims.(jwt.MapClaims)
-	paramId := c.Param("id")
-	userId := claims["jti"].(string)
+	paramID := c.Param("id")
+	userID := claims["jti"].(string)
 
-	if paramId != userId {
+	if paramID != userID {
 		response := &ResponseError{
 			Status:  "fail",
 			Message: "unauthorized",
@@ -169,7 +169,7 @@ func (controller *UserController) HandleUpdateUser(c echo.Context) error {
 	}
 
 	changeRequest := pb.UpdateUserRequest{
-		UserId: userId,
+		UserID: userID,
 		First:  updateRequest.First,
 		Last:   updateRequest.Last,
 		Email:  updateRequest.Email,
@@ -189,10 +189,10 @@ func (controller *UserController) HandleUpdateUser(c echo.Context) error {
 		Status: "success",
 		Data: &UserData{
 			User: &models.UserInfo{
-				ID:    r.Data.User.UserID,
-				First: r.Data.User.First,
-				Last:  r.Data.User.Last,
-				Email: r.Data.User.Email,
+				UserID: r.Data.User.UserID,
+				First:  r.Data.User.First,
+				Last:   r.Data.User.Last,
+				Email:  r.Data.User.Email,
 			},
 		},
 	}

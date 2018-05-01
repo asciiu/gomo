@@ -16,9 +16,9 @@ message OrdersRequest {
 }
 
 message OrderRequest {
-  string orderId = 1;
-  string userId = 2;
-  string apiKeyId = 3;
+  string orderID = 1;
+  string userID = 2;
+  string keyID = 3;
   string exchange = 4;
   string marketName = 5;
   string side = 6;
@@ -28,30 +28,30 @@ message OrderRequest {
   double currencyQuantity = 10;
   double currencyPercent = 11;
   string conditions = 12;
-  string parentOrderId = 13;
+  string parentOrderID = 13;
 }
 
 message GetUserOrderRequest {
-  string orderId = 1;
-  string userId = 2;
+  string orderID = 1;
+  string userID = 2;
 }
 
 message GetUserOrdersRequest {
-    string userId = 1;
+    string userID = 1;
 }
 
 message RemoveOrderRequest {
-  string orderId = 1;
-  string userId = 2;
+  string orderID = 1;
+  string userID = 2;
 }
 
 // Responses
 message Order {
-  string orderId = 1;
-  string userId = 2;
-  string apiKeyId = 3;
+  string orderID = 1;
+  string userID = 2;
+  string keyID = 3;
   string exchange = 4;
-  string exchangeOrderId = 5;
+  string exchangeOrderID = 5;
   string exchangeMarketName = 6;
   string marketName = 7;
   string side = 8;
@@ -63,7 +63,7 @@ message Order {
   string status = 14;
   string conditions = 15;
   string condition = 16;
-  string parentOrderId = 17;
+  string parentOrderID = 17;
 }
 
 message UserOrderData {

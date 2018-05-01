@@ -30,9 +30,9 @@ func (service *OrderService) publishOrder(publisher micro.Publisher, order *pb.O
 	// process order here
 	orderEvent := evt.OrderEvent{
 		Exchange:     "Binance",
-		OrderId:      order.OrderId,
-		UserId:       order.UserId,
-		ApiKeyId:     order.ApiKeyId,
+		OrderID:      order.OrderID,
+		UserID:       order.UserID,
+		KeyID:        order.KeyID,
 		MarketName:   order.MarketName,
 		BaseQuantity: order.BaseQuantity,
 		Side:         order.Side,
@@ -50,8 +50,8 @@ func (service *OrderService) publishOrder(publisher micro.Publisher, order *pb.O
 // private: validateBalance
 func (service *OrderService) validateBalance(ctx context.Context, currency, userID, apikeyID string) error {
 	balRequest := bp.GetUserBalanceRequest{
-		UserId:   userID,
-		ApiKeyId: apikeyID,
+		UserID:   userID,
+		KeyID:    apikeyID,
 		Currency: currency,
 	}
 
@@ -72,7 +72,7 @@ func (service *OrderService) LoadBuyOrder(ctx context.Context, order *pb.Order) 
 	currencies := strings.Split(order.MarketName, "-")
 	baseCurrency := currencies[1]
 
-	if err := service.validateBalance(ctx, baseCurrency, order.UserId, order.ApiKeyId); err != nil {
+	if err := service.validateBalance(ctx, baseCurrency, order.UserID, order.KeyID); err != nil {
 		return err
 	}
 
@@ -88,7 +88,7 @@ func (service *OrderService) LoadSellOrder(ctx context.Context, order *pb.Order)
 	currencies := strings.Split(order.MarketName, "-")
 	currency := currencies[0]
 
-	if err := service.validateBalance(ctx, currency, order.UserId, order.ApiKeyId); err != nil {
+	if err := service.validateBalance(ctx, currency, order.UserID, order.KeyID); err != nil {
 		return err
 	}
 
@@ -107,9 +107,9 @@ func (service *OrderService) AddOrders(ctx context.Context, req *pb.OrdersReques
 	// begin with head order
 	order := requestOrders[0]
 
-	parentOrderID := order.ParentOrderId
+	parentOrderID := order.ParentOrderID
 
-	// if zero for parentOrderId we have must load this order immediately
+	// if zero for parentOrderID we have must load this order immediately
 	if parentOrderID == "00000000-0000-0000-0000-000000000000" {
 
 		currencies := strings.Split(order.MarketName, "-")
@@ -122,7 +122,7 @@ func (service *OrderService) AddOrders(ctx context.Context, req *pb.OrdersReques
 			currency = currencies[0]
 		}
 
-		if err := service.validateBalance(ctx, currency, order.UserId, order.ApiKeyId); err != nil {
+		if err := service.validateBalance(ctx, currency, order.UserID, order.KeyID); err != nil {
 			response.Status = "fail"
 			response.Message = err.Error()
 			return nil
@@ -152,7 +152,7 @@ func (service *OrderService) AddOrders(ctx context.Context, req *pb.OrdersReques
 		}
 
 		requestOrders = requestOrders[1:]
-		parentOrderID = o.OrderId
+		parentOrderID = o.OrderID
 	}
 
 	// loop through and insert the rest of the chain
@@ -160,7 +160,7 @@ func (service *OrderService) AddOrders(ctx context.Context, req *pb.OrdersReques
 		order = requestOrders[i]
 
 		// assign the parent order id for following orders
-		order.ParentOrderId = parentOrderID
+		order.ParentOrderID = parentOrderID
 
 		o, error := orderRepo.InsertOrder(service.DB, order)
 
@@ -171,7 +171,7 @@ func (service *OrderService) AddOrders(ctx context.Context, req *pb.OrdersReques
 		}
 
 		orders = append(orders, o)
-		parentOrderID = o.OrderId
+		parentOrderID = o.OrderID
 	}
 
 	response.Status = "success"
@@ -182,7 +182,7 @@ func (service *OrderService) AddOrders(ctx context.Context, req *pb.OrdersReques
 }
 
 func (service *OrderService) GetUserOrder(ctx context.Context, req *pb.GetUserOrderRequest, res *pb.OrderResponse) error {
-	order, error := orderRepo.FindOrderById(service.DB, req)
+	order, error := orderRepo.FindOrderByID(service.DB, req)
 
 	switch {
 	case error == nil:
@@ -199,7 +199,7 @@ func (service *OrderService) GetUserOrder(ctx context.Context, req *pb.GetUserOr
 }
 
 func (service *OrderService) GetUserOrders(ctx context.Context, req *pb.GetUserOrdersRequest, res *pb.OrderListResponse) error {
-	orders, error := orderRepo.FindOrdersByUserId(service.DB, req)
+	orders, error := orderRepo.FindOrdersByUserID(service.DB, req)
 
 	switch {
 	case error == nil:
@@ -216,7 +216,7 @@ func (service *OrderService) GetUserOrders(ctx context.Context, req *pb.GetUserO
 }
 
 func (service *OrderService) RemoveOrder(ctx context.Context, req *pb.RemoveOrderRequest, res *pb.OrderResponse) error {
-	error := orderRepo.DeleteOrder(service.DB, req.OrderId)
+	error := orderRepo.DeleteOrder(service.DB, req.OrderID)
 	switch {
 	case error == nil:
 		res.Status = "success"

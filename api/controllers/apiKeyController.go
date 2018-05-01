@@ -6,20 +6,20 @@ import (
 	"fmt"
 	"net/http"
 
-	keyProto "github.com/asciiu/gomo/apikey-service/proto/apikey"
+	kp "github.com/asciiu/gomo/key-service/proto/key"
 	jwt "github.com/dgrijalva/jwt-go"
 	"github.com/labstack/echo"
 	micro "github.com/micro/go-micro"
 	"golang.org/x/net/context"
 )
 
-type ApiKeyController struct {
+type KeyController struct {
 	DB     *sql.DB
-	Client keyProto.ApiKeyServiceClient
+	Client kp.KeyServiceClient
 }
 
 // swagger:parameters postKey
-type ApiKeyRequest struct {
+type KeyRequest struct {
 	// Required.
 	// in: body
 	Exchange string `json:"exchange"`
@@ -44,30 +44,30 @@ type UpdateKeyRequest struct {
 // A ResponseKeySuccess will always contain a status of "successful".
 // swagger:model responseKeySuccess
 type ResponseKeySuccess struct {
-	Status string                   `json:"status"`
-	Data   *keyProto.UserApiKeyData `json:"data"`
+	Status string          `json:"status"`
+	Data   *kp.UserKeyData `json:"data"`
 }
 
 // A ResponseKeysSuccess will always contain a status of "successful".
 // swagger:model responseKeysSuccess
 type ResponseKeysSuccess struct {
-	Status string                    `json:"status"`
-	Data   *keyProto.UserApiKeysData `json:"data"`
+	Status string           `json:"status"`
+	Data   *kp.UserKeysData `json:"data"`
 }
 
-func NewApiKeyController(db *sql.DB) *ApiKeyController {
+func NewKeyController(db *sql.DB) *KeyController {
 	// Create a new service. Optionally include some options here.
-	service := micro.NewService(micro.Name("apikey.client"))
+	service := micro.NewService(micro.Name("key.client"))
 	service.Init()
 
-	controller := ApiKeyController{
+	controller := KeyController{
 		DB:     db,
-		Client: keyProto.NewApiKeyServiceClient("go.srv.apikey-service", service.Client()),
+		Client: kp.NewKeyServiceClient("go.srv.key-service", service.Client()),
 	}
 	return &controller
 }
 
-// swagger:route GET /keys/:keyId keys getKey
+// swagger:route GET /keys/:keyID keys getKey
 //
 // get a key (protected)
 //
@@ -76,18 +76,18 @@ func NewApiKeyController(db *sql.DB) *ApiKeyController {
 // responses:
 //  200: responseKeySuccess "data" will contain key stuffs with "status": "success"
 //  500: responseError the message will state what the internal server error was with "status": "error"
-func (controller *ApiKeyController) HandleGetKey(c echo.Context) error {
+func (controller *KeyController) HandleGetKey(c echo.Context) error {
 	token := c.Get("user").(*jwt.Token)
 	claims := token.Claims.(jwt.MapClaims)
-	userId := claims["jti"].(string)
-	keyId := c.Param("keyId")
+	userID := claims["jti"].(string)
+	keyID := c.Param("keyID")
 
-	getRequest := keyProto.GetUserApiKeyRequest{
-		ApiKeyId: keyId,
-		UserId:   userId,
+	getRequest := kp.GetUserKeyRequest{
+		KeyID:  keyID,
+		UserID: userID,
 	}
 
-	r, err := controller.Client.GetUserApiKey(context.Background(), &getRequest)
+	r, err := controller.Client.GetUserKey(context.Background(), &getRequest)
 	if err != nil {
 		response := &ResponseError{
 			Status:  "error",
@@ -113,14 +113,14 @@ func (controller *ApiKeyController) HandleGetKey(c echo.Context) error {
 
 	response := &ResponseKeySuccess{
 		Status: "success",
-		Data: &keyProto.UserApiKeyData{
-			ApiKey: &keyProto.ApiKey{
-				ApiKeyId:    r.Data.ApiKey.ApiKeyId,
-				UserId:      r.Data.ApiKey.UserId,
-				Exchange:    r.Data.ApiKey.Exchange,
-				Key:         r.Data.ApiKey.Key,
-				Description: r.Data.ApiKey.Description,
-				Status:      r.Data.ApiKey.Status,
+		Data: &kp.UserKeyData{
+			Key: &kp.Key{
+				KeyID:       r.Data.Key.KeyID,
+				UserID:      r.Data.Key.UserID,
+				Exchange:    r.Data.Key.Exchange,
+				Key:         r.Data.Key.Key,
+				Description: r.Data.Key.Description,
+				Status:      r.Data.Key.Status,
 			},
 		},
 	}
@@ -137,16 +137,16 @@ func (controller *ApiKeyController) HandleGetKey(c echo.Context) error {
 // responses:
 //  200: responseKeysSuccess "data" will contain a list of key info with "status": "success"
 //  500: responseError the message will state what the internal server error was with "status": "error"
-func (controller *ApiKeyController) HandleListKeys(c echo.Context) error {
+func (controller *KeyController) HandleListKeys(c echo.Context) error {
 	token := c.Get("user").(*jwt.Token)
 	claims := token.Claims.(jwt.MapClaims)
-	userId := claims["jti"].(string)
+	userID := claims["jti"].(string)
 
-	getRequest := keyProto.GetUserApiKeysRequest{
-		UserId: userId,
+	getRequest := kp.GetUserKeysRequest{
+		UserID: userID,
 	}
 
-	r, err := controller.Client.GetUserApiKeys(context.Background(), &getRequest)
+	r, err := controller.Client.GetUserKeys(context.Background(), &getRequest)
 	if err != nil {
 		response := &ResponseError{
 			Status:  "error",
@@ -170,23 +170,23 @@ func (controller *ApiKeyController) HandleListKeys(c echo.Context) error {
 		}
 	}
 
-	data := make([]*keyProto.ApiKey, len(r.Data.ApiKey))
-	for i := range data {
+	data := make([]*kp.Key, len(r.Data.Keys))
+	for i, key := range data {
 		// api removes the secret
-		data[i] = &keyProto.ApiKey{
-			ApiKeyId:    r.Data.ApiKey[i].ApiKeyId,
-			UserId:      r.Data.ApiKey[i].UserId,
-			Exchange:    r.Data.ApiKey[i].Exchange,
-			Key:         r.Data.ApiKey[i].Key,
-			Description: r.Data.ApiKey[i].Description,
-			Status:      r.Data.ApiKey[i].Status,
+		data[i] = &kp.Key{
+			KeyID:       key.KeyID,
+			UserID:      key.UserID,
+			Exchange:    key.Exchange,
+			Key:         key.Key,
+			Description: key.Description,
+			Status:      key.Status,
 		}
 	}
 
 	response := &ResponseKeysSuccess{
 		Status: "success",
-		Data: &keyProto.UserApiKeysData{
-			ApiKey: data,
+		Data: &kp.UserKeysData{
+			Keys: data,
 		},
 	}
 
@@ -203,11 +203,11 @@ func (controller *ApiKeyController) HandleListKeys(c echo.Context) error {
 //  200: responseKeySuccess "data" will contain key info with "status": "success"
 //  400: responseError missing params with "status": "fail"
 //  500: responseError the message will state what the internal server error was with "status": "error"
-func (controller *ApiKeyController) HandlePostKey(c echo.Context) error {
+func (controller *KeyController) HandlePostKey(c echo.Context) error {
 	token := c.Get("user").(*jwt.Token)
 	claims := token.Claims.(jwt.MapClaims)
-	userId := claims["jti"].(string)
-	addKeyRequest := ApiKeyRequest{}
+	userID := claims["jti"].(string)
+	addKeyRequest := KeyRequest{}
 
 	err := json.NewDecoder(c.Request().Body).Decode(&addKeyRequest)
 	if err != nil {
@@ -229,15 +229,15 @@ func (controller *ApiKeyController) HandlePostKey(c echo.Context) error {
 		return c.JSON(http.StatusBadRequest, response)
 	}
 
-	createRequest := keyProto.ApiKeyRequest{
-		UserId:      userId,
+	createRequest := kp.KeyRequest{
+		UserID:      userID,
 		Exchange:    addKeyRequest.Exchange,
 		Key:         addKeyRequest.Key,
 		Secret:      addKeyRequest.Secret,
 		Description: addKeyRequest.Description,
 	}
 
-	r, err := controller.Client.AddApiKey(context.Background(), &createRequest)
+	r, err := controller.Client.AddKey(context.Background(), &createRequest)
 	if err != nil {
 		fmt.Println(err)
 		response := &ResponseError{
@@ -270,7 +270,7 @@ func (controller *ApiKeyController) HandlePostKey(c echo.Context) error {
 	return c.JSON(http.StatusOK, response)
 }
 
-// swagger:route PUT /keys/:keyId keys updateKey
+// swagger:route PUT /keys/:keyID keys updateKey
 //
 // update a user api key (protected)
 //
@@ -280,11 +280,11 @@ func (controller *ApiKeyController) HandlePostKey(c echo.Context) error {
 //  200: responseKeySuccess "data" will contain key info with "status": "success"
 //  400: responseError missing params with "status": "fail"
 //  500: responseError the message will state what the internal server error was with "status": "error"
-func (controller *ApiKeyController) HandleUpdateKey(c echo.Context) error {
+func (controller *KeyController) HandleUpdateKey(c echo.Context) error {
 	token := c.Get("user").(*jwt.Token)
 	claims := token.Claims.(jwt.MapClaims)
-	userId := claims["jti"].(string)
-	keyId := c.Param("keyId")
+	userID := claims["jti"].(string)
+	keyID := c.Param("keyID")
 
 	keyRequest := UpdateKeyRequest{}
 
@@ -299,13 +299,13 @@ func (controller *ApiKeyController) HandleUpdateKey(c echo.Context) error {
 	}
 
 	// client can only update description
-	updateRequest := keyProto.ApiKeyRequest{
-		ApiKeyId:    keyId,
-		UserId:      userId,
+	updateRequest := kp.KeyRequest{
+		KeyID:       keyID,
+		UserID:      userID,
 		Description: keyRequest.Description,
 	}
 
-	r, err := controller.Client.UpdateApiKeyDescription(context.Background(), &updateRequest)
+	r, err := controller.Client.UpdateKeyDescription(context.Background(), &updateRequest)
 	if err != nil {
 		response := &ResponseError{
 			Status:  "error",
@@ -337,7 +337,7 @@ func (controller *ApiKeyController) HandleUpdateKey(c echo.Context) error {
 	return c.JSON(http.StatusOK, response)
 }
 
-// swagger:route DELETE /keys/:keyId keys deleteKey
+// swagger:route DELETE /keys/:keyID keys deleteKey
 //
 // remove user api key (protected)
 //
@@ -346,22 +346,22 @@ func (controller *ApiKeyController) HandleUpdateKey(c echo.Context) error {
 // responses:
 //  200: responseKeySuccess data will be null with "status": "success"
 //  500: responseError the message will state what the internal server error was with "status": "error"
-func (controller *ApiKeyController) HandleDeleteKey(c echo.Context) error {
+func (controller *KeyController) HandleDeleteKey(c echo.Context) error {
 	token := c.Get("user").(*jwt.Token)
 	claims := token.Claims.(jwt.MapClaims)
-	userId := claims["jti"].(string)
-	keyId := c.Param("keyId")
+	userID := claims["jti"].(string)
+	keyID := c.Param("keyID")
 
-	removeRequest := keyProto.RemoveApiKeyRequest{
-		ApiKeyId: keyId,
-		UserId:   userId,
+	removeRequest := kp.RemoveKeyRequest{
+		KeyID:  keyID,
+		UserID: userID,
 	}
 
-	r, err := controller.Client.RemoveApiKey(context.Background(), &removeRequest)
+	r, err := controller.Client.RemoveKey(context.Background(), &removeRequest)
 	if err != nil {
 		response := &ResponseError{
 			Status:  "error",
-			Message: "the apikey-service is not available",
+			Message: "the key-service is not available",
 		}
 
 		return c.JSON(http.StatusGone, response)

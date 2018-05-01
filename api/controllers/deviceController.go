@@ -27,7 +27,7 @@ type DeviceRequest struct {
 	DeviceToken string `json:"deviceToken"`
 	// Required.
 	// in: body
-	ExternalDeviceId string `json:"externalDeviceId"`
+	ExternalDeviceID string `json:"externalDeviceID"`
 }
 
 // A ResponseDeviceSuccess will always contain a status of "successful".
@@ -56,7 +56,7 @@ func NewDeviceController(db *sql.DB) *DeviceController {
 	return &controller
 }
 
-// swagger:route GET /devices/:deviceId devices getDevice
+// swagger:route GET /devices/:deviceID devices getDevice
 //
 // get a device by ID (protected)
 //
@@ -66,10 +66,10 @@ func NewDeviceController(db *sql.DB) *DeviceController {
 //  200: responseDeviceSuccess "data" will contain device stuffs with "status": "success"
 //  500: responseError the message will state what the internal server error was with "status": "error"
 func (controller *DeviceController) HandleGetDevice(c echo.Context) error {
-	deviceId := c.Param("deviceId")
+	deviceID := c.Param("deviceID")
 
 	getRequest := pb.GetUserDeviceRequest{
-		DeviceId: deviceId,
+		DeviceID: deviceID,
 	}
 
 	r, err := controller.Client.GetUserDevice(context.Background(), &getRequest)
@@ -116,10 +116,10 @@ func (controller *DeviceController) HandleGetDevice(c echo.Context) error {
 func (controller *DeviceController) HandleListDevices(c echo.Context) error {
 	token := c.Get("user").(*jwt.Token)
 	claims := token.Claims.(jwt.MapClaims)
-	userId := claims["jti"].(string)
+	userID := claims["jti"].(string)
 
 	getRequest := pb.GetUserDevicesRequest{
-		UserId: userId,
+		UserID: userID,
 	}
 
 	r, err := controller.Client.GetUserDevices(context.Background(), &getRequest)
@@ -167,7 +167,7 @@ func (controller *DeviceController) HandleListDevices(c echo.Context) error {
 func (controller *DeviceController) HandlePostDevice(c echo.Context) error {
 	token := c.Get("user").(*jwt.Token)
 	claims := token.Claims.(jwt.MapClaims)
-	userId := claims["jti"].(string)
+	userID := claims["jti"].(string)
 
 	addDeviceRequest := DeviceRequest{}
 
@@ -182,20 +182,20 @@ func (controller *DeviceController) HandlePostDevice(c echo.Context) error {
 	}
 
 	// verify that all params are present
-	if addDeviceRequest.DeviceToken == "" || addDeviceRequest.DeviceType == "" || addDeviceRequest.ExternalDeviceId == "" {
+	if addDeviceRequest.DeviceToken == "" || addDeviceRequest.DeviceType == "" || addDeviceRequest.ExternalDeviceID == "" {
 		response := &ResponseError{
 			Status:  "fail",
-			Message: "deviceType, deviceToken, and externalDeviceId are required!",
+			Message: "deviceType, deviceToken, and externalDeviceID are required!",
 		}
 
 		return c.JSON(http.StatusBadRequest, response)
 	}
 
 	createRequest := pb.AddDeviceRequest{
-		UserId:           userId,
+		UserID:           userID,
 		DeviceType:       addDeviceRequest.DeviceType,
 		DeviceToken:      addDeviceRequest.DeviceToken,
-		ExternalDeviceId: addDeviceRequest.ExternalDeviceId,
+		ExternalDeviceID: addDeviceRequest.ExternalDeviceID,
 	}
 
 	r, err := controller.Client.AddDevice(context.Background(), &createRequest)
@@ -230,7 +230,7 @@ func (controller *DeviceController) HandlePostDevice(c echo.Context) error {
 	return c.JSON(http.StatusOK, response)
 }
 
-// swagger:route PUT /devices/:deviceId devices updateDevice
+// swagger:route PUT /devices/:deviceID devices updateDevice
 //
 // update a registered device (protected)
 //
@@ -242,8 +242,8 @@ func (controller *DeviceController) HandlePostDevice(c echo.Context) error {
 func (controller *DeviceController) HandleUpdateDevice(c echo.Context) error {
 	token := c.Get("user").(*jwt.Token)
 	claims := token.Claims.(jwt.MapClaims)
-	userId := claims["jti"].(string)
-	deviceId := c.Param("deviceId")
+	userID := claims["jti"].(string)
+	deviceID := c.Param("deviceID")
 
 	addDeviceRequest := DeviceRequest{}
 
@@ -258,21 +258,21 @@ func (controller *DeviceController) HandleUpdateDevice(c echo.Context) error {
 	}
 
 	// verify that all params are present
-	if addDeviceRequest.DeviceToken == "" || addDeviceRequest.DeviceType == "" || addDeviceRequest.ExternalDeviceId == "" {
+	if addDeviceRequest.DeviceToken == "" || addDeviceRequest.DeviceType == "" || addDeviceRequest.ExternalDeviceID == "" {
 		response := &ResponseError{
 			Status:  "fail",
-			Message: "deviceType, deviceToken, and externalDeviceId are required!",
+			Message: "deviceType, deviceToken, and externalDeviceID are required!",
 		}
 
 		return c.JSON(http.StatusBadRequest, response)
 	}
 
 	updateRequest := pb.UpdateDeviceRequest{
-		DeviceId:         deviceId,
-		UserId:           userId,
+		DeviceID:         deviceID,
+		UserID:           userID,
 		DeviceType:       addDeviceRequest.DeviceType,
 		DeviceToken:      addDeviceRequest.DeviceToken,
-		ExternalDeviceId: addDeviceRequest.ExternalDeviceId,
+		ExternalDeviceID: addDeviceRequest.ExternalDeviceID,
 	}
 
 	r, err := controller.Client.UpdateDevice(context.Background(), &updateRequest)
@@ -307,7 +307,7 @@ func (controller *DeviceController) HandleUpdateDevice(c echo.Context) error {
 	return c.JSON(http.StatusOK, response)
 }
 
-// swagger:route DELETE /devices/:deviceId devices deleteDevice
+// swagger:route DELETE /devices/:deviceID devices deleteDevice
 //
 // removes a user's device (protected)
 //
@@ -319,12 +319,12 @@ func (controller *DeviceController) HandleUpdateDevice(c echo.Context) error {
 func (controller *DeviceController) HandleDeleteDevice(c echo.Context) error {
 	token := c.Get("user").(*jwt.Token)
 	claims := token.Claims.(jwt.MapClaims)
-	userId := claims["jti"].(string)
-	deviceId := c.Param("deviceId")
+	userID := claims["jti"].(string)
+	deviceID := c.Param("deviceID")
 
 	removeRequest := pb.RemoveDeviceRequest{
-		DeviceId: deviceId,
-		UserId:   userId,
+		DeviceID: deviceID,
+		UserID:   userID,
 	}
 
 	r, err := controller.Client.RemoveDevice(context.Background(), &removeRequest)

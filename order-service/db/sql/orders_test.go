@@ -5,9 +5,9 @@ import (
 	"log"
 	"testing"
 
-	keyRepo "github.com/asciiu/gomo/apikey-service/db/sql"
-	keyProto "github.com/asciiu/gomo/apikey-service/proto/apikey"
 	"github.com/asciiu/gomo/common/db"
+	keyRepo "github.com/asciiu/gomo/key-service/db/sql"
+	keyProto "github.com/asciiu/gomo/key-service/proto/key"
 	orderRepo "github.com/asciiu/gomo/order-service/db/sql"
 	orderProto "github.com/asciiu/gomo/order-service/proto/order"
 	userRepo "github.com/asciiu/gomo/user-service/db/sql"

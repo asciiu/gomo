@@ -20,7 +20,7 @@ type OrderController struct {
 
 type OrderTemp struct {
 	orderID            string
-	apiKeyId           string //Key id used for the order? Remember why we have this?
+	apiKeyID           string //Key id used for the order? Remember why we have this?
 	exchangeOrderID    string
 	baseCurrency       string // "BTC",
 	baseCurrencyLong   string // "Bitcoin", //As above
@@ -48,7 +48,7 @@ type OrderTemp struct {
 type OrderRequest struct {
 	// Required.
 	// in: body
-	ApiKeyId string `json:"apiKeyId"`
+	ApiKeyID string `json:"apiKeyID"`
 	// Required.
 	// in: body
 	MarketName string `json:"marketName"`
@@ -75,7 +75,7 @@ type OrderRequest struct {
 	Conditions string `json:"conditions"`
 
 	// Optional
-	ParentOrderId string `json:"parentOrderId"`
+	ParentOrderID string `json:"parentOrderID"`
 	// Optional
 	PaperMode bool `json:"paperMode"`
 }
@@ -122,7 +122,7 @@ func NewOrderController(db *sql.DB) *OrderController {
 	return &controller
 }
 
-// swagger:route GET /orders/:orderId orders getOrder
+// swagger:route GET /orders/:orderID orders getOrder
 //
 // show order (protected)
 //
@@ -134,12 +134,12 @@ func NewOrderController(db *sql.DB) *OrderController {
 func (controller *OrderController) HandleGetOrder(c echo.Context) error {
 	token := c.Get("user").(*jwt.Token)
 	claims := token.Claims.(jwt.MapClaims)
-	userId := claims["jti"].(string)
-	orderId := c.Param("orderId")
+	userID := claims["jti"].(string)
+	orderID := c.Param("orderID")
 
 	getRequest := orderProto.GetUserOrderRequest{
-		OrderId: orderId,
-		UserId:  userId,
+		OrderID: orderID,
+		UserID:  userID,
 	}
 
 	r, err := controller.Client.GetUserOrder(context.Background(), &getRequest)
@@ -186,10 +186,10 @@ func (controller *OrderController) HandleGetOrder(c echo.Context) error {
 func (controller *OrderController) HandleListOrders(c echo.Context) error {
 	token := c.Get("user").(*jwt.Token)
 	claims := token.Claims.(jwt.MapClaims)
-	userId := claims["jti"].(string)
+	userID := claims["jti"].(string)
 
 	getRequest := orderProto.GetUserOrdersRequest{
-		UserId: userId,
+		UserID: userID,
 	}
 
 	r, err := controller.Client.GetUserOrders(context.Background(), &getRequest)
@@ -247,7 +247,7 @@ func (controller *OrderController) HandlePostOrder(c echo.Context) error {
 	defer c.Request().Body.Close()
 	token := c.Get("user").(*jwt.Token)
 	claims := token.Claims.(jwt.MapClaims)
-	userId := claims["jti"].(string)
+	userID := claims["jti"].(string)
 
 	orders := make([]*OrderRequest, 0)
 	requests := make([]*orderProto.OrderRequest, 0)
@@ -271,19 +271,19 @@ func (controller *OrderController) HandlePostOrder(c echo.Context) error {
 	// error check all orders
 	for i, order := range orders {
 		// side, market name, and api key are required
-		if order.Side == "" || order.MarketName == "" || order.ApiKeyId == "" {
-			return fail(c, "side, marketName, and apiKeyId required!")
+		if order.Side == "" || order.MarketName == "" || order.ApiKeyID == "" {
+			return fail(c, "side, marketName, and apiKeyID required!")
 		}
 
-		// assume the first order is head of a chain if the ParentOrderId is empty
+		// assume the first order is head of a chain if the ParentOrderID is empty
 		// this means that a new chain of orders has been submitted because the
-		// ParentOrderId has not been assigned yet.
-		if i == 0 && order.ParentOrderId == "" && order.Side == "buy" && order.BasePercent == 0.0 {
+		// ParentOrderID has not been assigned yet.
+		if i == 0 && order.ParentOrderID == "" && order.Side == "buy" && order.BasePercent == 0.0 {
 			return fail(c, "head buy in chain requires a basePercent")
 		}
 
 		// if the head order side is sell we need a currency quantity
-		if i == 0 && order.ParentOrderId == "" && order.Side == "sell" && order.CurrencyPercent == 0.0 {
+		if i == 0 && order.ParentOrderID == "" && order.Side == "sell" && order.CurrencyPercent == 0.0 {
 			return fail(c, "head sell in chain requires a currencyPercent")
 		}
 
@@ -303,13 +303,13 @@ func (controller *OrderController) HandlePostOrder(c echo.Context) error {
 			return fail(c, "marketName must be currency-base: e.g. ADA-BTC")
 		}
 
-		if order.ParentOrderId == "" {
-			order.ParentOrderId = "00000000-0000-0000-0000-000000000000"
+		if order.ParentOrderID == "" {
+			order.ParentOrderID = "00000000-0000-0000-0000-000000000000"
 		}
 
 		request := orderProto.OrderRequest{
-			UserId:           userId,
-			ApiKeyId:         order.ApiKeyId,
+			UserID:           userID,
+			KeyID:            order.KeyID,
 			MarketName:       order.MarketName,
 			Side:             order.Side,
 			Conditions:       order.Conditions,
@@ -318,7 +318,7 @@ func (controller *OrderController) HandlePostOrder(c echo.Context) error {
 			BasePercent:      order.BasePercent,
 			CurrencyQuantity: order.CurrencyQuantity,
 			CurrencyPercent:  order.CurrencyPercent,
-			ParentOrderId:    order.ParentOrderId,
+			ParentOrderID:    order.ParentOrderID,
 		}
 		requests = append(requests, &request)
 	}
@@ -352,7 +352,7 @@ func (controller *OrderController) HandlePostOrder(c echo.Context) error {
 	return c.JSON(http.StatusOK, response)
 }
 
-// swagger:route PUT /orders/:orderId orders updateOrder
+// swagger:route PUT /orders/:orderID orders updateOrder
 //
 // update and order (protected)
 //
@@ -365,8 +365,8 @@ func (controller *OrderController) HandlePostOrder(c echo.Context) error {
 func (controller *OrderController) HandleUpdateOrder(c echo.Context) error {
 	token := c.Get("user").(*jwt.Token)
 	claims := token.Claims.(jwt.MapClaims)
-	userId := claims["jti"].(string)
-	orderId := c.Param("orderId")
+	userID := claims["jti"].(string)
+	orderID := c.Param("orderID")
 
 	orderRequest := UpdateOrderRequest{}
 
@@ -382,8 +382,8 @@ func (controller *OrderController) HandleUpdateOrder(c echo.Context) error {
 
 	// client can only update description
 	updateRequest := orderProto.OrderRequest{
-		OrderId:      orderId,
-		UserId:       userId,
+		OrderID:      orderID,
+		UserID:       userID,
 		Conditions:   orderRequest.Conditions,
 		BaseQuantity: orderRequest.BaseQuantity,
 	}
@@ -420,7 +420,7 @@ func (controller *OrderController) HandleUpdateOrder(c echo.Context) error {
 	return c.JSON(http.StatusOK, response)
 }
 
-// swagger:route DELETE /orders/:orderId orders deleteOrder
+// swagger:route DELETE /orders/:orderID orders deleteOrder
 //
 // Remove and order (protected)
 //
@@ -432,12 +432,12 @@ func (controller *OrderController) HandleUpdateOrder(c echo.Context) error {
 func (controller *OrderController) HandleDeleteOrder(c echo.Context) error {
 	token := c.Get("user").(*jwt.Token)
 	claims := token.Claims.(jwt.MapClaims)
-	userId := claims["jti"].(string)
-	orderId := c.Param("orderId")
+	userID := claims["jti"].(string)
+	orderID := c.Param("orderID")
 
 	removeRequest := orderProto.RemoveOrderRequest{
-		OrderId: orderId,
-		UserId:  userId,
+		OrderID: orderID,
+		UserID:  userID,
 	}
 
 	r, err := controller.Client.RemoveOrder(context.Background(), &removeRequest)

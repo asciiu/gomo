@@ -11,8 +11,8 @@ import (
 )
 
 type RefreshToken struct {
-	Id            string
-	UserId        string
+	ID            string
+	UserID        string
 	Selector      string
 	Authenticator string
 	TokenHash     string
@@ -51,12 +51,12 @@ func (token *RefreshToken) Valid(authenticator string) bool {
 		token.ExpiresOn.After(time.Now())
 }
 
-func NewRefreshToken(userId string) *RefreshToken {
-	newId := uuid.New()
+func NewRefreshToken(userID string) *RefreshToken {
+	newID := uuid.New()
 
 	token := RefreshToken{
-		Id:     newId.String(),
-		UserId: userId,
+		ID:     newID.String(),
+		UserID: userID,
 	}
 	return &token
 }

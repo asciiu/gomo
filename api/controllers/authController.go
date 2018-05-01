@@ -11,9 +11,9 @@ import (
 	"time"
 
 	asql "github.com/asciiu/gomo/api/db/sql"
-	keys "github.com/asciiu/gomo/apikey-service/proto/apikey"
 	balances "github.com/asciiu/gomo/balance-service/proto/balance"
 	devices "github.com/asciiu/gomo/device-service/proto/device"
+	keys "github.com/asciiu/gomo/key-service/proto/key"
 	gsql "github.com/asciiu/gomo/user-service/db/sql"
 	pb "github.com/asciiu/gomo/user-service/proto/user"
 	micro "github.com/micro/go-micro"
@@ -33,7 +33,7 @@ type AuthController struct {
 	DB       *sql.DB
 	Client   pb.UserServiceClient
 	Balances balances.BalanceServiceClient
-	Keys     keys.ApiKeyServiceClient
+	Keys     keys.KeyServiceClient
 	Devices  devices.DeviceServiceClient
 }
 
@@ -107,15 +107,15 @@ func NewAuthController(db *sql.DB) *AuthController {
 		DB:       db,
 		Client:   pb.NewUserServiceClient("go.srv.user-service", service.Client()),
 		Balances: balances.NewBalanceServiceClient("go.micro.srv.balance", service.Client()),
-		Keys:     keys.NewApiKeyServiceClient("go.srv.apikey-service", service.Client()),
+		Keys:     keys.NewKeyServiceClient("go.srv.key-service", service.Client()),
 		Devices:  devices.NewDeviceServiceClient("go.srv.device-service", service.Client()),
 	}
 	return &controller
 }
 
-func createJwtToken(userId string, duration time.Duration) (string, error) {
+func createJwtToken(userID string, duration time.Duration) (string, error) {
 	claims := jwt.StandardClaims{
-		Id:        userId,
+		Id:        userID,
 		ExpiresAt: time.Now().Add(duration).Unix(),
 	}
 
@@ -133,7 +133,7 @@ func createJwtToken(userId string, duration time.Duration) (string, error) {
 // Renews the refresh token and the access token in the reponse headers.
 func renewTokens(c echo.Context, refreshToken *apiModels.RefreshToken) {
 	// renew access
-	accessToken, err := createJwtToken(refreshToken.UserId, jwtDuration)
+	accessToken, err := createJwtToken(refreshToken.UserID, jwtDuration)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -253,7 +253,7 @@ func (controller *AuthController) HandleLogin(c echo.Context) error {
 	default:
 		if bcrypt.CompareHashAndPassword([]byte(user.PasswordHash), []byte(loginRequest.Password)) == nil {
 
-			accessToken, err := createJwtToken(user.Id, jwtDuration)
+			accessToken, err := createJwtToken(user.ID, jwtDuration)
 			if err != nil {
 				response := &ResponseError{
 					Status:  "error",
@@ -264,7 +264,7 @@ func (controller *AuthController) HandleLogin(c echo.Context) error {
 
 			// issue a refresh token if remember is true
 			if loginRequest.Remember {
-				refreshToken := apiModels.NewRefreshToken(user.Id)
+				refreshToken := apiModels.NewRefreshToken(user.ID)
 				renewTokens(c, refreshToken)
 
 				_, err3 := asql.InsertRefreshToken(controller.DB, refreshToken)
@@ -283,7 +283,7 @@ func (controller *AuthController) HandleLogin(c echo.Context) error {
 			// TODO refactor with device controller implementtion
 			// get user devices here
 			getRequest := devices.GetUserDevicesRequest{
-				UserId: user.Id,
+				UserID: user.ID,
 			}
 
 			r, _ := controller.Devices.GetUserDevices(context.Background(), &getRequest)
@@ -305,9 +305,9 @@ func (controller *AuthController) HandleLogin(c echo.Context) error {
 			for _, d := range r.Data.Device {
 				// api removes the secret
 				device := Device{
-					DeviceID:         d.DeviceId,
+					DeviceID:         d.DeviceID,
 					DeviceType:       d.DeviceType,
-					ExternalDeviceID: d.ExternalDeviceId,
+					ExternalDeviceID: d.ExternalDeviceID,
 					DeviceToken:      d.DeviceToken,
 				}
 				devices = append(devices, &device)
@@ -433,10 +433,10 @@ func (controller *AuthController) HandleSignup(c echo.Context) error {
 		Status: "success",
 		Data: &UserData{
 			User: &models.UserInfo{
-				Id:    r.Data.User.UserId,
-				First: r.Data.User.First,
-				Last:  r.Data.User.Last,
-				Email: r.Data.User.Email,
+				UserID: r.Data.User.UserID,
+				First:  r.Data.User.First,
+				Last:   r.Data.User.Last,
+				Email:  r.Data.User.Email,
 			},
 		},
 	}

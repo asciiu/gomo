@@ -49,17 +49,17 @@ type User struct {
 }
 
 type UserInfo struct {
-	ID    string `json:"userID"`
-	First string `json:"first"`
-	Last  string `json:"last"`
-	Email string `json:"email"`
+	UserID string `json:"userID"`
+	First  string `json:"first"`
+	Last   string `json:"last"`
+	Email  string `json:"email"`
 }
 
 func (user *User) Info() *UserInfo {
 	return &UserInfo{
-		ID:    user.ID,
-		First: user.First,
-		Last:  user.Last,
-		Email: user.Email,
+		UserID: user.ID,
+		First:  user.First,
+		Last:   user.Last,
+		Email:  user.Email,
 	}
 }

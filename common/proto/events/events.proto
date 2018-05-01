@@ -8,7 +8,7 @@ message ExchangeEvent {
   string type = 2;
   uint64 eventTime = 3;
   string marketName = 4;
-  uint64 tradeId = 5;
+  uint64 tradeID = 5;
   string price = 6;
   string quantity = 7;
   uint64 tradeTime = 8;
@@ -21,16 +21,16 @@ message Auth {
 
 message OrderEvent {
   string exchange = 1;
-  string orderId = 2;
-  string userId = 3;
-  string apiKeyId = 4;
+  string orderID = 2;
+  string userID = 3;
+  string KeyID = 4;
   string marketName = 5;
   string side = 6;
   double baseQuantity = 7;
   double baseQuantityRemainder = 8;
   string condition = 9;
   string conditions = 10;
-  string exchangeOrderId = 11;
+  string exchangeOrderID = 11;
   string exchangeMarketName = 12;
   string status = 13;
 }

@@ -38,7 +38,7 @@ func TestInsertUser(t *testing.T) {
 	}
 
 	requestDelete := pb.DeleteUserRequest{
-		UserId: response.Data.User.UserId,
+		UserID: response.Data.User.UserID,
 		Hard:   true,
 	}
 
@@ -68,7 +68,7 @@ func TestChangePassword(t *testing.T) {
 	}
 
 	invalidChangeReq := pb.ChangePasswordRequest{
-		UserId:      response.Data.User.UserId,
+		UserID:      response.Data.User.UserID,
 		OldPassword: "pass",
 		NewPassword: "new",
 	}
@@ -80,7 +80,7 @@ func TestChangePassword(t *testing.T) {
 	}
 
 	validChangeReq := pb.ChangePasswordRequest{
-		UserId:      response.Data.User.UserId,
+		UserID:      response.Data.User.UserID,
 		OldPassword: "password",
 		NewPassword: "new",
 	}
@@ -92,7 +92,7 @@ func TestChangePassword(t *testing.T) {
 	}
 
 	requestDelete := pb.DeleteUserRequest{
-		UserId: response.Data.User.UserId,
+		UserID: response.Data.User.UserID,
 		Hard:   true,
 	}
 
@@ -118,7 +118,7 @@ func TestGetUserInfo(t *testing.T) {
 	}
 
 	getRequest := pb.GetUserInfoRequest{
-		UserId: response.Data.User.UserId,
+		UserID: response.Data.User.UserID,
 	}
 	service.GetUserInfo(context.Background(), &getRequest, &response)
 
@@ -127,7 +127,7 @@ func TestGetUserInfo(t *testing.T) {
 	}
 
 	requestDelete := pb.DeleteUserRequest{
-		UserId: response.Data.User.UserId,
+		UserID: response.Data.User.UserID,
 		Hard:   true,
 	}
 
@@ -149,7 +149,7 @@ func TestUpdateUser(t *testing.T) {
 	service.CreateUser(context.Background(), &request, &response)
 
 	updateRequest := pb.UpdateUserRequest{
-		UserId: response.Data.User.UserId,
+		UserID: response.Data.User.UserID,
 		First:  "Bobby",
 		Last:   "McLovin",
 		Email:  "bobby@mcLovin",
@@ -172,7 +172,7 @@ func TestUpdateUser(t *testing.T) {
 	}
 
 	requestDelete := pb.DeleteUserRequest{
-		UserId: response.Data.User.UserId,
+		UserID: response.Data.User.UserID,
 		Hard:   true,
 	}
 

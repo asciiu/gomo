@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 
-	kp "github.com/asciiu/gomo/apikey-service/proto/apikey"
+	kp "github.com/asciiu/gomo/key-service/proto/key"
 	micro "github.com/micro/go-micro"
 )
 
