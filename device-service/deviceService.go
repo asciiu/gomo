@@ -20,9 +20,9 @@ func (service *DeviceService) AddDevice(ctx context.Context, req *pb.AddDeviceRe
 		res.Status = "success"
 		res.Data = &pb.UserDeviceData{
 			Device: &pb.Device{
-				DeviceId:         device.DeviceId,
-				UserId:           device.UserId,
-				ExternalDeviceId: device.ExternalDeviceId,
+				DeviceID:         device.DeviceID,
+				UserID:           device.UserID,
+				ExternalDeviceID: device.ExternalDeviceID,
 				DeviceType:       device.DeviceType,
 				DeviceToken:      device.DeviceToken,
 			},
@@ -37,15 +37,15 @@ func (service *DeviceService) AddDevice(ctx context.Context, req *pb.AddDeviceRe
 }
 
 func (service *DeviceService) GetUserDevice(ctx context.Context, req *pb.GetUserDeviceRequest, res *pb.DeviceResponse) error {
-	device, error := deviceRepo.FindDeviceByDeviceId(service.DB, req)
+	device, error := deviceRepo.FindDeviceByDeviceID(service.DB, req)
 
 	if error == nil {
 		res.Status = "success"
 		res.Data = &pb.UserDeviceData{
 			Device: &pb.Device{
-				DeviceId:         device.DeviceId,
-				UserId:           device.UserId,
-				ExternalDeviceId: device.ExternalDeviceId,
+				DeviceID:         device.DeviceID,
+				UserID:           device.UserID,
+				ExternalDeviceID: device.ExternalDeviceID,
 				DeviceType:       device.DeviceType,
 				DeviceToken:      device.DeviceToken,
 			},
@@ -59,7 +59,7 @@ func (service *DeviceService) GetUserDevice(ctx context.Context, req *pb.GetUser
 }
 
 func (service *DeviceService) GetUserDevices(ctx context.Context, req *pb.GetUserDevicesRequest, res *pb.DeviceListResponse) error {
-	devices, error := deviceRepo.FindDevicesByUserId(service.DB, req)
+	devices, error := deviceRepo.FindDevicesByUserID(service.DB, req)
 
 	if error == nil {
 		res.Status = "success"
@@ -75,7 +75,7 @@ func (service *DeviceService) GetUserDevices(ctx context.Context, req *pb.GetUse
 }
 
 func (service *DeviceService) RemoveDevice(ctx context.Context, req *pb.RemoveDeviceRequest, res *pb.DeviceResponse) error {
-	error := deviceRepo.DeleteDevice(service.DB, req.DeviceId)
+	error := deviceRepo.DeleteDevice(service.DB, req.DeviceID)
 	if error == nil {
 		res.Status = "success"
 	} else {
@@ -91,9 +91,9 @@ func (service *DeviceService) UpdateDevice(ctx context.Context, req *pb.UpdateDe
 		res.Status = "success"
 		res.Data = &pb.UserDeviceData{
 			Device: &pb.Device{
-				DeviceId:         device.DeviceId,
-				UserId:           device.UserId,
-				ExternalDeviceId: device.ExternalDeviceId,
+				DeviceID:         device.DeviceID,
+				UserID:           device.UserID,
+				ExternalDeviceID: device.ExternalDeviceID,
 				DeviceType:       device.DeviceType,
 				DeviceToken:      device.DeviceToken,
 			},

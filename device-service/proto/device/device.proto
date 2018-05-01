@@ -12,39 +12,39 @@ service DeviceService {
 
 // Requests
 message AddDeviceRequest {
-  string userId = 1;
+  string userID = 1;
   string deviceType = 2;
-  string externalDeviceId = 3;
+  string externalDeviceID = 3;
   string deviceToken = 4;
 }
 
 message GetUserDeviceRequest {
-  string userId = 1;
-  string deviceId = 2;
+  string userID = 1;
+  string deviceID = 2;
 }
 
 message GetUserDevicesRequest {
-    string userId = 1;
+    string userID = 1;
 }
 
 message RemoveDeviceRequest {
-  string userId = 1;
-  string deviceId = 2;
+  string userID = 1;
+  string deviceID = 2;
 }
 
 message UpdateDeviceRequest {
-  string deviceId = 1;
-  string userId = 2;
-  string externalDeviceId = 3;
+  string deviceID = 1;
+  string userID = 2;
+  string externalDeviceID = 3;
   string deviceType = 4;
   string deviceToken = 5;
 }
 
 // Responses
 message Device {
-  string deviceId = 1;
-  string userId = 2;
-  string externalDeviceId = 3;
+  string deviceID = 1;
+  string userID = 2;
+  string externalDeviceID = 3;
   string deviceType = 4;
   string deviceToken = 5;
 }

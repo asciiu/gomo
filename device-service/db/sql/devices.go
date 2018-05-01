@@ -8,15 +8,15 @@ import (
 	"github.com/google/uuid"
 )
 
-func DeleteDevice(db *sql.DB, deviceId string) error {
-	_, err := db.Exec("DELETE FROM user_devices WHERE id = $1", deviceId)
+func DeleteDevice(db *sql.DB, deviceID string) error {
+	_, err := db.Exec("DELETE FROM user_devices WHERE id = $1", deviceID)
 	return err
 }
 
-func FindDeviceByDeviceId(db *sql.DB, req *pb.GetUserDeviceRequest) (*pb.Device, error) {
+func FindDeviceByDeviceID(db *sql.DB, req *pb.GetUserDeviceRequest) (*pb.Device, error) {
 	var d pb.Device
-	err := db.QueryRow("SELECT id, user_id, device_id, device_type, device_token FROM user_devices WHERE id = $1", req.DeviceId).
-		Scan(&d.DeviceId, &d.UserId, &d.ExternalDeviceId, &d.DeviceType, &d.DeviceToken)
+	err := db.QueryRow("SELECT id, user_id, device_id, device_type, device_token FROM user_devices WHERE id = $1", req.DeviceID).
+		Scan(&d.DeviceID, &d.UserID, &d.ExternalDeviceID, &d.DeviceType, &d.DeviceToken)
 
 	if err != nil {
 		return nil, err
@@ -24,10 +24,10 @@ func FindDeviceByDeviceId(db *sql.DB, req *pb.GetUserDeviceRequest) (*pb.Device,
 	return &d, nil
 }
 
-func FindDevicesByUserId(db *sql.DB, req *pb.GetUserDevicesRequest) ([]*pb.Device, error) {
+func FindDevicesByUserID(db *sql.DB, req *pb.GetUserDevicesRequest) ([]*pb.Device, error) {
 	results := make([]*pb.Device, 0)
 
-	rows, err := db.Query("SELECT id, user_id, device_id, device_type, device_token FROM user_devices WHERE user_id = $1", req.UserId)
+	rows, err := db.Query("SELECT id, user_id, device_id, device_type, device_token FROM user_devices WHERE user_id = $1", req.UserID)
 	if err != nil {
 		log.Fatal(err)
 		return nil, err
@@ -35,7 +35,7 @@ func FindDevicesByUserId(db *sql.DB, req *pb.GetUserDevicesRequest) ([]*pb.Devic
 	defer rows.Close()
 	for rows.Next() {
 		var d pb.Device
-		err := rows.Scan(&d.DeviceId, &d.UserId, &d.ExternalDeviceId, &d.DeviceType, &d.DeviceToken)
+		err := rows.Scan(&d.DeviceID, &d.UserID, &d.ExternalDeviceID, &d.DeviceType, &d.DeviceToken)
 		if err != nil {
 			log.Fatal(err)
 			return nil, err
@@ -52,18 +52,18 @@ func FindDevicesByUserId(db *sql.DB, req *pb.GetUserDevicesRequest) ([]*pb.Devic
 }
 
 func InsertDevice(db *sql.DB, req *pb.AddDeviceRequest) (*pb.Device, error) {
-	newId := uuid.New()
+	newID := uuid.New()
 
 	sqlStatement := `insert into user_devices (id, user_id, device_id, device_type, device_token) values ($1, $2, $3, $4, $5)`
-	_, err := db.Exec(sqlStatement, newId, req.UserId, req.ExternalDeviceId, req.DeviceType, req.DeviceToken)
+	_, err := db.Exec(sqlStatement, newID, req.UserID, req.ExternalDeviceID, req.DeviceType, req.DeviceToken)
 
 	if err != nil {
 		return nil, err
 	}
 	device := &pb.Device{
-		DeviceId:         newId.String(),
-		UserId:           req.UserId,
-		ExternalDeviceId: req.ExternalDeviceId,
+		DeviceID:         newID.String(),
+		UserID:           req.UserID,
+		ExternalDeviceID: req.ExternalDeviceID,
 		DeviceType:       req.DeviceType,
 		DeviceToken:      req.DeviceToken,
 	}
@@ -72,7 +72,7 @@ func InsertDevice(db *sql.DB, req *pb.AddDeviceRequest) (*pb.Device, error) {
 
 func UpdateDevice(db *sql.DB, req *pb.UpdateDeviceRequest) (*pb.UpdateDeviceRequest, error) {
 	sqlStatement := `UPDATE user_devices SET device_id = $1, device_type = $2, device_token = $3 WHERE id = $4`
-	_, err := db.Exec(sqlStatement, req.ExternalDeviceId, req.DeviceType, req.DeviceToken, req.DeviceId)
+	_, err := db.Exec(sqlStatement, req.ExternalDeviceID, req.DeviceType, req.DeviceToken, req.DeviceID)
 
 	if err != nil {
 		return nil, err

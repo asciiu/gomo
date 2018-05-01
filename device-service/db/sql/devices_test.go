@@ -27,18 +27,18 @@ func TestInsertDevice(t *testing.T) {
 	defer db.Close()
 
 	device := pb.AddDeviceRequest{
-		UserId:           user.Id,
+		UserID:           user.ID,
 		DeviceType:       "ios",
-		ExternalDeviceId: "device-1234",
+		ExternalDeviceID: "device-1234",
 		DeviceToken:      "tokie-tokie",
 	}
 	deviceAdded, error := sql.InsertDevice(db, &device)
 	checkErr(error)
 
-	error = sql.DeleteDevice(db, deviceAdded.DeviceId)
+	error = sql.DeleteDevice(db, deviceAdded.DeviceID)
 	checkErr(error)
 
-	error = userRepo.DeleteUserHard(db, user.Id)
+	error = userRepo.DeleteUserHard(db, user.ID)
 	checkErr(error)
 }
 
@@ -51,28 +51,28 @@ func TestFindDevice(t *testing.T) {
 	defer db.Close()
 
 	device := pb.AddDeviceRequest{
-		UserId:           user.Id,
+		UserID:           user.ID,
 		DeviceType:       "ios",
-		ExternalDeviceId: "device-1234",
+		ExternalDeviceID: "device-1234",
 		DeviceToken:      "tokie-tokie",
 	}
 	deviceAdded, error := sql.InsertDevice(db, &device)
 	checkErr(error)
 
 	request := pb.GetUserDeviceRequest{
-		DeviceId: deviceAdded.DeviceId,
-		UserId:   user.Id,
+		DeviceID: deviceAdded.DeviceID,
+		UserID:   user.ID,
 	}
-	device2, err := sql.FindDeviceByDeviceId(db, &request)
+	device2, err := sql.FindDeviceByDeviceID(db, &request)
 	checkErr(err)
-	if deviceAdded.DeviceId != device2.DeviceId {
+	if deviceAdded.DeviceID != device2.DeviceID {
 		t.Errorf("no id match!")
 	}
 
-	error = sql.DeleteDevice(db, deviceAdded.DeviceId)
+	error = sql.DeleteDevice(db, deviceAdded.DeviceID)
 	checkErr(error)
 
-	error = userRepo.DeleteUserHard(db, user.Id)
+	error = userRepo.DeleteUserHard(db, user.ID)
 	checkErr(error)
 }
 
@@ -85,9 +85,9 @@ func TestUpdateDevice(t *testing.T) {
 	defer db.Close()
 
 	device := pb.AddDeviceRequest{
-		UserId:           user.Id,
+		UserID:           user.ID,
 		DeviceType:       "ios",
-		ExternalDeviceId: "device-1234",
+		ExternalDeviceID: "device-1234",
 		DeviceToken:      "tokie-tokie",
 	}
 	deviceAdded, error := sql.InsertDevice(db, &device)
@@ -96,9 +96,9 @@ func TestUpdateDevice(t *testing.T) {
 	deviceAdded.DeviceType = "android"
 
 	request := pb.UpdateDeviceRequest{
-		DeviceId:         deviceAdded.DeviceId,
-		UserId:           deviceAdded.UserId,
-		ExternalDeviceId: "1234",
+		DeviceID:         deviceAdded.DeviceID,
+		UserID:           deviceAdded.UserID,
+		ExternalDeviceID: "1234",
 		DeviceType:       "android",
 		DeviceToken:      "tokie",
 	}
@@ -106,19 +106,19 @@ func TestUpdateDevice(t *testing.T) {
 	checkErr(error)
 
 	requestFind := pb.GetUserDeviceRequest{
-		DeviceId: deviceAdded.DeviceId,
-		UserId:   user.Id,
+		DeviceID: deviceAdded.DeviceID,
+		UserID:   user.ID,
 	}
-	device2, err := sql.FindDeviceByDeviceId(db, &requestFind)
+	device2, err := sql.FindDeviceByDeviceID(db, &requestFind)
 	checkErr(err)
 	if device2.DeviceType != "android" {
 		t.Errorf("did not update!")
 	}
 
-	error = sql.DeleteDevice(db, device2.DeviceId)
+	error = sql.DeleteDevice(db, device2.DeviceID)
 	checkErr(error)
 
-	error = userRepo.DeleteUserHard(db, user.Id)
+	error = userRepo.DeleteUserHard(db, user.ID)
 	checkErr(error)
 }
 
@@ -131,27 +131,27 @@ func TestFindDevices(t *testing.T) {
 	defer db.Close()
 
 	device := pb.AddDeviceRequest{
-		UserId:           user.Id,
+		UserID:           user.ID,
 		DeviceType:       "ios",
-		ExternalDeviceId: "device-1234",
+		ExternalDeviceID: "device-1234",
 		DeviceToken:      "tokie-tokie",
 	}
 	_, error = sql.InsertDevice(db, &device)
 	checkErr(error)
 
 	device = pb.AddDeviceRequest{
-		UserId:           user.Id,
+		UserID:           user.ID,
 		DeviceType:       "android",
-		ExternalDeviceId: "device-5678",
+		ExternalDeviceID: "device-5678",
 		DeviceToken:      "token",
 	}
 	_, error = sql.InsertDevice(db, &device)
 	checkErr(error)
 
 	request := pb.GetUserDevicesRequest{
-		UserId: user.Id,
+		UserID: user.ID,
 	}
-	devices, err := sql.FindDevicesByUserId(db, &request)
+	devices, err := sql.FindDevicesByUserID(db, &request)
 	checkErr(err)
 
 	if len(devices) != 2 {
@@ -161,6 +161,6 @@ func TestFindDevices(t *testing.T) {
 		t.Errorf("should have found ios and android")
 	}
 
-	error = userRepo.DeleteUserHard(db, user.Id)
+	error = userRepo.DeleteUserHard(db, user.ID)
 	checkErr(error)
 }

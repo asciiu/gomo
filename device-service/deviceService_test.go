@@ -36,10 +36,10 @@ func TestInsertDevice(t *testing.T) {
 	defer service.DB.Close()
 
 	request := pb.AddDeviceRequest{
-		UserId:           user.Id,
+		UserID:           user.ID,
 		DeviceToken:      "tokie tokie tokie",
 		DeviceType:       "test",
-		ExternalDeviceId: "1234",
+		ExternalDeviceID: "1234",
 	}
 
 	response := pb.DeviceResponse{}
@@ -50,13 +50,13 @@ func TestInsertDevice(t *testing.T) {
 		t.Errorf(response.Message)
 	}
 
-	if response.Data.Device.UserId != request.UserId {
+	if response.Data.Device.UserID != request.UserID {
 		t.Errorf("user IDs do not match")
 	}
 
 	requestRemove := pb.RemoveDeviceRequest{
-		UserId:   user.Id,
-		DeviceId: response.Data.Device.DeviceId,
+		UserID:   user.ID,
+		DeviceID: response.Data.Device.DeviceID,
 	}
 
 	responseDel := pb.DeviceResponse{}
