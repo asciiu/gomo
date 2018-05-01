@@ -25,7 +25,7 @@ func (service *UserService) CreateUser(ctx context.Context, req *pb.CreateUserRe
 		res.Status = "success"
 		res.Data = &pb.UserData{
 			User: &pb.User{
-				UserId: user.Id,
+				UserID: user.ID,
 				First:  user.First,
 				Last:   user.Last,
 				Email:  user.Email,
@@ -49,9 +49,9 @@ func (service *UserService) CreateUser(ctx context.Context, req *pb.CreateUserRe
 func (service *UserService) DeleteUser(ctx context.Context, req *pb.DeleteUserRequest, res *pb.Response) error {
 	var err error
 	if req.Hard {
-		err = userRepo.DeleteUserHard(service.DB, req.UserId)
+		err = userRepo.DeleteUserHard(service.DB, req.UserID)
 	} else {
-		err = userRepo.DeleteUserSoft(service.DB, req.UserId)
+		err = userRepo.DeleteUserSoft(service.DB, req.UserID)
 	}
 
 	if err == nil {
@@ -66,13 +66,13 @@ func (service *UserService) DeleteUser(ctx context.Context, req *pb.DeleteUserRe
 // Changes the user's password. Password is updated when the request's
 // old password matches the current user's password hash.
 func (service *UserService) ChangePassword(ctx context.Context, req *pb.ChangePasswordRequest, res *pb.Response) error {
-	user, error := userRepo.FindUserById(service.DB, req.UserId)
+	user, error := userRepo.FindUserByID(service.DB, req.UserID)
 
 	switch {
 	case error == nil:
 		if bcrypt.CompareHashAndPassword([]byte(user.PasswordHash), []byte(req.OldPassword)) == nil {
 
-			err := userRepo.UpdateUserPassword(service.DB, req.UserId, models.HashAndSalt([]byte(req.NewPassword)))
+			err := userRepo.UpdateUserPassword(service.DB, req.UserID, models.HashAndSalt([]byte(req.NewPassword)))
 			if err != nil {
 				res.Status = "error"
 				res.Message = err.Error()
@@ -87,7 +87,7 @@ func (service *UserService) ChangePassword(ctx context.Context, req *pb.ChangePa
 
 	case strings.Contains(error.Error(), "no rows in result set"):
 		res.Status = "fail"
-		res.Message = fmt.Sprintf("user id not found: %s", req.UserId)
+		res.Message = fmt.Sprintf("user id not found: %s", req.UserID)
 
 	default:
 		res.Status = "error"
@@ -98,7 +98,7 @@ func (service *UserService) ChangePassword(ctx context.Context, req *pb.ChangePa
 }
 
 func (service *UserService) GetUserInfo(ctx context.Context, req *pb.GetUserInfoRequest, res *pb.UserResponse) error {
-	user, error := userRepo.FindUserById(service.DB, req.UserId)
+	user, error := userRepo.FindUserByID(service.DB, req.UserID)
 	if error != nil {
 		res.Status = "fail"
 		res.Message = error.Error()
@@ -106,7 +106,7 @@ func (service *UserService) GetUserInfo(ctx context.Context, req *pb.GetUserInfo
 		res.Status = "success"
 		res.Data = &pb.UserData{
 			User: &pb.User{
-				UserId: user.Id,
+				UserID: user.ID,
 				First:  user.First,
 				Last:   user.Last,
 				Email:  user.Email,
@@ -118,7 +118,7 @@ func (service *UserService) GetUserInfo(ctx context.Context, req *pb.GetUserInfo
 }
 
 func (service *UserService) UpdateUser(ctx context.Context, req *pb.UpdateUserRequest, res *pb.UserResponse) error {
-	user, error := userRepo.FindUserById(service.DB, req.UserId)
+	user, error := userRepo.FindUserByID(service.DB, req.UserID)
 	switch {
 	case error == nil:
 		user.Email = req.Email
@@ -133,7 +133,7 @@ func (service *UserService) UpdateUser(ctx context.Context, req *pb.UpdateUserRe
 			res.Status = "success"
 			res.Data = &pb.UserData{
 				User: &pb.User{
-					UserId: user.Id,
+					UserID: user.ID,
 					First:  user.First,
 					Last:   user.Last,
 					Email:  user.Email,
