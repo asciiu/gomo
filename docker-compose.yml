@@ -6,9 +6,6 @@ services:
   api:
     build: ./api
   
-  apikey-service:
-    build: ./apikey-service
-
   balance-service:
     build: ./balance-service
 
@@ -20,6 +17,9 @@ services:
 
   device-service:
     build: ./device-service
+
+  key-service:
+    build: ./key-service
 
   order-service:
     build: ./order-service

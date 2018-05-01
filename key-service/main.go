@@ -5,15 +5,15 @@ import (
 	"log"
 	"os"
 
-	keyProto "github.com/asciiu/gomo/apikey-service/proto/apikey"
 	"github.com/asciiu/gomo/common/db"
 	msg "github.com/asciiu/gomo/common/messages"
+	kp "github.com/asciiu/gomo/key-service/proto/key"
 	micro "github.com/micro/go-micro"
 )
 
 func main() {
 	srv := micro.NewService(
-		micro.Name("go.srv.apikey-service"),
+		micro.Name("go.srv.key-service"),
 	)
 
 	// Init will parse the command line flags.
@@ -28,7 +28,7 @@ func main() {
 	publisher := micro.NewPublisher(msg.TopicNewKey, srv.Client())
 	keyService := KeyService{gomoDB, publisher}
 
-	keyProto.RegisterApiKeyServiceHandler(srv.Server(), &keyService)
+	kp.RegisterKeyServiceHandler(srv.Server(), &keyService)
 
 	listener1 := KeyVerifiedListener{gomoDB}
 	// handles key verified events

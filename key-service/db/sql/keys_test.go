@@ -4,9 +4,9 @@ import (
 	"log"
 	"testing"
 
-	keyRepo "github.com/asciiu/gomo/apikey-service/db/sql"
-	pb "github.com/asciiu/gomo/apikey-service/proto/apikey"
 	"github.com/asciiu/gomo/common/db"
+	keyRepo "github.com/asciiu/gomo/key-service/db/sql"
+	pb "github.com/asciiu/gomo/key-service/proto/key"
 	userRepo "github.com/asciiu/gomo/user-service/db/sql"
 	user "github.com/asciiu/gomo/user-service/models"
 )
@@ -27,8 +27,8 @@ func TestInsertDevice(t *testing.T) {
 	defer db.Close()
 
 	key := pb.ApiKeyRequest{
-		ApiKeyId:    user.Id,
-		UserId:      user.Id,
+		ApiKeyID:    user.ID,
+		UserID:      user.ID,
 		Exchange:    "test",
 		Key:         "key",
 		Secret:      "secret",
@@ -37,10 +37,10 @@ func TestInsertDevice(t *testing.T) {
 	_, error = keyRepo.InsertApiKey(db, &key)
 	checkErr(error)
 
-	error = keyRepo.DeleteApiKey(db, key.ApiKeyId)
+	error = keyRepo.DeleteApiKey(db, key.ApiKeyID)
 	checkErr(error)
 
-	error = userRepo.DeleteUserHard(db, user.Id)
+	error = userRepo.DeleteUserHard(db, user.ID)
 	checkErr(error)
 }
 
@@ -53,7 +53,7 @@ func TestFindApiKey(t *testing.T) {
 	defer db.Close()
 
 	key := pb.ApiKeyRequest{
-		UserId:      user.Id,
+		UserID:      user.ID,
 		Exchange:    "test",
 		Key:         "key",
 		Secret:      "secret",
@@ -63,12 +63,12 @@ func TestFindApiKey(t *testing.T) {
 	checkErr(error)
 
 	request := pb.GetUserApiKeyRequest{
-		ApiKeyId: apiKey.ApiKeyId,
-		UserId:   user.Id,
+		ApiKeyID: apiKey.ApiKeyID,
+		UserID:   user.ID,
 	}
-	apiKey2, err := keyRepo.FindApiKeyById(db, &request)
+	apiKey2, err := keyRepo.FindApiKeyByID(db, &request)
 	checkErr(err)
-	if apiKey.ApiKeyId != apiKey2.ApiKeyId {
+	if apiKey.ApiKeyID != apiKey2.ApiKeyID {
 		t.Errorf("no id match!")
 	}
 	if apiKey2.Exchange != "test" {
@@ -78,6 +78,6 @@ func TestFindApiKey(t *testing.T) {
 		t.Errorf("whaaa?!")
 	}
 
-	error = userRepo.DeleteUserHard(db, user.Id)
+	error = userRepo.DeleteUserHard(db, user.ID)
 	checkErr(error)
 }

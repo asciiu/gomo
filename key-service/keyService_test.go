@@ -5,8 +5,8 @@ import (
 	"log"
 	"testing"
 
-	keyProto "github.com/asciiu/gomo/apikey-service/proto/apikey"
 	"github.com/asciiu/gomo/common/db"
+	keyProto "github.com/asciiu/gomo/key-service/proto/key"
 	userRepo "github.com/asciiu/gomo/user-service/db/sql"
 	user "github.com/asciiu/gomo/user-service/models"
 )
