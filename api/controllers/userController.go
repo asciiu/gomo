@@ -6,7 +6,7 @@ import (
 	"net/http"
 
 	models "github.com/asciiu/gomo/user-service/models"
-	pb "github.com/asciiu/gomo/user-service/proto/user"
+	users "github.com/asciiu/gomo/user-service/proto/user"
 	jwt "github.com/dgrijalva/jwt-go"
 	"github.com/labstack/echo"
 	micro "github.com/micro/go-micro"
@@ -14,8 +14,8 @@ import (
 )
 
 type UserController struct {
-	DB     *sql.DB
-	Client pb.UserServiceClient
+	DB    *sql.DB
+	Users users.UserServiceClient
 }
 
 // swagger:parameters changePassword
@@ -46,8 +46,8 @@ func NewUserController(db *sql.DB) *UserController {
 	service.Init()
 
 	controller := UserController{
-		DB:     db,
-		Client: pb.NewUserServiceClient("go.srv.user-service", service.Client()),
+		DB:    db,
+		Users: users.NewUserServiceClient("go.srv.user-service", service.Client()),
 	}
 	return &controller
 }
@@ -91,13 +91,13 @@ func (controller *UserController) HandleChangePassword(c echo.Context) error {
 		return c.JSON(http.StatusBadRequest, response)
 	}
 
-	changeRequest := pb.ChangePasswordRequest{
+	changeRequest := users.ChangePasswordRequest{
 		UserID:      userID,
 		OldPassword: passwordRequest.OldPassword,
 		NewPassword: passwordRequest.NewPassword,
 	}
 
-	r, err := controller.Client.ChangePassword(context.Background(), &changeRequest)
+	r, err := controller.Users.ChangePassword(context.Background(), &changeRequest)
 	if err != nil {
 		response := &ResponseError{
 			Status:  "error",
@@ -168,14 +168,14 @@ func (controller *UserController) HandleUpdateUser(c echo.Context) error {
 		return c.JSON(http.StatusBadRequest, response)
 	}
 
-	changeRequest := pb.UpdateUserRequest{
+	changeRequest := users.UpdateUserRequest{
 		UserID: userID,
 		First:  updateRequest.First,
 		Last:   updateRequest.Last,
 		Email:  updateRequest.Email,
 	}
 
-	r, err := controller.Client.UpdateUser(context.Background(), &changeRequest)
+	r, err := controller.Users.UpdateUser(context.Background(), &changeRequest)
 	if err != nil {
 		response := &ResponseError{
 			Status:  "error",

@@ -302,7 +302,7 @@ func (controller *AuthController) HandleLogin(c echo.Context) error {
 			}
 
 			devices := make([]*Device, 0)
-			for _, d := range r.Data.Device {
+			for _, d := range r.Data.Devices {
 				// api removes the secret
 				device := Device{
 					DeviceID:         d.DeviceID,

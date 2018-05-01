@@ -6,7 +6,7 @@ import (
 	"net/http"
 	"strings"
 
-	orderProto "github.com/asciiu/gomo/order-service/proto/order"
+	orders "github.com/asciiu/gomo/order-service/proto/order"
 	jwt "github.com/dgrijalva/jwt-go"
 	"github.com/labstack/echo"
 	micro "github.com/micro/go-micro"
@@ -15,7 +15,7 @@ import (
 
 type OrderController struct {
 	DB     *sql.DB
-	Client orderProto.OrderServiceClient
+	Orders orders.OrderServiceClient
 }
 
 type OrderTemp struct {
@@ -99,15 +99,15 @@ type UpdateOrderRequest struct {
 // A ResponseKeySuccess will always contain a status of "successful".
 // swagger:model responseOrderSuccess
 type ResponseOrderSuccess struct {
-	Status string                    `json:"status"`
-	Data   *orderProto.UserOrderData `json:"data"`
+	Status string                `json:"status"`
+	Data   *orders.UserOrderData `json:"data"`
 }
 
 // A ResponseKeysSuccess will always contain a status of "successful".
 // swagger:model responseOrdersSuccess
 type ResponseOrdersSuccess struct {
-	Status string                     `json:"status"`
-	Data   *orderProto.UserOrdersData `json:"data"`
+	Status string                 `json:"status"`
+	Data   *orders.UserOrdersData `json:"data"`
 }
 
 func NewOrderController(db *sql.DB) *OrderController {
@@ -117,7 +117,7 @@ func NewOrderController(db *sql.DB) *OrderController {
 
 	controller := OrderController{
 		DB:     db,
-		Client: orderProto.NewOrderServiceClient("go.srv.order-service", service.Client()),
+		Orders: orders.NewOrderServiceClient("go.srv.order-service", service.Client()),
 	}
 	return &controller
 }
@@ -137,21 +137,12 @@ func (controller *OrderController) HandleGetOrder(c echo.Context) error {
 	userID := claims["jti"].(string)
 	orderID := c.Param("orderID")
 
-	getRequest := orderProto.GetUserOrderRequest{
+	getRequest := orders.GetUserOrderRequest{
 		OrderID: orderID,
 		UserID:  userID,
 	}
 
-	r, err := controller.Client.GetUserOrder(context.Background(), &getRequest)
-	if err != nil {
-		response := &ResponseError{
-			Status:  "error",
-			Message: err.Error(),
-		}
-
-		return c.JSON(http.StatusInternalServerError, response)
-	}
-
+	r, _ := controller.Orders.GetUserOrder(context.Background(), &getRequest)
 	if r.Status != "success" {
 		response := &ResponseError{
 			Status:  r.Status,
@@ -188,20 +179,11 @@ func (controller *OrderController) HandleListOrders(c echo.Context) error {
 	claims := token.Claims.(jwt.MapClaims)
 	userID := claims["jti"].(string)
 
-	getRequest := orderProto.GetUserOrdersRequest{
+	getRequest := orders.GetUserOrdersRequest{
 		UserID: userID,
 	}
 
-	r, err := controller.Client.GetUserOrders(context.Background(), &getRequest)
-	if err != nil {
-		response := &ResponseError{
-			Status:  "error",
-			Message: err.Error(),
-		}
-
-		return c.JSON(http.StatusInternalServerError, response)
-	}
-
+	r, _ := controller.Orders.GetUserOrders(context.Background(), &getRequest)
 	if r.Status != "success" {
 		response := &ResponseError{
 			Status:  r.Status,
@@ -249,8 +231,8 @@ func (controller *OrderController) HandlePostOrder(c echo.Context) error {
 	claims := token.Claims.(jwt.MapClaims)
 	userID := claims["jti"].(string)
 
-	orders := make([]*OrderRequest, 0)
-	requests := make([]*orderProto.OrderRequest, 0)
+	ordrs := make([]*OrderRequest, 0)
+	requests := make([]*orders.OrderRequest, 0)
 	dec := json.NewDecoder(c.Request().Body)
 
 	_, err := dec.Token()
@@ -265,11 +247,11 @@ func (controller *OrderController) HandlePostOrder(c echo.Context) error {
 		if err := dec.Decode(&o); err != nil {
 			return fail(c, "expected an array")
 		}
-		orders = append(orders, &o)
+		ordrs = append(ordrs, &o)
 	}
 
 	// error check all orders
-	for i, order := range orders {
+	for i, order := range ordrs {
 		// side, market name, and api key are required
 		if order.Side == "" || order.MarketName == "" || order.KeyID == "" {
 			return fail(c, "side, marketName, and apiKeyID required!")
@@ -307,7 +289,7 @@ func (controller *OrderController) HandlePostOrder(c echo.Context) error {
 			order.ParentOrderID = "00000000-0000-0000-0000-000000000000"
 		}
 
-		request := orderProto.OrderRequest{
+		request := orders.OrderRequest{
 			UserID:           userID,
 			KeyID:            order.KeyID,
 			MarketName:       order.MarketName,
@@ -323,13 +305,12 @@ func (controller *OrderController) HandlePostOrder(c echo.Context) error {
 		requests = append(requests, &request)
 	}
 
-	orderRequests := orderProto.OrdersRequest{
+	orderRequests := orders.OrdersRequest{
 		Orders: requests,
 	}
 
 	// add order returns nil for error
-	r, _ := controller.Client.AddOrders(context.Background(), &orderRequests)
-
+	r, _ := controller.Orders.AddOrders(context.Background(), &orderRequests)
 	if r.Status != "success" {
 		response := &ResponseError{
 			Status:  r.Status,
@@ -381,23 +362,14 @@ func (controller *OrderController) HandleUpdateOrder(c echo.Context) error {
 	}
 
 	// client can only update description
-	updateRequest := orderProto.OrderRequest{
+	updateRequest := orders.OrderRequest{
 		OrderID:      orderID,
 		UserID:       userID,
 		Conditions:   orderRequest.Conditions,
 		BaseQuantity: orderRequest.BaseQuantity,
 	}
 
-	r, err := controller.Client.UpdateOrder(context.Background(), &updateRequest)
-	if err != nil {
-		response := &ResponseError{
-			Status:  "error",
-			Message: err.Error(),
-		}
-
-		return c.JSON(http.StatusInternalServerError, response)
-	}
-
+	r, _ := controller.Orders.UpdateOrder(context.Background(), &updateRequest)
 	if r.Status != "success" {
 		response := &ResponseError{
 			Status:  r.Status,
@@ -435,21 +407,12 @@ func (controller *OrderController) HandleDeleteOrder(c echo.Context) error {
 	userID := claims["jti"].(string)
 	orderID := c.Param("orderID")
 
-	removeRequest := orderProto.RemoveOrderRequest{
+	removeRequest := orders.RemoveOrderRequest{
 		OrderID: orderID,
 		UserID:  userID,
 	}
 
-	r, err := controller.Client.RemoveOrder(context.Background(), &removeRequest)
-	if err != nil {
-		response := &ResponseError{
-			Status:  "error",
-			Message: err.Error(),
-		}
-
-		return c.JSON(http.StatusInternalServerError, response)
-	}
-
+	r, _ := controller.Orders.RemoveOrder(context.Background(), &removeRequest)
 	if r.Status != "success" {
 		response := &ResponseError{
 			Status:  r.Status,

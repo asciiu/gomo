@@ -5,7 +5,7 @@ import (
 	"net/http"
 
 	models "github.com/asciiu/gomo/user-service/models"
-	pb "github.com/asciiu/gomo/user-service/proto/user"
+	users "github.com/asciiu/gomo/user-service/proto/user"
 	jwt "github.com/dgrijalva/jwt-go"
 	"github.com/labstack/echo"
 	micro "github.com/micro/go-micro"
@@ -13,8 +13,8 @@ import (
 )
 
 type SessionController struct {
-	DB     *sql.DB
-	Client pb.UserServiceClient
+	DB    *sql.DB
+	Users users.UserServiceClient
 }
 
 func NewSessionController(db *sql.DB) *SessionController {
@@ -22,8 +22,8 @@ func NewSessionController(db *sql.DB) *SessionController {
 	service.Init()
 
 	controller := SessionController{
-		DB:     db,
-		Client: pb.NewUserServiceClient("go.srv.user-service", service.Client()),
+		DB:    db,
+		Users: users.NewUserServiceClient("go.srv.user-service", service.Client()),
 	}
 	return &controller
 }
@@ -45,18 +45,24 @@ func (controller *SessionController) HandleSession(c echo.Context) error {
 	claims := token.Claims.(jwt.MapClaims)
 	userID := claims["jti"].(string)
 
-	getRequest := pb.GetUserInfoRequest{
+	getRequest := users.GetUserInfoRequest{
 		UserID: userID,
 	}
-	r, err := controller.Client.GetUserInfo(context.Background(), &getRequest)
-	if err != nil {
+	r, _ := controller.Users.GetUserInfo(context.Background(), &getRequest)
+	if r.Status != "success" {
 		response := &ResponseError{
-			Status:  "error",
-			Message: "update service unavailable",
+			Status:  r.Status,
+			Message: r.Message,
 		}
 
-		return c.JSON(http.StatusGone, response)
+		if r.Status == "fail" {
+			return c.JSON(http.StatusBadRequest, response)
+		}
+		if r.Status == "error" {
+			return c.JSON(http.StatusInternalServerError, response)
+		}
 	}
+
 	response := &ResponseSuccess{
 		Status: "success",
 		Data: &UserData{

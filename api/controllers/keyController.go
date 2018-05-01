@@ -3,10 +3,9 @@ package controllers
 import (
 	"database/sql"
 	"encoding/json"
-	"fmt"
 	"net/http"
 
-	kp "github.com/asciiu/gomo/key-service/proto/key"
+	keys "github.com/asciiu/gomo/key-service/proto/key"
 	jwt "github.com/dgrijalva/jwt-go"
 	"github.com/labstack/echo"
 	micro "github.com/micro/go-micro"
@@ -14,8 +13,8 @@ import (
 )
 
 type KeyController struct {
-	DB     *sql.DB
-	Client kp.KeyServiceClient
+	DB   *sql.DB
+	Keys keys.KeyServiceClient
 }
 
 // swagger:parameters postKey
@@ -44,15 +43,15 @@ type UpdateKeyRequest struct {
 // A ResponseKeySuccess will always contain a status of "successful".
 // swagger:model responseKeySuccess
 type ResponseKeySuccess struct {
-	Status string          `json:"status"`
-	Data   *kp.UserKeyData `json:"data"`
+	Status string            `json:"status"`
+	Data   *keys.UserKeyData `json:"data"`
 }
 
 // A ResponseKeysSuccess will always contain a status of "successful".
 // swagger:model responseKeysSuccess
 type ResponseKeysSuccess struct {
-	Status string           `json:"status"`
-	Data   *kp.UserKeysData `json:"data"`
+	Status string             `json:"status"`
+	Data   *keys.UserKeysData `json:"data"`
 }
 
 func NewKeyController(db *sql.DB) *KeyController {
@@ -61,8 +60,8 @@ func NewKeyController(db *sql.DB) *KeyController {
 	service.Init()
 
 	controller := KeyController{
-		DB:     db,
-		Client: kp.NewKeyServiceClient("go.srv.key-service", service.Client()),
+		DB:   db,
+		Keys: keys.NewKeyServiceClient("go.srv.key-service", service.Client()),
 	}
 	return &controller
 }
@@ -82,21 +81,12 @@ func (controller *KeyController) HandleGetKey(c echo.Context) error {
 	userID := claims["jti"].(string)
 	keyID := c.Param("keyID")
 
-	getRequest := kp.GetUserKeyRequest{
+	getRequest := keys.GetUserKeyRequest{
 		KeyID:  keyID,
 		UserID: userID,
 	}
 
-	r, err := controller.Client.GetUserKey(context.Background(), &getRequest)
-	if err != nil {
-		response := &ResponseError{
-			Status:  "error",
-			Message: err.Error(),
-		}
-
-		return c.JSON(http.StatusInternalServerError, response)
-	}
-
+	r, _ := controller.Keys.GetUserKey(context.Background(), &getRequest)
 	if r.Status != "success" {
 		response := &ResponseError{
 			Status:  r.Status,
@@ -113,8 +103,8 @@ func (controller *KeyController) HandleGetKey(c echo.Context) error {
 
 	response := &ResponseKeySuccess{
 		Status: "success",
-		Data: &kp.UserKeyData{
-			Key: &kp.Key{
+		Data: &keys.UserKeyData{
+			Key: &keys.Key{
 				KeyID:       r.Data.Key.KeyID,
 				UserID:      r.Data.Key.UserID,
 				Exchange:    r.Data.Key.Exchange,
@@ -142,20 +132,11 @@ func (controller *KeyController) HandleListKeys(c echo.Context) error {
 	claims := token.Claims.(jwt.MapClaims)
 	userID := claims["jti"].(string)
 
-	getRequest := kp.GetUserKeysRequest{
+	getRequest := keys.GetUserKeysRequest{
 		UserID: userID,
 	}
 
-	r, err := controller.Client.GetUserKeys(context.Background(), &getRequest)
-	if err != nil {
-		response := &ResponseError{
-			Status:  "error",
-			Message: err.Error(),
-		}
-
-		return c.JSON(http.StatusGone, response)
-	}
-
+	r, _ := controller.Keys.GetUserKeys(context.Background(), &getRequest)
 	if r.Status != "success" {
 		response := &ResponseError{
 			Status:  r.Status,
@@ -170,10 +151,10 @@ func (controller *KeyController) HandleListKeys(c echo.Context) error {
 		}
 	}
 
-	data := make([]*kp.Key, len(r.Data.Keys))
+	data := make([]*keys.Key, len(r.Data.Keys))
 	for i, key := range data {
 		// api removes the secret
-		data[i] = &kp.Key{
+		data[i] = &keys.Key{
 			KeyID:       key.KeyID,
 			UserID:      key.UserID,
 			Exchange:    key.Exchange,
@@ -185,7 +166,7 @@ func (controller *KeyController) HandleListKeys(c echo.Context) error {
 
 	response := &ResponseKeysSuccess{
 		Status: "success",
-		Data: &kp.UserKeysData{
+		Data: &keys.UserKeysData{
 			Keys: data,
 		},
 	}
@@ -229,7 +210,7 @@ func (controller *KeyController) HandlePostKey(c echo.Context) error {
 		return c.JSON(http.StatusBadRequest, response)
 	}
 
-	createRequest := kp.KeyRequest{
+	createRequest := keys.KeyRequest{
 		UserID:      userID,
 		Exchange:    addKeyRequest.Exchange,
 		Key:         addKeyRequest.Key,
@@ -237,17 +218,7 @@ func (controller *KeyController) HandlePostKey(c echo.Context) error {
 		Description: addKeyRequest.Description,
 	}
 
-	r, err := controller.Client.AddKey(context.Background(), &createRequest)
-	if err != nil {
-		fmt.Println(err)
-		response := &ResponseError{
-			Status:  "error",
-			Message: err.Error(),
-		}
-
-		return c.JSON(http.StatusGone, response)
-	}
-
+	r, _ := controller.Keys.AddKey(context.Background(), &createRequest)
 	if r.Status != "success" {
 		response := &ResponseError{
 			Status:  r.Status,
@@ -299,22 +270,13 @@ func (controller *KeyController) HandleUpdateKey(c echo.Context) error {
 	}
 
 	// client can only update description
-	updateRequest := kp.KeyRequest{
+	updateRequest := keys.KeyRequest{
 		KeyID:       keyID,
 		UserID:      userID,
 		Description: keyRequest.Description,
 	}
 
-	r, err := controller.Client.UpdateKeyDescription(context.Background(), &updateRequest)
-	if err != nil {
-		response := &ResponseError{
-			Status:  "error",
-			Message: err.Error(),
-		}
-
-		return c.JSON(http.StatusGone, response)
-	}
-
+	r, _ := controller.Keys.UpdateKeyDescription(context.Background(), &updateRequest)
 	if r.Status != "success" {
 		response := &ResponseError{
 			Status:  r.Status,
@@ -352,21 +314,12 @@ func (controller *KeyController) HandleDeleteKey(c echo.Context) error {
 	userID := claims["jti"].(string)
 	keyID := c.Param("keyID")
 
-	removeRequest := kp.RemoveKeyRequest{
+	removeRequest := keys.RemoveKeyRequest{
 		KeyID:  keyID,
 		UserID: userID,
 	}
 
-	r, err := controller.Client.RemoveKey(context.Background(), &removeRequest)
-	if err != nil {
-		response := &ResponseError{
-			Status:  "error",
-			Message: "the key-service is not available",
-		}
-
-		return c.JSON(http.StatusGone, response)
-	}
-
+	r, _ := controller.Keys.RemoveKey(context.Background(), &removeRequest)
 	if r.Status != "success" {
 		response := &ResponseError{
 			Status:  r.Status,

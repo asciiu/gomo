@@ -5,7 +5,7 @@ import (
 	"encoding/json"
 	"net/http"
 
-	pb "github.com/asciiu/gomo/device-service/proto/device"
+	devices "github.com/asciiu/gomo/device-service/proto/device"
 	jwt "github.com/dgrijalva/jwt-go"
 	"github.com/labstack/echo"
 	micro "github.com/micro/go-micro"
@@ -13,8 +13,8 @@ import (
 )
 
 type DeviceController struct {
-	DB     *sql.DB
-	Client pb.DeviceServiceClient
+	DB      *sql.DB
+	Devices devices.DeviceServiceClient
 }
 
 // swagger:parameters addDevice updateDevice
@@ -33,15 +33,15 @@ type DeviceRequest struct {
 // A ResponseDeviceSuccess will always contain a status of "successful".
 // swagger:model responseDeviceSuccess
 type ResponseDeviceSuccess struct {
-	Status string             `json:"status"`
-	Data   *pb.UserDeviceData `json:"data"`
+	Status string                  `json:"status"`
+	Data   *devices.UserDeviceData `json:"data"`
 }
 
 // A ResponseDevicesSuccess will always contain a status of "successful".
 // swagger:model responseDevicesSuccess
 type ResponseDevicesSuccess struct {
-	Status string              `json:"status"`
-	Data   *pb.UserDevicesData `json:"data"`
+	Status string                   `json:"status"`
+	Data   *devices.UserDevicesData `json:"data"`
 }
 
 func NewDeviceController(db *sql.DB) *DeviceController {
@@ -50,8 +50,8 @@ func NewDeviceController(db *sql.DB) *DeviceController {
 	service.Init()
 
 	controller := DeviceController{
-		DB:     db,
-		Client: pb.NewDeviceServiceClient("go.srv.device-service", service.Client()),
+		DB:      db,
+		Devices: devices.NewDeviceServiceClient("go.srv.device-service", service.Client()),
 	}
 	return &controller
 }
@@ -68,20 +68,11 @@ func NewDeviceController(db *sql.DB) *DeviceController {
 func (controller *DeviceController) HandleGetDevice(c echo.Context) error {
 	deviceID := c.Param("deviceID")
 
-	getRequest := pb.GetUserDeviceRequest{
+	getRequest := devices.GetUserDeviceRequest{
 		DeviceID: deviceID,
 	}
 
-	r, err := controller.Client.GetUserDevice(context.Background(), &getRequest)
-	if err != nil {
-		response := &ResponseError{
-			Status:  "error",
-			Message: "the device-service is not available",
-		}
-
-		return c.JSON(http.StatusGone, response)
-	}
-
+	r, _ := controller.Devices.GetUserDevice(context.Background(), &getRequest)
 	if r.Status != "success" {
 		response := &ResponseError{
 			Status:  r.Status,
@@ -118,20 +109,11 @@ func (controller *DeviceController) HandleListDevices(c echo.Context) error {
 	claims := token.Claims.(jwt.MapClaims)
 	userID := claims["jti"].(string)
 
-	getRequest := pb.GetUserDevicesRequest{
+	getRequest := devices.GetUserDevicesRequest{
 		UserID: userID,
 	}
 
-	r, err := controller.Client.GetUserDevices(context.Background(), &getRequest)
-	if err != nil {
-		response := &ResponseError{
-			Status:  "error",
-			Message: "the device-service is not available",
-		}
-
-		return c.JSON(http.StatusGone, response)
-	}
-
+	r, _ := controller.Devices.GetUserDevices(context.Background(), &getRequest)
 	if r.Status != "success" {
 		response := &ResponseError{
 			Status:  r.Status,
@@ -191,23 +173,14 @@ func (controller *DeviceController) HandlePostDevice(c echo.Context) error {
 		return c.JSON(http.StatusBadRequest, response)
 	}
 
-	createRequest := pb.AddDeviceRequest{
+	createRequest := devices.AddDeviceRequest{
 		UserID:           userID,
 		DeviceType:       addDeviceRequest.DeviceType,
 		DeviceToken:      addDeviceRequest.DeviceToken,
 		ExternalDeviceID: addDeviceRequest.ExternalDeviceID,
 	}
 
-	r, err := controller.Client.AddDevice(context.Background(), &createRequest)
-	if err != nil {
-		response := &ResponseError{
-			Status:  "error",
-			Message: "the device-service is not available",
-		}
-
-		return c.JSON(http.StatusGone, response)
-	}
-
+	r, _ := controller.Devices.AddDevice(context.Background(), &createRequest)
 	if r.Status != "success" {
 		response := &ResponseError{
 			Status:  r.Status,
@@ -267,7 +240,7 @@ func (controller *DeviceController) HandleUpdateDevice(c echo.Context) error {
 		return c.JSON(http.StatusBadRequest, response)
 	}
 
-	updateRequest := pb.UpdateDeviceRequest{
+	updateRequest := devices.UpdateDeviceRequest{
 		DeviceID:         deviceID,
 		UserID:           userID,
 		DeviceType:       addDeviceRequest.DeviceType,
@@ -275,16 +248,7 @@ func (controller *DeviceController) HandleUpdateDevice(c echo.Context) error {
 		ExternalDeviceID: addDeviceRequest.ExternalDeviceID,
 	}
 
-	r, err := controller.Client.UpdateDevice(context.Background(), &updateRequest)
-	if err != nil {
-		response := &ResponseError{
-			Status:  "error",
-			Message: "the device-service is not available",
-		}
-
-		return c.JSON(http.StatusGone, response)
-	}
-
+	r, _ := controller.Devices.UpdateDevice(context.Background(), &updateRequest)
 	if r.Status != "success" {
 		response := &ResponseError{
 			Status:  r.Status,
@@ -322,21 +286,12 @@ func (controller *DeviceController) HandleDeleteDevice(c echo.Context) error {
 	userID := claims["jti"].(string)
 	deviceID := c.Param("deviceID")
 
-	removeRequest := pb.RemoveDeviceRequest{
+	removeRequest := devices.RemoveDeviceRequest{
 		DeviceID: deviceID,
 		UserID:   userID,
 	}
 
-	r, err := controller.Client.RemoveDevice(context.Background(), &removeRequest)
-	if err != nil {
-		response := &ResponseError{
-			Status:  "error",
-			Message: "the device-service is not available",
-		}
-
-		return c.JSON(http.StatusGone, response)
-	}
-
+	r, _ := controller.Devices.RemoveDevice(context.Background(), &removeRequest)
 	if r.Status != "success" {
 		response := &ResponseError{
 			Status:  r.Status,
