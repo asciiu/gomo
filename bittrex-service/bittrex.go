@@ -13,7 +13,7 @@ type KeyValidator struct {
 	BalancePub     micro.Publisher
 }
 
-func (service *KeyValidator) Process(ctx context.Context, key *kp.ApiKey) error {
+func (service *KeyValidator) Process(ctx context.Context, key *kp.Key) error {
 	if key.Exchange != "Bittrex" {
 		return nil
 	}

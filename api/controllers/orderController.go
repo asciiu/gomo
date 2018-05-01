@@ -48,7 +48,7 @@ type OrderTemp struct {
 type OrderRequest struct {
 	// Required.
 	// in: body
-	ApiKeyID string `json:"apiKeyID"`
+	KeyID string `json:"keyID"`
 	// Required.
 	// in: body
 	MarketName string `json:"marketName"`
@@ -271,7 +271,7 @@ func (controller *OrderController) HandlePostOrder(c echo.Context) error {
 	// error check all orders
 	for i, order := range orders {
 		// side, market name, and api key are required
-		if order.Side == "" || order.MarketName == "" || order.ApiKeyID == "" {
+		if order.Side == "" || order.MarketName == "" || order.KeyID == "" {
 			return fail(c, "side, marketName, and apiKeyID required!")
 		}
 
