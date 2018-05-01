@@ -38,7 +38,7 @@ func NewRouter(db *sql.DB) *echo.Echo {
 	middlewares.SetMainMiddlewares(e)
 
 	// controllers
-	apiKeyController := controllers.NewKeyController(db)
+	keyController := controllers.NewKeyController(db)
 	authController := controllers.NewAuthController(db)
 	balanceController := controllers.NewBalanceController(db)
 	deviceController := controllers.NewDeviceController(db)
@@ -70,11 +70,11 @@ func NewRouter(db *sql.DB) *echo.Echo {
 	protectedApi.PUT("/users/:userID", userController.HandleUpdateUser)
 
 	// api key endpoints
-	protectedApi.GET("/keys", apiKeyController.HandleListKeys)
-	protectedApi.POST("/keys", apiKeyController.HandlePostKey)
-	protectedApi.GET("/keys/:keyID", apiKeyController.HandleGetKey)
-	protectedApi.PUT("/keys/:keyID", apiKeyController.HandleUpdateKey)
-	protectedApi.DELETE("/keys/:keyID", apiKeyController.HandleDeleteKey)
+	protectedApi.GET("/keys", keyController.HandleListKeys)
+	protectedApi.POST("/keys", keyController.HandlePostKey)
+	protectedApi.GET("/keys/:keyID", keyController.HandleGetKey)
+	protectedApi.PUT("/keys/:keyID", keyController.HandleUpdateKey)
+	protectedApi.DELETE("/keys/:keyID", keyController.HandleDeleteKey)
 
 	// device manage endpoints
 	protectedApi.GET("/devices", deviceController.HandleListDevices)
