@@ -21,7 +21,7 @@ func checkErr(err error) {
 func setupService() (*KeyService, *user.User) {
 	dbUrl := "postgres://postgres@localhost:5432/gomo_test?&sslmode=disable"
 	db, _ := db.NewDB(dbUrl)
-	service := KeyService{db}
+	service := KeyService{DB: db}
 
 	user := user.NewUser("first", "last", "test@email", "hash")
 	_, error := userRepo.InsertUser(db, user)
@@ -30,42 +30,42 @@ func setupService() (*KeyService, *user.User) {
 	return &service, user
 }
 
-func TestInsertApiKey(t *testing.T) {
+func TestInsertKey(t *testing.T) {
 	service, user := setupService()
 
 	defer service.DB.Close()
 
-	key := keyProto.ApiKeyRequest{
-		UserId:      user.Id,
+	key := keyProto.KeyRequest{
+		UserID:      user.ID,
 		Exchange:    "monex",
 		Key:         "key",
 		Secret:      "sssh",
 		Description: "shit dwog!",
 	}
 
-	response := keyProto.ApiKeyResponse{}
+	response := keyProto.KeyResponse{}
 
-	service.AddApiKey(context.Background(), &key, &response)
+	service.AddKey(context.Background(), &key, &response)
 
 	if response.Status != "success" {
 		t.Errorf(response.Message)
 	}
 
-	if response.Data.ApiKey.UserId != key.UserId {
+	if response.Data.Key.UserID != key.UserID {
 		t.Errorf("user IDs do not match")
 	}
 
-	requestRemove := keyProto.RemoveApiKeyRequest{
-		UserId:   user.Id,
-		ApiKeyId: response.Data.ApiKey.ApiKeyId,
+	requestRemove := keyProto.RemoveKeyRequest{
+		UserID: user.ID,
+		KeyID:  response.Data.Key.KeyID,
 	}
 
-	responseDel := keyProto.ApiKeyResponse{}
-	service.RemoveApiKey(context.Background(), &requestRemove, &responseDel)
+	responseDel := keyProto.KeyResponse{}
+	service.RemoveKey(context.Background(), &requestRemove, &responseDel)
 
 	if responseDel.Status != "success" {
 		t.Errorf(responseDel.Message)
 	}
 
-	userRepo.DeleteUserHard(service.DB, user.Id)
+	userRepo.DeleteUserHard(service.DB, user.ID)
 }

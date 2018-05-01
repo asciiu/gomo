@@ -4,7 +4,7 @@
 FROM golang:1.10.0 as builder
 
 # Set our workdir to our current service in the gopath
-WORKDIR /go/src/github.com/asciiu/gomo/apikey-service
+WORKDIR /go/src/github.com/asciiu/gomo/key-service
 
 # Copy the current code into our workdir
 COPY . .
@@ -20,7 +20,7 @@ RUN dep init && dep ensure
 
 # Build the binary, with a few flags which will allow
 # us to run this binary in Alpine. 
-RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o apikey-service
+RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o key-service
 
 
 # Here we're using a second FROM statement, which is strange,
@@ -39,9 +39,9 @@ WORKDIR /app
 # we pull the binary from the container named `builder`, within
 # this build context. This reaches into our previous image, finds
 # the binary we built, and pulls it into this container. Amazing!
-COPY --from=builder /go/src/github.com/asciiu/gomo/apikey-service/apikey-service .
+COPY --from=builder /go/src/github.com/asciiu/gomo/key-service/key-service .
 
 # Run the binary as per usual! This time with a binary build in a
 # separate container, with all of the correct dependencies and
 # run time libraries.
-CMD ["./apikey-service"]
+CMD ["./key-service"]
