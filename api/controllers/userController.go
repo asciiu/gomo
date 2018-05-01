@@ -188,7 +188,7 @@ func (controller *UserController) HandleUpdateUser(c echo.Context) error {
 	response := &ResponseSuccess{
 		Status: "success",
 		Data: &UserData{
-			&models.UserInfo{
+			User: &models.UserInfo{
 				Id:    r.Data.User.UserId,
 				First: r.Data.User.First,
 				Last:  r.Data.User.Last,

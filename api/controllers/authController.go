@@ -11,6 +11,9 @@ import (
 	"time"
 
 	asql "github.com/asciiu/gomo/api/db/sql"
+	keys "github.com/asciiu/gomo/apikey-service/proto/apikey"
+	balances "github.com/asciiu/gomo/balance-service/proto/balance"
+	devices "github.com/asciiu/gomo/device-service/proto/device"
 	gsql "github.com/asciiu/gomo/user-service/db/sql"
 	pb "github.com/asciiu/gomo/user-service/proto/user"
 	micro "github.com/micro/go-micro"
@@ -27,8 +30,11 @@ const refreshDuration = 720 * time.Hour
 const jwtDuration = 1440 * time.Minute
 
 type AuthController struct {
-	DB     *sql.DB
-	Client pb.UserServiceClient
+	DB       *sql.DB
+	Client   pb.UserServiceClient
+	Balances balances.BalanceServiceClient
+	Keys     keys.ApiKeyServiceClient
+	Devices  devices.DeviceServiceClient
 }
 
 type JwtClaims struct {
@@ -72,8 +78,16 @@ type ResponseSuccess struct {
 	Data   *UserData `json:"data"`
 }
 
+type Device struct {
+	DeviceID         string `json:"deviceID"`
+	DeviceType       string `json:"deviceType"`
+	ExternalDeviceID string `json:"externalDeviceID"`
+	DeviceToken      string `json:"deviceToken"`
+}
+
 type UserData struct {
-	User *models.UserInfo `json:"user"`
+	User    *models.UserInfo `json:"user"`
+	Devices []*Device        `json:"devices"`
 }
 
 // A ResponseSuccess will always contain a status of "successful".
@@ -90,8 +104,11 @@ func NewAuthController(db *sql.DB) *AuthController {
 	service.Init()
 
 	controller := AuthController{
-		DB:     db,
-		Client: pb.NewUserServiceClient("go.srv.user-service", service.Client()),
+		DB:       db,
+		Client:   pb.NewUserServiceClient("go.srv.user-service", service.Client()),
+		Balances: balances.NewBalanceServiceClient("go.micro.srv.balance", service.Client()),
+		Keys:     keys.NewApiKeyServiceClient("go.srv.apikey-service", service.Client()),
+		Devices:  devices.NewDeviceServiceClient("go.srv.device-service", service.Client()),
 	}
 	return &controller
 }
@@ -263,9 +280,45 @@ func (controller *AuthController) HandleLogin(c echo.Context) error {
 				c.Response().Header().Set("set-authorization", accessToken)
 			}
 
+			// TODO refactor with device controller implementtion
+			// get user devices here
+			getRequest := devices.GetUserDevicesRequest{
+				UserId: user.Id,
+			}
+
+			r, _ := controller.Devices.GetUserDevices(context.Background(), &getRequest)
+			if r.Status != "success" {
+				response := &ResponseError{
+					Status:  r.Status,
+					Message: r.Message,
+				}
+
+				if r.Status == "fail" {
+					return c.JSON(http.StatusBadRequest, response)
+				}
+				if r.Status == "error" {
+					return c.JSON(http.StatusInternalServerError, response)
+				}
+			}
+
+			devices := make([]*Device, 0)
+			for _, d := range r.Data.Device {
+				// api removes the secret
+				device := Device{
+					DeviceID:         d.DeviceId,
+					DeviceType:       d.DeviceType,
+					ExternalDeviceID: d.ExternalDeviceId,
+					DeviceToken:      d.DeviceToken,
+				}
+				devices = append(devices, &device)
+			}
+
 			response := &ResponseSuccess{
 				Status: "success",
-				Data:   &UserData{user.Info()},
+				Data: &UserData{
+					User:    user.Info(),
+					Devices: devices,
+				},
 			}
 
 			return c.JSON(http.StatusOK, response)
@@ -379,7 +432,7 @@ func (controller *AuthController) HandleSignup(c echo.Context) error {
 	response := &ResponseSuccess{
 		Status: "success",
 		Data: &UserData{
-			&models.UserInfo{
+			User: &models.UserInfo{
 				Id:    r.Data.User.UserId,
 				First: r.Data.User.First,
 				Last:  r.Data.User.Last,
