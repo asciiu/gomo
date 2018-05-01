@@ -12,7 +12,7 @@ service UserService {
 
 // Requests
 message ChangePasswordRequest {
-  string userId  = 1;
+  string userID  = 1;
   string newPassword = 2;
   string oldPassword = 3;
 }
@@ -25,16 +25,16 @@ message CreateUserRequest {
 }
 
 message DeleteUserRequest {
-  string userId = 1;
+  string userID = 1;
   bool hard = 2;
 }
 
 message GetUserInfoRequest {
-    string userId = 1;
+    string userID = 1;
 }
 
 message UpdateUserRequest {
-    string userId = 1;
+    string userID = 1;
     string first = 2;
     string last = 3;
     string email = 4;
@@ -47,7 +47,7 @@ message Response {
 }
 
 message User {
-  string userId = 1;
+  string userID = 1;
   string first = 2;
   string last = 3;
   string email = 4;
