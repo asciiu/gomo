@@ -46,7 +46,7 @@ func (process *BuyProcessor) ProcessEvent(ctx context.Context, event *evt.Exchan
 
 				// if it is a simulated order trigger an update order event
 				evt := buyOrder.EventOrigin
-				evt.ExchangeOrderId = "paper"
+				evt.ExchangeOrderID = "paper"
 				evt.ExchangeMarketName = "paper"
 				evt.Status = "filled"
 				evt.Condition = desc
