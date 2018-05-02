@@ -97,7 +97,7 @@ func (m *GetUserBalancesRequest) GetKeyID() string {
 }
 
 type AccountBalances struct {
-	Balances []*Balance `protobuf:"bytes,4,rep,name=balances" json:"balances,omitempty"`
+	Balances []*Balance `protobuf:"bytes,4,rep,name=balances" json:"balances"`
 }
 
 func (m *AccountBalances) Reset()                    { *m = AccountBalances{} }
