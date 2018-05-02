@@ -41,9 +41,9 @@ const _ = proto.ProtoPackageIsVersion2 // please upgrade the proto package
 
 // Requests
 type GetUserBalanceRequest struct {
-	UserID   string `protobuf:"bytes,1,opt,name=userID" json:"userID,omitempty"`
-	KeyID    string `protobuf:"bytes,2,opt,name=keyID" json:"keyID,omitempty"`
-	Currency string `protobuf:"bytes,3,opt,name=currency" json:"currency,omitempty"`
+	UserID   string `protobuf:"bytes,1,opt,name=userID" json:"userID"`
+	KeyID    string `protobuf:"bytes,2,opt,name=keyID" json:"keyID"`
+	Currency string `protobuf:"bytes,3,opt,name=currency" json:"currency"`
 }
 
 func (m *GetUserBalanceRequest) Reset()                    { *m = GetUserBalanceRequest{} }
@@ -73,8 +73,8 @@ func (m *GetUserBalanceRequest) GetCurrency() string {
 }
 
 type GetUserBalancesRequest struct {
-	UserID string `protobuf:"bytes,1,opt,name=userID" json:"userID,omitempty"`
-	KeyID  string `protobuf:"bytes,2,opt,name=keyID" json:"keyID,omitempty"`
+	UserID string `protobuf:"bytes,1,opt,name=userID" json:"userID"`
+	KeyID  string `protobuf:"bytes,2,opt,name=keyID" json:"keyID"`
 }
 
 func (m *GetUserBalancesRequest) Reset()                    { *m = GetUserBalancesRequest{} }
@@ -114,16 +114,16 @@ func (m *AccountBalances) GetBalances() []*Balance {
 
 // Responses
 type Balance struct {
-	ID                string  `protobuf:"bytes,1,opt,name=ID" json:"ID,omitempty"`
-	UserID            string  `protobuf:"bytes,2,opt,name=userID" json:"userID,omitempty"`
-	KeyID             string  `protobuf:"bytes,3,opt,name=keyID" json:"keyID,omitempty"`
-	ExchangeName      string  `protobuf:"bytes,4,opt,name=exchangeName" json:"exchangeName,omitempty"`
-	CurrencyName      string  `protobuf:"bytes,5,opt,name=currencyName" json:"currencyName,omitempty"`
-	Available         float64 `protobuf:"fixed64,6,opt,name=available" json:"available,omitempty"`
-	Locked            float64 `protobuf:"fixed64,7,opt,name=locked" json:"locked,omitempty"`
-	ExchangeTotal     float64 `protobuf:"fixed64,8,opt,name=exchangeTotal" json:"exchangeTotal,omitempty"`
-	ExchangeAvailable float64 `protobuf:"fixed64,9,opt,name=exchangeAvailable" json:"exchangeAvailable,omitempty"`
-	ExchangedLocked   float64 `protobuf:"fixed64,10,opt,name=exchangedLocked" json:"exchangedLocked,omitempty"`
+	ID                string  `protobuf:"bytes,1,opt,name=ID" json:"ID"`
+	UserID            string  `protobuf:"bytes,2,opt,name=userID" json:"userID"`
+	KeyID             string  `protobuf:"bytes,3,opt,name=keyID" json:"keyID"`
+	ExchangeName      string  `protobuf:"bytes,4,opt,name=exchangeName" json:"exchangeName"`
+	CurrencyName      string  `protobuf:"bytes,5,opt,name=currencyName" json:"currencyName"`
+	Available         float64 `protobuf:"fixed64,6,opt,name=available" json:"available"`
+	Locked            float64 `protobuf:"fixed64,7,opt,name=locked" json:"locked"`
+	ExchangeTotal     float64 `protobuf:"fixed64,8,opt,name=exchangeTotal" json:"exchangeTotal"`
+	ExchangeAvailable float64 `protobuf:"fixed64,9,opt,name=exchangeAvailable" json:"exchangeAvailable"`
+	ExchangedLocked   float64 `protobuf:"fixed64,10,opt,name=exchangedLocked" json:"exchangedLocked"`
 }
 
 func (m *Balance) Reset()                    { *m = Balance{} }
@@ -202,7 +202,7 @@ func (m *Balance) GetExchangedLocked() float64 {
 }
 
 type UserBalanceData struct {
-	Balance *Balance `protobuf:"bytes,1,opt,name=balance" json:"balance,omitempty"`
+	Balance *Balance `protobuf:"bytes,1,opt,name=balance" json:"balance"`
 }
 
 func (m *UserBalanceData) Reset()                    { *m = UserBalanceData{} }
@@ -218,9 +218,9 @@ func (m *UserBalanceData) GetBalance() *Balance {
 }
 
 type BalanceResponse struct {
-	Status  string           `protobuf:"bytes,1,opt,name=status" json:"status,omitempty"`
-	Message string           `protobuf:"bytes,2,opt,name=message" json:"message,omitempty"`
-	Data    *UserBalanceData `protobuf:"bytes,3,opt,name=data" json:"data,omitempty"`
+	Status  string           `protobuf:"bytes,1,opt,name=status" json:"status"`
+	Message string           `protobuf:"bytes,2,opt,name=message" json:"message"`
+	Data    *UserBalanceData `protobuf:"bytes,3,opt,name=data" json:"data"`
 }
 
 func (m *BalanceResponse) Reset()                    { *m = BalanceResponse{} }
@@ -250,8 +250,8 @@ func (m *BalanceResponse) GetData() *UserBalanceData {
 }
 
 type BalancesResponse struct {
-	Status  string           `protobuf:"bytes,1,opt,name=status" json:"status,omitempty"`
-	Message string           `protobuf:"bytes,2,opt,name=message" json:"message,omitempty"`
+	Status  string           `protobuf:"bytes,1,opt,name=status" json:"status"`
+	Message string           `protobuf:"bytes,2,opt,name=message" json:"message"`
 	Data    *AccountBalances `protobuf:"bytes,3,opt,name=data" json:"data"`
 }
 
