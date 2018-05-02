@@ -252,7 +252,7 @@ func (m *BalanceResponse) GetData() *UserBalanceData {
 type BalancesResponse struct {
 	Status  string           `protobuf:"bytes,1,opt,name=status" json:"status,omitempty"`
 	Message string           `protobuf:"bytes,2,opt,name=message" json:"message,omitempty"`
-	Data    *AccountBalances `protobuf:"bytes,3,opt,name=data" json:"data,omitempty"`
+	Data    *AccountBalances `protobuf:"bytes,3,opt,name=data" json:"data"`
 }
 
 func (m *BalancesResponse) Reset()                    { *m = BalancesResponse{} }
