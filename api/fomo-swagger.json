@@ -17,6 +17,30 @@
   "host": "stage.fomo.exchange",
   "basePath": "/api",
   "paths": {
+    "/balances": {
+      "get": {
+        "description": "Returns all balances for user.",
+        "tags": [
+          "balances"
+        ],
+        "summary": "get all balances (protected)",
+        "operationId": "getAllBalances",
+        "responses": {
+          "200": {
+            "description": "\"data\" will contain array of balances with \"status\": \"success\"",
+            "schema": {
+              "$ref": "#/definitions/responseBalancesSuccess"
+            }
+          },
+          "500": {
+            "description": "the message will state what the internal server error was with \"status\": \"error\"",
+            "schema": {
+              "$ref": "#/definitions/responseError"
+            }
+          }
+        }
+      }
+    },
     "/devices": {
       "get": {
         "description": "Returns a list of registered devices for logged in user.",
@@ -67,9 +91,9 @@
             }
           },
           {
-            "x-go-name": "ExternalDeviceId",
+            "x-go-name": "ExternalDeviceID",
             "description": "Required.",
-            "name": "externalDeviceId",
+            "name": "externalDeviceID",
             "in": "body",
             "schema": {
               "type": "string"
@@ -98,7 +122,7 @@
         }
       }
     },
-    "/devices/:deviceId": {
+    "/devices/:deviceID": {
       "get": {
         "description": "Get a user's device by the device's ID.",
         "tags": [
@@ -148,9 +172,9 @@
             }
           },
           {
-            "x-go-name": "ExternalDeviceId",
+            "x-go-name": "ExternalDeviceID",
             "description": "Required.",
-            "name": "externalDeviceId",
+            "name": "externalDeviceID",
             "in": "body",
             "schema": {
               "type": "string"
@@ -285,7 +309,7 @@
         }
       }
     },
-    "/keys/:keyId": {
+    "/keys/:keyID": {
       "get": {
         "description": "Gets a user's key by the key ID. The secret will not be returned in the response data.",
         "tags": [
@@ -491,19 +515,13 @@
         "operationId": "addOrder",
         "parameters": [
           {
-            "x-go-name": "ApiKeyId",
+            "x-go-name": "KeyID",
             "description": "Required.",
-            "name": "apiKeyId",
+            "name": "keyID",
             "in": "body",
             "schema": {
               "type": "string"
             }
-          },
-          {
-            "type": "string",
-            "x-go-name": "ExchangeMarketName",
-            "name": "exchangeMarketName",
-            "in": "query"
           },
           {
             "x-go-name": "MarketName",
@@ -525,7 +543,7 @@
           },
           {
             "x-go-name": "OrderType",
-            "description": "Required.",
+            "description": "Optional.",
             "name": "orderType",
             "in": "body",
             "schema": {
@@ -533,9 +551,9 @@
             }
           },
           {
-            "x-go-name": "Price",
-            "description": "Required.",
-            "name": "price",
+            "x-go-name": "BaseQuantity",
+            "description": "Required for buy side when order is first in chain",
+            "name": "baseQuantity",
             "in": "body",
             "schema": {
               "type": "number",
@@ -543,9 +561,29 @@
             }
           },
           {
-            "x-go-name": "Qauntity",
-            "description": "Required.",
-            "name": "quantity",
+            "x-go-name": "BasePercent",
+            "description": "Required for buy side on chained orders",
+            "name": "basePercent",
+            "in": "body",
+            "schema": {
+              "type": "number",
+              "format": "double"
+            }
+          },
+          {
+            "x-go-name": "CurrencyQuantity",
+            "description": "Required for sell side when an order is first in a chain",
+            "name": "currencyQuantity",
+            "in": "body",
+            "schema": {
+              "type": "number",
+              "format": "double"
+            }
+          },
+          {
+            "x-go-name": "CurrencyPercent",
+            "description": "Required for sell side for all orders that are chained",
+            "name": "currencyPercent",
             "in": "body",
             "schema": {
               "type": "number",
@@ -560,13 +598,27 @@
             "schema": {
               "type": "string"
             }
+          },
+          {
+            "type": "string",
+            "x-go-name": "ParentOrderID",
+            "description": "Optional",
+            "name": "parentOrderID",
+            "in": "query"
+          },
+          {
+            "type": "boolean",
+            "x-go-name": "PaperMode",
+            "description": "Optional",
+            "name": "paperMode",
+            "in": "query"
           }
         ],
         "responses": {
           "200": {
-            "description": "\"data\" will contain order info with \"status\": \"success\"",
+            "description": "\"data\" will contain list of orders with \"status\": \"success\"",
             "schema": {
-              "$ref": "#/definitions/responseOrderSuccess"
+              "$ref": "#/definitions/responseOrdersSuccess"
             }
           },
           "400": {
@@ -584,7 +636,7 @@
         }
       }
     },
-    "/orders/:orderId": {
+    "/orders/:orderID": {
       "get": {
         "description": "Get info about an order.",
         "tags": [
@@ -635,9 +687,9 @@
             }
           },
           {
-            "x-go-name": "Qauntity",
+            "x-go-name": "BaseQuantity",
             "description": "Optional.",
-            "name": "quantity",
+            "name": "baseQuantity",
             "in": "body",
             "schema": {
               "type": "number",
@@ -909,7 +961,7 @@
             }
           },
           "401": {
-            "description": "the user Id in url param does not match with status \"fail\".",
+            "description": "the user ID in url param does not match with status \"fail\".",
             "schema": {
               "$ref": "#/definitions/responseError"
             }
@@ -931,94 +983,106 @@
     }
   },
   "definitions": {
-    "ApiKey": {
-      "description": "Responses",
+    "AccountBalances": {
       "type": "object",
       "properties": {
-        "apiKeyId": {
-          "type": "string",
-          "x-go-name": "ApiKeyId"
-        },
-        "description": {
-          "type": "string",
-          "x-go-name": "Description"
-        },
-        "exchange": {
-          "type": "string",
-          "x-go-name": "Exchange"
-        },
-        "key": {
-          "type": "string",
-          "x-go-name": "Key"
-        },
-        "secret": {
-          "type": "string",
-          "x-go-name": "Secret"
-        },
-        "status": {
-          "type": "string",
-          "x-go-name": "Status"
-        },
-        "userId": {
-          "type": "string",
-          "x-go-name": "UserId"
+        "balances": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/Balance"
+          },
+          "x-go-name": "Balances"
         }
       },
-      "x-go-package": "github.com/asciiu/gomo/apikey-service/proto/apikey"
-    },
-    "ApiKeyController": {
-      "type": "object",
-      "properties": {
-        "Client": {
-          "$ref": "#/definitions/ApiKeyServiceClient"
-        },
-        "DB": {
-          "$ref": "#/definitions/DB"
-        }
-      },
-      "x-go-package": "github.com/asciiu/gomo/api/controllers"
-    },
-    "ApiKeyRequest": {
-      "type": "object",
-      "properties": {
-        "description": {
-          "description": "Optional.\nin: body",
-          "type": "string",
-          "x-go-name": "Description"
-        },
-        "exchange": {
-          "description": "Required.\nin: body",
-          "type": "string",
-          "x-go-name": "Exchange"
-        },
-        "key": {
-          "description": "Required.\nin: body",
-          "type": "string",
-          "x-go-name": "Key"
-        },
-        "secret": {
-          "description": "Required.\nin: body",
-          "type": "string",
-          "x-go-name": "Secret"
-        }
-      },
-      "x-go-package": "github.com/asciiu/gomo/api/controllers"
-    },
-    "ApiKeyServiceClient": {
-      "type": "object",
-      "x-go-package": "github.com/asciiu/gomo/apikey-service/proto/apikey"
+      "x-go-package": "github.com/asciiu/gomo/balance-service/proto/balance"
     },
     "AuthController": {
       "type": "object",
       "properties": {
-        "Client": {
+        "Balances": {
+          "$ref": "#/definitions/BalanceServiceClient"
+        },
+        "DB": {
+          "$ref": "#/definitions/DB"
+        },
+        "Devices": {
+          "$ref": "#/definitions/DeviceServiceClient"
+        },
+        "Keys": {
+          "$ref": "#/definitions/KeyServiceClient"
+        },
+        "Users": {
           "$ref": "#/definitions/UserServiceClient"
+        }
+      },
+      "x-go-package": "github.com/asciiu/gomo/api/controllers"
+    },
+    "Balance": {
+      "description": "Responses",
+      "type": "object",
+      "properties": {
+        "ID": {
+          "type": "string"
+        },
+        "available": {
+          "type": "number",
+          "format": "double",
+          "x-go-name": "Available"
+        },
+        "currencyName": {
+          "type": "string",
+          "x-go-name": "CurrencyName"
+        },
+        "exchangeAvailable": {
+          "type": "number",
+          "format": "double",
+          "x-go-name": "ExchangeAvailable"
+        },
+        "exchangeName": {
+          "type": "string",
+          "x-go-name": "ExchangeName"
+        },
+        "exchangeTotal": {
+          "type": "number",
+          "format": "double",
+          "x-go-name": "ExchangeTotal"
+        },
+        "exchangedLocked": {
+          "type": "number",
+          "format": "double",
+          "x-go-name": "ExchangedLocked"
+        },
+        "keyID": {
+          "type": "string",
+          "x-go-name": "KeyID"
+        },
+        "locked": {
+          "type": "number",
+          "format": "double",
+          "x-go-name": "Locked"
+        },
+        "userID": {
+          "type": "string",
+          "x-go-name": "UserID"
+        }
+      },
+      "x-go-package": "github.com/asciiu/gomo/balance-service/proto/balance"
+    },
+    "BalanceController": {
+      "type": "object",
+      "properties": {
+        "Balances": {
+          "$ref": "#/definitions/BalanceServiceClient"
         },
         "DB": {
           "$ref": "#/definitions/DB"
         }
       },
       "x-go-package": "github.com/asciiu/gomo/api/controllers"
+    },
+    "BalanceServiceClient": {
+      "type": "object",
+      "x-go-package": "github.com/asciiu/gomo/balance-service/proto/balance"
     },
     "DB": {
       "description": "The sql package creates and frees connections automatically; it\nalso maintains a free pool of idle connections. If the database has\na concept of per-connection state, such state can only be reliably\nobserved within a transaction. Once DB.Begin is called, the\nreturned Tx is bound to a single connection. Once Commit or\nRollback is called on the transaction, that transaction's\nconnection is returned to DB's idle connection pool. The pool size\ncan be controlled with SetMaxIdleConns.",
@@ -1027,12 +1091,11 @@
       "x-go-package": "database/sql"
     },
     "Device": {
-      "description": "Responses",
       "type": "object",
       "properties": {
-        "deviceId": {
+        "deviceID": {
           "type": "string",
-          "x-go-name": "DeviceId"
+          "x-go-name": "DeviceID"
         },
         "deviceToken": {
           "type": "string",
@@ -1042,25 +1105,21 @@
           "type": "string",
           "x-go-name": "DeviceType"
         },
-        "externalDeviceId": {
+        "externalDeviceID": {
           "type": "string",
-          "x-go-name": "ExternalDeviceId"
-        },
-        "userId": {
-          "type": "string",
-          "x-go-name": "UserId"
+          "x-go-name": "ExternalDeviceID"
         }
       },
-      "x-go-package": "github.com/asciiu/gomo/device-service/proto/device"
+      "x-go-package": "github.com/asciiu/gomo/api/controllers"
     },
     "DeviceController": {
       "type": "object",
       "properties": {
-        "Client": {
-          "$ref": "#/definitions/DeviceServiceClient"
-        },
         "DB": {
           "$ref": "#/definitions/DB"
+        },
+        "Devices": {
+          "$ref": "#/definitions/DeviceServiceClient"
         }
       },
       "x-go-package": "github.com/asciiu/gomo/api/controllers"
@@ -1078,10 +1137,10 @@
           "type": "string",
           "x-go-name": "DeviceType"
         },
-        "externalDeviceId": {
+        "externalDeviceID": {
           "description": "Required.\nin: body",
           "type": "string",
-          "x-go-name": "ExternalDeviceId"
+          "x-go-name": "ExternalDeviceID"
         }
       },
       "x-go-package": "github.com/asciiu/gomo/api/controllers"
@@ -1131,6 +1190,83 @@
       },
       "x-go-package": "github.com/asciiu/gomo/api/controllers"
     },
+    "Key": {
+      "description": "Responses",
+      "type": "object",
+      "properties": {
+        "description": {
+          "type": "string",
+          "x-go-name": "Description"
+        },
+        "exchange": {
+          "type": "string",
+          "x-go-name": "Exchange"
+        },
+        "key": {
+          "type": "string",
+          "x-go-name": "Key"
+        },
+        "keyID": {
+          "type": "string",
+          "x-go-name": "KeyID"
+        },
+        "secret": {
+          "type": "string",
+          "x-go-name": "Secret"
+        },
+        "status": {
+          "type": "string",
+          "x-go-name": "Status"
+        },
+        "userID": {
+          "type": "string",
+          "x-go-name": "UserID"
+        }
+      },
+      "x-go-package": "github.com/asciiu/gomo/key-service/proto/key"
+    },
+    "KeyController": {
+      "type": "object",
+      "properties": {
+        "DB": {
+          "$ref": "#/definitions/DB"
+        },
+        "Keys": {
+          "$ref": "#/definitions/KeyServiceClient"
+        }
+      },
+      "x-go-package": "github.com/asciiu/gomo/api/controllers"
+    },
+    "KeyRequest": {
+      "type": "object",
+      "properties": {
+        "description": {
+          "description": "Optional.\nin: body",
+          "type": "string",
+          "x-go-name": "Description"
+        },
+        "exchange": {
+          "description": "Required.\nin: body",
+          "type": "string",
+          "x-go-name": "Exchange"
+        },
+        "key": {
+          "description": "Required.\nin: body",
+          "type": "string",
+          "x-go-name": "Key"
+        },
+        "secret": {
+          "description": "Required.\nin: body",
+          "type": "string",
+          "x-go-name": "Secret"
+        }
+      },
+      "x-go-package": "github.com/asciiu/gomo/api/controllers"
+    },
+    "KeyServiceClient": {
+      "type": "object",
+      "x-go-package": "github.com/asciiu/gomo/key-service/proto/key"
+    },
     "LoginRequest": {
       "type": "object",
       "properties": {
@@ -1156,13 +1292,33 @@
       "description": "Responses",
       "type": "object",
       "properties": {
-        "apiKeyId": {
+        "basePercent": {
+          "type": "number",
+          "format": "double",
+          "x-go-name": "BasePercent"
+        },
+        "baseQuantity": {
+          "type": "number",
+          "format": "double",
+          "x-go-name": "BaseQuantity"
+        },
+        "condition": {
           "type": "string",
-          "x-go-name": "ApiKeyId"
+          "x-go-name": "Condition"
         },
         "conditions": {
           "type": "string",
           "x-go-name": "Conditions"
+        },
+        "currencyPercent": {
+          "type": "number",
+          "format": "double",
+          "x-go-name": "CurrencyPercent"
+        },
+        "currencyQuantity": {
+          "type": "number",
+          "format": "double",
+          "x-go-name": "CurrencyQuantity"
         },
         "exchange": {
           "type": "string",
@@ -1172,36 +1328,29 @@
           "type": "string",
           "x-go-name": "ExchangeMarketName"
         },
-        "exchangeOrderId": {
+        "exchangeOrderID": {
           "type": "string",
-          "x-go-name": "ExchangeOrderId"
+          "x-go-name": "ExchangeOrderID"
+        },
+        "keyID": {
+          "type": "string",
+          "x-go-name": "KeyID"
         },
         "marketName": {
           "type": "string",
           "x-go-name": "MarketName"
         },
-        "orderId": {
+        "orderID": {
           "type": "string",
-          "x-go-name": "OrderId"
+          "x-go-name": "OrderID"
         },
         "orderType": {
           "type": "string",
           "x-go-name": "OrderType"
         },
-        "price": {
-          "type": "number",
-          "format": "double",
-          "x-go-name": "Price"
-        },
-        "qty": {
-          "type": "number",
-          "format": "double",
-          "x-go-name": "Qty"
-        },
-        "qtyRemaining": {
-          "type": "number",
-          "format": "double",
-          "x-go-name": "QtyRemaining"
+        "parentOrderID": {
+          "type": "string",
+          "x-go-name": "ParentOrderID"
         },
         "side": {
           "type": "string",
@@ -1211,9 +1360,9 @@
           "type": "string",
           "x-go-name": "Status"
         },
-        "userId": {
+        "userID": {
           "type": "string",
-          "x-go-name": "UserId"
+          "x-go-name": "UserID"
         }
       },
       "x-go-package": "github.com/asciiu/gomo/order-service/proto/order"
@@ -1221,11 +1370,11 @@
     "OrderController": {
       "type": "object",
       "properties": {
-        "Client": {
-          "$ref": "#/definitions/OrderServiceClient"
-        },
         "DB": {
           "$ref": "#/definitions/DB"
+        },
+        "Orders": {
+          "$ref": "#/definitions/OrderServiceClient"
         }
       },
       "x-go-package": "github.com/asciiu/gomo/api/controllers"
@@ -1233,19 +1382,39 @@
     "OrderRequest": {
       "type": "object",
       "properties": {
-        "apiKeyId": {
-          "description": "Required.\nin: body",
-          "type": "string",
-          "x-go-name": "ApiKeyId"
+        "basePercent": {
+          "description": "Required for buy side on chained orders\nin: body",
+          "type": "number",
+          "format": "double",
+          "x-go-name": "BasePercent"
+        },
+        "baseQuantity": {
+          "description": "Required for buy side when order is first in chain\nin: body",
+          "type": "number",
+          "format": "double",
+          "x-go-name": "BaseQuantity"
         },
         "conditions": {
           "description": "Required.\nin: body",
           "type": "string",
           "x-go-name": "Conditions"
         },
-        "exchangeMarketName": {
+        "currencyPercent": {
+          "description": "Required for sell side for all orders that are chained\nin: body",
+          "type": "number",
+          "format": "double",
+          "x-go-name": "CurrencyPercent"
+        },
+        "currencyQuantity": {
+          "description": "Required for sell side when an order is first in a chain\nin: body",
+          "type": "number",
+          "format": "double",
+          "x-go-name": "CurrencyQuantity"
+        },
+        "keyID": {
+          "description": "Required.\nin: body",
           "type": "string",
-          "x-go-name": "ExchangeMarketName"
+          "x-go-name": "KeyID"
         },
         "marketName": {
           "description": "Required.\nin: body",
@@ -1253,21 +1422,19 @@
           "x-go-name": "MarketName"
         },
         "orderType": {
-          "description": "Required.\nin: body",
+          "description": "Optional.\nin: body",
           "type": "string",
           "x-go-name": "OrderType"
         },
-        "price": {
-          "description": "Required.\nin: body",
-          "type": "number",
-          "format": "double",
-          "x-go-name": "Price"
+        "paperMode": {
+          "description": "Optional",
+          "type": "boolean",
+          "x-go-name": "PaperMode"
         },
-        "quantity": {
-          "description": "Required.\nin: body",
-          "type": "number",
-          "format": "double",
-          "x-go-name": "Qauntity"
+        "parentOrderID": {
+          "description": "Optional",
+          "type": "string",
+          "x-go-name": "ParentOrderID"
         },
         "side": {
           "description": "Required.\nin: body",
@@ -1325,6 +1492,12 @@
     "UpdateOrderRequest": {
       "type": "object",
       "properties": {
+        "baseQuantity": {
+          "description": "Optional.\nin: body",
+          "type": "number",
+          "format": "double",
+          "x-go-name": "BaseQuantity"
+        },
         "conditions": {
           "description": "Optional.\nin: body",
           "type": "string",
@@ -1340,41 +1513,20 @@
           "type": "number",
           "format": "double",
           "x-go-name": "Price"
-        },
-        "quantity": {
-          "description": "Optional.\nin: body",
-          "type": "number",
-          "format": "double",
-          "x-go-name": "Qauntity"
         }
       },
       "x-go-package": "github.com/asciiu/gomo/api/controllers"
     },
-    "UserApiKeyData": {
-      "type": "object",
-      "properties": {
-        "apiKey": {
-          "$ref": "#/definitions/ApiKey"
-        }
-      },
-      "x-go-package": "github.com/asciiu/gomo/apikey-service/proto/apikey"
-    },
-    "UserApiKeysData": {
-      "type": "object",
-      "properties": {
-        "apiKey": {
-          "type": "array",
-          "items": {
-            "$ref": "#/definitions/ApiKey"
-          },
-          "x-go-name": "ApiKey"
-        }
-      },
-      "x-go-package": "github.com/asciiu/gomo/apikey-service/proto/apikey"
-    },
     "UserData": {
       "type": "object",
       "properties": {
+        "devices": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/Device"
+          },
+          "x-go-name": "Devices"
+        },
         "user": {
           "$ref": "#/definitions/UserInfo"
         }
@@ -1393,12 +1545,12 @@
     "UserDevicesData": {
       "type": "object",
       "properties": {
-        "device": {
+        "devices": {
           "type": "array",
           "items": {
             "$ref": "#/definitions/Device"
           },
-          "x-go-name": "Device"
+          "x-go-name": "Devices"
         }
       },
       "x-go-package": "github.com/asciiu/gomo/device-service/proto/device"
@@ -1414,16 +1566,38 @@
           "type": "string",
           "x-go-name": "First"
         },
-        "id": {
-          "type": "string",
-          "x-go-name": "Id"
-        },
         "last": {
           "type": "string",
           "x-go-name": "Last"
+        },
+        "userID": {
+          "type": "string",
+          "x-go-name": "UserID"
         }
       },
       "x-go-package": "github.com/asciiu/gomo/user-service/models"
+    },
+    "UserKeyData": {
+      "type": "object",
+      "properties": {
+        "key": {
+          "$ref": "#/definitions/Key"
+        }
+      },
+      "x-go-package": "github.com/asciiu/gomo/key-service/proto/key"
+    },
+    "UserKeysData": {
+      "type": "object",
+      "properties": {
+        "keys": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/Key"
+          },
+          "x-go-name": "Keys"
+        }
+      },
+      "x-go-package": "github.com/asciiu/gomo/key-service/proto/key"
     },
     "UserOrderData": {
       "type": "object",
@@ -1437,12 +1611,12 @@
     "UserOrdersData": {
       "type": "object",
       "properties": {
-        "order": {
+        "orders": {
           "type": "array",
           "items": {
             "$ref": "#/definitions/Order"
           },
-          "x-go-name": "Order"
+          "x-go-name": "Orders"
         }
       },
       "x-go-package": "github.com/asciiu/gomo/order-service/proto/order"
@@ -1450,6 +1624,21 @@
     "UserServiceClient": {
       "type": "object",
       "x-go-package": "github.com/asciiu/gomo/user-service/proto/user"
+    },
+    "responseBalancesSuccess": {
+      "type": "object",
+      "title": "A ResponseBalancesSuccess will always contain a status of \"successful\".",
+      "properties": {
+        "data": {
+          "$ref": "#/definitions/AccountBalances"
+        },
+        "status": {
+          "type": "string",
+          "x-go-name": "Status"
+        }
+      },
+      "x-go-name": "ResponseBalancesSuccess",
+      "x-go-package": "github.com/asciiu/gomo/api/controllers"
     },
     "responseDeviceSuccess": {
       "type": "object",
@@ -1503,7 +1692,7 @@
       "title": "A ResponseKeySuccess will always contain a status of \"successful\".",
       "properties": {
         "data": {
-          "$ref": "#/definitions/UserApiKeyData"
+          "$ref": "#/definitions/UserKeyData"
         },
         "status": {
           "type": "string",
@@ -1518,7 +1707,7 @@
       "title": "A ResponseKeysSuccess will always contain a status of \"successful\".",
       "properties": {
         "data": {
-          "$ref": "#/definitions/UserApiKeysData"
+          "$ref": "#/definitions/UserKeysData"
         },
         "status": {
           "type": "string",
