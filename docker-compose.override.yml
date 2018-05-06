@@ -116,3 +116,12 @@ services:
       POSTGRES_PASSWORD: fomornd 
       POSTGRES_DB: "fomo_dev"
       POSTGRES_USER: "fomo"
+
+  gorush:
+    image: appleboy/gorush
+    ports:
+      - 6088:8088
+    volumes:
+      - ${PWD}/gorush.yml:/config.yml
+      - ${PWD}/apns.p8:/apns.p8
+      
