@@ -9,7 +9,10 @@ import (
 	"github.com/asciiu/gomo/api/controllers"
 	asql "github.com/asciiu/gomo/api/db/sql"
 	"github.com/asciiu/gomo/api/middlewares"
+	msg "github.com/asciiu/gomo/common/messages"
 	"github.com/labstack/echo"
+	micro "github.com/micro/go-micro"
+	"github.com/micro/go-micro/server"
 )
 
 // clean up stage refresh tokens in DB every 30 minutes
@@ -45,6 +48,10 @@ func NewRouter(db *sql.DB) *echo.Echo {
 	orderController := controllers.NewOrderController(db)
 	sessionController := controllers.NewSessionController(db)
 	userController := controllers.NewUserController(db)
+	socketController := controllers.NewWebsocketController()
+
+	// websocket ticker
+	e.GET("/ticker", socketController.Connect)
 
 	// api group
 	openApi := e.Group("/api")
@@ -92,6 +99,13 @@ func NewRouter(db *sql.DB) *echo.Echo {
 
 	// required for health checks
 	e.GET("/index.html", health)
+
+	service := micro.NewService(
+		micro.Name("micro.fomo.api"),
+	)
+	service.Init()
+	micro.RegisterSubscriber(msg.TopicAggTrade, service.Server(), socketController.ProcessEvent, server.SubscriberQueue("queue.pubsub"))
+	go service.Run()
 
 	return e
 }

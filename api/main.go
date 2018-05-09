@@ -51,13 +51,12 @@ func checkErr(err error) {
 }
 
 func main() {
-	dbUrl := fmt.Sprintf("%s", os.Getenv("DB_URL"))
-	fmt.Println(dbUrl)
-
-	gomoDB, err := db.NewDB(dbUrl)
+	dbURL := fmt.Sprintf("%s", os.Getenv("DB_URL"))
+	gomoDB, err := db.NewDB(dbURL)
 	checkErr(err)
 	defer gomoDB.Close()
 
 	e := NewRouter(gomoDB)
+
 	e.Logger.Fatal(e.Start(":5000"))
 }
