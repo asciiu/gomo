@@ -1,6 +1,7 @@
 package controllers
 
 import (
+	"encoding/json"
 	"log"
 	"net/http"
 
@@ -42,7 +43,19 @@ func (controller *WebsocketController) Connect(c echo.Context) error {
 
 // ProcessEvent will process ExchangeEvents. These events are published from the exchange sockets.
 func (controller *WebsocketController) ProcessEvent(ctx context.Context, event *evt.ExchangeEvent) error {
-	log.Println(event)
+	//log.Println(event)
+
+	for _, conn := range controller.connections {
+		json, err := json.Marshal(event)
+		if err != nil {
+			log.Println(err)
+			return nil
+		}
+
+		if err := conn.WriteMessage(websocket.TextMessage, json); err != nil {
+			log.Println(err)
+		}
+	}
 
 	return nil
 }
