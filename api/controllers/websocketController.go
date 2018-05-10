@@ -1,7 +1,6 @@
 package controllers
 
 import (
-	"fmt"
 	"log"
 	"net/http"
 
@@ -11,7 +10,9 @@ import (
 	"golang.org/x/net/context"
 )
 
-type WebsocketController struct{}
+type WebsocketController struct {
+	connections []*websocket.Conn
+}
 
 func NewWebsocketController() *WebsocketController {
 	return &WebsocketController{}
@@ -30,22 +31,13 @@ func (controller *WebsocketController) Connect(c echo.Context) error {
 	if err != nil {
 		return err
 	}
-	defer ws.Close()
+	//defer ws.Close()
 
-	for {
-		// Write
-		err := ws.WriteMessage(websocket.TextMessage, []byte("Hello, Client!"))
-		if err != nil {
-			c.Logger().Error(err)
-		}
-
-		//// Read
-		_, msg, err := ws.ReadMessage()
-		if err != nil {
-			c.Logger().Error(err)
-		}
-		fmt.Printf("%s\n", msg)
+	controller.connections = append(controller.connections, ws)
+	if err := ws.WriteMessage(websocket.TextMessage, []byte("what's the frequency!")); err != nil {
+		c.Logger().Error(err)
 	}
+	return nil
 }
 
 // ProcessEvent will process ExchangeEvents. These events are published from the exchange sockets.
