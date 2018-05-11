@@ -10,7 +10,7 @@
 [[projects]]
   name = "github.com/rgamba/evtwebsocket"
   packages = ["."]
-  revision = "f226ee483c6cbf8b0e153b76b4285b4c06af3006"
+  revision = "290162f6985843602db4225302eab3d57be693dd"
   branch = "master"
 
 [[projects]]
