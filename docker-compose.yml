@@ -18,6 +18,9 @@ services:
   bittrex-service:
     build: ./bittrex-service
 
+  coinigy-websocket:
+    build: ./coinigy-websocket
+
   device-service:
     build: ./device-service
 
