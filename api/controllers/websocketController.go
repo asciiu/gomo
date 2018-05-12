@@ -27,6 +27,7 @@ var (
 	}
 )
 
+// Connect handles websocket connections
 func (controller *WebsocketController) Connect(c echo.Context) error {
 	ws, err := upgrader.Upgrade(c.Response(), c.Request(), nil)
 	if err != nil {

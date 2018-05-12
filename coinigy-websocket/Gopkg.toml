@@ -27,7 +27,7 @@
 
 [[constraint]]
   branch = "master"
-  name = "github.com/asciiu/socketcluster-client-go"
+  name = "github.com/Freeaqingme/go-socketcluster-client"
 
 [prune]
   go-tests = true

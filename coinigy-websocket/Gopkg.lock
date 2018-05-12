@@ -3,35 +3,19 @@
 
 [[projects]]
   branch = "master"
-  name = "github.com/asciiu/socketcluster-client-go"
-  packages = ["scclient"]
-  revision = "f5b8daa5d6f3c81a2da837af1e50369c438377c5"
-
-[[projects]]
-  name = "github.com/rgamba/evtwebsocket"
+  name = "github.com/Freeaqingme/go-socketcluster-client"
   packages = ["."]
-  revision = "290162f6985843602db4225302eab3d57be693dd"
-  branch = "master"
+  revision = "693500c604aadb121eec1a59b303d3d741674822"
 
 [[projects]]
-  branch = "master"
-  name = "github.com/sacOO7/socketcluster-client-go"
-  packages = [
-    "scclient/models",
-    "scclient/parser",
-    "scclient/utils"
-  ]
-  revision = "38e51acdd956bcc787dd30e2ec57c4a0ef0afd81"
-
-[[projects]]
-  branch = "master"
-  name = "golang.org/x/net"
-  packages = ["websocket"]
-  revision = "f73e4c9ed3b7ebdd5f699a16a880c2b1994e50dd"
+  name = "github.com/gorilla/websocket"
+  packages = ["."]
+  revision = "ea4d1f681babbce9545c9c5f3d5194a789c89f5b"
+  version = "v1.2.0"
 
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "2065514847f8e8c1a8dbddb3b07ca351ea5a3e0d28137185ce218ebd65602bbc"
+  inputs-digest = "fcf0f1e70017abd45b43f28b15cdddfea8415f6edcd985fa0cb8f1742221e40a"
   solver-name = "gps-cdcl"
   solver-version = 1
