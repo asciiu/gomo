@@ -50,6 +50,15 @@ services:
     environment:
       MICRO_ADDRESS: ":5001"
       MICRO_REGISTRY: "mdns"
+  
+  coinigy-websocket:
+    build: ./coinigy-websocket
+    ports:
+      - 5010:5000
+    environment:
+      MICRO_REGISTRY: "mdns"
+      API_KEY: ""
+      API_SECRET: ""
 
   device-service:
     build: ./device-service
