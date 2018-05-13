@@ -3,15 +3,15 @@ syntax = "proto3";
 package common.events; 
 
 // Events 
-message ExchangeEvent {
+message TradeEvent {
   string exchange = 1;
   string type = 2;
-  uint64 eventTime = 3;
+  string eventTime = 3;
   string marketName = 4;
-  uint64 tradeID = 5;
-  string price = 6;
-  string quantity = 7;
-  uint64 tradeTime = 8;
+  string tradeID = 5;
+  double price = 6;
+  double quantity = 7;
+  double total = 8;
 }
 
 message Auth {
