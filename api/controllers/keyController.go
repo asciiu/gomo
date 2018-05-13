@@ -106,7 +106,6 @@ func (controller *KeyController) HandleGetKey(c echo.Context) error {
 		Data: &keys.UserKeyData{
 			Key: &keys.Key{
 				KeyID:       r.Data.Key.KeyID,
-				UserID:      r.Data.Key.UserID,
 				Exchange:    r.Data.Key.Exchange,
 				Key:         r.Data.Key.Key,
 				Description: r.Data.Key.Description,
@@ -152,11 +151,10 @@ func (controller *KeyController) HandleListKeys(c echo.Context) error {
 	}
 
 	data := make([]*keys.Key, len(r.Data.Keys))
-	for i, key := range data {
+	for i, key := range r.Data.Keys {
 		// api removes the secret
 		data[i] = &keys.Key{
 			KeyID:       key.KeyID,
-			UserID:      key.UserID,
 			Exchange:    key.Exchange,
 			Key:         key.Key,
 			Description: key.Description,
