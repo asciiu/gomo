@@ -12,9 +12,6 @@ services:
   binance-service: 
     build: ./binance-service
 
-  binance-websocket: 
-    build: ./binance-websocket
-
   bittrex-service:
     build: ./bittrex-service
 
