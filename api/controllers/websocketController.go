@@ -54,7 +54,8 @@ func (controller *WebsocketController) Connect(c echo.Context) error {
 }
 
 // ProcessEvent will process ExchangeEvents. These events are published from the exchange sockets.
-func (controller *WebsocketController) ProcessEvent(ctx context.Context, event *evt.ExchangeEvent) error {
+func (controller *WebsocketController) ProcessEvent(ctx context.Context, event *evt.TradeEvent) error {
+	//fmt.Println(event)
 	for _, conn := range controller.connections {
 		json, err := json.Marshal(event)
 		if err != nil {

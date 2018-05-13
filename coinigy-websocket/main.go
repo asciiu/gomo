@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"log"
@@ -8,6 +9,8 @@ import (
 	"strings"
 
 	"github.com/Freeaqingme/go-socketcluster-client"
+	msg "github.com/asciiu/gomo/common/messages"
+	evt "github.com/asciiu/gomo/common/proto/events"
 	micro "github.com/micro/go-micro"
 )
 
@@ -26,6 +29,27 @@ type Exchange struct {
 
 type ExchangeChannel struct {
 	ChannelName string `json:"channel"`
+}
+
+// {"market_history_id":160554809190,"exchange":"BTRX","marketid":0,"label":"KMD/BTC",
+//"tradeid":"29151260","time":"2018-05-13T05:12:27","price":0.000353,"quantity":300,
+//"total":0.1059,"timestamp":"2018-05-13T05:13:10","time_local":"2018-05-13 05:12:27",
+//"type":"BUY","exchId":15,"channel":"TRADE-BTRX--KMD--BTC"}
+type CoinigyTrade struct {
+	MarketHistoryID int     `json:"market_history_id"`
+	ExCode          string  `json:"exchange"`
+	MarketID        int     `json:"marketid"`
+	Label           string  `json:"label"`
+	TradeID         string  `json:"tradeid"`
+	Time            string  `json:"time"`
+	Price           float64 `json:"price"`
+	Quantity        float64 `json:"quantity"`
+	Total           float64 `json:"total"`
+	TimeStamp       string  `json:"timestamp"`
+	TimeLocal       string  `json:"time_local"`
+	Type            string  `json:"type"`
+	ExchangeID      int     `json:"exchId"`
+	Channel         string  `json:"channel"`
 }
 
 const wsUrl = "wss://sc-02.coinigy.com/socketcluster/"
@@ -104,8 +128,8 @@ func main() {
 
 	// Supply a callback for any events that need to be performed upon every reconnnect
 	auth := auth{
-		ApiKey:    fmt.Sprintf("%s", os.Getenv("API_KEY")),
-		ApiSecret: fmt.Sprintf("%s", os.Getenv("API_SECRET")),
+		ApiKey:    os.Getenv("API_KEY"),
+		ApiSecret: os.Getenv("API_SECRET"),
 	}
 	client.ConnectCallback = func() error {
 		_, err := client.Emit("auth", &auth)
@@ -116,22 +140,13 @@ func main() {
 		panic(err)
 	}
 
-	// channel, err := client.Subscribe("TRADE-KRKN--XBT--EUR")
-	// if err != nil {
-	// 	panic(err)
-	// }
-
-	// go func() {
-	// 	for msg := range channel {
-	// 		fmt.Println("New kraken trade: " + string(msg))
-	// 	}
-	// }()
 	exs, err := exchanges(client)
 	if err != nil {
 		panic(err)
 	}
 
 	channelNames := make([]string, 0)
+	exchangeNames := make(map[string]string)
 	// loop through all exchanges
 	for _, e := range exs {
 		var flag = false
@@ -146,12 +161,22 @@ func main() {
 			continue
 		}
 
+		exchangeNames[e.ExCode] = e.ExName
+
 		for _, c := range e.Channels {
 			if strings.Contains(c.ChannelName, "TRADE") {
 				channelNames = append(channelNames, c.ChannelName)
 			}
 		}
 	}
+
+	//fmt.Println(exchangeNames)
+
+	srv := micro.NewService(
+		micro.Name("micro.coinigy.websocket"),
+	)
+	srv.Init()
+	tradePublisher := micro.NewPublisher(msg.TopicAggTrade, srv.Client())
 
 	for i, name := range channelNames {
 		if i < 250 {
@@ -162,17 +187,35 @@ func main() {
 
 			go func() {
 				for msg := range channel {
-					fmt.Println(string(msg))
+					var md CoinigyTrade
+					err := json.Unmarshal(msg, &md)
+					if err != nil {
+						log.Println(err)
+					}
+
+					tradeEvent := evt.TradeEvent{
+						Exchange:   exchangeNames[md.ExCode],
+						Type:       md.Type,
+						EventTime:  md.TimeStamp,
+						MarketName: md.Label,
+						TradeID:    md.TradeID,
+						Price:      md.Price,
+						Quantity:   md.Quantity,
+						Total:      md.Total,
+					}
+
+					if err := tradePublisher.Publish(context.Background(), &tradeEvent); err != nil {
+						log.Println("publish warning: ", err, tradeEvent)
+					}
+
+					//fmt.Println(string(msg))
+					//fmt.Println(md)
 				}
 			}()
 
 		}
 	}
 
-	srv := micro.NewService(
-		micro.Name("micro.coinigy.websocket"),
-	)
-	srv.Init()
 	if err := srv.Run(); err != nil {
 		log.Fatal(err)
 	}

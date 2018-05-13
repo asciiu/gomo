@@ -66,15 +66,15 @@ func (bconn *BinanceConnection) Open(market string) {
 				log.Println("nope")
 			}
 
-			exchangeEvent := ep.ExchangeEvent{
-				Exchange:   "Binance",
-				Type:       aggTrade.Type,
-				EventTime:  aggTrade.EventTime,
+			exchangeEvent := ep.TradeEvent{
+				Exchange: "Binance",
+				Type:     aggTrade.Type,
+				//EventTime:  aggTrade.EventTime,
 				MarketName: aggTrade.Symbol,
-				TradeID:    aggTrade.TradeID,
-				Price:      aggTrade.Price,
-				Quantity:   aggTrade.Quantity,
-				TradeTime:  aggTrade.TradeTime,
+				//TradeID:    string(aggTrade.TradeID),
+				//Price:      aggTrade.Price,
+				//Quantity:   aggTrade.Quantity,
+				//TradeTime:  aggTrade.TradeTime,
 			}
 
 			if err := bconn.Publisher.Publish(context.Background(), &exchangeEvent); err != nil {
