@@ -7,6 +7,7 @@ import (
 	"log"
 	"os"
 	"strings"
+	"time"
 
 	"github.com/Freeaqingme/go-socketcluster-client"
 	msg "github.com/asciiu/gomo/common/messages"
@@ -123,7 +124,7 @@ func channels(client *scclient.Client, exchange string) ([]ExchangeChannel, erro
 	}
 }
 
-func main() {
+func NewCoinigyClient() (*scclient.Client, error) {
 	client := scclient.New(wsUrl)
 
 	// Supply a callback for any events that need to be performed upon every reconnnect
@@ -140,6 +141,15 @@ func main() {
 		panic(err)
 	}
 
+	return client, nil
+}
+
+func main() {
+	client, err := NewCoinigyClient()
+	if err != nil {
+		panic(err)
+	}
+
 	exs, err := exchanges(client)
 	if err != nil {
 		panic(err)
@@ -147,17 +157,19 @@ func main() {
 
 	channelNames := make([]string, 0)
 	exchangeNames := make(map[string]string)
-	// loop through all exchanges
+	// loop through all exchanges skip non suppported exchanges
 	for _, e := range exs {
-		var flag = false
+		var supported = false
 
+		// set supported exchange flag
 		for _, a := range supportedExchanges {
 			if a == e.ExCode {
-				flag = true
+				supported = true
 			}
 		}
 
-		if !flag {
+		// skip non supported exchanges
+		if !supported {
 			continue
 		}
 
@@ -170,8 +182,6 @@ func main() {
 		}
 	}
 
-	//fmt.Println(exchangeNames)
-
 	srv := micro.NewService(
 		micro.Name("micro.coinigy.websocket"),
 	)
@@ -179,41 +189,52 @@ func main() {
 	tradePublisher := micro.NewPublisher(msg.TopicAggTrade, srv.Client())
 
 	for i, name := range channelNames {
-		if i < 250 {
-			channel, err := client.Subscribe(name)
+		fmt.Printf("%d: %s\n", i, name)
+
+		// every 250 subscriptions we shall create new client
+		if i%250 == 0 {
+			client, err = NewCoinigyClient()
 			if err != nil {
 				panic(err)
 			}
 
-			go func() {
-				for msg := range channel {
-					var md CoinigyTrade
-					err := json.Unmarshal(msg, &md)
-					if err != nil {
-						log.Println(err)
-					}
-
-					tradeEvent := evt.TradeEvent{
-						Exchange:   exchangeNames[md.ExCode],
-						Type:       md.Type,
-						EventTime:  md.TimeStamp,
-						MarketName: md.Label,
-						TradeID:    md.TradeID,
-						Price:      md.Price,
-						Quantity:   md.Quantity,
-						Total:      md.Total,
-					}
-
-					if err := tradePublisher.Publish(context.Background(), &tradeEvent); err != nil {
-						log.Println("publish warning: ", err, tradeEvent)
-					}
-
-					//fmt.Println(string(msg))
-					//fmt.Println(md)
-				}
-			}()
-
+			fmt.Println("New Client")
+			time.Sleep(2 * time.Second)
 		}
+
+		channel, err := client.Subscribe(name)
+		if err != nil {
+			panic(err)
+		}
+
+		go func() {
+			for msg := range channel {
+				var md CoinigyTrade
+				err := json.Unmarshal(msg, &md)
+				if err != nil {
+					log.Println(err)
+				}
+
+				tradeEvent := evt.TradeEvent{
+					Exchange:   exchangeNames[md.ExCode],
+					Type:       md.Type,
+					EventTime:  md.TimeStamp,
+					MarketName: md.Label,
+					TradeID:    md.TradeID,
+					Price:      md.Price,
+					Quantity:   md.Quantity,
+					Total:      md.Total,
+				}
+
+				if err := tradePublisher.Publish(context.Background(), &tradeEvent); err != nil {
+					log.Println("publish warning: ", err, tradeEvent)
+				}
+
+				//fmt.Println(string(msg))
+				//fmt.Println(tradeEvent)
+			}
+		}()
+
 	}
 
 	if err := srv.Run(); err != nil {
