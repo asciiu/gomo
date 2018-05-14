@@ -88,7 +88,20 @@ func (controller *WebsocketController) ProcessEvent(ctx context.Context, event *
 		MarketName: event.MarketName,
 		Price:      event.Price,
 	}
-	controller.buffer = append(controller.buffer, &tevent)
+
+	found := false
+	for _, e := range controller.buffer {
+		if e.Exchange == tevent.Exchange && e.MarketName == tevent.MarketName {
+			e.Type = tevent.Type
+			e.Price = tevent.Price
+			found = true
+			break
+		}
+	}
+
+	if !found {
+		controller.buffer = append(controller.buffer, &tevent)
+	}
 
 	return nil
 }
