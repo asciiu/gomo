@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"log"
 	"net/http"
+	"time"
 
 	evt "github.com/asciiu/gomo/common/proto/events"
 	"github.com/gorilla/websocket"
@@ -13,10 +14,13 @@ import (
 
 type WebsocketController struct {
 	connections []*websocket.Conn
+	buffer      []*evt.TradeEvent
 }
 
 func NewWebsocketController() *WebsocketController {
-	return &WebsocketController{}
+	return &WebsocketController{
+		buffer: make([]*evt.TradeEvent, 0),
+	}
 }
 
 var (
@@ -53,21 +57,46 @@ func (controller *WebsocketController) Connect(c echo.Context) error {
 	return nil
 }
 
-// ProcessEvent will process ExchangeEvents. These events are published from the exchange sockets.
-func (controller *WebsocketController) ProcessEvent(ctx context.Context, event *evt.TradeEvent) error {
-	//fmt.Println(event)
+func (controller *WebsocketController) Ticker() {
+	time.Sleep(2 * time.Second)
+	events := controller.buffer
+	controller.buffer = nil
 	for _, conn := range controller.connections {
-		json, err := json.Marshal(event)
+		json, err := json.Marshal(events)
 		if err != nil {
 			log.Println(err)
-			return err
 		}
 
 		if err := conn.WriteMessage(websocket.TextMessage, json); err != nil {
 			log.Println(err)
-			return err
 		}
 	}
+	controller.Ticker()
+}
+
+// ProcessEvent will process ExchangeEvents. These events are published from the exchange sockets.
+func (controller *WebsocketController) ProcessEvent(ctx context.Context, event *evt.TradeEvent) error {
+	// shorten trade event
+	tevent := evt.TradeEvent{
+		Exchange:   event.Exchange,
+		Type:       event.Type,
+		MarketName: event.MarketName,
+		Price:      event.Price,
+	}
+	controller.buffer = append(controller.buffer, &tevent)
+
+	//for _, conn := range controller.connections {
+	//json, err := json.Marshal(tevent)
+	//if err != nil {
+	//	log.Println(err)
+	//	return err
+	//}
+
+	//if err := conn.WriteMessage(websocket.TextMessage, json); err != nil {
+	//	log.Println(err)
+	//	return err
+	//}
+	//}
 
 	return nil
 }

@@ -105,6 +105,7 @@ func NewRouter(db *sql.DB) *echo.Echo {
 	)
 	service.Init()
 	micro.RegisterSubscriber(msg.TopicAggTrade, service.Server(), socketController.ProcessEvent, server.SubscriberQueue("queue.pubsub"))
+	go socketController.Ticker()
 	go service.Run()
 
 	return e
