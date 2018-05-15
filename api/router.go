@@ -49,6 +49,7 @@ func NewRouter(db *sql.DB) *echo.Echo {
 	sessionController := controllers.NewSessionController(db)
 	userController := controllers.NewUserController(db)
 	socketController := controllers.NewWebsocketController()
+	searchController := controllers.NewSearchController()
 
 	// websocket ticker
 	e.GET("/ticker", socketController.Connect)
@@ -97,6 +98,9 @@ func NewRouter(db *sql.DB) *echo.Echo {
 	protectedApi.PUT("/orders/:orderID", orderController.HandleUpdateOrder)
 	protectedApi.DELETE("/orders/:orderID", orderController.HandleDeleteOrder)
 
+	// search endpoint
+	protectedApi.GET("/search", searchController.Search)
+
 	// required for health checks
 	e.GET("/index.html", health)
 
@@ -105,6 +109,8 @@ func NewRouter(db *sql.DB) *echo.Echo {
 	)
 	service.Init()
 	micro.RegisterSubscriber(msg.TopicAggTrade, service.Server(), socketController.ProcessEvent, server.SubscriberQueue("queue.pubsub"))
+	micro.RegisterSubscriber(msg.TopicAggTrade, service.Server(), searchController.ProcessEvent, server.SubscriberQueue("queue.pubsub"))
+
 	go socketController.Ticker()
 	go service.Run()
 
