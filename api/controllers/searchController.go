@@ -12,37 +12,56 @@ import (
 )
 
 type SearchController struct {
-	markets map[string]*evt.TradeEvent
+	markets map[string]*Market
 	mux     sync.Mutex
 }
 
 // A ResponseSearchSuccess will always contain a status of "successful".
-// swagger:model responseDeviceSuccess
+// swagger:model responseSearchSuccess
 type ResponseSearchSuccess struct {
-	Status string            `json:"status"`
-	Data   []*evt.TradeEvent `json:"data"`
+	Status string          `json:"status"`
+	Data   ResponseMarkets `json:"data"`
+}
+
+type ResponseMarkets struct {
+	Markets []*Market `json:"markets"`
+}
+
+type Market struct {
+	Exchange   string  `json:"exchange,omitempty"`
+	Type       string  `json:"type,omitempty"`
+	MarketName string  `json:"marketName,omitempty"`
+	Price      float64 `json:"price,omitempty"`
 }
 
 func NewSearchController() *SearchController {
 	return &SearchController{
-		markets: make(map[string]*evt.TradeEvent),
+		markets: make(map[string]*Market),
 	}
 }
 
+// swagger:route GET /search search searchMarkets
+//
+// search markets (protected)
+//
+// Returns a list of active markets.
+//
+// responses:
+//  200: responseSearchSuccess "data" will contain array of markets with "status": "success"
 func (controller *SearchController) Search(c echo.Context) error {
 
 	term := c.QueryParam("term")
-	m := make([]*evt.TradeEvent, 0)
+	m := make([]*Market, 0)
 
 	for k, v := range controller.markets {
-		if strings.Contains(strings.ToLower(k), term) {
+		if strings.Contains(strings.ToLower(k), strings.ToLower(term)) {
 			m = append(m, v)
 		}
 	}
 
 	response := &ResponseSearchSuccess{
 		Status: "success",
-		Data:   m,
+		Data:   ResponseMarkets{m},
 	}
 
 	return c.JSON(http.StatusOK, response)
@@ -51,7 +70,7 @@ func (controller *SearchController) Search(c echo.Context) error {
 // ProcessEvent will process ExchangeEvents. These events are published from the exchange sockets.
 func (controller *SearchController) ProcessEvent(ctx context.Context, event *evt.TradeEvent) error {
 	// shorten trade event
-	tevent := evt.TradeEvent{
+	tevent := Market{
 		Exchange:   event.Exchange,
 		Type:       event.Type,
 		MarketName: event.MarketName,
