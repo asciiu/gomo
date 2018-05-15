@@ -219,7 +219,7 @@ func main() {
 					Exchange:   exchangeNames[md.ExCode],
 					Type:       md.Type,
 					EventTime:  md.TimeStamp,
-					MarketName: md.Label,
+					MarketName: strings.Replace(md.Label, "/", "-", 1),
 					TradeID:    md.TradeID,
 					Price:      md.Price,
 					Quantity:   md.Quantity,
