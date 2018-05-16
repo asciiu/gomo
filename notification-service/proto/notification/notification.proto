@@ -1,0 +1,29 @@
+syntax = "proto3";
+
+package go.micro.srv.notification; 
+
+service NotificationService {
+  rpc GetUserNotifications(GetUserNotifcationsRequest) returns (NotificationListResponse) {}
+}
+
+// Requests
+message GetUserNotifcationsRequest {
+    string userID = 1;
+}
+
+// Responses
+message Notification {
+  string notificationID = 1;
+  string userID = 2;
+  string description = 3;
+}
+
+message UserNotifications {
+  repeated Notification notifications = 1;
+}
+
+message NotificationListResponse {
+  string status = 1;
+  string message = 2;
+  UserNotifications data = 3;
+}

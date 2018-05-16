@@ -85,6 +85,16 @@ services:
     depends_on:
       - database
 
+  notification-service:
+    ports:
+      - 5011:5000
+    environment:
+      DB_URL: "postgres://fomo:fomornd@docker.for.mac.host.internal:6432/fomo_dev?&sslmode=disable"
+      MICRO_ADDRESS: ":5001"
+      MICRO_REGISTRY: "mdns"
+    depends_on:
+      - database
+
   order-service:
     build: ./order-service
     ports:
@@ -120,6 +130,7 @@ services:
     image: appleboy/gorush
     ports:
       - 6088:8088
+      - 9000:9000
     volumes:
       - ${PWD}/gorush.yml:/config.yml
       - ${PWD}/apns.p8:/apns.p8

@@ -27,6 +27,9 @@ services:
   key-service:
     build: ./key-service
 
+  notification-service:
+    build: ./notification-service
+
   order-service:
     build: ./order-service
 
