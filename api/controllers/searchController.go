@@ -49,7 +49,7 @@ func NewSearchController(db *sql.DB) *SearchController {
 	currencies, err := asql.GetCurrencyNames(db)
 	switch {
 	case err == sql.ErrNoRows:
-		log.Println("Quad start the reactor!")
+		log.Println("Quaid, start the reactor!")
 	case err != nil:
 	default:
 		for _, c := range currencies {
