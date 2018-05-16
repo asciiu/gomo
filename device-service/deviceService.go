@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"database/sql"
+	"strings"
 
 	deviceRepo "github.com/asciiu/gomo/device-service/db/sql"
 	devices "github.com/asciiu/gomo/device-service/proto/device"
@@ -19,6 +20,10 @@ func (service *DeviceService) AddDevice(ctx context.Context, req *devices.AddDev
 	device, error := deviceRepo.InsertDevice(service.DB, req)
 
 	switch {
+	case strings.Contains(error.Error(), "user_devices_device_id_device_type_device_token_key"):
+		res.Status = "fail"
+		res.Message = "device already registered"
+
 	case error == nil:
 		res.Status = "success"
 		res.Data = &devices.UserDeviceData{
@@ -30,6 +35,7 @@ func (service *DeviceService) AddDevice(ctx context.Context, req *devices.AddDev
 				DeviceToken:      device.DeviceToken,
 			},
 		}
+
 	default:
 		res.Status = "error"
 		res.Message = error.Error()
