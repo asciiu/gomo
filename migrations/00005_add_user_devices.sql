@@ -7,7 +7,8 @@ CREATE TABLE user_devices (
  device_type VARCHAR NOT NULL,
  device_token VARCHAR NOT NULL,
  created_on TIMESTAMP DEFAULT now(),
- updated_on TIMESTAMP DEFAULT current_timestamp
+ updated_on TIMESTAMP DEFAULT current_timestamp,
+ UNIQUE (device_id, device_type, device_token)
 );
 
 -- +goose Down
