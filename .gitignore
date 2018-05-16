@@ -1,3 +1,5 @@
 .idea/
 vendor/
 docker-compose.stage.yml
+apns.p8
+gorush.yml
