@@ -20,3 +20,6 @@ const TopicNewSellOrder = "NewSellOrder"
 
 // TopicOrderFilled when order has filled
 const TopicOrderFilled = "OrderFilled"
+
+// TopicNotification when a notification is generated
+const TopicNotification = "Notification"
