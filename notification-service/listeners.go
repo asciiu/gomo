@@ -5,7 +5,7 @@ import (
 	"database/sql"
 	"log"
 
-	notification "github.com/asciiu/gomo/notification-service/proto/notification"
+	notification "github.com/asciiu/gomo/notification-service/proto"
 )
 
 type NotificationListener struct {

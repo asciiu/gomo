@@ -4,7 +4,7 @@ import (
 	"context"
 	"database/sql"
 
-	notifications "github.com/asciiu/gomo/notification-service/proto/notification"
+	notifications "github.com/asciiu/gomo/notification-service/proto"
 )
 
 type NotificationService struct {
