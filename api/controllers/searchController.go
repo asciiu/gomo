@@ -35,8 +35,9 @@ type Market struct {
 }
 
 type SearchController struct {
-	markets    map[string]*Market
-	mux        sync.Mutex
+	markets map[string]*Market
+	mux     sync.Mutex
+	// map of ticker symbol to full name
 	currencies map[string]string
 }
 
@@ -81,8 +82,14 @@ func (controller *SearchController) Search(c echo.Context) error {
 	m := make([]*Market, 0)
 
 	for k, v := range controller.markets {
-		if strings.Contains(strings.ToLower(k), strings.ToLower(term)) {
+		switch {
+		case strings.Contains(strings.ToLower(k), strings.ToLower(term)):
 			m = append(m, v)
+		case strings.Contains(strings.ToLower(v.BaseCurrency), strings.ToLower(term)):
+			m = append(m, v)
+		case strings.Contains(strings.ToLower(v.MarketCurrency), strings.ToLower(term)):
+			m = append(m, v)
+		default:
 		}
 	}
 
