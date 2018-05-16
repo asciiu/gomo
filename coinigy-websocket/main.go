@@ -199,7 +199,7 @@ func main() {
 			}
 
 			fmt.Println("New Client")
-			time.Sleep(2 * time.Second)
+			time.Sleep(5 * time.Second)
 		}
 
 		channel, err := client.Subscribe(name)
