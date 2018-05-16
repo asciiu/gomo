@@ -49,7 +49,7 @@ func NewRouter(db *sql.DB) *echo.Echo {
 	sessionController := controllers.NewSessionController(db)
 	userController := controllers.NewUserController(db)
 	socketController := controllers.NewWebsocketController()
-	searchController := controllers.NewSearchController()
+	searchController := controllers.NewSearchController(db)
 
 	// websocket ticker
 	e.GET("/ticker", socketController.Connect)
