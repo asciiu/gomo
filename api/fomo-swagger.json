@@ -750,6 +750,32 @@
         }
       }
     },
+    "/search": {
+      "get": {
+        "description": "Returns a list of active markets.",
+        "tags": [
+          "search"
+        ],
+        "summary": "search markets (protected)",
+        "operationId": "searchMarkets",
+        "parameters": [
+          {
+            "type": "string",
+            "x-go-name": "Term",
+            "name": "term",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "\"data\" will contain array of markets with \"status\": \"success\"",
+            "schema": {
+              "$ref": "#/definitions/responseSearchSuccess"
+            }
+          }
+        }
+      }
+    },
     "/session": {
       "get": {
         "description": "Creates a new session for an authenticated user. The session data will eventually contain\nwhatever info you need to begin a new session. At the moment the response data mirrors\nlogin data. This endpoint depends on the user-service. If the user-service\nis unreachable, a 410 with a status of \"error\" will be returned.",
@@ -1288,6 +1314,37 @@
       },
       "x-go-package": "github.com/asciiu/gomo/api/controllers"
     },
+    "Market": {
+      "type": "object",
+      "properties": {
+        "baseCurrency": {
+          "type": "string",
+          "x-go-name": "BaseCurrency"
+        },
+        "exchange": {
+          "type": "string",
+          "x-go-name": "Exchange"
+        },
+        "marketCurrency": {
+          "type": "string",
+          "x-go-name": "MarketCurrency"
+        },
+        "marketName": {
+          "type": "string",
+          "x-go-name": "MarketName"
+        },
+        "price": {
+          "type": "number",
+          "format": "double",
+          "x-go-name": "Price"
+        },
+        "type": {
+          "type": "string",
+          "x-go-name": "Type"
+        }
+      },
+      "x-go-package": "github.com/asciiu/gomo/api/controllers"
+    },
     "Order": {
       "description": "Responses",
       "type": "object",
@@ -1450,6 +1507,33 @@
     },
     "OrderTemp": {
       "type": "object",
+      "x-go-package": "github.com/asciiu/gomo/api/controllers"
+    },
+    "ResponseMarkets": {
+      "type": "object",
+      "properties": {
+        "markets": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/Market"
+          },
+          "x-go-name": "Markets"
+        }
+      },
+      "x-go-package": "github.com/asciiu/gomo/api/controllers"
+    },
+    "SearchController": {
+      "type": "object",
+      "x-go-package": "github.com/asciiu/gomo/api/controllers"
+    },
+    "SearchTerm": {
+      "type": "object",
+      "properties": {
+        "term": {
+          "type": "string",
+          "x-go-name": "Term"
+        }
+      },
       "x-go-package": "github.com/asciiu/gomo/api/controllers"
     },
     "SignupRequest": {
@@ -1745,6 +1829,21 @@
         }
       },
       "x-go-name": "ResponseOrdersSuccess",
+      "x-go-package": "github.com/asciiu/gomo/api/controllers"
+    },
+    "responseSearchSuccess": {
+      "type": "object",
+      "title": "A ResponseSearchSuccess will always contain a status of \"successful\".",
+      "properties": {
+        "data": {
+          "$ref": "#/definitions/ResponseMarkets"
+        },
+        "status": {
+          "type": "string",
+          "x-go-name": "Status"
+        }
+      },
+      "x-go-name": "ResponseSearchSuccess",
       "x-go-package": "github.com/asciiu/gomo/api/controllers"
     },
     "responseSuccess": {

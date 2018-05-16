@@ -40,6 +40,13 @@ type SearchController struct {
 	currencies map[string]string
 }
 
+// swagger:parameters searchMarkets
+type SearchTerm struct {
+	// Required: false
+	// In: query
+	Term string `json:"term"`
+}
+
 func NewSearchController(db *sql.DB) *SearchController {
 	controller := SearchController{
 		markets:    make(map[string]*Market),
