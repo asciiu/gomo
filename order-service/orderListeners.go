@@ -3,22 +3,36 @@ package main
 import (
 	"context"
 	"database/sql"
+	"fmt"
 	"log"
 
 	evt "github.com/asciiu/gomo/common/proto/events"
+	notifications "github.com/asciiu/gomo/notification-service/proto"
 	orderRepo "github.com/asciiu/gomo/order-service/db/sql"
+	micro "github.com/micro/go-micro"
 )
 
 // OrderFilledReceiver handles order filled events
 type OrderFilledReceiver struct {
-	DB      *sql.DB
-	Service *OrderService
+	DB        *sql.DB
+	Service   *OrderService
+	NotifyPub micro.Publisher
 }
 
 // ProcessEvent handles OrderEvents. These events are published by when an order was filled.
 func (receiver *OrderFilledReceiver) ProcessEvent(ctx context.Context, orderEvent *evt.OrderEvent) error {
 
 	log.Printf("order filled -- %+v\n", orderEvent)
+
+	notification := notifications.Notification{
+		UserID:      orderEvent.UserID,
+		Description: fmt.Sprintf("orderId: %s status: %s", orderEvent.OrderID, orderEvent.Status),
+	}
+
+	// publish verify key event
+	if err := receiver.NotifyPub.Publish(context.Background(), &notification); err != nil {
+		log.Println("could not publish verified key event: ", err)
+	}
 
 	parentOrder, error := orderRepo.UpdateOrderStatus(receiver.DB, orderEvent)
 	switch {

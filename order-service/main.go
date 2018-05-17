@@ -40,8 +40,9 @@ func main() {
 	}
 
 	filledReceiver := OrderFilledReceiver{
-		DB:      gomoDB,
-		Service: &orderService,
+		DB:        gomoDB,
+		Service:   &orderService,
+		NotifyPub: micro.NewPublisher(msg.TopicNotification, srv.Client()),
 	}
 
 	micro.RegisterSubscriber(msg.TopicOrderFilled, srv.Server(), &filledReceiver)
