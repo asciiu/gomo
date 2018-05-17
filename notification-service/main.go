@@ -9,6 +9,7 @@ import (
 	msg "github.com/asciiu/gomo/common/messages"
 	notification "github.com/asciiu/gomo/notification-service/proto"
 	micro "github.com/micro/go-micro"
+	"github.com/micro/go-micro/server"
 )
 
 func main() {
@@ -30,8 +31,9 @@ func main() {
 	notification.RegisterNotificationServiceHandler(srv.Server(), &notificationService)
 
 	listener1 := NewNotificationListener(gomoDB, srv)
+
 	// handles key verified events
-	micro.RegisterSubscriber(msg.TopicNotification, srv.Server(), &listener1)
+	micro.RegisterSubscriber(msg.TopicNotification, srv.Server(), listener1.ProcessNotification, server.SubscriberQueue("queue.pubsub"))
 
 	if err := srv.Run(); err != nil {
 		log.Fatal(err)

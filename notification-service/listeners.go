@@ -43,7 +43,7 @@ func NewNotificationListener(db *sql.DB, service micro.Service) *NotificationLis
 	return &listener
 }
 
-func (listener *NotificationListener) Process(ctx context.Context, note *notification.Notification) error {
+func (listener *NotificationListener) ProcessNotification(ctx context.Context, note *notification.Notification) error {
 	// get device tokens from DB for user ID
 	log.Println("notification ", note.Description)
 
