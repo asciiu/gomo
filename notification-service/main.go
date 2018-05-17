@@ -29,7 +29,7 @@ func main() {
 
 	notification.RegisterNotificationServiceHandler(srv.Server(), &notificationService)
 
-	listener1 := NewNotificationListener(gomoDB)
+	listener1 := NewNotificationListener(gomoDB, srv)
 	// handles key verified events
 	micro.RegisterSubscriber(msg.TopicNotification, srv.Server(), &listener1)
 

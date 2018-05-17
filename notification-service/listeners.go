@@ -3,22 +3,26 @@ package main
 import (
 	"context"
 	"database/sql"
+	"errors"
 	"fmt"
 	"log"
 	"os"
 
 	"github.com/appleboy/gorush/rpc/proto"
+	devices "github.com/asciiu/gomo/device-service/proto/device"
 	notification "github.com/asciiu/gomo/notification-service/proto"
+	micro "github.com/micro/go-micro"
 	"google.golang.org/grpc"
 )
 
 type NotificationListener struct {
-	DB     *sql.DB
-	client proto.GorushClient
-	topic  string
+	db      *sql.DB
+	devices devices.DeviceServiceClient
+	client  proto.GorushClient
+	topic   string
 }
 
-func NewNotificationListener(db *sql.DB) *NotificationListener {
+func NewNotificationListener(db *sql.DB, service micro.Service) *NotificationListener {
 	address := fmt.Sprintf("%s", os.Getenv("GORUSH_ADDRESS"))
 	topic := fmt.Sprintf("%s", os.Getenv("APNS_TOPIC"))
 
@@ -30,9 +34,10 @@ func NewNotificationListener(db *sql.DB) *NotificationListener {
 	client := proto.NewGorushClient(conn)
 
 	listener := NotificationListener{
-		DB:     db,
-		client: client,
-		topic:  topic,
+		db:      db,
+		client:  client,
+		topic:   topic,
+		devices: devices.NewDeviceServiceClient("go.srv.device-service", service.Client()),
 	}
 
 	return &listener
@@ -42,10 +47,31 @@ func (listener *NotificationListener) Process(ctx context.Context, note *notific
 	// get device tokens from DB for user ID
 	log.Println("notification ", note.Description)
 
+	getRequest := devices.GetUserDevicesRequest{
+		UserID: note.UserID,
+	}
+
+	ds, _ := listener.devices.GetUserDevices(context.Background(), &getRequest)
+
+	if ds.Status != "success" {
+		log.Println("error from GetUserDevices ", ds.Message)
+		return errors.New(ds.Message)
+	}
+
+	iosTokens := make([]string, 0)
+
+	for _, thing := range ds.Data.Devices {
+		deviceType := thing.DeviceType
+		deviceToken := thing.DeviceToken
+		if deviceType == "ios" {
+			iosTokens = append(iosTokens, deviceToken)
+		}
+	}
+
 	// loop over device tokens and send
 	r, err := listener.client.Send(context.Background(), &proto.NotificationRequest{
 		Platform: 1,
-		Tokens:   []string{"d98b367c3cdb9d2c2a52a4fe0cc40f95c693ac0d87e7c4fb41988afc3d46111c"},
+		Tokens:   iosTokens,
 		Message:  "test message",
 		Badge:    1,
 		Category: "test",

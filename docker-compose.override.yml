@@ -97,6 +97,7 @@ services:
     depends_on:
       - database
       - gorush
+      - device-service
 
   order-service:
     build: ./order-service

@@ -25,12 +25,18 @@ func main() {
 		log.Fatalf(err.Error())
 	}
 
-	publisher := micro.NewPublisher(msg.TopicNewKey, srv.Client())
-	keyService := KeyService{gomoDB, publisher}
+	keyService := KeyService{
+		DB:     gomoDB,
+		KeyPub: micro.NewPublisher(msg.TopicNewKey, srv.Client()),
+	}
 
 	kp.RegisterKeyServiceHandler(srv.Server(), &keyService)
 
-	listener1 := KeyVerifiedListener{gomoDB}
+	listener1 := KeyVerifiedListener{
+		DB:        gomoDB,
+		NotifyPub: micro.NewPublisher(msg.TopicNotification, srv.Client()),
+	}
+
 	// handles key verified events
 	micro.RegisterSubscriber(msg.TopicKeyVerified, srv.Server(), &listener1)
 
