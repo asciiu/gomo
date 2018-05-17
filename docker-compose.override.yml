@@ -93,6 +93,7 @@ services:
       MICRO_ADDRESS: ":5001"
       MICRO_REGISTRY: "mdns"
       GORUSH_ADDRESS: "docker.for.mac.host.internal:9000"
+      APNS_TOPIC: "com.mozzarello.projectfomo"
     depends_on:
       - database
       - gorush
