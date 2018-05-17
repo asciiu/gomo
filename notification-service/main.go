@@ -14,11 +14,9 @@ import (
 	"google.golang.org/grpc"
 )
 
-const (
-	address = "localhost:9000"
-)
-
 func TestPush() {
+	address := fmt.Sprintf("%s", os.Getenv("GORUSH_ADDRESS"))
+
 	// Set up a connection to the server.
 	conn, err := grpc.Dial(address, grpc.WithInsecure())
 	if err != nil {
@@ -28,8 +26,8 @@ func TestPush() {
 	c := proto.NewGorushClient(conn)
 
 	r, err := c.Send(context.Background(), &proto.NotificationRequest{
-		Platform: 2,
-		Tokens:   []string{"1234567890"},
+		Platform: 1,
+		Tokens:   []string{"d98b367c3cdb9d2c2a52a4fe0cc40f95c693ac0d87e7c4fb41988afc3d46111c"},
 		Message:  "test message",
 		Badge:    1,
 		Category: "test",
@@ -71,6 +69,8 @@ func main() {
 	listener1 := NotificationListener{gomoDB}
 	// handles key verified events
 	micro.RegisterSubscriber(msg.TopicNotification, srv.Server(), &listener1)
+
+	TestPush()
 
 	if err := srv.Run(); err != nil {
 		log.Fatal(err)
