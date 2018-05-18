@@ -34,18 +34,20 @@ type Market struct {
 	Price          float64 `json:"price"`
 }
 
-type SearchController struct {
-	markets map[string]*Market
-	mux     sync.Mutex
-	// map of ticker symbol to full name
-	currencies map[string]string
-}
-
+// This struct is used in the generated swagger docs,
+// and it is not used anywhere.
 // swagger:parameters searchMarkets
 type SearchTerm struct {
 	// Required: false
 	// In: query
 	Term string `json:"term"`
+}
+
+type SearchController struct {
+	markets map[string]*Market
+	mux     sync.Mutex
+	// map of ticker symbol to full name
+	currencies map[string]string
 }
 
 func NewSearchController(db *sql.DB) *SearchController {

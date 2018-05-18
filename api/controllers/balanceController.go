@@ -11,16 +11,25 @@ import (
 	"golang.org/x/net/context"
 )
 
-type BalanceController struct {
-	DB       *sql.DB
-	Balances balances.BalanceServiceClient
-}
-
 // A ResponseBalancesSuccess will always contain a status of "successful".
 // swagger:model responseBalancesSuccess
 type ResponseBalancesSuccess struct {
 	Status string                    `json:"status"`
 	Data   *balances.AccountBalances `json:"data"`
+}
+
+// This struct is used in the generated swagger docs,
+// and it is not used anywhere.
+// swagger:parameters getAllBalances
+type SearchSymbol struct {
+	// Required: false
+	// In: query
+	Symbol string `json:"symbol"`
+}
+
+type BalanceController struct {
+	DB       *sql.DB
+	Balances balances.BalanceServiceClient
 }
 
 func NewBalanceController(db *sql.DB) *BalanceController {

@@ -25,6 +25,14 @@
         ],
         "summary": "get all balances (protected)",
         "operationId": "getAllBalances",
+        "parameters": [
+          {
+            "type": "string",
+            "x-go-name": "Symbol",
+            "name": "symbol",
+            "in": "query"
+          }
+        ],
         "responses": {
           "200": {
             "description": "\"data\" will contain array of balances with \"status\": \"success\"",
@@ -1526,8 +1534,22 @@
       "type": "object",
       "x-go-package": "github.com/asciiu/gomo/api/controllers"
     },
-    "SearchTerm": {
+    "SearchSymbol": {
+      "description": "and it is not used anywhere.",
       "type": "object",
+      "title": "This struct is used in the generated swagger docs,",
+      "properties": {
+        "symbol": {
+          "type": "string",
+          "x-go-name": "Symbol"
+        }
+      },
+      "x-go-package": "github.com/asciiu/gomo/api/controllers"
+    },
+    "SearchTerm": {
+      "description": "and it is not used anywhere.",
+      "type": "object",
+      "title": "This struct is used in the generated swagger docs,",
       "properties": {
         "term": {
           "type": "string",
