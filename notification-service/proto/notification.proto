@@ -14,13 +14,13 @@ message GetUserNotifcationsRequest {
 // Responses
 message Notification {
   string notificationID = 1;
-  string userID = 2;
-  string description = 3;
-  string subtitle = 4;
+  string notificationType = 2;
+  string userID = 3;
+  string objectID = 4;
   string title = 5;
-  string timestamp = 6;
-  string type = 7;
-  string ID = 8;
+  string subtitle = 6;
+  string description = 7;
+  string timestamp = 8;
 }
 
 message UserNotifications {
