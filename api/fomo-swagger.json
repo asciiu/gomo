@@ -19,7 +19,7 @@
   "paths": {
     "/balances": {
       "get": {
-        "description": "Returns all balances for user.",
+        "description": "Returns all balances for user. Use optional query param 'symbol' as lowercase ticker symbol - e.g. ada.",
         "tags": [
           "balances"
         ],

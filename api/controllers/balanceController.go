@@ -47,7 +47,7 @@ func NewBalanceController(db *sql.DB) *BalanceController {
 //
 // get all balances (protected)
 //
-// Returns all balances for user.
+// Returns all balances for user. Use optional query param 'symbol' as lowercase ticker symbol - e.g. ada.
 //
 // responses:
 //  200: responseBalancesSuccess "data" will contain array of balances with "status": "success"
