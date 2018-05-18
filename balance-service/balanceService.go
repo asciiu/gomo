@@ -35,14 +35,26 @@ func (service *BalanceService) GetUserBalance(ctx context.Context, req *bp.GetUs
 // Can't return an error with a response object - response object is returned as nil when error is non nil.
 // Therefore, return error in response object.
 func (service *BalanceService) GetUserBalances(ctx context.Context, req *bp.GetUserBalancesRequest, res *bp.BalancesResponse) error {
-	balances, error := repo.FindBalancesByUserID(service.DB, req)
 
-	if error == nil {
-		res.Status = "success"
-		res.Data = balances
-	} else {
-		res.Status = "error"
-		res.Message = error.Error()
+	switch {
+	case req.Symbol == "":
+		balances, error := repo.FindAllBalancesByUserID(service.DB, req)
+		if error == nil {
+			res.Status = "success"
+			res.Data = balances
+		} else {
+			res.Status = "error"
+			res.Message = error.Error()
+		}
+	default:
+		balances, error := repo.FindSymbolBalancesByUserID(service.DB, req)
+		if error == nil {
+			res.Status = "success"
+			res.Data = balances
+		} else {
+			res.Status = "error"
+			res.Message = error.Error()
+		}
 	}
 
 	return nil

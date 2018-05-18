@@ -27,7 +27,38 @@ func FindBalance(db *sql.DB, req *bp.GetUserBalanceRequest) (*bp.Balance, error)
 	return &b, nil
 }
 
-func FindBalancesByUserID(db *sql.DB, req *bp.GetUserBalancesRequest) (*bp.AccountBalances, error) {
+func FindSymbolBalancesByUserID(db *sql.DB, req *bp.GetUserBalancesRequest) (*bp.AccountBalances, error) {
+	balances := make([]*bp.Balance, 0)
+
+	rows, err := db.Query(`SELECT id, user_id, user_key_id, exchange_name, currency_name, available, 
+		locked, exchange_total, exchange_available, exchange_locked FROM user_balances 
+		WHERE user_id = $1 and lower($2) = lower(currency_name)`,
+		req.UserID, req.Symbol)
+
+	if err != nil {
+		log.Fatal(err)
+		return nil, err
+	}
+	defer rows.Close()
+	for rows.Next() {
+		b := bp.Balance{}
+
+		err := rows.Scan(&b.ID, &b.UserID, &b.KeyID, &b.ExchangeName, &b.CurrencyName, &b.Available,
+			&b.Locked, &b.ExchangeTotal, &b.ExchangeAvailable, &b.ExchangedLocked)
+		if err != nil {
+			log.Fatal(err)
+			return nil, err
+		}
+		balances = append(balances, &b)
+	}
+	accBalances := bp.AccountBalances{
+		Balances: balances,
+	}
+
+	return &accBalances, nil
+}
+
+func FindAllBalancesByUserID(db *sql.DB, req *bp.GetUserBalancesRequest) (*bp.AccountBalances, error) {
 	balances := make([]*bp.Balance, 0)
 
 	rows, err := db.Query(`SELECT id, user_id, user_key_id, exchange_name, currency_name, available, 

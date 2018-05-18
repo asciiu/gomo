@@ -31,7 +31,7 @@ func (receiver *OrderFilledReceiver) ProcessEvent(ctx context.Context, orderEven
 
 	// publish verify key event
 	if err := receiver.NotifyPub.Publish(context.Background(), &notification); err != nil {
-		log.Println("could not publish verified key event: ", err)
+		log.Println("could not publish notification: ", err)
 	}
 
 	parentOrder, error := orderRepo.UpdateOrderStatus(receiver.DB, orderEvent)

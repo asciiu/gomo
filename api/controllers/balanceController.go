@@ -47,9 +47,11 @@ func (controller *BalanceController) HandleGetBalances(c echo.Context) error {
 	token := c.Get("user").(*jwt.Token)
 	claims := token.Claims.(jwt.MapClaims)
 	userID := claims["jti"].(string)
+	symbol := c.QueryParam("symbol")
 
 	getRequest := balances.GetUserBalancesRequest{
 		UserID: userID,
+		Symbol: symbol,
 	}
 
 	r, err := controller.Balances.GetUserBalances(context.Background(), &getRequest)
