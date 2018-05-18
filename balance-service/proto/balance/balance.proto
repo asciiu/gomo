@@ -17,6 +17,7 @@ message GetUserBalanceRequest {
 message GetUserBalancesRequest {
   string userID = 1;
   string keyID = 2;
+  string symbol = 3;
 }
 
 message AccountBalances{
