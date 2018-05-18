@@ -3,12 +3,13 @@ syntax = "proto3";
 package go.micro.srv.notification; 
 
 service NotificationService {
-  rpc GetUserNotifications(GetUserNotifcationsRequest) returns (NotificationListResponse) {}
+  rpc GetUserNotificationsByType(GetNotifcationsByType) returns (NotificationListResponse) {}
 }
 
 // Requests
-message GetUserNotifcationsRequest {
+message GetNotifcationsByType {
     string userID = 1;
+    string notificationType = 2;
 }
 
 // Responses
