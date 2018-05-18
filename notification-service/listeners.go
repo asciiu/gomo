@@ -44,13 +44,13 @@ func NewNotificationListener(db *sql.DB, service micro.Service) *NotificationLis
 }
 
 func (listener *NotificationListener) ProcessNotification(ctx context.Context, note *notification.Notification) error {
-	// get device tokens from DB for user ID
 	log.Println("notification ", note.Description)
 
 	getRequest := devices.GetUserDevicesRequest{
 		UserID: note.UserID,
 	}
 
+	// get device tokens from DB for user ID
 	ds, _ := listener.devices.GetUserDevices(context.Background(), &getRequest)
 
 	if ds.Status != "success" {
@@ -69,6 +69,7 @@ func (listener *NotificationListener) ProcessNotification(ctx context.Context, n
 	}
 
 	// loop over device tokens and send
+	// TODO fill in the rest
 	r, err := listener.client.Send(context.Background(), &proto.NotificationRequest{
 		Platform: 1,
 		Tokens:   iosTokens,
@@ -78,9 +79,9 @@ func (listener *NotificationListener) ProcessNotification(ctx context.Context, n
 		Sound:    "test",
 		Topic:    listener.topic,
 		Alert: &proto.Alert{
-			Title:    "Test Title",
+			Title:    note.Title,
 			Body:     note.Description,
-			Subtitle: "Test Alert Sub Title",
+			Subtitle: note.Subtitle,
 			LocKey:   "Test loc key",
 			LocArgs:  []string{"test", "test"},
 		},
