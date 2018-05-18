@@ -3,13 +3,15 @@ syntax = "proto3";
 package go.micro.srv.notification; 
 
 service NotificationService {
-  rpc GetUserNotificationsByType(GetNotifcationsByType) returns (NotificationListResponse) {}
+  rpc GetUserNotificationsByType(GetNotifcationsByType) returns (NotificationPagedResponse) {}
 }
 
 // Requests
 message GetNotifcationsByType {
     string userID = 1;
     string notificationType = 2;
+    uint32 page = 3;
+    uint32 pageSize = 4;
 }
 
 // Responses
@@ -24,12 +26,15 @@ message Notification {
   string timestamp = 8;
 }
 
-message UserNotifications {
-  repeated Notification notifications = 1;
+message UserNotificationsPage {
+  uint32 page = 1;
+  uint32 pageSize = 2; 
+  uint32 total = 3;
+  repeated Notification notifications = 4; 
 }
 
-message NotificationListResponse {
+message NotificationPagedResponse {
   string status = 1;
   string message = 2;
-  UserNotifications data = 3;
+  UserNotificationsPage data = 3;
 }

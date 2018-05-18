@@ -24,10 +24,15 @@ import (
 // 	return &k, nil
 // }
 
-func FindNotificationsByType(db *sql.DB, req *notification.GetNotifcationsByType) ([]*notification.Notification, error) {
-	results := make([]*notification.Notification, 0)
+func FindNotificationsByType(db *sql.DB, req *notification.GetNotifcationsByType) (*notification.UserNotificationsPage, error) {
+	notifications := make([]*notification.Notification, 0)
+
+	var total uint32
+	queryTotal := `SELECT count(*) FROM notifications WHERE user_id = $1 and notification_type = $2`
+	err := db.QueryRow(queryTotal).Scan(&total)
+
 	query := `SELECT id, user_id, title, subtitle, description, timestamp, notification_type, 
-		object_id FROM notifications WHERE user_id = $1 and notification_type = $2`
+		object_id FROM notifications WHERE user_id = $1 and notification_type = $2 ORDER BY timestamp OFFSET $3 LIMIT $4`
 
 	rows, err := db.Query(query, req.UserID, req.NotificationType)
 	if err != nil {
@@ -44,7 +49,7 @@ func FindNotificationsByType(db *sql.DB, req *notification.GetNotifcationsByType
 			return nil, err
 		}
 
-		results = append(results, &n)
+		notifications = append(notifications, &n)
 	}
 	err = rows.Err()
 	if err != nil {
@@ -52,7 +57,14 @@ func FindNotificationsByType(db *sql.DB, req *notification.GetNotifcationsByType
 		return nil, err
 	}
 
-	return results, nil
+	result := notification.UserNotificationsPage{
+		Page:          req.Page,
+		PageSize:      req.PageSize,
+		Total:         total,
+		Notifications: notifications,
+	}
+
+	return &result, nil
 }
 
 func InsertNotification(db *sql.DB, note *notification.Notification) (*notification.Notification, error) {
