@@ -2,6 +2,7 @@ package sql
 
 import (
 	"database/sql"
+	"log"
 
 	notification "github.com/asciiu/gomo/notification-service/proto"
 	"github.com/google/uuid"
@@ -23,32 +24,36 @@ import (
 // 	return &k, nil
 // }
 
-// func FindNotificationsByType(db *sql.DB, req *pb.GetUserKeysRequest) ([]*pb.Key, error) {
-// 	results := make([]*pb.Key, 0)
+func FindNotificationsByType(db *sql.DB, req *notification.GetNotifcationsByType) ([]*notification.Notification, error) {
+	results := make([]*notification.Notification, 0)
+	query := `SELECT id, user_id, title, subtitle, description, timestamp, notification_type, 
+		object_id FROM notifications WHERE user_id = $1 and notification_type = $2`
 
-// 	rows, err := db.Query("SELECT id, user_id, exchange_name, api_key, secret, description, status FROM user_keys WHERE user_id = $1", req.UserID)
-// 	if err != nil {
-// 		log.Fatal(err)
-// 		return nil, err
-// 	}
-// 	defer rows.Close()
-// 	for rows.Next() {
-// 		var k pb.Key
-// 		err := rows.Scan(&k.KeyID, &k.UserID, &k.Exchange, &k.Key, &k.Secret, &k.Description, &k.Status)
-// 		if err != nil {
-// 			log.Fatal(err)
-// 			return nil, err
-// 		}
-// 		results = append(results, &k)
-// 	}
-// 	err = rows.Err()
-// 	if err != nil {
-// 		log.Fatal(err)
-// 		return nil, err
-// 	}
+	rows, err := db.Query(query, req.UserID, req.NotificationType)
+	if err != nil {
+		log.Fatal(err)
+		return nil, err
+	}
+	defer rows.Close()
+	for rows.Next() {
+		var n notification.Notification
+		err := rows.Scan(&n.NotificationID, &n.UserID, &n.Title, &n.Subtitle, &n.Description,
+			&n.Timestamp, &n.NotificationType, &n.ObjectID)
+		if err != nil {
+			log.Fatal(err)
+			return nil, err
+		}
 
-// 	return results, nil
-// }
+		results = append(results, &n)
+	}
+	err = rows.Err()
+	if err != nil {
+		log.Fatal(err)
+		return nil, err
+	}
+
+	return results, nil
+}
 
 func InsertNotification(db *sql.DB, note *notification.Notification) (*notification.Notification, error) {
 	newID := uuid.New()
