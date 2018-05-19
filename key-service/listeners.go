@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"database/sql"
+	"fmt"
 	"log"
 
 	repo "github.com/asciiu/gomo/key-service/db/sql"
@@ -21,9 +22,13 @@ func (listener *KeyVerifiedListener) Process(ctx context.Context, key *kp.Key) e
 
 	_, error := repo.UpdateKeyStatus(listener.DB, key)
 
+	description := fmt.Sprintf("%s key verified", key.Exchange)
 	notification := notifications.Notification{
-		UserID:      key.UserID,
-		Description: "your key has been verified",
+		UserID:           key.UserID,
+		NotificationType: "key",
+		ObjectID:         key.KeyID,
+		Title:            "Exchange Setup",
+		Description:      description,
 	}
 
 	// publish verify key event

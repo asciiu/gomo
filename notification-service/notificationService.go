@@ -14,7 +14,7 @@ type NotificationService struct {
 // GetUserNotifications returns error to conform to protobuf def, but the error will always be returned as nil.
 // Can't return an error with a response object - response object is returned as nil when error is non nil.
 // Therefore, return error in response object.
-func (service *NotificationService) GetUserNotifications(ctx context.Context, req *notifications.GetUserNotifcationsRequest, res *notifications.NotificationListResponse) error {
+func (service *NotificationService) GetUserNotificationsByType(ctx context.Context, req *notifications.GetNotifcationsByType, res *notifications.NotificationPagedResponse) error {
 
 	//keys, error := repo.FindKeysByUserID(service.DB, req)
 

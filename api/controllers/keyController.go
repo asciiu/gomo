@@ -99,7 +99,7 @@ func (controller *KeyController) HandleGetKey(c echo.Context) error {
 		if r.Status == "error" {
 			return c.JSON(http.StatusInternalServerError, response)
 		}
-		if r.Status == "empty" {
+		if r.Status == "nonentity" {
 			return c.JSON(http.StatusNotFound, response)
 		}
 	}

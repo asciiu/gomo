@@ -70,7 +70,7 @@ func (service *KeyService) GetUserKey(ctx context.Context, req *kp.GetUserKeyReq
 			},
 		}
 	case strings.Contains(error.Error(), "no rows in result set"):
-		res.Status = "empty"
+		res.Status = "nonentity"
 		res.Message = fmt.Sprintf("key not found")
 	default:
 		res.Status = "error"

@@ -10,8 +10,8 @@ import (
 
 	"github.com/appleboy/gorush/rpc/proto"
 	devices "github.com/asciiu/gomo/device-service/proto/device"
+	repo "github.com/asciiu/gomo/notification-service/db/sql"
 	notification "github.com/asciiu/gomo/notification-service/proto"
-	repo "github.com/asciiu/notification-service/db/sql"
 	micro "github.com/micro/go-micro"
 	"google.golang.org/grpc"
 )
