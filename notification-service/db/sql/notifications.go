@@ -71,7 +71,7 @@ func InsertNotification(db *sql.DB, note *notification.Notification) (*notificat
 	newID := uuid.New()
 
 	sqlStatement := `insert into notifications (id, user_id, title, subtitle, description, 
-		timestamp, notification_type, object_id) values ($1, $2, $3, $4, $5, $6, $7)`
+		timestamp, notification_type, object_id) values ($1, $2, $3, $4, $5, $6, $7, $8)`
 
 	_, err := db.Exec(sqlStatement, newID, note.UserID, note.Title, note.Subtitle,
 		note.Description, note.Timestamp, note.NotificationType, note.ObjectID)
