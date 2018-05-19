@@ -4,7 +4,6 @@ import (
 	"context"
 	"database/sql"
 	"log"
-	"strconv"
 	"strings"
 
 	evt "github.com/asciiu/gomo/common/proto/events"
@@ -22,7 +21,7 @@ type SellProcessor struct {
 
 // ProcessEvent will process ExchangeEvents. These events are published from the exchange sockets and
 // are used as the order trigger.
-func (process *SellProcessor) ProcessEvent(ctx context.Context, event *evt.ExchangeEvent) error {
+func (process *SellProcessor) ProcessEvent(ctx context.Context, event *evt.TradeEvent) error {
 	sellOrders := process.Receiver.Orders
 
 	for i, sellOrder := range sellOrders {
@@ -34,9 +33,8 @@ func (process *SellProcessor) ProcessEvent(ctx context.Context, event *evt.Excha
 
 		conditions := sellOrder.Conditions
 		for _, evaluateFunc := range conditions {
-			f, _ := strconv.ParseFloat(event.Price, 64)
 
-			if isValid, desc := evaluateFunc(f); isValid {
+			if isValid, desc := evaluateFunc(event.Price); isValid {
 				process.Receiver.Orders = append(sellOrders[:i], sellOrders[i+1:]...)
 				// if non simulated trigger buy event - exchange service subscribes to these events
 

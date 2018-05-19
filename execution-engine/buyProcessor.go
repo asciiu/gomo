@@ -4,7 +4,6 @@ import (
 	"context"
 	"database/sql"
 	"log"
-	"strconv"
 	"strings"
 
 	evt "github.com/asciiu/gomo/common/proto/events"
@@ -21,7 +20,7 @@ type BuyProcessor struct {
 }
 
 // ProcessEvent will process ExchangeEvents. These events are published from the exchange sockets.
-func (process *BuyProcessor) ProcessEvent(ctx context.Context, event *evt.ExchangeEvent) error {
+func (process *BuyProcessor) ProcessEvent(ctx context.Context, event *evt.TradeEvent) error {
 	buyOrders := process.Receiver.Orders
 
 	for i, buyOrder := range buyOrders {
@@ -35,10 +34,9 @@ func (process *BuyProcessor) ProcessEvent(ctx context.Context, event *evt.Exchan
 		conditions := buyOrder.Conditions
 		// eval all conditions for this order
 		for _, evaluateFunc := range conditions {
-			f, _ := strconv.ParseFloat(event.Price, 64)
 
 			// does condition of order eval to true?
-			if isValid, desc := evaluateFunc(f); isValid {
+			if isValid, desc := evaluateFunc(event.Price); isValid {
 				// remove this order from the process
 				process.Receiver.Orders = append(buyOrders[:i], buyOrders[i+1:]...)
 
