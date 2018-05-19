@@ -26,8 +26,10 @@ import (
 	"golang.org/x/net/context"
 )
 
-const refreshDuration = 720 * time.Hour
-const jwtDuration = 1440 * time.Minute
+//const refreshDuration = 720 * time.Hour
+//const jwtDuration = 1440 * time.Minute
+const refreshDuration = 30 * time.Minute
+const jwtDuration = 30 * time.Minute
 
 type AuthController struct {
 	DB       *sql.DB

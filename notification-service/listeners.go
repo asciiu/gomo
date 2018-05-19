@@ -11,6 +11,7 @@ import (
 	"github.com/appleboy/gorush/rpc/proto"
 	devices "github.com/asciiu/gomo/device-service/proto/device"
 	notification "github.com/asciiu/gomo/notification-service/proto"
+	repo "github.com/asciiu/notification-service/db/sql"
 	micro "github.com/micro/go-micro"
 	"google.golang.org/grpc"
 )
@@ -44,6 +45,12 @@ func NewNotificationListener(db *sql.DB, service micro.Service) *NotificationLis
 }
 
 func (listener *NotificationListener) ProcessNotification(ctx context.Context, note *notification.Notification) error {
+
+	_, error := repo.InsertNotification(listener.db, note)
+	if error != nil {
+		log.Println("could not insert new notification ", error)
+	}
+
 	log.Println("notification ", note.Description)
 
 	getRequest := devices.GetUserDevicesRequest{

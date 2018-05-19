@@ -3,7 +3,9 @@ package main
 import (
 	"context"
 	"database/sql"
+	"fmt"
 	"log"
+	"strings"
 
 	repo "github.com/asciiu/gomo/key-service/db/sql"
 	kp "github.com/asciiu/gomo/key-service/proto/key"
@@ -67,6 +69,9 @@ func (service *KeyService) GetUserKey(ctx context.Context, req *kp.GetUserKeyReq
 				Status:      apiKey.Status,
 			},
 		}
+	case strings.Contains(error.Error(), "no rows in result set"):
+		res.Status = "empty"
+		res.Message = fmt.Sprintf("key not found")
 	default:
 		res.Status = "error"
 		res.Message = error.Error()
