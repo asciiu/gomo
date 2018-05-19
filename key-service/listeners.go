@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"fmt"
 	"log"
+	"time"
 
 	repo "github.com/asciiu/gomo/key-service/db/sql"
 	kp "github.com/asciiu/gomo/key-service/proto/key"
@@ -29,6 +30,7 @@ func (listener *KeyVerifiedListener) Process(ctx context.Context, key *kp.Key) e
 		ObjectID:         key.KeyID,
 		Title:            "Exchange Setup",
 		Description:      description,
+		Timestamp:        time.Now().UTC().Format(time.RFC3339),
 	}
 
 	// publish verify key event
