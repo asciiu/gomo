@@ -43,13 +43,13 @@ const _ = proto.ProtoPackageIsVersion2 // please upgrade the proto package
 
 // Requests
 type KeyRequest struct {
-	KeyID       string `protobuf:"bytes,1,opt,name=keyID" json:"keyID,omitempty"`
-	UserID      string `protobuf:"bytes,2,opt,name=userID" json:"userID,omitempty"`
-	Exchange    string `protobuf:"bytes,3,opt,name=exchange" json:"exchange,omitempty"`
-	Key         string `protobuf:"bytes,4,opt,name=key" json:"key,omitempty"`
-	Secret      string `protobuf:"bytes,5,opt,name=secret" json:"secret,omitempty"`
-	Description string `protobuf:"bytes,6,opt,name=description" json:"description,omitempty"`
-	Status      string `protobuf:"bytes,7,opt,name=status" json:"status,omitempty"`
+	KeyID       string `protobuf:"bytes,1,opt,name=keyID" json:"keyID"`
+	UserID      string `protobuf:"bytes,2,opt,name=userID" json:"userID"`
+	Exchange    string `protobuf:"bytes,3,opt,name=exchange" json:"exchange"`
+	Key         string `protobuf:"bytes,4,opt,name=key" json:"key"`
+	Secret      string `protobuf:"bytes,5,opt,name=secret" json:"secret"`
+	Description string `protobuf:"bytes,6,opt,name=description" json:"description"`
+	Status      string `protobuf:"bytes,7,opt,name=status" json:"status"`
 }
 
 func (m *KeyRequest) Reset()                    { *m = KeyRequest{} }
@@ -107,8 +107,8 @@ func (m *KeyRequest) GetStatus() string {
 }
 
 type GetUserKeyRequest struct {
-	UserID string `protobuf:"bytes,1,opt,name=userID" json:"userID,omitempty"`
-	KeyID  string `protobuf:"bytes,2,opt,name=keyID" json:"keyID,omitempty"`
+	UserID string `protobuf:"bytes,1,opt,name=userID" json:"userID"`
+	KeyID  string `protobuf:"bytes,2,opt,name=keyID" json:"keyID"`
 }
 
 func (m *GetUserKeyRequest) Reset()                    { *m = GetUserKeyRequest{} }
@@ -131,7 +131,7 @@ func (m *GetUserKeyRequest) GetKeyID() string {
 }
 
 type GetUserKeysRequest struct {
-	UserID string `protobuf:"bytes,1,opt,name=userID" json:"userID,omitempty"`
+	UserID string `protobuf:"bytes,1,opt,name=userID" json:"userID"`
 }
 
 func (m *GetUserKeysRequest) Reset()                    { *m = GetUserKeysRequest{} }
@@ -147,8 +147,8 @@ func (m *GetUserKeysRequest) GetUserID() string {
 }
 
 type RemoveKeyRequest struct {
-	UserID string `protobuf:"bytes,1,opt,name=userID" json:"userID,omitempty"`
-	KeyID  string `protobuf:"bytes,2,opt,name=keyID" json:"keyID,omitempty"`
+	UserID string `protobuf:"bytes,1,opt,name=userID" json:"userID"`
+	KeyID  string `protobuf:"bytes,2,opt,name=keyID" json:"keyID"`
 }
 
 func (m *RemoveKeyRequest) Reset()                    { *m = RemoveKeyRequest{} }
@@ -172,13 +172,13 @@ func (m *RemoveKeyRequest) GetKeyID() string {
 
 // Responses
 type Key struct {
-	KeyID       string `protobuf:"bytes,1,opt,name=keyID" json:"keyID,omitempty"`
-	UserID      string `protobuf:"bytes,2,opt,name=userID" json:"userID,omitempty"`
-	Exchange    string `protobuf:"bytes,3,opt,name=exchange" json:"exchange,omitempty"`
-	Key         string `protobuf:"bytes,4,opt,name=key" json:"key,omitempty"`
-	Secret      string `protobuf:"bytes,5,opt,name=secret" json:"secret,omitempty"`
-	Status      string `protobuf:"bytes,6,opt,name=status" json:"status,omitempty"`
-	Description string `protobuf:"bytes,7,opt,name=description" json:"description,omitempty"`
+	KeyID       string `protobuf:"bytes,1,opt,name=keyID" json:"keyID"`
+	UserID      string `protobuf:"bytes,2,opt,name=userID" json:"userID"`
+	Exchange    string `protobuf:"bytes,3,opt,name=exchange" json:"exchange"`
+	Key         string `protobuf:"bytes,4,opt,name=key" json:"key"`
+	Secret      string `protobuf:"bytes,5,opt,name=secret" json:"secret"`
+	Status      string `protobuf:"bytes,6,opt,name=status" json:"status"`
+	Description string `protobuf:"bytes,7,opt,name=description" json:"description"`
 }
 
 func (m *Key) Reset()                    { *m = Key{} }
@@ -236,7 +236,7 @@ func (m *Key) GetDescription() string {
 }
 
 type UserKeyData struct {
-	Key *Key `protobuf:"bytes,1,opt,name=key" json:"key,omitempty"`
+	Key *Key `protobuf:"bytes,1,opt,name=key" json:"key"`
 }
 
 func (m *UserKeyData) Reset()                    { *m = UserKeyData{} }
@@ -252,7 +252,7 @@ func (m *UserKeyData) GetKey() *Key {
 }
 
 type UserKeysData struct {
-	Keys []*Key `protobuf:"bytes,1,rep,name=keys" json:"keys,omitempty"`
+	Keys []*Key `protobuf:"bytes,1,rep,name=keys" json:"keys"`
 }
 
 func (m *UserKeysData) Reset()                    { *m = UserKeysData{} }
@@ -268,9 +268,9 @@ func (m *UserKeysData) GetKeys() []*Key {
 }
 
 type KeyResponse struct {
-	Status  string       `protobuf:"bytes,1,opt,name=status" json:"status,omitempty"`
-	Message string       `protobuf:"bytes,2,opt,name=message" json:"message,omitempty"`
-	Data    *UserKeyData `protobuf:"bytes,3,opt,name=data" json:"data,omitempty"`
+	Status  string       `protobuf:"bytes,1,opt,name=status" json:"status"`
+	Message string       `protobuf:"bytes,2,opt,name=message" json:"message"`
+	Data    *UserKeyData `protobuf:"bytes,3,opt,name=data" json:"data"`
 }
 
 func (m *KeyResponse) Reset()                    { *m = KeyResponse{} }
@@ -300,9 +300,9 @@ func (m *KeyResponse) GetData() *UserKeyData {
 }
 
 type KeyListResponse struct {
-	Status  string        `protobuf:"bytes,1,opt,name=status" json:"status,omitempty"`
-	Message string        `protobuf:"bytes,2,opt,name=message" json:"message,omitempty"`
-	Data    *UserKeysData `protobuf:"bytes,3,opt,name=data" json:"data,omitempty"`
+	Status  string        `protobuf:"bytes,1,opt,name=status" json:"status"`
+	Message string        `protobuf:"bytes,2,opt,name=message" json:"message"`
+	Data    *UserKeysData `protobuf:"bytes,3,opt,name=data" json:"data"`
 }
 
 func (m *KeyListResponse) Reset()                    { *m = KeyListResponse{} }
