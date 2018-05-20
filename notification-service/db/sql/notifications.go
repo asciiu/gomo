@@ -29,7 +29,7 @@ func FindNotificationsByType(db *sql.DB, req *notification.GetNotifcationsByType
 
 	var total uint32
 	queryTotal := `SELECT count(*) FROM notifications WHERE user_id = $1 and notification_type = $2`
-	err := db.QueryRow(queryTotal).Scan(&total)
+	err := db.QueryRow(queryTotal, req.UserID, req.NotificationType).Scan(&total)
 
 	query := `SELECT id, user_id, title, subtitle, description, timestamp, notification_type, 
 		object_id FROM notifications WHERE user_id = $1 and notification_type = $2 ORDER BY timestamp OFFSET $3 LIMIT $4`
