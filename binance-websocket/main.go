@@ -7,12 +7,10 @@ import (
 	"log"
 	"os"
 	"os/signal"
-	"strconv"
 	"sync"
 	"time"
 
 	msg "github.com/asciiu/gomo/common/messages"
-	ep "github.com/asciiu/gomo/common/proto/events"
 	"github.com/gorilla/websocket"
 	micro "github.com/micro/go-micro"
 )
@@ -37,9 +35,36 @@ type BinanceAggTrade struct {
 	Ignore       bool   `json:"M"`
 }
 
+type BinanceTicker struct {
+	Type                string `json:"e"`
+	EventTime           uint64 `json:"E"`
+	Symbol              string `json:"s"`
+	PriceChange         string `json:"p"`
+	PriceChangePercent  string `json:"P"`
+	WeightedAvgPrice    string `json:"w"`
+	PreviousDayClose    string `json:"x"`
+	ClosePrice          string `json:"c"`
+	CloseQuantity       string `json:"Q"`
+	BestBidPrice        string `json:"b"`
+	BestBidQuantity     string `json:"B"`
+	BestAskPrice        string `json:"a"`
+	BestAskQuantity     string `json:"A"`
+	OpenPrice           string `json:"o"`
+	HighPrice           string `json:"h"`
+	LowPrice            string `json:"l"`
+	TotalTradedBaseVol  string `json:"v"`
+	TotalTradedAssetVol string `json:"q"`
+	OpenTime            uint64 `json:"O"`
+	CloseTime           uint64 `json:"C"`
+	FirstTradeID        uint64 `json:"F"`
+	LastTradeID         uint64 `json:"L"`
+	TotalTrades         uint64 `json:"n"`
+}
+
 func (bconn *BinanceConnection) Open(market string) {
 	bconn.group.Add(1)
-	url := fmt.Sprintf("wss://stream.binance.com:9443/ws/%s@aggTrade", market)
+	//url := fmt.Sprintf("wss://stream.binance.com:9443/ws/%s@aggTrade", market)
+	url := "wss://stream.binance.com:9443/ws/!ticker@arr"
 	log.Printf("connecting to %s", url)
 
 	conn, _, err := websocket.DefaultDialer.Dial(url, nil)
@@ -61,40 +86,44 @@ func (bconn *BinanceConnection) Open(market string) {
 				return
 			}
 
-			aggTrade := BinanceAggTrade{}
-			if err = json.Unmarshal(message, &aggTrade); err != nil {
-				log.Println("nope")
+			//aggTrade := BinanceAggTrade{}
+			ticker := []*BinanceTicker{}
+			fmt.Println(message)
+			if err = json.Unmarshal(message, &ticker); err != nil {
+				log.Fatal("dial:", err)
 			}
 
-			//tradeEvent := evt.TradeEvent{
-			//	Exchange:   exchangeNames[md.ExCode],
-			//	Type:       md.Type,
-			//	EventTime:  md.TimeStamp,
-			//	MarketName: strings.Replace(md.Label, "/", "-", 1),
-			//	TradeID:    md.TradeID,
-			//	Price:      md.Price,
-			//	Quantity:   md.Quantity,
-			//	Total:      md.Total,
-			//}
+			for _, tick := range ticker {
+				fmt.Println(tick)
 
-			tm := time.Unix(int64(aggTrade.EventTime), 0)
-			p, _ := strconv.ParseFloat(aggTrade.Price, 64)
-			q, _ := strconv.ParseFloat(aggTrade.Quantity, 64)
+				//tradeEvent := evt.TradeEvent{
+				//	Exchange:   exchangeNames[md.ExCode],
+				//	Type:       md.Type,
+				//	EventTime:  md.TimeStamp,
+				//	MarketName: strings.Replace(md.Label, "/", "-", 1),
+				//	TradeID:    md.TradeID,
+				//	Price:      md.Price,
+				//	Quantity:   md.Quantity,
+				//	Total:      md.Total,
+				//}
 
-			exchangeEvent := ep.TradeEvent{
-				Exchange:   "Binance",
-				Type:       aggTrade.Type,
-				EventTime:  tm.String(),
-				MarketName: aggTrade.Symbol,
-				Price:      p,
-				Quantity:   q,
+				//tm := time.Unix(int64(ticker.EventTime), 0)
+				//p, _ := strconv.ParseFloat(ticker.ClosePrice, 64)
+				//q, _ := strconv.ParseFloat(ticker.Quantity, 64)
+
+				//exchangeEvent := ep.TradeEvent{
+				//	Exchange:   "Binance",
+				//	EventTime:  tm.String(),
+				//	MarketName: ticker.Symbol,
+				//	Price:      p,
+				//}
+
+				//fmt.Println(exchangeEvent)
+
+				// if err := bconn.Publisher.Publish(context.Background(), &exchangeEvent); err != nil {
+				// 	log.Println("publish warning: ", err, exchangeEvent)
+				// }
 			}
-
-			fmt.Println(exchangeEvent)
-
-			// if err := bconn.Publisher.Publish(context.Background(), &exchangeEvent); err != nil {
-			// 	log.Println("publish warning: ", err, exchangeEvent)
-			// }
 		}
 	}()
 
