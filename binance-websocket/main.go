@@ -1,16 +1,20 @@
 package main
 
 import (
+	"context"
 	"encoding/json"
 	"flag"
 	"fmt"
 	"log"
 	"os"
 	"os/signal"
+	"strconv"
+	"strings"
 	"sync"
 	"time"
 
 	msg "github.com/asciiu/gomo/common/messages"
+	evt "github.com/asciiu/gomo/common/proto/events"
 	"github.com/gorilla/websocket"
 	micro "github.com/micro/go-micro"
 )
@@ -94,35 +98,38 @@ func (bconn *BinanceConnection) Open(market string) {
 			}
 
 			for _, tick := range ticker {
-				fmt.Println(tick)
+				//tm := time.Unix(int64(tick.EventTime), 0)
+				p, _ := strconv.ParseFloat(tick.ClosePrice, 64)
 
-				//tradeEvent := evt.TradeEvent{
-				//	Exchange:   exchangeNames[md.ExCode],
-				//	Type:       md.Type,
-				//	EventTime:  md.TimeStamp,
-				//	MarketName: strings.Replace(md.Label, "/", "-", 1),
-				//	TradeID:    md.TradeID,
-				//	Price:      md.Price,
-				//	Quantity:   md.Quantity,
-				//	Total:      md.Total,
-				//}
+				// marketname must include hyphen
+				symbol := tick.Symbol
+				switch {
+				case strings.HasSuffix(symbol, "BTC"):
+					symbol = strings.Replace(symbol, "BTC", "", 1)
+					symbol = symbol + "-BTC"
+				case strings.HasSuffix(symbol, "USDT"):
+					symbol = strings.Replace(symbol, "USDT", "", 1)
+					symbol = symbol + "-USDT"
+				case strings.HasSuffix(symbol, "ETH"):
+					symbol = strings.Replace(symbol, "ETH", "", 1)
+					symbol = symbol + "-ETH"
+				case strings.HasSuffix(symbol, "BNB"):
+					symbol = strings.Replace(symbol, "BNB", "", 1)
+					symbol = symbol + "-BNB"
+				}
 
-				//tm := time.Unix(int64(ticker.EventTime), 0)
-				//p, _ := strconv.ParseFloat(ticker.ClosePrice, 64)
-				//q, _ := strconv.ParseFloat(ticker.Quantity, 64)
+				tickerEvent := evt.TradeEvent{
+					Exchange:   "Binance",
+					MarketName: symbol,
+					Price:      p,
+					//EventTime:  tm.String(),
+				}
 
-				//exchangeEvent := ep.TradeEvent{
-				//	Exchange:   "Binance",
-				//	EventTime:  tm.String(),
-				//	MarketName: ticker.Symbol,
-				//	Price:      p,
-				//}
+				//fmt.Println(tickerEvent)
 
-				//fmt.Println(exchangeEvent)
-
-				// if err := bconn.Publisher.Publish(context.Background(), &exchangeEvent); err != nil {
-				// 	log.Println("publish warning: ", err, exchangeEvent)
-				// }
+				if err := bconn.Publisher.Publish(context.Background(), &tickerEvent); err != nil {
+					log.Println("publish warning: ", err, tickerEvent)
+				}
 			}
 		}
 	}()
