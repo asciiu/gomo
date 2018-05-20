@@ -25,6 +25,12 @@ type SearchType struct {
 	// Required: false
 	// In: query
 	Type string `json:"type"`
+	// Required: false
+	// In: query
+	Page string `json:"page"`
+	// Required: false
+	// In: query
+	PageSize string `json:"pageSize"`
 }
 
 type NotificationController struct {
@@ -62,9 +68,6 @@ func (controller *NotificationController) HandleListNotifications(c echo.Context
 	// defaults for page and page size here
 	// ignore the errors and assume the values are int
 	page, _ := strconv.ParseUint(pageStr, 10, 32)
-	if page == 0 {
-		page = 1
-	}
 	pageSize, _ := strconv.ParseUint(pageSizeStr, 10, 32)
 	if pageSize == 0 {
 		pageSize = 20
