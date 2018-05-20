@@ -35,7 +35,7 @@ message Balance {
   double locked = 7;
   double exchangeTotal = 8;
   double exchangeAvailable = 9;
-  double exchangedLocked = 10; 
+  double exchangeLocked = 10; 
 }
 
 message UserBalanceData {
