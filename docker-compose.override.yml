@@ -3,19 +3,12 @@ version: '3.6'
 services:
 
   api:
-    build: ./api
     ports: 
       - 5000:5000
     environment:
       DB_URL: "postgres://fomo:fomornd@docker.for.mac.host.internal:6432/fomo_dev?&sslmode=disable"
       MICRO_REGISTRY: "mdns"
       GOMO_JWT: "jyVadHV5Z+tihp4ptuEvD2xXu6iWrFaSebYovtmzl0Cg4RDi1udp7qyme8ZZQl+A"
-    depends_on:
-      - key-service
-      - device-service
-      - order-service 
-      - user-service 
-      - database
 
   balance-service:
     build: ./balance-service

@@ -5,6 +5,12 @@ services:
 
   api:
     build: ./api
+    depends_on:
+      - key-service
+      - device-service
+      - order-service 
+      - user-service 
+      - database
   
   balance-service:
     build: ./balance-service
