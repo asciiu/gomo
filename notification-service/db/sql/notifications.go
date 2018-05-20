@@ -34,7 +34,7 @@ func FindNotificationsByType(db *sql.DB, req *notification.GetNotifcationsByType
 	query := `SELECT id, user_id, title, subtitle, description, timestamp, notification_type, 
 		object_id FROM notifications WHERE user_id = $1 and notification_type = $2 ORDER BY timestamp OFFSET $3 LIMIT $4`
 
-	rows, err := db.Query(query, req.UserID, req.NotificationType)
+	rows, err := db.Query(query, req.UserID, req.NotificationType, req.Page, req.PageSize)
 	if err != nil {
 		log.Fatal(err)
 		return nil, err
