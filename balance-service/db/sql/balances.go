@@ -15,7 +15,7 @@ func FindBalance(db *sql.DB, req *bp.GetUserBalanceRequest) (*bp.Balance, error)
 		exchange_locked FROM user_balances WHERE user_id = $1 and user_key_id = $2 and currency_name = $3`,
 		req.UserID, req.KeyID, req.Currency).
 		Scan(&b.ID, &b.ExchangeName, &b.Available, &b.Locked, &b.ExchangeTotal, &b.ExchangeAvailable,
-			&b.ExchangedLocked)
+			&b.ExchangeLocked)
 
 	b.UserID = req.UserID
 	b.KeyID = req.KeyID
@@ -44,7 +44,7 @@ func FindSymbolBalancesByUserID(db *sql.DB, req *bp.GetUserBalancesRequest) (*bp
 		b := bp.Balance{}
 
 		err := rows.Scan(&b.ID, &b.UserID, &b.KeyID, &b.ExchangeName, &b.CurrencyName, &b.Available,
-			&b.Locked, &b.ExchangeTotal, &b.ExchangeAvailable, &b.ExchangedLocked)
+			&b.Locked, &b.ExchangeTotal, &b.ExchangeAvailable, &b.ExchangeLocked)
 		if err != nil {
 			log.Fatal(err)
 			return nil, err
@@ -75,7 +75,7 @@ func FindAllBalancesByUserID(db *sql.DB, req *bp.GetUserBalancesRequest) (*bp.Ac
 		b := bp.Balance{}
 
 		err := rows.Scan(&b.ID, &b.UserID, &b.KeyID, &b.ExchangeName, &b.CurrencyName, &b.Available,
-			&b.Locked, &b.ExchangeTotal, &b.ExchangeAvailable, &b.ExchangedLocked)
+			&b.Locked, &b.ExchangeTotal, &b.ExchangeAvailable, &b.ExchangeLocked)
 		if err != nil {
 			log.Fatal(err)
 			return nil, err
@@ -106,7 +106,7 @@ func UpsertBalances(db *sql.DB, req *bp.AccountBalances) (int, error) {
 		total := available + locked
 
 		_, err := db.Exec(sqlStatement, newID, balance.UserID, balance.KeyID, balance.ExchangeName,
-			balance.CurrencyName, available, locked, total, balance.ExchangeAvailable, balance.ExchangedLocked)
+			balance.CurrencyName, available, locked, total, balance.ExchangeAvailable, balance.ExchangeLocked)
 
 		if err != nil {
 			return count, err
