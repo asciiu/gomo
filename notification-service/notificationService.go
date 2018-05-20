@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 
+	repo "github.com/asciiu/gomo/notification-service/db/sql"
 	notifications "github.com/asciiu/gomo/notification-service/proto"
 )
 
@@ -16,17 +17,15 @@ type NotificationService struct {
 // Therefore, return error in response object.
 func (service *NotificationService) GetUserNotificationsByType(ctx context.Context, req *notifications.GetNotifcationsByType, res *notifications.NotificationPagedResponse) error {
 
-	//keys, error := repo.FindKeysByUserID(service.DB, req)
+	pagedResult, error := repo.FindNotificationsByType(service.DB, req)
 
-	//switch {
-	//case error == nil:
-	//	res.Status = "success"
-	//	res.Data = &kp.UserKeysData{
-	//		Keys: keys,
-	//	}
-	//default:
-	//	res.Status = "error"
-	//	res.Message = error.Error()
-	//}
+	switch {
+	case error == nil:
+		res.Status = "success"
+		res.Data = pagedResult
+	default:
+		res.Status = "error"
+		res.Message = error.Error()
+	}
 	return nil
 }

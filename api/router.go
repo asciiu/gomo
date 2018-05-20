@@ -45,6 +45,7 @@ func NewRouter(db *sql.DB) *echo.Echo {
 	authController := controllers.NewAuthController(db)
 	balanceController := controllers.NewBalanceController(db)
 	deviceController := controllers.NewDeviceController(db)
+	notificationController := controllers.NewNotificationController()
 	orderController := controllers.NewOrderController(db)
 	sessionController := controllers.NewSessionController(db)
 	userController := controllers.NewUserController(db)
@@ -90,6 +91,9 @@ func NewRouter(db *sql.DB) *echo.Echo {
 	protectedApi.GET("/devices/:deviceID", deviceController.HandleGetDevice)
 	protectedApi.PUT("/devices/:deviceID", deviceController.HandleUpdateDevice)
 	protectedApi.DELETE("/devices/:deviceID", deviceController.HandleDeleteDevice)
+
+	// notifications
+	protectedApi.GET("/notifications", notificationController.HandleListNotifications)
 
 	// order management endpoints
 	protectedApi.GET("/orders", orderController.HandleListOrders)
