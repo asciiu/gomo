@@ -29,6 +29,11 @@ services:
       MICRO_ADDRESS: ":5001"
       MICRO_REGISTRY: "mdns"
 
+  binance-websocket: 
+    environment:
+      MICRO_ADDRESS: ":5001"
+      MICRO_REGISTRY: "mdns"
+
   bittrex-service: 
     build: ./bittrex-service
     ports:

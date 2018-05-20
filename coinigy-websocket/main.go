@@ -138,7 +138,7 @@ func NewCoinigyClient() (*scclient.Client, error) {
 	}
 
 	if err := client.Connect(); err != nil {
-		panic(err)
+		return nil, err
 	}
 
 	return client, nil
@@ -147,7 +147,7 @@ func NewCoinigyClient() (*scclient.Client, error) {
 func main() {
 	client, err := NewCoinigyClient()
 	if err != nil {
-		panic(err)
+		log.Fatal(err)
 	}
 
 	exs, err := exchanges(client)

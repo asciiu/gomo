@@ -1,13 +1,13 @@
 package main
 
 import (
-	"context"
 	"encoding/json"
 	"flag"
 	"fmt"
 	"log"
 	"os"
 	"os/signal"
+	"strconv"
 	"sync"
 	"time"
 
@@ -66,20 +66,35 @@ func (bconn *BinanceConnection) Open(market string) {
 				log.Println("nope")
 			}
 
+			//tradeEvent := evt.TradeEvent{
+			//	Exchange:   exchangeNames[md.ExCode],
+			//	Type:       md.Type,
+			//	EventTime:  md.TimeStamp,
+			//	MarketName: strings.Replace(md.Label, "/", "-", 1),
+			//	TradeID:    md.TradeID,
+			//	Price:      md.Price,
+			//	Quantity:   md.Quantity,
+			//	Total:      md.Total,
+			//}
+
+			tm := time.Unix(int64(aggTrade.EventTime), 0)
+			p, _ := strconv.ParseFloat(aggTrade.Price, 64)
+			q, _ := strconv.ParseFloat(aggTrade.Quantity, 64)
+
 			exchangeEvent := ep.TradeEvent{
-				Exchange: "Binance",
-				Type:     aggTrade.Type,
-				//EventTime:  aggTrade.EventTime,
+				Exchange:   "Binance",
+				Type:       aggTrade.Type,
+				EventTime:  tm.String(),
 				MarketName: aggTrade.Symbol,
-				//TradeID:    string(aggTrade.TradeID),
-				//Price:      aggTrade.Price,
-				//Quantity:   aggTrade.Quantity,
-				//TradeTime:  aggTrade.TradeTime,
+				Price:      p,
+				Quantity:   q,
 			}
 
-			if err := bconn.Publisher.Publish(context.Background(), &exchangeEvent); err != nil {
-				log.Println("publish warning: ", err, exchangeEvent)
-			}
+			fmt.Println(exchangeEvent)
+
+			// if err := bconn.Publisher.Publish(context.Background(), &exchangeEvent); err != nil {
+			// 	log.Println("publish warning: ", err, exchangeEvent)
+			// }
 		}
 	}()
 

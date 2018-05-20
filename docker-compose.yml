@@ -15,6 +15,9 @@ services:
   
   balance-service:
     build: ./balance-service
+  
+  binance-websocket:
+    build: ./binance-websocket
 
   binance-service: 
     build: ./binance-service
