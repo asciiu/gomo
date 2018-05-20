@@ -38,10 +38,10 @@ const _ = proto.ProtoPackageIsVersion2 // please upgrade the proto package
 
 // Requests
 type GetNotifcationsByType struct {
-	UserID           string `protobuf:"bytes,1,opt,name=userID" json:"userID,omitempty"`
-	NotificationType string `protobuf:"bytes,2,opt,name=notificationType" json:"notificationType,omitempty"`
-	Page             uint32 `protobuf:"varint,3,opt,name=page" json:"page,omitempty"`
-	PageSize         uint32 `protobuf:"varint,4,opt,name=pageSize" json:"pageSize,omitempty"`
+	UserID           string `protobuf:"bytes,1,opt,name=userID" json:"userID"`
+	NotificationType string `protobuf:"bytes,2,opt,name=notificationType" json:"notificationType"`
+	Page             uint32 `protobuf:"varint,3,opt,name=page" json:"page"`
+	PageSize         uint32 `protobuf:"varint,4,opt,name=pageSize" json:"pageSize"`
 }
 
 func (m *GetNotifcationsByType) Reset()                    { *m = GetNotifcationsByType{} }
@@ -79,14 +79,14 @@ func (m *GetNotifcationsByType) GetPageSize() uint32 {
 
 // Responses
 type Notification struct {
-	NotificationID   string `protobuf:"bytes,1,opt,name=notificationID" json:"notificationID,omitempty"`
-	NotificationType string `protobuf:"bytes,2,opt,name=notificationType" json:"notificationType,omitempty"`
-	UserID           string `protobuf:"bytes,3,opt,name=userID" json:"userID,omitempty"`
-	ObjectID         string `protobuf:"bytes,4,opt,name=objectID" json:"objectID,omitempty"`
-	Title            string `protobuf:"bytes,5,opt,name=title" json:"title,omitempty"`
-	Subtitle         string `protobuf:"bytes,6,opt,name=subtitle" json:"subtitle,omitempty"`
-	Description      string `protobuf:"bytes,7,opt,name=description" json:"description,omitempty"`
-	Timestamp        string `protobuf:"bytes,8,opt,name=timestamp" json:"timestamp,omitempty"`
+	NotificationID   string `protobuf:"bytes,1,opt,name=notificationID" json:"notificationID"`
+	NotificationType string `protobuf:"bytes,2,opt,name=notificationType" json:"notificationType"`
+	UserID           string `protobuf:"bytes,3,opt,name=userID" json:"userID"`
+	ObjectID         string `protobuf:"bytes,4,opt,name=objectID" json:"objectID"`
+	Title            string `protobuf:"bytes,5,opt,name=title" json:"title"`
+	Subtitle         string `protobuf:"bytes,6,opt,name=subtitle" json:"subtitle"`
+	Description      string `protobuf:"bytes,7,opt,name=description" json:"description"`
+	Timestamp        string `protobuf:"bytes,8,opt,name=timestamp" json:"timestamp"`
 }
 
 func (m *Notification) Reset()                    { *m = Notification{} }
@@ -151,10 +151,10 @@ func (m *Notification) GetTimestamp() string {
 }
 
 type UserNotificationsPage struct {
-	Page          uint32          `protobuf:"varint,1,opt,name=page" json:"page,omitempty"`
-	PageSize      uint32          `protobuf:"varint,2,opt,name=pageSize" json:"pageSize,omitempty"`
-	Total         uint32          `protobuf:"varint,3,opt,name=total" json:"total,omitempty"`
-	Notifications []*Notification `protobuf:"bytes,4,rep,name=notifications" json:"notifications,omitempty"`
+	Page          uint32          `protobuf:"varint,1,opt,name=page" json:"page"`
+	PageSize      uint32          `protobuf:"varint,2,opt,name=pageSize" json:"pageSize"`
+	Total         uint32          `protobuf:"varint,3,opt,name=total" json:"total"`
+	Notifications []*Notification `protobuf:"bytes,4,rep,name=notifications" json:"notifications"`
 }
 
 func (m *UserNotificationsPage) Reset()                    { *m = UserNotificationsPage{} }
@@ -191,9 +191,9 @@ func (m *UserNotificationsPage) GetNotifications() []*Notification {
 }
 
 type NotificationPagedResponse struct {
-	Status  string                 `protobuf:"bytes,1,opt,name=status" json:"status,omitempty"`
-	Message string                 `protobuf:"bytes,2,opt,name=message" json:"message,omitempty"`
-	Data    *UserNotificationsPage `protobuf:"bytes,3,opt,name=data" json:"data,omitempty"`
+	Status  string                 `protobuf:"bytes,1,opt,name=status" json:"status"`
+	Message string                 `protobuf:"bytes,2,opt,name=message" json:"message"`
+	Data    *UserNotificationsPage `protobuf:"bytes,3,opt,name=data" json:"data"`
 }
 
 func (m *NotificationPagedResponse) Reset()                    { *m = NotificationPagedResponse{} }
