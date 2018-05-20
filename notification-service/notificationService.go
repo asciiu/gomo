@@ -16,7 +16,6 @@ type NotificationService struct {
 // Can't return an error with a response object - response object is returned as nil when error is non nil.
 // Therefore, return error in response object.
 func (service *NotificationService) GetUserNotificationsByType(ctx context.Context, req *notifications.GetNotifcationsByType, res *notifications.NotificationPagedResponse) error {
-
 	pagedResult, error := repo.FindNotificationsByType(service.DB, req)
 
 	switch {
