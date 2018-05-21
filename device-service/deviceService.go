@@ -50,7 +50,7 @@ func (service *DeviceService) AddDevice(ctx context.Context, req *devices.AddDev
 		ureq := devices.UpdateDeviceRequest{
 			DeviceID:         device.DeviceID,
 			UserID:           req.UserID,
-			DeviceType:       req.DeviceToken,
+			DeviceType:       req.DeviceType,
 			DeviceToken:      req.DeviceToken,
 			ExternalDeviceID: req.ExternalDeviceID,
 		}
