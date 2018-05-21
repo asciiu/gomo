@@ -33,15 +33,30 @@ type DeviceRequest struct {
 // A ResponseDeviceSuccess will always contain a status of "successful".
 // swagger:model responseDeviceSuccess
 type ResponseDeviceSuccess struct {
-	Status string                  `json:"status"`
-	Data   *devices.UserDeviceData `json:"data"`
+	Status string          `json:"status"`
+	Data   *UserDeviceData `json:"data"`
 }
 
 // A ResponseDevicesSuccess will always contain a status of "successful".
 // swagger:model responseDevicesSuccess
 type ResponseDevicesSuccess struct {
-	Status string                   `json:"status"`
-	Data   *devices.UserDevicesData `json:"data"`
+	Status string           `json:"status"`
+	Data   *UserDevicesData `json:"data"`
+}
+
+type UserDeviceData struct {
+	Device *ApiDevice `json:"device`
+}
+
+type UserDevicesData struct {
+	Devices []*ApiDevice `json:"devices`
+}
+
+type ApiDevice struct {
+	DeviceID         string `json:"deviceID"`
+	ExternalDeviceID string `json:"externalDeviceID"`
+	DeviceType       string `json:"deviceType"`
+	DeviceToken      string `json:"deviceToken"`
 }
 
 func NewDeviceController(db *sql.DB) *DeviceController {
@@ -89,7 +104,14 @@ func (controller *DeviceController) HandleGetDevice(c echo.Context) error {
 
 	response := &ResponseDeviceSuccess{
 		Status: "success",
-		Data:   r.Data,
+		Data: &UserDeviceData{
+			Device: &ApiDevice{
+				DeviceID:         r.Data.Device.DeviceID,
+				ExternalDeviceID: r.Data.Device.ExternalDeviceID,
+				DeviceType:       r.Data.Device.DeviceType,
+				DeviceToken:      r.Data.Device.DeviceToken,
+			},
+		},
 	}
 
 	return c.JSON(http.StatusOK, response)
@@ -128,9 +150,21 @@ func (controller *DeviceController) HandleListDevices(c echo.Context) error {
 		}
 	}
 
+	data := make([]*ApiDevice, len(r.Data.Devices))
+	for i, device := range r.Data.Devices {
+		data[i] = &ApiDevice{
+			DeviceID:         device.DeviceID,
+			ExternalDeviceID: device.ExternalDeviceID,
+			DeviceType:       device.DeviceType,
+			DeviceToken:      device.DeviceToken,
+		}
+	}
+
 	response := &ResponseDevicesSuccess{
 		Status: "success",
-		Data:   r.Data,
+		Data: &UserDevicesData{
+			Devices: data,
+		},
 	}
 
 	return c.JSON(http.StatusOK, response)
@@ -197,7 +231,14 @@ func (controller *DeviceController) HandlePostDevice(c echo.Context) error {
 
 	response := &ResponseDeviceSuccess{
 		Status: "success",
-		Data:   r.Data,
+		Data: &UserDeviceData{
+			Device: &ApiDevice{
+				DeviceID:         r.Data.Device.DeviceID,
+				ExternalDeviceID: r.Data.Device.ExternalDeviceID,
+				DeviceType:       r.Data.Device.DeviceType,
+				DeviceToken:      r.Data.Device.DeviceToken,
+			},
+		},
 	}
 
 	return c.JSON(http.StatusOK, response)
@@ -265,7 +306,14 @@ func (controller *DeviceController) HandleUpdateDevice(c echo.Context) error {
 
 	response := &ResponseDeviceSuccess{
 		Status: "success",
-		Data:   r.Data,
+		Data: &UserDeviceData{
+			Device: &ApiDevice{
+				DeviceID:         r.Data.Device.DeviceID,
+				ExternalDeviceID: r.Data.Device.ExternalDeviceID,
+				DeviceType:       r.Data.Device.DeviceType,
+				DeviceToken:      r.Data.Device.DeviceToken,
+			},
+		},
 	}
 
 	return c.JSON(http.StatusOK, response)
