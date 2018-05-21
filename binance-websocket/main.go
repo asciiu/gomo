@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"flag"
-	"fmt"
 	"log"
 	"os"
 	"os/signal"
@@ -93,7 +92,6 @@ func (bconn *BinanceConnection) Open(market string) {
 
 			//aggTrade := BinanceAggTrade{}
 			ticker := []*BinanceTicker{}
-			fmt.Println(message)
 			if err = json.Unmarshal(message, &ticker); err != nil {
 				log.Fatal("dial:", err)
 			}
