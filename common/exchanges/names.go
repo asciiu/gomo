@@ -1,13 +1,13 @@
 package exchanges
 
 // Binance
-const Binance = "Binance"
+const Binance = "binance"
 
 // Bittrex
-const Bittrex = "Bittrex"
+const Bittrex = "bittrex"
 
 // Kucoin
-const Kucoin = "Kucoin"
+const Kucoin = "kucoin"
 
 // Poloniex
-const Poloniex = "Poloniex"
+const Poloniex = "poloniex"
