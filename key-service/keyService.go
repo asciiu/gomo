@@ -7,6 +7,8 @@ import (
 	"log"
 	"strings"
 
+	"github.com/asciiu/gomo/common/exchanges"
+
 	repo "github.com/asciiu/gomo/key-service/db/sql"
 	kp "github.com/asciiu/gomo/key-service/proto/key"
 	micro "github.com/micro/go-micro"
@@ -17,10 +19,31 @@ type KeyService struct {
 	KeyPub micro.Publisher
 }
 
+// IMPORTANT! When adding support for new exchanges we must add there names here!
+// TODO: read these from a config or from the DB
+var supported = [...]string{exchanges.Binance}
+
+func stringInSupported(a string) bool {
+	for _, b := range supported {
+		if b == a {
+			return true
+		}
+	}
+	return false
+}
+
 // AddKey returns error to conform to protobuf def, but the error will always be returned as nil.
 // Can't return an error with a response object - response object is returned as nil when error is non nil.
 // Therefore, return error in response object.
 func (service *KeyService) AddKey(ctx context.Context, req *kp.KeyRequest, res *kp.KeyResponse) error {
+
+	// supported exchange keys check
+	if !stringInSupported(req.Exchange) {
+		res.Status = "fail"
+		res.Message = fmt.Sprintln("%s is not a supported exchange", req.Exchange)
+		return nil
+	}
+
 	apiKey, error := repo.InsertKey(service.DB, req)
 
 	switch {

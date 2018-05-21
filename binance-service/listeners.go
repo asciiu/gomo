@@ -72,7 +72,7 @@ func (service *KeyValidator) Process(ctx context.Context, key *kp.Key) error {
 				Locked:            balance.Locked,
 				ExchangeTotal:     total,
 				ExchangeAvailable: balance.Free,
-				ExchangedLocked:   balance.Locked,
+				ExchangeLocked:    balance.Locked,
 			}
 			balances = append(balances, &bal)
 		}
