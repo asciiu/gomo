@@ -26,12 +26,15 @@ type ResponseMarkets struct {
 }
 
 type Market struct {
-	Exchange       string  `json:"exchange"`
-	Type           string  `json:"type"`
-	MarketName     string  `json:"marketName"`
-	BaseCurrency   string  `json:"baseCurrency"`
-	MarketCurrency string  `json:"marketCurrency"`
-	Price          float64 `json:"price"`
+	BaseCurrency       string `json:"baseCurrency"`
+	BaseCurrencyLong   string `json:"baseCurrencyLong"`
+	Exchange           string `json:"exchange"`
+	ExchangeMarketName string `json:"exchangeMarketName"`
+	MarketCurrency     string `json:"marketCurrency"`
+	MarketCurrencyLong string `json:"marketCurrencyLong"`
+	MarketName         string `json:"marketName"`
+	MarketPrice        string `json:"marketPrice"`
+	MinTradeSize       string `json:"minTradeSize"`
 }
 
 // This struct is used in the generated swagger docs,
@@ -106,17 +109,22 @@ func (controller *SearchController) Search(c echo.Context) error {
 // ProcessEvent will process ExchangeEvents. These events are published from the exchange sockets.
 func (controller *SearchController) ProcessEvent(ctx context.Context, event *evt.TradeEvent) error {
 	names := strings.Split(event.MarketName, "-")
-	marketCurrency := controller.currencies[names[0]]
-	baseCurrency := controller.currencies[names[1]]
+	baseCurrency := names[1]
+	baseCurrencyName := controller.currencies[baseCurrency]
+	marketCurrency := names[0]
+	marketCurrencyName := controller.currencies[marketCurrency]
 
 	// shorten trade event
 	tevent := Market{
-		Exchange:       event.Exchange,
-		Type:           event.Type,
-		MarketName:     event.MarketName,
-		BaseCurrency:   baseCurrency,
-		MarketCurrency: marketCurrency,
-		Price:          event.Price,
+		BaseCurrency:       baseCurrency,
+		BaseCurrencyLong:   baseCurrencyName,
+		Exchange:           event.Exchange,
+		ExchangeMarketName: names[0] + names[1],
+		MarketCurrency:     marketCurrency,
+		MarketCurrencyLong: marketCurrencyName,
+		MarketName:         event.MarketName,
+		MarketPrice:        fmt.Sprintf("%.8f", event.Price),
+		MinTradeSize:       "0.0001",
 	}
 
 	key := fmt.Sprintf("%s-%s", event.Exchange, event.MarketName)
