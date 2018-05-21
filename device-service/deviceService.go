@@ -3,7 +3,6 @@ package main
 import (
 	"context"
 	"database/sql"
-	"strings"
 
 	deviceRepo "github.com/asciiu/gomo/device-service/db/sql"
 	devices "github.com/asciiu/gomo/device-service/proto/device"
@@ -17,29 +16,65 @@ type DeviceService struct {
 // Can't return an error with a response object - response object is returned as nil when error is non nil.
 // Therefore, return error in response object.
 func (service *DeviceService) AddDevice(ctx context.Context, req *devices.AddDeviceRequest, res *devices.DeviceResponse) error {
-	device, error := deviceRepo.InsertDevice(service.DB, req)
+	mreq := devices.GetDeviceMatchRequest{
+		UserID:           req.UserID,
+		DeviceType:       req.DeviceToken,
+		DeviceToken:      req.DeviceToken,
+		ExternalDeviceID: req.ExternalDeviceID,
+	}
+
+	device, error := deviceRepo.FindDeviceMatch(service.DB, &mreq)
 
 	switch {
-	case strings.Contains(error.Error(), "user_devices_device_id_device_type_device_token_key"):
-		res.Status = "fail"
-		res.Message = "device already registered"
 
-	case error == nil:
-		res.Status = "success"
-		res.Data = &devices.UserDeviceData{
-			Device: &devices.Device{
-				DeviceID:         device.DeviceID,
-				UserID:           device.UserID,
-				ExternalDeviceID: device.ExternalDeviceID,
-				DeviceType:       device.DeviceType,
-				DeviceToken:      device.DeviceToken,
-			},
+	case error == sql.ErrNoRows:
+		// there were no matches found therefore insert it
+		di, error := deviceRepo.InsertDevice(service.DB, req)
+		switch {
+		case error == nil:
+			res.Status = "success"
+			res.Data = &devices.UserDeviceData{
+				Device: &devices.Device{
+					DeviceID:         di.DeviceID,
+					UserID:           di.UserID,
+					ExternalDeviceID: di.ExternalDeviceID,
+					DeviceType:       di.DeviceType,
+					DeviceToken:      di.DeviceToken,
+				},
+			}
+		default:
+			res.Status = "error"
+			res.Message = error.Error()
 		}
 
-	default:
-		res.Status = "error"
-		res.Message = error.Error()
+	case device != nil:
+		// device match found update the device
+		ureq := devices.UpdateDeviceRequest{
+			DeviceID:         device.DeviceID,
+			UserID:           req.UserID,
+			DeviceType:       req.DeviceToken,
+			DeviceToken:      req.DeviceToken,
+			ExternalDeviceID: req.ExternalDeviceID,
+		}
+		du, error := deviceRepo.UpdateDevice(service.DB, &ureq)
+		switch {
+		case error == nil:
+			res.Status = "success"
+			res.Data = &devices.UserDeviceData{
+				Device: &devices.Device{
+					DeviceID:         du.DeviceID,
+					UserID:           du.UserID,
+					ExternalDeviceID: du.ExternalDeviceID,
+					DeviceType:       du.DeviceType,
+					DeviceToken:      du.DeviceToken,
+				},
+			}
+		default:
+			res.Status = "error"
+			res.Message = error.Error()
+		}
 	}
+
 	return nil
 }
 

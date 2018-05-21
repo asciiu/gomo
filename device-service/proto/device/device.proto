@@ -23,6 +23,13 @@ message GetUserDeviceRequest {
   string deviceID = 2;
 }
 
+message GetDeviceMatchRequest {
+  string userID = 1;
+  string deviceType = 2;
+  string externalDeviceID = 3;
+  string deviceToken = 4;
+}
+
 message GetUserDevicesRequest {
     string userID = 1;
 }

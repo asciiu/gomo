@@ -24,6 +24,20 @@ func FindDeviceByDeviceID(db *sql.DB, req *pb.GetUserDeviceRequest) (*pb.Device,
 	return &d, nil
 }
 
+func FindDeviceMatch(db *sql.DB, req *pb.GetDeviceMatchRequest) (*pb.Device, error) {
+	var d pb.Device
+	query := `SELECT id, user_id, device_id, device_type, device_token 
+		FROM user_devices WHERE user_id = $1 and device_type = $2 and device_id = $3
+		and device_token = $4`
+	err := db.QueryRow(query, req.UserID, req.DeviceType, req.ExternalDeviceID, req.DeviceToken).
+		Scan(&d.DeviceID, &d.UserID, &d.ExternalDeviceID, &d.DeviceType, &d.DeviceToken)
+
+	if err != nil {
+		return nil, err
+	}
+	return &d, nil
+}
+
 func FindDevicesByUserID(db *sql.DB, req *pb.GetUserDevicesRequest) ([]*pb.Device, error) {
 	results := make([]*pb.Device, 0)
 
