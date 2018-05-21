@@ -18,15 +18,13 @@ type DeviceService struct {
 func (service *DeviceService) AddDevice(ctx context.Context, req *devices.AddDeviceRequest, res *devices.DeviceResponse) error {
 	mreq := devices.GetDeviceMatchRequest{
 		UserID:           req.UserID,
-		DeviceType:       req.DeviceToken,
+		DeviceType:       req.DeviceType,
 		DeviceToken:      req.DeviceToken,
 		ExternalDeviceID: req.ExternalDeviceID,
 	}
 
 	device, error := deviceRepo.FindDeviceMatch(service.DB, &mreq)
-
 	switch {
-
 	case error == sql.ErrNoRows:
 		// there were no matches found therefore insert it
 		di, error := deviceRepo.InsertDevice(service.DB, req)
