@@ -45,11 +45,11 @@ type ResponseDevicesSuccess struct {
 }
 
 type UserDeviceData struct {
-	Device *ApiDevice `json:"device`
+	Device *ApiDevice `json:"device"`
 }
 
 type UserDevicesData struct {
-	Devices []*ApiDevice `json:"devices`
+	Devices []*ApiDevice `json:"devices"`
 }
 
 type ApiDevice struct {
