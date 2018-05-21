@@ -43,15 +43,31 @@ type UpdateKeyRequest struct {
 // A ResponseKeySuccess will always contain a status of "successful".
 // swagger:model responseKeySuccess
 type ResponseKeySuccess struct {
-	Status string            `json:"status"`
-	Data   *keys.UserKeyData `json:"data"`
+	Status string       `json:"status"`
+	Data   *UserKeyData `json:"data"`
 }
 
 // A ResponseKeysSuccess will always contain a status of "successful".
 // swagger:model responseKeysSuccess
 type ResponseKeysSuccess struct {
-	Status string             `json:"status"`
-	Data   *keys.UserKeysData `json:"data"`
+	Status string        `json:"status"`
+	Data   *UserKeysData `json:"data"`
+}
+
+type UserKeyData struct {
+	Key *Key `json:"key"`
+}
+
+type UserKeysData struct {
+	Keys []*Key `json:"keys"`
+}
+
+type Key struct {
+	KeyID       string `json:"keyID"`
+	Exchange    string `json:"exchange"`
+	Key         string `json:"key"`
+	Description string `json:"description"`
+	Status      string `json:"status"`
 }
 
 func NewKeyController(db *sql.DB) *KeyController {
@@ -106,8 +122,8 @@ func (controller *KeyController) HandleGetKey(c echo.Context) error {
 
 	response := &ResponseKeySuccess{
 		Status: "success",
-		Data: &keys.UserKeyData{
-			Key: &keys.Key{
+		Data: &UserKeyData{
+			Key: &Key{
 				KeyID:       r.Data.Key.KeyID,
 				Exchange:    r.Data.Key.Exchange,
 				Key:         r.Data.Key.Key,
@@ -153,10 +169,10 @@ func (controller *KeyController) HandleListKeys(c echo.Context) error {
 		}
 	}
 
-	data := make([]*keys.Key, len(r.Data.Keys))
+	data := make([]*Key, len(r.Data.Keys))
 	for i, key := range r.Data.Keys {
 		// api removes the secret
-		data[i] = &keys.Key{
+		data[i] = &Key{
 			KeyID:       key.KeyID,
 			Exchange:    key.Exchange,
 			Key:         key.Key,
@@ -167,7 +183,7 @@ func (controller *KeyController) HandleListKeys(c echo.Context) error {
 
 	response := &ResponseKeysSuccess{
 		Status: "success",
-		Data: &keys.UserKeysData{
+		Data: &UserKeysData{
 			Keys: data,
 		},
 	}
@@ -236,7 +252,15 @@ func (controller *KeyController) HandlePostKey(c echo.Context) error {
 
 	response := &ResponseKeySuccess{
 		Status: "success",
-		Data:   r.Data,
+		Data: &UserKeyData{
+			Key: &Key{
+				KeyID:       r.Data.Key.KeyID,
+				Exchange:    r.Data.Key.Exchange,
+				Key:         r.Data.Key.Key,
+				Description: r.Data.Key.Description,
+				Status:      r.Data.Key.Status,
+			},
+		},
 	}
 
 	return c.JSON(http.StatusOK, response)
@@ -294,7 +318,15 @@ func (controller *KeyController) HandleUpdateKey(c echo.Context) error {
 
 	response := &ResponseKeySuccess{
 		Status: "success",
-		Data:   r.Data,
+		Data: &UserKeyData{
+			Key: &Key{
+				KeyID:       r.Data.Key.KeyID,
+				Exchange:    r.Data.Key.Exchange,
+				Key:         r.Data.Key.Key,
+				Description: r.Data.Key.Description,
+				Status:      r.Data.Key.Status,
+			},
+		},
 	}
 
 	return c.JSON(http.StatusOK, response)
