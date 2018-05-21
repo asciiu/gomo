@@ -65,6 +65,10 @@ func (service *KeyService) AddKey(ctx context.Context, req *kp.KeyRequest, res *
 			},
 		}
 
+	case strings.Contains(error.Error(), "user_keys_api_key_secret_key"):
+		res.Status = "fail"
+		res.Message = "key/secret pair already exists"
+
 	default:
 		res.Status = "error"
 		res.Message = error.Error()
