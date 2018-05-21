@@ -7,7 +7,8 @@ const (
 	Binance         Exchange = 0
 	Bittrex         Exchange = 1
 	Poloniex        Exchange = 2
-	UnknownExchange Exchange = 3
+	Kucoin          Exchange = 3
+	UnknownExchange Exchange = 4
 )
 
 const (
@@ -18,11 +19,13 @@ const (
 
 func NewExchange(ex string) Exchange {
 	switch ex {
-	case "Binance":
+	case "binance":
 		return Binance
-	case "Bittrex":
+	case "bittrex":
 		return Bittrex
-	case "Poloniex":
+	case "kucoin":
+		return Kucoin
+	case "poloniex":
 		return Poloniex
 	default:
 		return UnknownExchange
@@ -32,10 +35,10 @@ func NewExchange(ex string) Exchange {
 func (exchange Exchange) String() string {
 	// ... operator counts how many items in the array
 	names := [...]string{
-		"Binance",
-		"Bittrex",
-		"Poloniex",
-		"Cryptopia"}
+		"binance",
+		"bittrex",
+		"kucoin",
+		"poloniex"}
 	// → `day`: It's one of the
 	// values of Weekday constants.
 	// If the constant is Sunday,

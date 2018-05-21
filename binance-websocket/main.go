@@ -13,6 +13,7 @@ import (
 	"sync"
 	"time"
 
+	exchanges "github.com/asciiu/gomo/common/exchanges"
 	msg "github.com/asciiu/gomo/common/messages"
 	evt "github.com/asciiu/gomo/common/proto/events"
 	"github.com/gorilla/websocket"
@@ -119,7 +120,7 @@ func (bconn *BinanceConnection) Open(market string) {
 				}
 
 				tickerEvent := evt.TradeEvent{
-					Exchange:   "Binance",
+					Exchange:   exchanges.Binance,
 					MarketName: symbol,
 					Price:      p,
 					//EventTime:  tm.String(),

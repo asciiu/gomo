@@ -173,7 +173,7 @@ func main() {
 			continue
 		}
 
-		exchangeNames[e.ExCode] = e.ExName
+		exchangeNames[e.ExCode] = strings.ToLower(e.ExName)
 
 		for _, c := range e.Channels {
 			if strings.Contains(c.ChannelName, "TRADE") {
