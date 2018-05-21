@@ -45,10 +45,10 @@ const _ = proto.ProtoPackageIsVersion2 // please upgrade the proto package
 
 // Requests
 type AddDeviceRequest struct {
-	UserID           string `protobuf:"bytes,1,opt,name=userID" json:"userID,omitempty"`
-	DeviceType       string `protobuf:"bytes,2,opt,name=deviceType" json:"deviceType,omitempty"`
-	ExternalDeviceID string `protobuf:"bytes,3,opt,name=externalDeviceID" json:"externalDeviceID,omitempty"`
-	DeviceToken      string `protobuf:"bytes,4,opt,name=deviceToken" json:"deviceToken,omitempty"`
+	UserID           string `protobuf:"bytes,1,opt,name=userID" json:"userID"`
+	DeviceType       string `protobuf:"bytes,2,opt,name=deviceType" json:"deviceType"`
+	ExternalDeviceID string `protobuf:"bytes,3,opt,name=externalDeviceID" json:"externalDeviceID"`
+	DeviceToken      string `protobuf:"bytes,4,opt,name=deviceToken" json:"deviceToken"`
 }
 
 func (m *AddDeviceRequest) Reset()                    { *m = AddDeviceRequest{} }
@@ -85,8 +85,8 @@ func (m *AddDeviceRequest) GetDeviceToken() string {
 }
 
 type GetUserDeviceRequest struct {
-	UserID   string `protobuf:"bytes,1,opt,name=userID" json:"userID,omitempty"`
-	DeviceID string `protobuf:"bytes,2,opt,name=deviceID" json:"deviceID,omitempty"`
+	UserID   string `protobuf:"bytes,1,opt,name=userID" json:"userID"`
+	DeviceID string `protobuf:"bytes,2,opt,name=deviceID" json:"deviceID"`
 }
 
 func (m *GetUserDeviceRequest) Reset()                    { *m = GetUserDeviceRequest{} }
@@ -109,10 +109,10 @@ func (m *GetUserDeviceRequest) GetDeviceID() string {
 }
 
 type GetDeviceMatchRequest struct {
-	UserID           string `protobuf:"bytes,1,opt,name=userID" json:"userID,omitempty"`
-	DeviceType       string `protobuf:"bytes,2,opt,name=deviceType" json:"deviceType,omitempty"`
-	ExternalDeviceID string `protobuf:"bytes,3,opt,name=externalDeviceID" json:"externalDeviceID,omitempty"`
-	DeviceToken      string `protobuf:"bytes,4,opt,name=deviceToken" json:"deviceToken,omitempty"`
+	UserID           string `protobuf:"bytes,1,opt,name=userID" json:"userID"`
+	DeviceType       string `protobuf:"bytes,2,opt,name=deviceType" json:"deviceType"`
+	ExternalDeviceID string `protobuf:"bytes,3,opt,name=externalDeviceID" json:"externalDeviceID"`
+	DeviceToken      string `protobuf:"bytes,4,opt,name=deviceToken" json:"deviceToken"`
 }
 
 func (m *GetDeviceMatchRequest) Reset()                    { *m = GetDeviceMatchRequest{} }
@@ -149,7 +149,7 @@ func (m *GetDeviceMatchRequest) GetDeviceToken() string {
 }
 
 type GetUserDevicesRequest struct {
-	UserID string `protobuf:"bytes,1,opt,name=userID" json:"userID,omitempty"`
+	UserID string `protobuf:"bytes,1,opt,name=userID" json:"userID"`
 }
 
 func (m *GetUserDevicesRequest) Reset()                    { *m = GetUserDevicesRequest{} }
@@ -165,8 +165,8 @@ func (m *GetUserDevicesRequest) GetUserID() string {
 }
 
 type RemoveDeviceRequest struct {
-	UserID   string `protobuf:"bytes,1,opt,name=userID" json:"userID,omitempty"`
-	DeviceID string `protobuf:"bytes,2,opt,name=deviceID" json:"deviceID,omitempty"`
+	UserID   string `protobuf:"bytes,1,opt,name=userID" json:"userID"`
+	DeviceID string `protobuf:"bytes,2,opt,name=deviceID" json:"deviceID"`
 }
 
 func (m *RemoveDeviceRequest) Reset()                    { *m = RemoveDeviceRequest{} }
@@ -189,11 +189,11 @@ func (m *RemoveDeviceRequest) GetDeviceID() string {
 }
 
 type UpdateDeviceRequest struct {
-	DeviceID         string `protobuf:"bytes,1,opt,name=deviceID" json:"deviceID,omitempty"`
-	UserID           string `protobuf:"bytes,2,opt,name=userID" json:"userID,omitempty"`
-	ExternalDeviceID string `protobuf:"bytes,3,opt,name=externalDeviceID" json:"externalDeviceID,omitempty"`
-	DeviceType       string `protobuf:"bytes,4,opt,name=deviceType" json:"deviceType,omitempty"`
-	DeviceToken      string `protobuf:"bytes,5,opt,name=deviceToken" json:"deviceToken,omitempty"`
+	DeviceID         string `protobuf:"bytes,1,opt,name=deviceID" json:"deviceID"`
+	UserID           string `protobuf:"bytes,2,opt,name=userID" json:"userID"`
+	ExternalDeviceID string `protobuf:"bytes,3,opt,name=externalDeviceID" json:"externalDeviceID"`
+	DeviceType       string `protobuf:"bytes,4,opt,name=deviceType" json:"deviceType"`
+	DeviceToken      string `protobuf:"bytes,5,opt,name=deviceToken" json:"deviceToken"`
 }
 
 func (m *UpdateDeviceRequest) Reset()                    { *m = UpdateDeviceRequest{} }
@@ -238,11 +238,11 @@ func (m *UpdateDeviceRequest) GetDeviceToken() string {
 
 // Responses
 type Device struct {
-	DeviceID         string `protobuf:"bytes,1,opt,name=deviceID" json:"deviceID,omitempty"`
-	UserID           string `protobuf:"bytes,2,opt,name=userID" json:"userID,omitempty"`
-	ExternalDeviceID string `protobuf:"bytes,3,opt,name=externalDeviceID" json:"externalDeviceID,omitempty"`
-	DeviceType       string `protobuf:"bytes,4,opt,name=deviceType" json:"deviceType,omitempty"`
-	DeviceToken      string `protobuf:"bytes,5,opt,name=deviceToken" json:"deviceToken,omitempty"`
+	DeviceID         string `protobuf:"bytes,1,opt,name=deviceID" json:"deviceID"`
+	UserID           string `protobuf:"bytes,2,opt,name=userID" json:"userID"`
+	ExternalDeviceID string `protobuf:"bytes,3,opt,name=externalDeviceID" json:"externalDeviceID"`
+	DeviceType       string `protobuf:"bytes,4,opt,name=deviceType" json:"deviceType"`
+	DeviceToken      string `protobuf:"bytes,5,opt,name=deviceToken" json:"deviceToken"`
 }
 
 func (m *Device) Reset()                    { *m = Device{} }
@@ -286,7 +286,7 @@ func (m *Device) GetDeviceToken() string {
 }
 
 type UserDeviceData struct {
-	Device *Device `protobuf:"bytes,1,opt,name=device" json:"device,omitempty"`
+	Device *Device `protobuf:"bytes,1,opt,name=device" json:"device"`
 }
 
 func (m *UserDeviceData) Reset()                    { *m = UserDeviceData{} }
@@ -302,7 +302,7 @@ func (m *UserDeviceData) GetDevice() *Device {
 }
 
 type UserDevicesData struct {
-	Devices []*Device `protobuf:"bytes,1,rep,name=devices" json:"devices,omitempty"`
+	Devices []*Device `protobuf:"bytes,1,rep,name=devices" json:"devices"`
 }
 
 func (m *UserDevicesData) Reset()                    { *m = UserDevicesData{} }
@@ -318,9 +318,9 @@ func (m *UserDevicesData) GetDevices() []*Device {
 }
 
 type DeviceResponse struct {
-	Status  string          `protobuf:"bytes,1,opt,name=status" json:"status,omitempty"`
-	Message string          `protobuf:"bytes,2,opt,name=message" json:"message,omitempty"`
-	Data    *UserDeviceData `protobuf:"bytes,3,opt,name=data" json:"data,omitempty"`
+	Status  string          `protobuf:"bytes,1,opt,name=status" json:"status"`
+	Message string          `protobuf:"bytes,2,opt,name=message" json:"message"`
+	Data    *UserDeviceData `protobuf:"bytes,3,opt,name=data" json:"data"`
 }
 
 func (m *DeviceResponse) Reset()                    { *m = DeviceResponse{} }
@@ -350,9 +350,9 @@ func (m *DeviceResponse) GetData() *UserDeviceData {
 }
 
 type DeviceListResponse struct {
-	Status  string           `protobuf:"bytes,1,opt,name=status" json:"status,omitempty"`
-	Message string           `protobuf:"bytes,2,opt,name=message" json:"message,omitempty"`
-	Data    *UserDevicesData `protobuf:"bytes,3,opt,name=data" json:"data,omitempty"`
+	Status  string           `protobuf:"bytes,1,opt,name=status" json:"status"`
+	Message string           `protobuf:"bytes,2,opt,name=message" json:"message"`
+	Data    *UserDevicesData `protobuf:"bytes,3,opt,name=data" json:"data"`
 }
 
 func (m *DeviceListResponse) Reset()                    { *m = DeviceListResponse{} }
