@@ -14,8 +14,8 @@ import (
 // A ResponseBalancesSuccess will always contain a status of "successful".
 // swagger:model responseBalancesSuccess
 type ResponseBalancesSuccess struct {
-	Status string                    `json:"status"`
-	Data   *balances.AccountBalances `json:"data"`
+	Status string           `json:"status"`
+	Data   *AccountBalances `json:"data"`
 }
 
 // This struct is used in the generated swagger docs,
@@ -25,6 +25,22 @@ type SearchSymbol struct {
 	// Required: false
 	// In: query
 	Symbol string `json:"symbol"`
+}
+
+type AccountBalances struct {
+	Balances []*Balance `json:"balances"`
+}
+
+type Balance struct {
+	BalanceID         string  `json:"balanceID"`
+	KeyID             string  `json:"keyID"`
+	ExchangeName      string  `json:"exchange"`
+	CurrencyName      string  `json:"currencyName"`
+	Available         float64 `json:"available"`
+	Locked            float64 `json:"locked"`
+	ExchangeTotal     float64 `json:"exchangeTotal"`
+	ExchangeAvailable float64 `json:"exchangeAvailable"`
+	ExchangeLocked    float64 `json:"exchangeLocked"`
 }
 
 type BalanceController struct {
@@ -87,9 +103,27 @@ func (controller *BalanceController) HandleGetBalances(c echo.Context) error {
 		}
 	}
 
+	data := make([]*Balance, len(r.Data.Balances))
+	for i, balance := range r.Data.Balances {
+		// api removes the secret
+		data[i] = &Balance{
+			BalanceID:         balance.ID,
+			KeyID:             balance.KeyID,
+			ExchangeName:      balance.ExchangeName,
+			CurrencyName:      balance.CurrencyName,
+			Available:         balance.Available,
+			Locked:            balance.Locked,
+			ExchangeTotal:     balance.ExchangeTotal,
+			ExchangeAvailable: balance.ExchangeAvailable,
+			ExchangeLocked:    balance.ExchangeLocked,
+		}
+	}
+
 	response := &ResponseBalancesSuccess{
 		Status: "success",
-		Data:   r.Data,
+		Data: &AccountBalances{
+			Balances: data,
+		},
 	}
 
 	return c.JSON(http.StatusOK, response)
