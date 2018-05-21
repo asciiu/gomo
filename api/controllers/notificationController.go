@@ -38,7 +38,7 @@ type NotificationController struct {
 }
 
 func NewNotificationController() *NotificationController {
-	service := micro.NewService(micro.Name("balance.client"))
+	service := micro.NewService(micro.Name("notification.client"))
 	service.Init()
 
 	controller := NotificationController{

@@ -491,6 +491,44 @@
         }
       }
     },
+    "/notifications": {
+      "get": {
+        "description": "Returns a list of notifications.",
+        "tags": [
+          "notifications"
+        ],
+        "summary": "get notifications (protected)",
+        "operationId": "searchNotifications",
+        "parameters": [
+          {
+            "type": "string",
+            "x-go-name": "Type",
+            "name": "type",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "x-go-name": "Page",
+            "name": "page",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "x-go-name": "PageSize",
+            "name": "pageSize",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "\"data\" will contain array of notifications with \"status\": \"success\"",
+            "schema": {
+              "$ref": "#/definitions/responseNotificationSuccess"
+            }
+          }
+        }
+      }
+    },
     "/orders": {
       "get": {
         "description": "Currently returns all orders. Eventually going to add params to filter orders.",
@@ -1028,7 +1066,29 @@
           "x-go-name": "Balances"
         }
       },
-      "x-go-package": "github.com/asciiu/gomo/balance-service/proto/balance"
+      "x-go-package": "github.com/asciiu/gomo/api/controllers"
+    },
+    "ApiDevice": {
+      "type": "object",
+      "properties": {
+        "deviceID": {
+          "type": "string",
+          "x-go-name": "DeviceID"
+        },
+        "deviceToken": {
+          "type": "string",
+          "x-go-name": "DeviceToken"
+        },
+        "deviceType": {
+          "type": "string",
+          "x-go-name": "DeviceType"
+        },
+        "externalDeviceID": {
+          "type": "string",
+          "x-go-name": "ExternalDeviceID"
+        }
+      },
+      "x-go-package": "github.com/asciiu/gomo/api/controllers"
     },
     "AuthController": {
       "type": "object",
@@ -1052,39 +1112,39 @@
       "x-go-package": "github.com/asciiu/gomo/api/controllers"
     },
     "Balance": {
-      "description": "Responses",
       "type": "object",
       "properties": {
-        "ID": {
-          "type": "string"
-        },
         "available": {
           "type": "number",
           "format": "double",
           "x-go-name": "Available"
         },
+        "balanceID": {
+          "type": "string",
+          "x-go-name": "BalanceID"
+        },
         "currencyName": {
           "type": "string",
           "x-go-name": "CurrencyName"
+        },
+        "exchange": {
+          "type": "string",
+          "x-go-name": "ExchangeName"
         },
         "exchangeAvailable": {
           "type": "number",
           "format": "double",
           "x-go-name": "ExchangeAvailable"
         },
-        "exchangeName": {
-          "type": "string",
-          "x-go-name": "ExchangeName"
+        "exchangeLocked": {
+          "type": "number",
+          "format": "double",
+          "x-go-name": "ExchangeLocked"
         },
         "exchangeTotal": {
           "type": "number",
           "format": "double",
           "x-go-name": "ExchangeTotal"
-        },
-        "exchangedLocked": {
-          "type": "number",
-          "format": "double",
-          "x-go-name": "ExchangedLocked"
         },
         "keyID": {
           "type": "string",
@@ -1094,13 +1154,9 @@
           "type": "number",
           "format": "double",
           "x-go-name": "Locked"
-        },
-        "userID": {
-          "type": "string",
-          "x-go-name": "UserID"
         }
       },
-      "x-go-package": "github.com/asciiu/gomo/balance-service/proto/balance"
+      "x-go-package": "github.com/asciiu/gomo/api/controllers"
     },
     "BalanceController": {
       "type": "object",
@@ -1225,7 +1281,6 @@
       "x-go-package": "github.com/asciiu/gomo/api/controllers"
     },
     "Key": {
-      "description": "Responses",
       "type": "object",
       "properties": {
         "description": {
@@ -1244,20 +1299,12 @@
           "type": "string",
           "x-go-name": "KeyID"
         },
-        "secret": {
-          "type": "string",
-          "x-go-name": "Secret"
-        },
         "status": {
           "type": "string",
           "x-go-name": "Status"
-        },
-        "userID": {
-          "type": "string",
-          "x-go-name": "UserID"
         }
       },
-      "x-go-package": "github.com/asciiu/gomo/key-service/proto/key"
+      "x-go-package": "github.com/asciiu/gomo/api/controllers"
     },
     "KeyController": {
       "type": "object",
@@ -1329,29 +1376,92 @@
           "type": "string",
           "x-go-name": "BaseCurrency"
         },
+        "baseCurrencyLong": {
+          "type": "string",
+          "x-go-name": "BaseCurrencyLong"
+        },
         "exchange": {
           "type": "string",
           "x-go-name": "Exchange"
+        },
+        "exchangeMarketName": {
+          "type": "string",
+          "x-go-name": "ExchangeMarketName"
         },
         "marketCurrency": {
           "type": "string",
           "x-go-name": "MarketCurrency"
         },
+        "marketCurrencyLong": {
+          "type": "string",
+          "x-go-name": "MarketCurrencyLong"
+        },
         "marketName": {
           "type": "string",
           "x-go-name": "MarketName"
         },
-        "price": {
-          "type": "number",
-          "format": "double",
-          "x-go-name": "Price"
-        },
-        "type": {
+        "marketPrice": {
           "type": "string",
-          "x-go-name": "Type"
+          "x-go-name": "MarketPrice"
+        },
+        "minTradeSize": {
+          "type": "string",
+          "x-go-name": "MinTradeSize"
         }
       },
       "x-go-package": "github.com/asciiu/gomo/api/controllers"
+    },
+    "Notification": {
+      "description": "Responses",
+      "type": "object",
+      "properties": {
+        "description": {
+          "type": "string",
+          "x-go-name": "Description"
+        },
+        "notificationID": {
+          "type": "string",
+          "x-go-name": "NotificationID"
+        },
+        "notificationType": {
+          "type": "string",
+          "x-go-name": "NotificationType"
+        },
+        "objectID": {
+          "type": "string",
+          "x-go-name": "ObjectID"
+        },
+        "subtitle": {
+          "type": "string",
+          "x-go-name": "Subtitle"
+        },
+        "timestamp": {
+          "type": "string",
+          "x-go-name": "Timestamp"
+        },
+        "title": {
+          "type": "string",
+          "x-go-name": "Title"
+        },
+        "userID": {
+          "type": "string",
+          "x-go-name": "UserID"
+        }
+      },
+      "x-go-package": "github.com/asciiu/gomo/notification-service/proto"
+    },
+    "NotificationController": {
+      "type": "object",
+      "properties": {
+        "Notifications": {
+          "$ref": "#/definitions/NotificationServiceClient"
+        }
+      },
+      "x-go-package": "github.com/asciiu/gomo/api/controllers"
+    },
+    "NotificationServiceClient": {
+      "type": "object",
+      "x-go-package": "github.com/asciiu/gomo/notification-service/proto"
     },
     "Order": {
       "description": "Responses",
@@ -1558,6 +1668,26 @@
       },
       "x-go-package": "github.com/asciiu/gomo/api/controllers"
     },
+    "SearchType": {
+      "description": "and it is not used anywhere.",
+      "type": "object",
+      "title": "This struct is used in the generated swagger docs,",
+      "properties": {
+        "page": {
+          "type": "string",
+          "x-go-name": "Page"
+        },
+        "pageSize": {
+          "type": "string",
+          "x-go-name": "PageSize"
+        },
+        "type": {
+          "type": "string",
+          "x-go-name": "Type"
+        }
+      },
+      "x-go-package": "github.com/asciiu/gomo/api/controllers"
+    },
     "SignupRequest": {
       "type": "object",
       "properties": {
@@ -1643,10 +1773,10 @@
       "type": "object",
       "properties": {
         "device": {
-          "$ref": "#/definitions/Device"
+          "$ref": "#/definitions/ApiDevice"
         }
       },
-      "x-go-package": "github.com/asciiu/gomo/device-service/proto/device"
+      "x-go-package": "github.com/asciiu/gomo/api/controllers"
     },
     "UserDevicesData": {
       "type": "object",
@@ -1654,12 +1784,12 @@
         "devices": {
           "type": "array",
           "items": {
-            "$ref": "#/definitions/Device"
+            "$ref": "#/definitions/ApiDevice"
           },
           "x-go-name": "Devices"
         }
       },
-      "x-go-package": "github.com/asciiu/gomo/device-service/proto/device"
+      "x-go-package": "github.com/asciiu/gomo/api/controllers"
     },
     "UserInfo": {
       "type": "object",
@@ -1690,7 +1820,7 @@
           "$ref": "#/definitions/Key"
         }
       },
-      "x-go-package": "github.com/asciiu/gomo/key-service/proto/key"
+      "x-go-package": "github.com/asciiu/gomo/api/controllers"
     },
     "UserKeysData": {
       "type": "object",
@@ -1703,7 +1833,35 @@
           "x-go-name": "Keys"
         }
       },
-      "x-go-package": "github.com/asciiu/gomo/key-service/proto/key"
+      "x-go-package": "github.com/asciiu/gomo/api/controllers"
+    },
+    "UserNotificationsPage": {
+      "type": "object",
+      "properties": {
+        "notifications": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/Notification"
+          },
+          "x-go-name": "Notifications"
+        },
+        "page": {
+          "type": "integer",
+          "format": "uint32",
+          "x-go-name": "Page"
+        },
+        "pageSize": {
+          "type": "integer",
+          "format": "uint32",
+          "x-go-name": "PageSize"
+        },
+        "total": {
+          "type": "integer",
+          "format": "uint32",
+          "x-go-name": "Total"
+        }
+      },
+      "x-go-package": "github.com/asciiu/gomo/notification-service/proto"
     },
     "UserOrderData": {
       "type": "object",
@@ -1821,6 +1979,21 @@
         }
       },
       "x-go-name": "ResponseKeysSuccess",
+      "x-go-package": "github.com/asciiu/gomo/api/controllers"
+    },
+    "responseNotificationSuccess": {
+      "type": "object",
+      "title": "A ResponseNotificationSuccess will always contain a status of \"successful\".",
+      "properties": {
+        "data": {
+          "$ref": "#/definitions/UserNotificationsPage"
+        },
+        "status": {
+          "type": "string",
+          "x-go-name": "Status"
+        }
+      },
+      "x-go-name": "ResponseNotificationSuccess",
       "x-go-package": "github.com/asciiu/gomo/api/controllers"
     },
     "responseOrderSuccess": {
