@@ -40,7 +40,7 @@ func (service *KeyService) AddKey(ctx context.Context, req *kp.KeyRequest, res *
 	// supported exchange keys check
 	if !stringInSupported(req.Exchange) {
 		res.Status = "fail"
-		res.Message = fmt.Sprintln("%s is not a supported exchange", req.Exchange)
+		res.Message = fmt.Sprintf("%s is not a supported exchange", req.Exchange)
 		return nil
 	}
 
