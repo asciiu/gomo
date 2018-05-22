@@ -3,3 +3,4 @@ vendor/
 docker-compose.stage.yml
 apns.p8
 gorush.yml
+google-cred.json
