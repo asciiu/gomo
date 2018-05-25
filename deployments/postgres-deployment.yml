@@ -1,0 +1,37 @@
+apiVersion: apps/v1beta2
+kind: StatefulSet
+metadata:
+  name: postgres
+spec:
+  serviceName: postgres
+  selector:
+    matchLabels:
+      app: postgres
+  replicas: 1 
+  template:
+    metadata:
+      labels:
+        app: postgres
+        role: postgres
+    spec:
+      terminationGracePeriodSeconds: 10
+      containers:
+        - name: postgres
+          image: postgres
+          ports:
+            - name: postgres
+              containerPort: 5432
+          volumeMounts:
+            - name: postgres-persistent-storage
+              mountPath: /var/lib/postgresql/data
+              subPath: fomo_stage 
+  volumeClaimTemplates:
+  - metadata:
+      name: postgres-persistent-storage
+      annotations:
+        volume.beta.kubernetes.io/storage-class: "fomo-disk"
+    spec:
+      accessModes: [ "ReadWriteOnce" ]
+      resources:
+        requests:
+         storage: 100Gi

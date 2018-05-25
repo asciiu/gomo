@@ -10,11 +10,13 @@ import (
 	"github.com/mattn/anko/core"
 	"github.com/mattn/anko/vm"
 	micro "github.com/micro/go-micro"
+	k8s "github.com/micro/kubernetes/go/micro"
 )
 
 func main() {
-	srv := micro.NewService(
-		micro.Name("micro.execution.engine"),
+	srv := k8s.NewService(
+		micro.Name("fomo.execution"),
+		micro.Version("latest"),
 	)
 
 	srv.Init()
@@ -55,6 +57,7 @@ func main() {
 	micro.RegisterSubscriber(msg.TopicAggTrade, srv.Server(), &buyProcessor)
 	micro.RegisterSubscriber(msg.TopicAggTrade, srv.Server(), &sellProcessor)
 
+	log.Println("Engine start")
 	if err := srv.Run(); err != nil {
 		log.Fatal(err)
 	}

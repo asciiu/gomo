@@ -1,0 +1,10 @@
+kind: StorageClass
+apiVersion: storage.k8s.io/v1beta1
+metadata:
+  name: fomo-disk 
+provisioner: kubernetes.io/gce-pd
+parameters:
+  type: pd-ssd
+mountOptions:
+  - dir_mode=0777
+  - file_mode=0777

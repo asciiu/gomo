@@ -1,0 +1,31 @@
+apiVersion: apps/v1beta1
+kind: Deployment
+metadata:
+  name: engine
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: engine 
+  template:
+    metadata:
+      labels:
+        app: engine 
+    spec:
+        containers:
+        - name: execution-engine
+          image: us.gcr.io/fomo-204904/execution-engine:latest
+          imagePullPolicy: Always
+          command: [
+            "./execution-engine",
+            "--selector=static",
+            "--server_address=:8080",
+          ]
+          env:
+          - name: DB_URL
+            value: "postgres://fomo:spaceballs@s1.fomo.exchange:9200/fomo_stage?&sslmode=disable" 
+          - name: UPDATED_AT
+            value: "Mon 19 Mar 2018 12:05:58 GMT"
+          ports:
+          - containerPort: 8080
+            name: engine-port
