@@ -3,7 +3,6 @@ kind: ConfigMap
 metadata:
   name: fomo-config
 data:
-  EXAMPLE_DB_HOST: postgres://postgres@postgres/fomo_stage?sslmode=disable
-  EXAMPLE_DB_KIND: postgres
+  DB_URL: postgres://postgres@postgres/fomo_stage?sslmode=disable
   PGDATA: /var/lib/postgresql/data/pgdata
   POSTGRES_USER: postgres
