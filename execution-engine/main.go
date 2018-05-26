@@ -57,7 +57,6 @@ func main() {
 	micro.RegisterSubscriber(msg.TopicAggTrade, srv.Server(), &buyProcessor)
 	micro.RegisterSubscriber(msg.TopicAggTrade, srv.Server(), &sellProcessor)
 
-	log.Println("Engine start")
 	if err := srv.Run(); err != nil {
 		log.Fatal(err)
 	}
