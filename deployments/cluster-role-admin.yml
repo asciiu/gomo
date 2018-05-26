@@ -1,0 +1,15 @@
+# create this cluster role for the default service account
+# to grant cluster-admin privileges 
+# to list all default cluster roles `kubectl get clusterroles`
+apiVersion: rbac.authorization.k8s.io/v1beta1
+kind: ClusterRoleBinding
+metadata:
+  name: fomo-admin
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: cluster-admin 
+subjects:
+  - kind: ServiceAccount
+    name: default
+    namespace: default

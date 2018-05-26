@@ -18,8 +18,8 @@ spec:
           imagePullPolicy: Always
           command: [
             "./execution-engine",
-         		"--server_address=0.0.0.0:8080",
-		        "--broker_address=0.0.0.0:10001"
+            "--selector=static",
+            "--server_address=:8080"
           ]
           envFrom:
           - configMapRef:
