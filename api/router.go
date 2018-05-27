@@ -13,6 +13,7 @@ import (
 	"github.com/labstack/echo"
 	micro "github.com/micro/go-micro"
 	"github.com/micro/go-micro/server"
+	k8s "github.com/micro/kubernetes/go/micro"
 )
 
 // clean up stage refresh tokens in DB every 30 minutes
@@ -108,7 +109,7 @@ func NewRouter(db *sql.DB) *echo.Echo {
 	// required for health checks
 	e.GET("/index.html", health)
 
-	service := micro.NewService(
+	service := k8s.NewService(
 		micro.Name("micro.fomo.api"),
 	)
 	service.Init()

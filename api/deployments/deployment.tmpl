@@ -1,0 +1,32 @@
+apiVersion: apps/v1beta1
+kind: Deployment
+metadata:
+  name: api 
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: api 
+  template:
+    metadata:
+      labels:
+        app: api 
+    spec:
+        containers:
+        - name: api 
+          image: us.gcr.io/fomo-204904/api:latest
+          imagePullPolicy: Always
+          command: [
+            "./api",
+            "--selector=static",
+            "--server_address=:8080"
+          ]
+          envFrom:
+          - configMapRef:
+              name: fomo-config
+          env:
+          - name: UPDATED_AT
+            value: "Mon 19 Mar 2018 12:05:58 GMT"
+          ports:
+          - containerPort: 5000
+            name: api-port
