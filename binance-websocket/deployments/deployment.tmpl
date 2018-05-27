@@ -18,7 +18,8 @@ spec:
           imagePullPolicy: Always
           command: [
             "./binance-websocket",
-		        "--broker_address=0.0.0.0:10001"
+            "--selector=static",
+            "--server_address=:8080"
           ]
           envFrom:
           - configMapRef:
