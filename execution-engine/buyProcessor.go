@@ -3,7 +3,6 @@ package main
 import (
 	"context"
 	"database/sql"
-	"fmt"
 	"log"
 	"strings"
 
@@ -23,8 +22,6 @@ type BuyProcessor struct {
 // ProcessEvent will process ExchangeEvents. These events are published from the exchange sockets.
 func (process *BuyProcessor) ProcessEvent(ctx context.Context, event *evt.TradeEvent) error {
 	buyOrders := process.Receiver.Orders
-
-	fmt.Println(event)
 
 	for i, buyOrder := range buyOrders {
 
