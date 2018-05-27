@@ -3,24 +3,20 @@ package main
 import (
 	"context"
 	"encoding/json"
-	"flag"
 	"log"
-	"os"
-	"os/signal"
 	"strconv"
 	"strings"
 	"sync"
-	"time"
 
 	exchanges "github.com/asciiu/gomo/common/exchanges"
 	msg "github.com/asciiu/gomo/common/messages"
 	evt "github.com/asciiu/gomo/common/proto/events"
 	"github.com/gorilla/websocket"
 	micro "github.com/micro/go-micro"
+	k8s "github.com/micro/kubernetes/go/micro"
 )
 
 type BinanceConnection struct {
-	channel   <-chan bool
 	group     *sync.WaitGroup
 	Publisher micro.Publisher
 }
@@ -65,9 +61,7 @@ type BinanceTicker struct {
 	TotalTrades         uint64 `json:"n"`
 }
 
-func (bconn *BinanceConnection) Open(market string) {
-	bconn.group.Add(1)
-	//url := fmt.Sprintf("wss://stream.binance.com:9443/ws/%s@aggTrade", market)
+func (bconn *BinanceConnection) Ticker() {
 	url := "wss://stream.binance.com:9443/ws/!ticker@arr"
 	log.Printf("connecting to %s", url)
 
@@ -76,132 +70,73 @@ func (bconn *BinanceConnection) Open(market string) {
 		log.Fatal("dial:", err)
 	}
 
-	defer bconn.group.Done()
+	defer conn.Close()
 
-	// create channel for done
-	done := make(chan struct{})
-
-	go func() {
-		defer close(done)
-		for {
-			_, message, err := conn.ReadMessage()
-			if err != nil {
-				log.Println("websocket err: ", err)
-				return
-			}
-
-			//aggTrade := BinanceAggTrade{}
-			ticker := []*BinanceTicker{}
-			if err = json.Unmarshal(message, &ticker); err != nil {
-				log.Fatal("dial:", err)
-			}
-
-			for _, tick := range ticker {
-				//tm := time.Unix(int64(tick.EventTime), 0)
-				p, _ := strconv.ParseFloat(tick.ClosePrice, 64)
-
-				// marketname must include hyphen
-				symbol := tick.Symbol
-				switch {
-				case strings.HasSuffix(symbol, "BTC"):
-					symbol = strings.Replace(symbol, "BTC", "", 1)
-					symbol = symbol + "-BTC"
-				case strings.HasSuffix(symbol, "USDT"):
-					symbol = strings.Replace(symbol, "USDT", "", 1)
-					symbol = symbol + "-USDT"
-				case strings.HasSuffix(symbol, "ETH"):
-					symbol = strings.Replace(symbol, "ETH", "", 1)
-					symbol = symbol + "-ETH"
-				case strings.HasSuffix(symbol, "BNB"):
-					symbol = strings.Replace(symbol, "BNB", "", 1)
-					symbol = symbol + "-BNB"
-				}
-
-				tickerEvent := evt.TradeEvent{
-					Exchange:   exchanges.Binance,
-					MarketName: symbol,
-					Price:      p,
-					//EventTime:  tm.String(),
-				}
-
-				//fmt.Println(tickerEvent)
-
-				if err := bconn.Publisher.Publish(context.Background(), &tickerEvent); err != nil {
-					log.Println("publish warning: ", err, tickerEvent)
-				}
-			}
-		}
-	}()
-
-	// loop indefinitely until one of the following happens
 	for {
-		select {
-		case <-done:
-			conn.Close()
-			log.Println("unexpected close of market: ", market)
+		_, message, err := conn.ReadMessage()
+		if err != nil {
+			log.Println("websocket err: ", err)
 			return
-		case <-bconn.channel:
-			//Cleanly close the connection by sending a close message and then
-			//waiting (with timeout) for the server to close the connection.
-			err := conn.WriteMessage(websocket.CloseMessage, websocket.FormatCloseMessage(websocket.CloseNormalClosure, ""))
-			if err != nil {
-				log.Println("write close:", err)
-				return
+		}
+
+		//aggTrade := BinanceAggTrade{}
+		ticker := []*BinanceTicker{}
+		if err = json.Unmarshal(message, &ticker); err != nil {
+			log.Fatal("dial:", err)
+		}
+
+		for _, tick := range ticker {
+			//tm := time.Unix(int64(tick.EventTime), 0)
+			p, _ := strconv.ParseFloat(tick.ClosePrice, 64)
+
+			// marketname must include hyphen
+			symbol := tick.Symbol
+			switch {
+			case strings.HasSuffix(symbol, "BTC"):
+				symbol = strings.Replace(symbol, "BTC", "", 1)
+				symbol = symbol + "-BTC"
+			case strings.HasSuffix(symbol, "USDT"):
+				symbol = strings.Replace(symbol, "USDT", "", 1)
+				symbol = symbol + "-USDT"
+			case strings.HasSuffix(symbol, "ETH"):
+				symbol = strings.Replace(symbol, "ETH", "", 1)
+				symbol = symbol + "-ETH"
+			case strings.HasSuffix(symbol, "BNB"):
+				symbol = strings.Replace(symbol, "BNB", "", 1)
+				symbol = symbol + "-BNB"
 			}
 
-			// wait on the above go routine to exit
-			select {
-			case <-done:
-			case <-time.After(time.Second):
+			tickerEvent := evt.TradeEvent{
+				Exchange:   exchanges.Binance,
+				MarketName: symbol,
+				Price:      p,
+				//EventTime:  tm.String(),
 			}
-			conn.Close()
-			return
+
+			//fmt.Println(tickerEvent)
+
+			if err := bconn.Publisher.Publish(context.Background(), &tickerEvent); err != nil {
+				log.Println("publish warning: ", err, tickerEvent)
+			}
 		}
 	}
 }
+
 func main() {
-	srv := micro.NewService(
-		micro.Name("micro.binance.websocket"),
+	srv := k8s.NewService(
+		micro.Name("fomo.binance.websocket"),
 	)
 
 	srv.Init()
 	tradePublisher := micro.NewPublisher(msg.TopicAggTrade, srv.Client())
 
-	flag.Parse()
-	log.SetFlags(0)
-
-	interrupt := make(chan os.Signal, 1)
-	signal.Notify(interrupt, os.Interrupt)
-
-	var wg sync.WaitGroup
-	var channels []chan bool
-	markets := [2]string{
-		"adabtc",
-		"bnbbtc",
+	bconn := BinanceConnection{
+		Publisher: tradePublisher,
 	}
 
-	for i := 0; i < len(markets); i++ {
-		c := make(chan bool)
-		bconn := BinanceConnection{
-			channel:   c,
-			group:     &wg,
-			Publisher: tradePublisher,
-		}
-		channels = append(channels, c)
-		go bconn.Open(markets[i])
-	}
+	go bconn.Ticker()
 
-	for {
-		select {
-		case <-interrupt:
-
-			for j := 0; j < len(channels); j++ {
-				close(channels[j])
-			}
-			wg.Wait()
-			log.Println("bye!")
-
-			return
-		}
+	if err := srv.Run(); err != nil {
+		log.Fatal(err)
 	}
 }
