@@ -1,0 +1,31 @@
+apiVersion: apps/v1beta1
+kind: Deployment
+metadata:
+  name: binance-websocket 
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: binance-websocket 
+  template:
+    metadata:
+      labels:
+        app: binance-websocket 
+    spec:
+        containers:
+        - name: binance-websocket 
+          image: us.gcr.io/fomo-204904/binance-websocket:latest
+          imagePullPolicy: Always
+          command: [
+            "./binance-websocket",
+		        "--broker_address=0.0.0.0:10001"
+          ]
+          envFrom:
+          - configMapRef:
+              name: fomo-config
+          env:
+          - name: UPDATED_AT
+            value: "Mon 19 Mar 2018 12:05:58 GMT"
+          ports:
+          - containerPort: 8080
+            name: binance-port
