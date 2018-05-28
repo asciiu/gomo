@@ -17,6 +17,7 @@ import (
 	gsql "github.com/asciiu/gomo/user-service/db/sql"
 	users "github.com/asciiu/gomo/user-service/proto/user"
 	micro "github.com/micro/go-micro"
+	k8s "github.com/micro/kubernetes/go/micro"
 
 	apiModels "github.com/asciiu/gomo/api/models"
 	models "github.com/asciiu/gomo/user-service/models"
@@ -102,12 +103,12 @@ type ResponseError struct {
 
 func NewAuthController(db *sql.DB) *AuthController {
 	// Create a new service. Optionally include some options here.
-	service := micro.NewService(micro.Name("user.client"))
+	service := k8s.NewService(micro.Name("user.client"))
 	service.Init()
 
 	controller := AuthController{
 		DB:       db,
-		Users:    users.NewUserServiceClient("go.srv.user-service", service.Client()),
+		Users:    users.NewUserServiceClient("fomo.users", service.Client()),
 		Balances: balances.NewBalanceServiceClient("go.micro.srv.balance", service.Client()),
 		Keys:     keys.NewKeyServiceClient("go.srv.key-service", service.Client()),
 		Devices:  devices.NewDeviceServiceClient("go.srv.device-service", service.Client()),
