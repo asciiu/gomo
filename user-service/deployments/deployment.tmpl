@@ -1,16 +1,16 @@
 apiVersion: apps/v1beta1
 kind: Deployment
 metadata:
-  name: user-service 
+  name: users 
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: user-service 
+      app: users 
   template:
     metadata:
       labels:
-        app: user-service 
+        app: users 
     spec:
         containers:
         - name: user-service 
@@ -28,5 +28,5 @@ spec:
           - name: UPDATED_AT
             value: "Mon 19 Mar 2018 12:05:58 GMT"
           ports:
-          - containerPort: 5000
+          - containerPort: 8080
             name: users-port

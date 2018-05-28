@@ -18,8 +18,7 @@ spec:
           imagePullPolicy: Always
           command: [
             "./api",
-            "--selector=static",
-            "--server_address=:8080"
+            "--selector=static"
           ]
           envFrom:
           - configMapRef:
