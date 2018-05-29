@@ -8,11 +8,12 @@ import (
 	"github.com/asciiu/gomo/common/db"
 	pb "github.com/asciiu/gomo/device-service/proto/device"
 	micro "github.com/micro/go-micro"
+	k8s "github.com/micro/kubernetes/go/micro"
 )
 
 func NewDeviceService(name, dbUrl string) micro.Service {
 	// Create a new service. Include some options here.
-	srv := micro.NewService(
+	srv := k8s.NewService(
 		// This name must match the package name given in your protobuf definition
 		micro.Name(name),
 		micro.Version("latest"),
@@ -39,7 +40,7 @@ func NewDeviceService(name, dbUrl string) micro.Service {
 
 func main() {
 	dbUrl := fmt.Sprintf("%s", os.Getenv("DB_URL"))
-	srv := NewDeviceService("go.srv.device-service", dbUrl)
+	srv := NewDeviceService("fomo.devices", dbUrl)
 
 	if err := srv.Run(); err != nil {
 		log.Fatal(err)
