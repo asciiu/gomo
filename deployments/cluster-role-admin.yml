@@ -1,6 +1,6 @@
-# create this cluster role for the default service account
-# to grant cluster-admin privileges 
-# to list all default cluster roles `kubectl get clusterroles`
+# Create this cluster role for the default service account
+# to grant cluster-admin privileges. 
+# To list all default cluster roles `kubectl get clusterroles`
 apiVersion: rbac.authorization.k8s.io/v1beta1
 kind: ClusterRoleBinding
 metadata:
