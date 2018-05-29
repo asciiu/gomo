@@ -1,0 +1,28 @@
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: gorush
+spec:
+  replicas: 1 
+  template:
+    metadata:
+      labels:
+        app: gorush
+        tier: frontend
+    spec:
+      containers:
+      - image: appleboy/gorush
+        name: gorush
+        imagePullPolicy: Always
+        ports:
+        - containerPort: 8088
+        livenessProbe:
+          httpGet:
+            path: /healthz
+            port: 8088
+          initialDelaySeconds: 3
+          periodSeconds: 3
+        envFrom:
+          - configMapRef:
+              name: gorush-config 
+     
