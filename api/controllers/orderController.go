@@ -117,7 +117,7 @@ func NewOrderController(db *sql.DB) *OrderController {
 
 	controller := OrderController{
 		DB:     db,
-		Orders: orders.NewOrderServiceClient("go.srv.order-service", service.Client()),
+		Orders: orders.NewOrderServiceClient("orders", service.Client()),
 	}
 	return &controller
 }

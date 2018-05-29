@@ -42,7 +42,7 @@ func NewNotificationController() *NotificationController {
 	service.Init()
 
 	controller := NotificationController{
-		Notifications: notifications.NewNotificationServiceClient("go.srv.notification-service", service.Client()),
+		Notifications: notifications.NewNotificationServiceClient("notifications", service.Client()),
 	}
 
 	return &controller

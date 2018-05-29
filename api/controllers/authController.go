@@ -109,9 +109,9 @@ func NewAuthController(db *sql.DB) *AuthController {
 	controller := AuthController{
 		DB:       db,
 		Users:    users.NewUserServiceClient("users", service.Client()),
-		Balances: balances.NewBalanceServiceClient("go.micro.srv.balance", service.Client()),
-		Keys:     keys.NewKeyServiceClient("go.srv.key-service", service.Client()),
-		Devices:  devices.NewDeviceServiceClient("go.srv.device-service", service.Client()),
+		Balances: balances.NewBalanceServiceClient("balances", service.Client()),
+		Keys:     keys.NewKeyServiceClient("keys", service.Client()),
+		Devices:  devices.NewDeviceServiceClient("devices", service.Client()),
 	}
 
 	return &controller

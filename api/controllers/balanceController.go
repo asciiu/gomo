@@ -54,7 +54,7 @@ func NewBalanceController(db *sql.DB) *BalanceController {
 
 	controller := BalanceController{
 		DB:       db,
-		Balances: balances.NewBalanceServiceClient("go.micro.srv.balance", service.Client()),
+		Balances: balances.NewBalanceServiceClient("balances", service.Client()),
 	}
 	return &controller
 }

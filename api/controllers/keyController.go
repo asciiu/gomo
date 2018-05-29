@@ -77,7 +77,7 @@ func NewKeyController(db *sql.DB) *KeyController {
 
 	controller := KeyController{
 		DB:   db,
-		Keys: keys.NewKeyServiceClient("go.srv.key-service", service.Client()),
+		Keys: keys.NewKeyServiceClient("keys", service.Client()),
 	}
 	return &controller
 }

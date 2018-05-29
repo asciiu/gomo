@@ -66,7 +66,7 @@ func NewDeviceController(db *sql.DB) *DeviceController {
 
 	controller := DeviceController{
 		DB:      db,
-		Devices: devices.NewDeviceServiceClient("go.srv.device-service", service.Client()),
+		Devices: devices.NewDeviceServiceClient("devices", service.Client()),
 	}
 	return &controller
 }
