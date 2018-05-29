@@ -10,11 +10,12 @@ import (
 	notification "github.com/asciiu/gomo/notification-service/proto"
 	micro "github.com/micro/go-micro"
 	"github.com/micro/go-micro/server"
+	k8s "github.com/micro/kubernetes/go/micro"
 )
 
 func main() {
-	srv := micro.NewService(
-		micro.Name("go.srv.notification-service"),
+	srv := k8s.NewService(
+		micro.Name("fomo.notifications"),
 	)
 
 	// Init will parse the command line flags.

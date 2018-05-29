@@ -38,7 +38,7 @@ func NewNotificationListener(db *sql.DB, service micro.Service) *NotificationLis
 		db:      db,
 		client:  client,
 		topic:   topic,
-		devices: devices.NewDeviceServiceClient("go.srv.device-service", service.Client()),
+		devices: devices.NewDeviceServiceClient("devices", service.Client()),
 	}
 
 	return &listener
