@@ -5,3 +5,4 @@ apns.p8
 gorush.yml
 google-cred.json
 .terraform
+gorush-configmap.yml
