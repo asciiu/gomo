@@ -9,17 +9,17 @@ import (
 	"github.com/asciiu/gomo/common/db"
 	msg "github.com/asciiu/gomo/common/messages"
 	op "github.com/asciiu/gomo/order-service/proto/order"
-
 	micro "github.com/micro/go-micro"
+	k8s "github.com/micro/kubernetes/go/micro"
 )
 
 func main() {
 	dbURL := fmt.Sprintf("%s", os.Getenv("DB_URL"))
 
 	// Create a new service. Include some options here.
-	srv := micro.NewService(
+	srv := k8s.NewService(
 		// This name must match the package name given in your protobuf definition
-		micro.Name("go.srv.order-service"),
+		micro.Name("fomo.orders"),
 		micro.Version("latest"),
 	)
 
@@ -34,7 +34,7 @@ func main() {
 
 	orderService := OrderService{
 		DB:      gomoDB,
-		Client:  bp.NewBalanceServiceClient("go.micro.srv.balance", srv.Client()),
+		Client:  bp.NewBalanceServiceClient("balances", srv.Client()),
 		NewBuy:  micro.NewPublisher(msg.TopicNewBuyOrder, srv.Client()),
 		NewSell: micro.NewPublisher(msg.TopicNewSellOrder, srv.Client()),
 	}
