@@ -9,11 +9,12 @@ import (
 	msg "github.com/asciiu/gomo/common/messages"
 	kp "github.com/asciiu/gomo/key-service/proto/key"
 	micro "github.com/micro/go-micro"
+	k8s "github.com/micro/kubernetes/go/micro"
 )
 
 func main() {
-	srv := micro.NewService(
-		micro.Name("go.srv.key-service"),
+	srv := k8s.NewService(
+		micro.Name("fomo.keys"),
 	)
 
 	// Init will parse the command line flags.
