@@ -5,11 +5,12 @@ import (
 
 	msg "github.com/asciiu/gomo/common/messages"
 	micro "github.com/micro/go-micro"
+	k8s "github.com/micro/kubernetes/go/micro"
 )
 
 func main() {
-	srv := micro.NewService(
-		micro.Name("go.micro.srv.binance"),
+	srv := k8s.NewService(
+		micro.Name("fomo.binance"),
 	)
 
 	srv.Init()
