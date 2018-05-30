@@ -25,6 +25,10 @@ spec:
           - configMapRef:
               name: fomo-config
           env:
+          - name: GORUSH_ADDRESS
+            value: "10.55.245.67:32404"
+          - name: APNS_TOPIC
+            value: "com.mozzarello.projectfomo"
           - name: UPDATED_AT
             value: "Mon 19 Mar 2018 12:05:58 GMT"
           ports:

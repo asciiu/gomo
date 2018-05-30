@@ -4,7 +4,7 @@ build:
 	docker build -t us.gcr.io/fomo-204904/notification-service:latest .
 	docker push us.gcr.io/fomo-204904/notification-service:latest 
 
-deploy:
+start:
 	sed "s/{{ UPDATED_AT }}/$(shell date)/g" ./deployments/deployment.tmpl > ./deployments/deployment.yml
 	kubectl create -f ./deployments/deployment.yml
 	kubectl create -f ./deployments/service.yml
