@@ -3,12 +3,14 @@ package controllers
 import (
 	"database/sql"
 	"encoding/json"
+	"fmt"
 	"net/http"
 
 	keys "github.com/asciiu/gomo/key-service/proto/key"
 	jwt "github.com/dgrijalva/jwt-go"
 	"github.com/labstack/echo"
 	micro "github.com/micro/go-micro"
+	k8s "github.com/micro/kubernetes/go/micro"
 	"golang.org/x/net/context"
 )
 
@@ -72,7 +74,7 @@ type Key struct {
 
 func NewKeyController(db *sql.DB) *KeyController {
 	// Create a new service. Optionally include some options here.
-	service := micro.NewService(micro.Name("key.client"))
+	service := k8s.NewService(micro.Name("key.client"))
 	service.Init()
 
 	controller := KeyController{
@@ -154,7 +156,8 @@ func (controller *KeyController) HandleListKeys(c echo.Context) error {
 		UserID: userID,
 	}
 
-	r, _ := controller.Keys.GetUserKeys(context.Background(), &getRequest)
+	r, e := controller.Keys.GetUserKeys(context.Background(), &getRequest)
+	fmt.Printf("error was %+v\n", e)
 	if r.Status != "success" {
 		response := &ResponseError{
 			Status:  r.Status,

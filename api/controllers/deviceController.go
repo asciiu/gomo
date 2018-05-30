@@ -9,6 +9,7 @@ import (
 	jwt "github.com/dgrijalva/jwt-go"
 	"github.com/labstack/echo"
 	micro "github.com/micro/go-micro"
+	k8s "github.com/micro/kubernetes/go/micro"
 	"golang.org/x/net/context"
 )
 
@@ -61,7 +62,7 @@ type ApiDevice struct {
 
 func NewDeviceController(db *sql.DB) *DeviceController {
 	// Create a new service. Optionally include some options here.
-	service := micro.NewService(micro.Name("device.client"))
+	service := k8s.NewService(micro.Name("device.client"))
 	service.Init()
 
 	controller := DeviceController{
