@@ -9,7 +9,6 @@ spec:
   selector:
     app: gorush
     tier: frontend
-  type: NodePort 
   ports:
   - protocol: TCP
     port: 9000 
