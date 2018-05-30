@@ -1,8 +1,11 @@
-apiVersion: extensions/v1beta1
+apiVersion: apps/v1beta2 
 kind: Deployment
 metadata:
   name: gorush
 spec:
+  selector:
+    matchLabels:
+      app: gorush 
   replicas: 1 
   template:
     metadata:
@@ -25,4 +28,11 @@ spec:
         envFrom:
           - configMapRef:
               name: gorush-config 
+        volumeMounts:
+        - mountPath: /gorush
+          name: gorush-data
+      volumes:
+      - name: gorush-data
+        persistentVolumeClaim:
+          claimName: gorush-vol 
      
