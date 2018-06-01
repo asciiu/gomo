@@ -6,3 +6,4 @@ gorush.yml
 google-cred.json
 .terraform
 gorush-configmap.yml
+local-config-map.yaml
