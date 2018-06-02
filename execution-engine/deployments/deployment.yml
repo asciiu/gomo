@@ -14,8 +14,8 @@ spec:
     spec:
         containers:
         - name: execution-engine
-          image: us.gcr.io/fomo-204904/execution-engine:latest
-          imagePullPolicy: Always
+          image: us.gcr.io/fomo-204904/execution-engine:dev
+          imagePullPolicy: IfNotPresent
           command: [
             "./execution-engine",
             "--selector=static",
