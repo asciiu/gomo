@@ -14,8 +14,8 @@ spec:
     spec:
         containers:
         - name: balance-service 
-          image: us.gcr.io/fomo-204904/balance-service:latest
-          imagePullPolicy: Always
+          image: us.gcr.io/fomo-204904/balance-service:dev
+          imagePullPolicy: IfNotPresent 
           command: [
             "./balance-service",
             "--selector=static",
