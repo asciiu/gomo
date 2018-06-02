@@ -14,8 +14,8 @@ spec:
     spec:
         containers:
         - name: key-service 
-          image: us.gcr.io/fomo-204904/key-service:latest
-          imagePullPolicy: Always
+          image: us.gcr.io/fomo-204904/key-service:dev
+          imagePullPolicy: IfNotPresent
           command: [
             "./key-service",
             "--selector=static",
