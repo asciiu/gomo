@@ -7,3 +7,4 @@ google-cred.json
 .terraform
 gorush-configmap.yml
 local-config-map.yaml
+stage-config-map.yaml
