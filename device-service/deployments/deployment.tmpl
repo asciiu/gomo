@@ -14,8 +14,8 @@ spec:
     spec:
         containers:
         - name: device-service 
-          image: us.gcr.io/fomo-204904/device-service:latest
-          imagePullPolicy: Always
+          image: us.gcr.io/fomo-204904/device-service:dev
+          imagePullPolicy: IfNotPresent 
           command: [
             "./device-service",
             "--selector=static",
