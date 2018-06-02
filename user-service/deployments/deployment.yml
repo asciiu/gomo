@@ -14,8 +14,8 @@ spec:
     spec:
         containers:
         - name: user-service 
-          image: us.gcr.io/fomo-204904/user-service:latest
-          imagePullPolicy: Always
+          image: us.gcr.io/fomo-204904/user-service:dev
+          imagePullPolicy: IfNotPresent 
           command: [
             "./user-service",
             "--selector=static",
