@@ -14,8 +14,8 @@ spec:
     spec:
         containers:
         - name: notification-service 
-          image: us.gcr.io/fomo-204904/notification-service:latest
-          imagePullPolicy: Always
+          image: us.gcr.io/fomo-204904/notification-service:dev
+          imagePullPolicy: IfNotPresent
           command: [
             "./notification-service",
             "--selector=static",
