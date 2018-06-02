@@ -14,8 +14,8 @@ spec:
     spec:
         containers:
         - name: binance-service 
-          image: us.gcr.io/fomo-204904/binance-service:latest
-          imagePullPolicy: Always
+          image: us.gcr.io/fomo-204904/binance-service:dev
+          imagePullPolicy: IfNotPresent
           command: [
             "./binance-service",
             "--selector=static",
