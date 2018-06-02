@@ -14,8 +14,8 @@ spec:
     spec:
         containers:
         - name: binance-websocket 
-          image: us.gcr.io/fomo-204904/binance-websocket:latest
-          imagePullPolicy: Always
+          image: us.gcr.io/fomo-204904/binance-websocket:dev
+          imagePullPolicy: IfNotPresent
           command: [
             "./binance-websocket",
             "--selector=static",
