@@ -56,7 +56,8 @@ func main() {
 	checkErr(err)
 	defer gomoDB.Close()
 
-	e := NewRouter(gomoDB)
+	router := NewRouter(gomoDB)
 
-	e.Logger.Fatal(e.Start(":5000"))
+	// HTTPs server
+	router.Logger.Fatal(router.StartAutoTLS(":443"))
 }

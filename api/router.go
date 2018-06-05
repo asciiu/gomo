@@ -14,6 +14,7 @@ import (
 	micro "github.com/micro/go-micro"
 	"github.com/micro/go-micro/server"
 	k8s "github.com/micro/kubernetes/go/micro"
+	"golang.org/x/crypto/acme/autocert"
 )
 
 // clean up stage refresh tokens in DB every 30 minutes
@@ -39,6 +40,10 @@ func NewRouter(db *sql.DB) *echo.Echo {
 	go cleanDatabase(db)
 
 	e := echo.New()
+	e.AutoTLSManager.Prompt = autocert.AcceptTOS
+	e.AutoTLSManager.HostPolicy = autocert.HostWhitelist("stage.fomo.exchange")
+	e.AutoTLSManager.Cache = autocert.DirCache("/var/tmp/.cache")
+
 	middlewares.SetMainMiddlewares(e)
 
 	// controllers
@@ -108,6 +113,7 @@ func NewRouter(db *sql.DB) *echo.Echo {
 
 	// required for health checks
 	e.GET("/index.html", health)
+	e.GET("/", health)
 
 	service := k8s.NewService(
 		micro.Name("micro.fomo.api"),
