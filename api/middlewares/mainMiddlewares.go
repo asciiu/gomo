@@ -14,6 +14,9 @@ func SetMainMiddlewares(e *echo.Echo) {
 		Format: `[${time_rfc3339}]  ${status}  ${method}  ${host}${path} ${latency_human}` + "\n",
 	}))
 
+	// redirect http to https
+	e.Pre(middleware.HTTPSRedirect())
+
 	// don't crash on exceptions
 	//e.Use(middleware.Recover())
 }
