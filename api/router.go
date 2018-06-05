@@ -60,6 +60,9 @@ func NewRouter(db *sql.DB) *echo.Echo {
 
 	// websocket ticker
 	e.GET("/ticker", socketController.Connect)
+	// required for health checks
+	e.GET("/index.html", health)
+	e.GET("/", health)
 
 	// api group
 	openApi := e.Group("/api")
@@ -110,10 +113,6 @@ func NewRouter(db *sql.DB) *echo.Echo {
 
 	// search endpoint
 	protectedApi.GET("/search", searchController.Search)
-
-	// required for health checks
-	e.GET("/index.html", health)
-	e.GET("/", health)
 
 	service := k8s.NewService(
 		micro.Name("micro.fomo.api"),
