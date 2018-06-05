@@ -1,7 +1,7 @@
 # We use the official golang image, which contains all the 
 # correct build tools and libraries. Notice `as builder`,
 # this gives this container a name that we can reference later on. 
-FROM golang:1.10.0 as builder
+FROM golang:1.10.2 as builder
 
 # Set our workdir to our current service in the gopath
 WORKDIR /go/src/github.com/asciiu/gomo/binance-websocket
