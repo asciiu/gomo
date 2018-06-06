@@ -1,0 +1,32 @@
+apiVersion: apps/v1beta2 
+kind: Deployment
+metadata:
+  name: swagger
+spec:
+  selector:
+    matchLabels:
+      app: swagger 
+  replicas: 1 
+  template:
+    metadata:
+      labels:
+        app: swagger
+        tier: frontend
+    spec:
+      containers:
+      - image: swaggerapi/swagger-ui 
+        name: swagger
+        imagePullPolicy: Always
+        ports:
+        - containerPort: 8080
+        envFrom:
+        - configMapRef:
+            name: swagger-config 
+        volumeMounts:
+        - mountPath: /swagger
+          name: swagger-data
+      volumes:
+      - name: swagger-data
+        persistentVolumeClaim:
+          claimName: gorush-vol 
+     

@@ -1,0 +1,17 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: swagger 
+  labels:
+    app: swagger 
+    tier: frontend
+spec:
+  loadBalancerIP: "35.197.17.136"
+  type: LoadBalancer
+  selector:
+    app: swagger 
+    tier: frontend
+  ports:
+  - protocol: TCP
+    port: 80 
+    targetPort: 8080
