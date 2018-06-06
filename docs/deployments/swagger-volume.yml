@@ -1,7 +1,7 @@
 kind: PersistentVolumeClaim
 apiVersion: v1
 metadata:
-  name: fomo-stage-gorush-vol
+  name: fomo-stage-swagger-vol 
 spec:
   accessModes:
     - ReadWriteOnce

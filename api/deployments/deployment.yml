@@ -31,3 +31,10 @@ spec:
             name: https-port
           - containerPort:  80 
             name: http-port
+          volumeMounts:
+          - mountPath: /mnt/fomo
+            name: api-data
+        volumes:
+        - name: api-data
+          persistentVolumeClaim:
+            claimName: fomo-stage-api-vol 

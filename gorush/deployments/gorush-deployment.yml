@@ -29,10 +29,10 @@ spec:
           - configMapRef:
               name: gorush-config 
         volumeMounts:
-        - mountPath: /gorush
+        - mountPath: /mnt/fomo
           name: gorush-data
       volumes:
       - name: gorush-data
         persistentVolumeClaim:
-          claimName: gorush-vol 
+          claimName: fomo-stage-gorush-vol 
      

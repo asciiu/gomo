@@ -42,7 +42,7 @@ func NewRouter(db *sql.DB) *echo.Echo {
 	e := echo.New()
 	e.AutoTLSManager.Prompt = autocert.AcceptTOS
 	e.AutoTLSManager.HostPolicy = autocert.HostWhitelist("stage.fomo.exchange")
-	e.AutoTLSManager.Cache = autocert.DirCache("/var/tmp/.cache")
+	e.AutoTLSManager.Cache = autocert.DirCache("/mnt/fomo/autocert")
 
 	middlewares.SetMainMiddlewares(e)
 

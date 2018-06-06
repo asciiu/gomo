@@ -3,4 +3,4 @@ kind: ConfigMap
 metadata:
   name: swagger-config
 data:
-  SWAGGER_JSON: "/swagger/swagger.json" 
+  SWAGGER_JSON: "/mnt/fomo/swagger/swagger.json" 

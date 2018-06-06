@@ -23,10 +23,10 @@ spec:
         - configMapRef:
             name: swagger-config 
         volumeMounts:
-        - mountPath: /swagger
+        - mountPath: /mnt/fomo
           name: swagger-data
       volumes:
       - name: swagger-data
         persistentVolumeClaim:
-          claimName: gorush-vol 
+          claimName: fomo-stage-swagger-vol 
      
