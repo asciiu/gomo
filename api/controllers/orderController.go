@@ -56,7 +56,7 @@ type OrderRequest struct {
 	// Required.
 	// in: body
 	Side string `json:"side"`
-	// Optional.
+	// Required. Valid order types are "BuyOrder", "SellOrder", "PaperBuyOrder", "PaperSellOrder". Order not of these types will be ignored.
 	// in: body
 	OrderType string `json:"orderType"`
 	// Required for buy side when order is first in chain
@@ -75,10 +75,8 @@ type OrderRequest struct {
 	// in: body
 	Conditions string `json:"conditions"`
 
-	// Optional
+	// Optional parent order ID to add this chain of orders to
 	ParentOrderID string `json:"parentOrderID"`
-	// Optional
-	PaperMode bool `json:"paperMode"`
 }
 
 // swagger:parameters updateOrder
