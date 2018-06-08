@@ -1459,6 +1459,14 @@
     "Order": {
       "type": "object",
       "properties": {
+        "baseCurrency": {
+          "type": "string",
+          "x-go-name": "BaseCurrency"
+        },
+        "baseCurrencyLong": {
+          "type": "string",
+          "x-go-name": "BaseCurrencyLong"
+        },
         "basePercent": {
           "type": "number",
           "format": "double",
@@ -1502,6 +1510,14 @@
         "keyID": {
           "type": "string",
           "x-go-name": "KeyID"
+        },
+        "marketCurrency": {
+          "type": "string",
+          "x-go-name": "MarketCurrency"
+        },
+        "marketCurrencyLong": {
+          "type": "string",
+          "x-go-name": "MarketCurrencyLong"
         },
         "marketName": {
           "type": "string",
