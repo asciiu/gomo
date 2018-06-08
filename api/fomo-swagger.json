@@ -570,8 +570,8 @@
             }
           },
           {
+            "example": "ADA-BTC",
             "x-go-name": "MarketName",
-            "description": "Required.",
             "name": "marketName",
             "in": "body",
             "schema": {
@@ -580,7 +580,7 @@
           },
           {
             "x-go-name": "Side",
-            "description": "Required.",
+            "description": "Required. \"buy\" or \"sell\"",
             "name": "side",
             "in": "body",
             "schema": {
@@ -589,7 +589,7 @@
           },
           {
             "x-go-name": "OrderType",
-            "description": "Required. Valid order types are \"BuyOrder\", \"SellOrder\", \"PaperBuyOrder\", \"PaperSellOrder\". Order not of these types will be ignored.",
+            "description": "Required. Valid order types are \"market\", \"limit\", \"virtual\". Orders not within these types will be ignored.",
             "name": "orderType",
             "in": "body",
             "schema": {
@@ -1580,12 +1580,12 @@
           "x-go-name": "KeyID"
         },
         "marketName": {
-          "description": "Required.\nin: body",
           "type": "string",
-          "x-go-name": "MarketName"
+          "x-go-name": "MarketName",
+          "example": "ADA-BTC"
         },
         "orderType": {
-          "description": "Required. Valid order types are \"BuyOrder\", \"SellOrder\", \"PaperBuyOrder\", \"PaperSellOrder\". Order not of these types will be ignored.\nin: body",
+          "description": "Required. Valid order types are \"market\", \"limit\", \"virtual\". Orders not within these types will be ignored.\nin: body",
           "type": "string",
           "x-go-name": "OrderType"
         },
@@ -1595,7 +1595,7 @@
           "x-go-name": "ParentOrderID"
         },
         "side": {
-          "description": "Required.\nin: body",
+          "description": "Required. \"buy\" or \"sell\"\nin: body",
           "type": "string",
           "x-go-name": "Side"
         }

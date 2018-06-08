@@ -56,8 +56,8 @@ type OrderRequest struct {
 	// Required. Example: ADA-BTC
 	// in: body
 	MarketName string `json:"marketName"`
-	// Required.
-	// in: body side is "buy" or "sell"
+	// Required. "buy" or "sell"
+	// in: body
 	Side string `json:"side"`
 	// Required. Valid order types are "market", "limit", "virtual". Orders not within these types will be ignored.
 	// in: body
