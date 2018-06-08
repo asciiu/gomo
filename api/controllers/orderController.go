@@ -6,7 +6,7 @@ import (
 	"net/http"
 	"strings"
 
-	orderValidator "github.com/asciiu/gomo/common/consts/order"
+	orderValidator "github.com/asciiu/gomo/common/constants/order"
 	orders "github.com/asciiu/gomo/order-service/proto/order"
 	jwt "github.com/dgrijalva/jwt-go"
 	"github.com/labstack/echo"

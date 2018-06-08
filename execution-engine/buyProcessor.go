@@ -6,6 +6,7 @@ import (
 	"log"
 	"strings"
 
+	"github.com/asciiu/gomo/common/consts/status"
 	evt "github.com/asciiu/gomo/common/proto/events"
 	"github.com/mattn/anko/vm"
 	micro "github.com/micro/go-micro"
@@ -46,7 +47,7 @@ func (process *BuyProcessor) ProcessEvent(ctx context.Context, event *evt.TradeE
 				evt := buyOrder.EventOrigin
 				evt.ExchangeOrderID = "paper"
 				evt.ExchangeMarketName = "paper"
-				evt.Status = "filled"
+				evt.Status = status.Filled
 				evt.Condition = desc
 
 				log.Printf("buy order triggered -- %+v\n", evt)

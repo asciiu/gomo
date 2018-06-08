@@ -8,9 +8,9 @@ import (
 	"strings"
 
 	balances "github.com/asciiu/gomo/balance-service/proto/balance"
-	"github.com/asciiu/gomo/common/consts/response"
-	"github.com/asciiu/gomo/common/consts/side"
-	"github.com/asciiu/gomo/common/consts/status"
+	"github.com/asciiu/gomo/common/constants/response"
+	"github.com/asciiu/gomo/common/constants/side"
+	"github.com/asciiu/gomo/common/constants/status"
 	evt "github.com/asciiu/gomo/common/proto/events"
 	orderRepo "github.com/asciiu/gomo/order-service/db/sql"
 	orders "github.com/asciiu/gomo/order-service/proto/order"
