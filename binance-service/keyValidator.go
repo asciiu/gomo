@@ -9,6 +9,7 @@ import (
 	binance "github.com/asciiu/go-binance"
 	bp "github.com/asciiu/gomo/balance-service/proto/balance"
 	"github.com/asciiu/gomo/common/constants/exchange"
+	keyconstants "github.com/asciiu/gomo/common/constants/key"
 	kp "github.com/asciiu/gomo/key-service/proto/key"
 	"github.com/go-kit/kit/log"
 	micro "github.com/micro/go-micro"
@@ -52,7 +53,7 @@ func (service *KeyValidator) Process(ctx context.Context, key *kp.Key) error {
 		}
 
 		// TODO this should be enum
-		key.Status = "verified"
+		key.Status = keyconstants.Verified
 
 		// publish verify key event
 		if err := service.KeyVerifiedPub.Publish(context.Background(), key); err != nil {
