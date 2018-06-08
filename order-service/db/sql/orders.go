@@ -97,7 +97,7 @@ func FindOrdersByUserID(db *sql.DB, req *orderProto.GetUserOrdersRequest) ([]*or
 	return results, nil
 }
 
-func InsertOrder(db *sql.DB, req *orderProto.OrderRequest) (*orderProto.Order, error) {
+func InsertOrder(db *sql.DB, req *orderProto.OrderRequest, status string) (*orderProto.Order, error) {
 	newID := uuid.New()
 
 	jsonCond, err := json.Marshal(req.Conditions)
@@ -114,7 +114,7 @@ func InsertOrder(db *sql.DB, req *orderProto.OrderRequest) (*orderProto.Order, e
 		values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16)`
 	_, err = db.Exec(sqlStatement, newID, req.UserID, req.KeyID, req.Exchange, "", "", req.MarketName,
 		req.Side, req.OrderType, req.BaseQuantity, req.BasePercent, req.CurrencyQuantity, req.CurrencyPercent,
-		"pending", jsonCond, req.ParentOrderID)
+		status, jsonCond, req.ParentOrderID)
 
 	if err != nil {
 		return nil, err
@@ -131,7 +131,7 @@ func InsertOrder(db *sql.DB, req *orderProto.OrderRequest) (*orderProto.Order, e
 		BasePercent:      req.BasePercent,
 		CurrencyQuantity: req.CurrencyQuantity,
 		CurrencyPercent:  req.CurrencyPercent,
-		Status:           "pending",
+		Status:           status,
 		Conditions:       req.Conditions,
 		ParentOrderID:    req.ParentOrderID,
 	}

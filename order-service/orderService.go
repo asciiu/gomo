@@ -10,6 +10,7 @@ import (
 	balances "github.com/asciiu/gomo/balance-service/proto/balance"
 	"github.com/asciiu/gomo/common/consts/response"
 	"github.com/asciiu/gomo/common/consts/side"
+	"github.com/asciiu/gomo/common/consts/status"
 	evt "github.com/asciiu/gomo/common/proto/events"
 	orderRepo "github.com/asciiu/gomo/order-service/db/sql"
 	orders "github.com/asciiu/gomo/order-service/proto/order"
@@ -118,7 +119,7 @@ func (service *OrderService) AddOrders(ctx context.Context, req *orders.OrdersRe
 
 	parentOrderID := order.ParentOrderID
 
-	// if zero for parentOrderID we have must load this order immediately
+	// if zero for parentOrderID we must load this order immediately
 	if parentOrderID == "00000000-0000-0000-0000-000000000000" {
 
 		currencies := strings.Split(order.MarketName, "-")
@@ -137,7 +138,8 @@ func (service *OrderService) AddOrders(ctx context.Context, req *orders.OrdersRe
 			return nil
 		}
 
-		o, error := orderRepo.InsertOrder(service.DB, order)
+		// this order will be published to the executor so mark its status as Open
+		o, error := orderRepo.InsertOrder(service.DB, order, status.Open)
 
 		if error != nil {
 			res.Status = response.Error
@@ -171,7 +173,7 @@ func (service *OrderService) AddOrders(ctx context.Context, req *orders.OrdersRe
 		// assign the parent order id for following orders
 		order.ParentOrderID = parentOrderID
 
-		o, error := orderRepo.InsertOrder(service.DB, order)
+		o, error := orderRepo.InsertOrder(service.DB, order, status.Pending)
 
 		if error != nil {
 			res.Status = response.Error
