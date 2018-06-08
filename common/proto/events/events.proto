@@ -23,14 +23,15 @@ message OrderEvent {
   string exchange = 1;
   string orderID = 2;
   string userID = 3;
-  string KeyID = 4;
+  string keyID = 4;
   string marketName = 5;
   string side = 6;
-  double baseQuantity = 7;
-  double baseQuantityRemainder = 8;
-  string condition = 9;
-  string conditions = 10;
-  string exchangeOrderID = 11;
-  string exchangeMarketName = 12;
-  string status = 13;
+  string orderType = 7;
+  double baseQuantity = 8;
+  double baseQuantityRemainder = 9;
+  string condition = 10;
+  string conditions = 11;
+  string exchangeOrderID = 12;
+  string exchangeMarketName = 13;
+  string status = 14;
 }
