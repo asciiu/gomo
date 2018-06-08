@@ -43,8 +43,8 @@ func (process *SellProcessor) ProcessEvent(ctx context.Context, event *evt.Trade
 				// if it is a simulated order trigger an update order event
 				if sellOrder.EventOrigin.OrderType == types.VirtualOrder {
 					evt := sellOrder.EventOrigin
-					evt.ExchangeOrderID = "virtual"
-					evt.ExchangeMarketName = "virtual"
+					evt.ExchangeOrderID = types.VirtualOrder
+					evt.ExchangeMarketName = types.VirtualOrder
 					evt.Status = status.Filled
 					evt.Condition = desc
 

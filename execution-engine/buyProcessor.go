@@ -47,8 +47,8 @@ func (process *BuyProcessor) ProcessEvent(ctx context.Context, event *evt.TradeE
 				// if it is a simulated order trigger an update order event
 				if buyOrder.EventOrigin.OrderType == types.VirtualOrder {
 					evt := buyOrder.EventOrigin
-					evt.ExchangeOrderID = "virtual"
-					evt.ExchangeMarketName = "virtual"
+					evt.ExchangeOrderID = types.VirtualOrder
+					evt.ExchangeMarketName = types.VirtualOrder
 					evt.Status = status.Filled
 					evt.Condition = desc
 
