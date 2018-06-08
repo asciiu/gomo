@@ -8,7 +8,7 @@ import (
 
 	binance "github.com/asciiu/go-binance"
 	bp "github.com/asciiu/gomo/balance-service/proto/balance"
-	"github.com/asciiu/gomo/common/exchanges"
+	"github.com/asciiu/gomo/common/constants/exchange"
 	kp "github.com/asciiu/gomo/key-service/proto/key"
 	"github.com/go-kit/kit/log"
 	micro "github.com/micro/go-micro"
@@ -20,7 +20,7 @@ type KeyValidator struct {
 }
 
 func (service *KeyValidator) Process(ctx context.Context, key *kp.Key) error {
-	if key.Exchange != exchanges.Binance {
+	if key.Exchange != exchange.Binance {
 		return nil
 	}
 
