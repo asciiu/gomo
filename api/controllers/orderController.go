@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"strings"
 
+	enums "github.com/asciiu/gomo/common/enums"
 	orders "github.com/asciiu/gomo/order-service/proto/order"
 	jwt "github.com/dgrijalva/jwt-go"
 	"github.com/labstack/echo"
@@ -251,6 +252,10 @@ func (controller *OrderController) HandlePostOrder(c echo.Context) error {
 
 	// error check all orders
 	for i, order := range ordrs {
+		if enums.OrderTypeFromString(order.OrderType) == enums.UnknownOrderType {
+			return fail(c, "bad order type found. Must be BuyOrder, SellOrder, PaperBuyOrder, or PaperSellOrder!")
+		}
+
 		// side, market name, and api key are required
 		if order.Side == "" || order.MarketName == "" || order.KeyID == "" {
 			return fail(c, "side, marketName, and apiKeyID required!")
