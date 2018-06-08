@@ -589,7 +589,7 @@
           },
           {
             "x-go-name": "OrderType",
-            "description": "Optional.",
+            "description": "Required. Valid order types are \"BuyOrder\", \"SellOrder\", \"PaperBuyOrder\", \"PaperSellOrder\". Order not of these types will be ignored.",
             "name": "orderType",
             "in": "body",
             "schema": {
@@ -648,15 +648,8 @@
           {
             "type": "string",
             "x-go-name": "ParentOrderID",
-            "description": "Optional",
+            "description": "Optional parent order ID to add this chain of orders to",
             "name": "parentOrderID",
-            "in": "query"
-          },
-          {
-            "type": "boolean",
-            "x-go-name": "PaperMode",
-            "description": "Optional",
-            "name": "paperMode",
             "in": "query"
           }
         ],
@@ -1464,7 +1457,6 @@
       "x-go-package": "github.com/asciiu/gomo/notification-service/proto"
     },
     "Order": {
-      "description": "Responses",
       "type": "object",
       "properties": {
         "basePercent": {
@@ -1534,13 +1526,9 @@
         "status": {
           "type": "string",
           "x-go-name": "Status"
-        },
-        "userID": {
-          "type": "string",
-          "x-go-name": "UserID"
         }
       },
-      "x-go-package": "github.com/asciiu/gomo/order-service/proto/order"
+      "x-go-package": "github.com/asciiu/gomo/api/controllers"
     },
     "OrderController": {
       "type": "object",
@@ -1597,17 +1585,12 @@
           "x-go-name": "MarketName"
         },
         "orderType": {
-          "description": "Optional.\nin: body",
+          "description": "Required. Valid order types are \"BuyOrder\", \"SellOrder\", \"PaperBuyOrder\", \"PaperSellOrder\". Order not of these types will be ignored.\nin: body",
           "type": "string",
           "x-go-name": "OrderType"
         },
-        "paperMode": {
-          "description": "Optional",
-          "type": "boolean",
-          "x-go-name": "PaperMode"
-        },
         "parentOrderID": {
-          "description": "Optional",
+          "description": "Optional parent order ID to add this chain of orders to",
           "type": "string",
           "x-go-name": "ParentOrderID"
         },
@@ -1622,10 +1605,6 @@
     "OrderServiceClient": {
       "type": "object",
       "x-go-package": "github.com/asciiu/gomo/order-service/proto/order"
-    },
-    "OrderTemp": {
-      "type": "object",
-      "x-go-package": "github.com/asciiu/gomo/api/controllers"
     },
     "ResponseMarkets": {
       "type": "object",
@@ -1870,7 +1849,7 @@
           "$ref": "#/definitions/Order"
         }
       },
-      "x-go-package": "github.com/asciiu/gomo/order-service/proto/order"
+      "x-go-package": "github.com/asciiu/gomo/api/controllers"
     },
     "UserOrdersData": {
       "type": "object",
@@ -1883,7 +1862,7 @@
           "x-go-name": "Orders"
         }
       },
-      "x-go-package": "github.com/asciiu/gomo/order-service/proto/order"
+      "x-go-package": "github.com/asciiu/gomo/api/controllers"
     },
     "UserServiceClient": {
       "type": "object",

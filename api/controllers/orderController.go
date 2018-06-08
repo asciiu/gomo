@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	orderValidator "github.com/asciiu/gomo/common/constants/order"
+	"github.com/asciiu/gomo/common/constants/response"
 	orders "github.com/asciiu/gomo/order-service/proto/order"
 	jwt "github.com/dgrijalva/jwt-go"
 	"github.com/labstack/echo"
@@ -20,30 +21,31 @@ type OrderController struct {
 	Orders orders.OrderServiceClient
 }
 
-type OrderTemp struct {
-	orderID            string
-	apiKeyID           string //Key id used for the order? Remember why we have this?
-	exchangeOrderID    string
-	baseCurrency       string // "BTC",
-	baseCurrencyLong   string // "Bitcoin", //As above
-	marketCurrency     string // "LTC",
-	marketCurrencyLong string // "Litecoin", //Only bittrex seems to have this, pass the short name if doesn't exist
-	minTradeSize       string //"0.001", //string
-	marketName         string // "LTCBTC", //Convention is market+base this is our name
-	//marketPrice: "0.41231231", //String Last price from socket for the pair in the exchange
-	//?btcPrice: "0.41231231", //String This is a shortcut for me not to calculate we can discuss it
-	//?fiatPrice: "1.35",  //Stting This is a shortcut for me not to calculate we can discuss it
-	exchange           string // "binance"
-	exchangeMarketName string // "LTC-BTC", //Some exchanges put dash others reverse them i.e. BTCLTC,
-	orderType          string // limit, market, stop, fake_market, see above.
-	rate               string //String
-	baseQuantity       float64
-	quantity           float64 // baseQuantity / rate
-	quantityRemaining  float64 // how many
-	side               string  // buy, sell
-	conditions         string
-	status             string //open, draft, closed,
-	createdAt          int64  //integer
+type UserOrderData struct {
+	Order *Order `json:"order"`
+}
+
+type UserOrdersData struct {
+	Orders []*Order `json:"orders"`
+}
+
+type Order struct {
+	OrderID            string  `json:"orderID"`
+	KeyID              string  `json:"keyID"`
+	Exchange           string  `json:"exchange"`
+	ExchangeOrderID    string  `json:"exchangeOrderID"`
+	ExchangeMarketName string  `json:"exchangeMarketName"`
+	MarketName         string  `json:"marketName"`
+	Side               string  `json:"side"`
+	OrderType          string  `json:"orderType"`
+	BaseQuantity       float64 `json:"baseQuantity"`
+	BasePercent        float64 `json:"basePercent"`
+	CurrencyQuantity   float64 `json:"currencyQuantity"`
+	CurrencyPercent    float64 `json:"currencyPercent"`
+	Status             string  `json:"status"`
+	Conditions         string  `json:"conditions"`
+	Condition          string  `json:"condition"`
+	ParentOrderID      string  `json:"parentOrderID"`
 }
 
 // swagger:parameters addOrder
@@ -51,13 +53,13 @@ type OrderRequest struct {
 	// Required.
 	// in: body
 	KeyID string `json:"keyID"`
-	// Required.
+	// Required. Example: ADA-BTC
 	// in: body
 	MarketName string `json:"marketName"`
 	// Required.
-	// in: body
+	// in: body side is "buy" or "sell"
 	Side string `json:"side"`
-	// Required. Valid order types are "BuyOrder", "SellOrder", "PaperBuyOrder", "PaperSellOrder". Order not of these types will be ignored.
+	// Required. Valid order types are "market", "limit", "virtual". Orders not within these types will be ignored.
 	// in: body
 	OrderType string `json:"orderType"`
 	// Required for buy side when order is first in chain
@@ -99,15 +101,15 @@ type UpdateOrderRequest struct {
 // A ResponseKeySuccess will always contain a status of "successful".
 // swagger:model responseOrderSuccess
 type ResponseOrderSuccess struct {
-	Status string                `json:"status"`
-	Data   *orders.UserOrderData `json:"data"`
+	Status string         `json:"status"`
+	Data   *UserOrderData `json:"data"`
 }
 
 // A ResponseKeysSuccess will always contain a status of "successful".
 // swagger:model responseOrdersSuccess
 type ResponseOrdersSuccess struct {
-	Status string                 `json:"status"`
-	Data   *orders.UserOrdersData `json:"data"`
+	Status string          `json:"status"`
+	Data   *UserOrdersData `json:"data"`
 }
 
 func NewOrderController(db *sql.DB) *OrderController {
@@ -143,26 +145,45 @@ func (controller *OrderController) HandleGetOrder(c echo.Context) error {
 	}
 
 	r, _ := controller.Orders.GetUserOrder(context.Background(), &getRequest)
-	if r.Status != "success" {
-		response := &ResponseError{
+	if r.Status != response.Success {
+		res := &ResponseError{
 			Status:  r.Status,
 			Message: r.Message,
 		}
 
-		if r.Status == "fail" {
-			return c.JSON(http.StatusBadRequest, response)
+		if r.Status == response.Fail {
+			return c.JSON(http.StatusBadRequest, res)
 		}
-		if r.Status == "error" {
-			return c.JSON(http.StatusInternalServerError, response)
+		if r.Status == response.Error {
+			return c.JSON(http.StatusInternalServerError, res)
 		}
 	}
 
-	response := &ResponseOrderSuccess{
-		Status: "success",
-		Data:   r.Data,
+	res := &ResponseOrderSuccess{
+		Status: response.Success,
+		Data: &UserOrderData{
+			Order: &Order{
+				OrderID:            r.Data.Order.OrderID,
+				KeyID:              r.Data.Order.KeyID,
+				Exchange:           r.Data.Order.Exchange,
+				ExchangeOrderID:    r.Data.Order.ExchangeOrderID,
+				ExchangeMarketName: r.Data.Order.ExchangeMarketName,
+				MarketName:         r.Data.Order.MarketName,
+				Side:               r.Data.Order.Side,
+				OrderType:          r.Data.Order.OrderType,
+				BaseQuantity:       r.Data.Order.BaseQuantity,
+				BasePercent:        r.Data.Order.BasePercent,
+				CurrencyQuantity:   r.Data.Order.CurrencyQuantity,
+				CurrencyPercent:    r.Data.Order.CurrencyPercent,
+				Status:             r.Data.Order.Status,
+				Conditions:         r.Data.Order.Conditions,
+				Condition:          r.Data.Order.Condition,
+				ParentOrderID:      r.Data.Order.ParentOrderID,
+			},
+		},
 	}
 
-	return c.JSON(http.StatusOK, response)
+	return c.JSON(http.StatusOK, res)
 }
 
 // swagger:route GET /orders orders getAllOrders
@@ -184,35 +205,59 @@ func (controller *OrderController) HandleListOrders(c echo.Context) error {
 	}
 
 	r, _ := controller.Orders.GetUserOrders(context.Background(), &getRequest)
-	if r.Status != "success" {
-		response := &ResponseError{
+	if r.Status != response.Success {
+		res := &ResponseError{
 			Status:  r.Status,
 			Message: r.Message,
 		}
 
-		if r.Status == "fail" {
-			return c.JSON(http.StatusBadRequest, response)
+		if r.Status == response.Fail {
+			return c.JSON(http.StatusBadRequest, res)
 		}
-		if r.Status == "error" {
-			return c.JSON(http.StatusInternalServerError, response)
+		if r.Status == response.Error {
+			return c.JSON(http.StatusInternalServerError, res)
 		}
 	}
 
-	response := &ResponseOrdersSuccess{
-		Status: "success",
-		Data:   r.Data,
+	data := make([]*Order, len(r.Data.Orders))
+	for i, o := range r.Data.Orders {
+		data[i] = &Order{
+			OrderID:            o.OrderID,
+			KeyID:              o.KeyID,
+			Exchange:           o.Exchange,
+			ExchangeOrderID:    o.ExchangeOrderID,
+			ExchangeMarketName: o.ExchangeMarketName,
+			MarketName:         o.MarketName,
+			Side:               o.Side,
+			OrderType:          o.OrderType,
+			BaseQuantity:       o.BaseQuantity,
+			BasePercent:        o.BasePercent,
+			CurrencyQuantity:   o.CurrencyQuantity,
+			CurrencyPercent:    o.CurrencyPercent,
+			Status:             o.Status,
+			Conditions:         o.Conditions,
+			Condition:          o.Condition,
+			ParentOrderID:      o.ParentOrderID,
+		}
 	}
 
-	return c.JSON(http.StatusOK, response)
+	res := &ResponseOrdersSuccess{
+		Status: response.Success,
+		Data: &UserOrdersData{
+			Orders: data,
+		},
+	}
+
+	return c.JSON(http.StatusOK, res)
 }
 
 func fail(c echo.Context, msg string) error {
-	response := &ResponseError{
-		Status:  "fail",
+	res := &ResponseError{
+		Status:  response.Fail,
 		Message: msg,
 	}
 
-	return c.JSON(http.StatusBadRequest, response)
+	return c.JSON(http.StatusBadRequest, res)
 }
 
 // swagger:route POST /orders orders addOrder
@@ -315,26 +360,50 @@ func (controller *OrderController) HandlePostOrder(c echo.Context) error {
 
 	// add order returns nil for error
 	r, _ := controller.Orders.AddOrders(context.Background(), &orderRequests)
-	if r.Status != "success" {
-		response := &ResponseError{
+	if r.Status != response.Success {
+		res := &ResponseError{
 			Status:  r.Status,
 			Message: r.Message,
 		}
 
-		if r.Status == "fail" {
-			return c.JSON(http.StatusBadRequest, response)
+		if r.Status == response.Fail {
+			return c.JSON(http.StatusBadRequest, res)
 		}
-		if r.Status == "error" {
-			return c.JSON(http.StatusInternalServerError, response)
+		if r.Status == response.Error {
+			return c.JSON(http.StatusInternalServerError, res)
 		}
 	}
 
-	response := &ResponseOrdersSuccess{
-		Status: "success",
-		Data:   r.Data,
+	data := make([]*Order, len(r.Data.Orders))
+	for i, o := range r.Data.Orders {
+		data[i] = &Order{
+			OrderID:            o.OrderID,
+			KeyID:              o.KeyID,
+			Exchange:           o.Exchange,
+			ExchangeOrderID:    o.ExchangeOrderID,
+			ExchangeMarketName: o.ExchangeMarketName,
+			MarketName:         o.MarketName,
+			Side:               o.Side,
+			OrderType:          o.OrderType,
+			BaseQuantity:       o.BaseQuantity,
+			BasePercent:        o.BasePercent,
+			CurrencyQuantity:   o.CurrencyQuantity,
+			CurrencyPercent:    o.CurrencyPercent,
+			Status:             o.Status,
+			Conditions:         o.Conditions,
+			Condition:          o.Condition,
+			ParentOrderID:      o.ParentOrderID,
+		}
 	}
 
-	return c.JSON(http.StatusOK, response)
+	res := &ResponseOrdersSuccess{
+		Status: response.Success,
+		Data: &UserOrdersData{
+			Orders: data,
+		},
+	}
+
+	return c.JSON(http.StatusOK, res)
 }
 
 // swagger:route PUT /orders/:orderID orders updateOrder
@@ -357,12 +426,12 @@ func (controller *OrderController) HandleUpdateOrder(c echo.Context) error {
 
 	err := json.NewDecoder(c.Request().Body).Decode(&orderRequest)
 	if err != nil {
-		response := &ResponseError{
-			Status:  "fail",
+		res := &ResponseError{
+			Status:  response.Fail,
 			Message: err.Error(),
 		}
 
-		return c.JSON(http.StatusBadRequest, response)
+		return c.JSON(http.StatusBadRequest, res)
 	}
 
 	// client can only update description
@@ -374,26 +443,45 @@ func (controller *OrderController) HandleUpdateOrder(c echo.Context) error {
 	}
 
 	r, _ := controller.Orders.UpdateOrder(context.Background(), &updateRequest)
-	if r.Status != "success" {
-		response := &ResponseError{
+	if r.Status != response.Success {
+		res := &ResponseError{
 			Status:  r.Status,
 			Message: r.Message,
 		}
 
-		if r.Status == "fail" {
-			return c.JSON(http.StatusBadRequest, response)
+		if r.Status == response.Fail {
+			return c.JSON(http.StatusBadRequest, res)
 		}
-		if r.Status == "error" {
-			return c.JSON(http.StatusInternalServerError, response)
+		if r.Status == response.Error {
+			return c.JSON(http.StatusInternalServerError, res)
 		}
 	}
 
-	response := &ResponseOrderSuccess{
-		Status: "success",
-		Data:   r.Data,
+	res := &ResponseOrderSuccess{
+		Status: response.Success,
+		Data: &UserOrderData{
+			Order: &Order{
+				OrderID:            r.Data.Order.OrderID,
+				KeyID:              r.Data.Order.KeyID,
+				Exchange:           r.Data.Order.Exchange,
+				ExchangeOrderID:    r.Data.Order.ExchangeOrderID,
+				ExchangeMarketName: r.Data.Order.ExchangeMarketName,
+				MarketName:         r.Data.Order.MarketName,
+				Side:               r.Data.Order.Side,
+				OrderType:          r.Data.Order.OrderType,
+				BaseQuantity:       r.Data.Order.BaseQuantity,
+				BasePercent:        r.Data.Order.BasePercent,
+				CurrencyQuantity:   r.Data.Order.CurrencyQuantity,
+				CurrencyPercent:    r.Data.Order.CurrencyPercent,
+				Status:             r.Data.Order.Status,
+				Conditions:         r.Data.Order.Conditions,
+				Condition:          r.Data.Order.Condition,
+				ParentOrderID:      r.Data.Order.ParentOrderID,
+			},
+		},
 	}
 
-	return c.JSON(http.StatusOK, response)
+	return c.JSON(http.StatusOK, res)
 }
 
 // swagger:route DELETE /orders/:orderID orders deleteOrder
@@ -417,23 +505,23 @@ func (controller *OrderController) HandleDeleteOrder(c echo.Context) error {
 	}
 
 	r, _ := controller.Orders.RemoveOrder(context.Background(), &removeRequest)
-	if r.Status != "success" {
-		response := &ResponseError{
+	if r.Status != response.Success {
+		res := &ResponseError{
 			Status:  r.Status,
 			Message: r.Message,
 		}
 
-		if r.Status == "fail" {
-			return c.JSON(http.StatusBadRequest, response)
+		if r.Status == response.Fail {
+			return c.JSON(http.StatusBadRequest, res)
 		}
-		if r.Status == "error" {
-			return c.JSON(http.StatusInternalServerError, response)
+		if r.Status == response.Error {
+			return c.JSON(http.StatusInternalServerError, res)
 		}
 	}
 
-	response := &ResponseOrderSuccess{
-		Status: "success",
+	res := &ResponseOrderSuccess{
+		Status: response.Success,
 	}
 
-	return c.JSON(http.StatusOK, response)
+	return c.JSON(http.StatusOK, res)
 }

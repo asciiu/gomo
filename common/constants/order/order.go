@@ -2,19 +2,17 @@ package order
 
 const (
 	// order types here
-	BuyOrder         string = "buy"
-	SellOrder        string = "sell"
-	VirtualBuyOrder  string = "vbuy"
-	VirtualSellOrder string = "vsell"
+	LimitOrder       string = "limit"
+	MarketOrder      string = "market"
+	VirtualOrder     string = "virtual"
 	UnknownOrderType string = "???"
 )
 
 func ValidateOrderType(ot string) bool {
 	ots := [...]string{
-		BuyOrder,
-		SellOrder,
-		VirtualBuyOrder,
-		VirtualSellOrder,
+		LimitOrder,
+		MarketOrder,
+		VirtualOrder,
 	}
 
 	for _, ty := range ots {
