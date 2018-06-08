@@ -12,6 +12,7 @@ import (
 	"github.com/asciiu/gomo/common/constants/side"
 	"github.com/asciiu/gomo/common/constants/status"
 	evt "github.com/asciiu/gomo/common/proto/events"
+	keys "github.com/asciiu/gomo/key-service/proto/key"
 	orderRepo "github.com/asciiu/gomo/order-service/db/sql"
 	orders "github.com/asciiu/gomo/order-service/proto/order"
 	micro "github.com/micro/go-micro"
@@ -22,21 +23,34 @@ const MinBalance = 0.00001000
 
 // OrderService ...
 type OrderService struct {
-	DB      *sql.DB
-	Client  balances.BalanceServiceClient
-	NewBuy  micro.Publisher
-	NewSell micro.Publisher
+	DB        *sql.DB
+	Client    balances.BalanceServiceClient
+	KeyClient keys.KeyServiceClient
+	NewBuy    micro.Publisher
+	NewSell   micro.Publisher
 }
 
 // private: This is where the order events are published to the rest of the system
 // this function should only be callable from within the OrderService
-func (service *OrderService) publishOrder(publisher micro.Publisher, order *orders.Order) error {
+func (service *OrderService) publishOrder(ctx context.Context, publisher micro.Publisher, order *orders.Order) error {
+
+	keyReq := keys.GetUserKeyRequest{
+		UserID: order.UserID,
+		KeyID:  order.KeyID,
+	}
+
+	keyResponse, _ := service.KeyClient.GetUserKey(ctx, &keyReq)
+	if keyResponse.Status != response.Success {
+		return fmt.Errorf("key is invalid for order -- %s, %#v", keyResponse.Message, order)
+	}
 
 	// convert order to order event
 	orderEvent := evt.OrderEvent{
 		Exchange:     order.Exchange,
 		OrderID:      order.OrderID,
 		UserID:       order.UserID,
+		Key:          keyResponse.Data.Key.Key,
+		Secret:       keyResponse.Data.Key.Secret,
 		KeyID:        order.KeyID,
 		MarketName:   order.MarketName,
 		BaseQuantity: order.BaseQuantity,
@@ -83,7 +97,7 @@ func (service *OrderService) LoadBuyOrder(ctx context.Context, order *orders.Ord
 		return err
 	}
 
-	if err := service.publishOrder(service.NewBuy, order); err != nil {
+	if err := service.publishOrder(ctx, service.NewBuy, order); err != nil {
 		return err
 	}
 
@@ -100,7 +114,7 @@ func (service *OrderService) LoadSellOrder(ctx context.Context, order *orders.Or
 		return err
 	}
 
-	if err := service.publishOrder(service.NewSell, order); err != nil {
+	if err := service.publishOrder(ctx, service.NewSell, order); err != nil {
 		return err
 	}
 
@@ -156,7 +170,7 @@ func (service *OrderService) AddOrders(ctx context.Context, req *orders.OrdersRe
 			pub = service.NewSell
 		}
 
-		if err := service.publishOrder(pub, o); err != nil {
+		if err := service.publishOrder(ctx, pub, o); err != nil {
 			res.Status = response.Error
 			res.Message = "could not publish order: " + err.Error()
 			return nil

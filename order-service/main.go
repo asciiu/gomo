@@ -8,6 +8,7 @@ import (
 	bp "github.com/asciiu/gomo/balance-service/proto/balance"
 	"github.com/asciiu/gomo/common/db"
 	msg "github.com/asciiu/gomo/common/messages"
+	keys "github.com/asciiu/gomo/key-service/proto/key"
 	op "github.com/asciiu/gomo/order-service/proto/order"
 	micro "github.com/micro/go-micro"
 	k8s "github.com/micro/kubernetes/go/micro"
@@ -33,10 +34,11 @@ func main() {
 	}
 
 	orderService := OrderService{
-		DB:      gomoDB,
-		Client:  bp.NewBalanceServiceClient("balances", srv.Client()),
-		NewBuy:  micro.NewPublisher(msg.TopicNewBuyOrder, srv.Client()),
-		NewSell: micro.NewPublisher(msg.TopicNewSellOrder, srv.Client()),
+		DB:        gomoDB,
+		Client:    bp.NewBalanceServiceClient("balances", srv.Client()),
+		KeyClient: keys.NewKeyServiceClient("keys", srv.Client()),
+		NewBuy:    micro.NewPublisher(msg.TopicNewBuyOrder, srv.Client()),
+		NewSell:   micro.NewPublisher(msg.TopicNewSellOrder, srv.Client()),
 	}
 
 	filledReceiver := OrderFilledReceiver{
