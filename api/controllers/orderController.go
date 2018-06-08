@@ -3,9 +3,11 @@ package controllers
 import (
 	"database/sql"
 	"encoding/json"
+	"log"
 	"net/http"
 	"strings"
 
+	asql "github.com/asciiu/gomo/api/db/sql"
 	orderValidator "github.com/asciiu/gomo/common/constants/order"
 	"github.com/asciiu/gomo/common/constants/response"
 	orders "github.com/asciiu/gomo/order-service/proto/order"
@@ -19,6 +21,8 @@ import (
 type OrderController struct {
 	DB     *sql.DB
 	Orders orders.OrderServiceClient
+	// map of ticker symbol to full name
+	currencies map[string]string
 }
 
 type UserOrderData struct {
@@ -36,8 +40,12 @@ type Order struct {
 	ExchangeOrderID    string  `json:"exchangeOrderID"`
 	ExchangeMarketName string  `json:"exchangeMarketName"`
 	MarketName         string  `json:"marketName"`
+	MarketCurrency     string  `json:"marketCurrency"`
+	MarketCurrencyLong string  `json:"marketCurrencyLong"`
 	Side               string  `json:"side"`
 	OrderType          string  `json:"orderType"`
+	BaseCurrency       string  `json:"baseCurrency"`
+	BaseCurrencyLong   string  `json:"baseCurrencyLong"`
 	BaseQuantity       float64 `json:"baseQuantity"`
 	BasePercent        float64 `json:"basePercent"`
 	CurrencyQuantity   float64 `json:"currencyQuantity"`
@@ -118,10 +126,24 @@ func NewOrderController(db *sql.DB) *OrderController {
 	service.Init()
 
 	controller := OrderController{
-		DB:     db,
-		Orders: orders.NewOrderServiceClient("orders", service.Client()),
+		DB:         db,
+		Orders:     orders.NewOrderServiceClient("orders", service.Client()),
+		currencies: make(map[string]string),
 	}
+
+	currencies, err := asql.GetCurrencyNames(db)
+	switch {
+	case err == sql.ErrNoRows:
+		log.Println("Quaid, you need to populate the currency_names table!")
+	case err != nil:
+	default:
+		for _, c := range currencies {
+			controller.currencies[c.TickerSymbol] = c.CurrencyName
+		}
+	}
+
 	return &controller
+
 }
 
 // swagger:route GET /orders/:orderID orders getOrder
@@ -159,6 +181,12 @@ func (controller *OrderController) HandleGetOrder(c echo.Context) error {
 		}
 	}
 
+	names := strings.Split(r.Data.Order.MarketName, "-")
+	baseCurrency := names[1]
+	baseCurrencyLong := controller.currencies[baseCurrency]
+	marketCurrency := names[0]
+	marketCurrencyLong := controller.currencies[marketCurrency]
+
 	res := &ResponseOrderSuccess{
 		Status: response.Success,
 		Data: &UserOrderData{
@@ -169,8 +197,12 @@ func (controller *OrderController) HandleGetOrder(c echo.Context) error {
 				ExchangeOrderID:    r.Data.Order.ExchangeOrderID,
 				ExchangeMarketName: r.Data.Order.ExchangeMarketName,
 				MarketName:         r.Data.Order.MarketName,
+				MarketCurrency:     marketCurrency,
+				MarketCurrencyLong: marketCurrencyLong,
 				Side:               r.Data.Order.Side,
 				OrderType:          r.Data.Order.OrderType,
+				BaseCurrency:       baseCurrency,
+				BaseCurrencyLong:   baseCurrencyLong,
 				BaseQuantity:       r.Data.Order.BaseQuantity,
 				BasePercent:        r.Data.Order.BasePercent,
 				CurrencyQuantity:   r.Data.Order.CurrencyQuantity,
@@ -221,6 +253,13 @@ func (controller *OrderController) HandleListOrders(c echo.Context) error {
 
 	data := make([]*Order, len(r.Data.Orders))
 	for i, o := range r.Data.Orders {
+
+		names := strings.Split(o.MarketName, "-")
+		baseCurrency := names[1]
+		baseCurrencyLong := controller.currencies[baseCurrency]
+		marketCurrency := names[0]
+		marketCurrencyLong := controller.currencies[marketCurrency]
+
 		data[i] = &Order{
 			OrderID:            o.OrderID,
 			KeyID:              o.KeyID,
@@ -228,8 +267,12 @@ func (controller *OrderController) HandleListOrders(c echo.Context) error {
 			ExchangeOrderID:    o.ExchangeOrderID,
 			ExchangeMarketName: o.ExchangeMarketName,
 			MarketName:         o.MarketName,
+			MarketCurrency:     marketCurrency,
+			MarketCurrencyLong: marketCurrencyLong,
 			Side:               o.Side,
 			OrderType:          o.OrderType,
+			BaseCurrency:       baseCurrency,
+			BaseCurrencyLong:   baseCurrencyLong,
 			BaseQuantity:       o.BaseQuantity,
 			BasePercent:        o.BasePercent,
 			CurrencyQuantity:   o.CurrencyQuantity,
@@ -376,6 +419,12 @@ func (controller *OrderController) HandlePostOrder(c echo.Context) error {
 
 	data := make([]*Order, len(r.Data.Orders))
 	for i, o := range r.Data.Orders {
+		names := strings.Split(o.MarketName, "-")
+		baseCurrency := names[1]
+		baseCurrencyLong := controller.currencies[baseCurrency]
+		marketCurrency := names[0]
+		marketCurrencyLong := controller.currencies[marketCurrency]
+
 		data[i] = &Order{
 			OrderID:            o.OrderID,
 			KeyID:              o.KeyID,
@@ -383,10 +432,14 @@ func (controller *OrderController) HandlePostOrder(c echo.Context) error {
 			ExchangeOrderID:    o.ExchangeOrderID,
 			ExchangeMarketName: o.ExchangeMarketName,
 			MarketName:         o.MarketName,
+			MarketCurrency:     marketCurrency,
+			MarketCurrencyLong: marketCurrencyLong,
 			Side:               o.Side,
 			OrderType:          o.OrderType,
 			BaseQuantity:       o.BaseQuantity,
 			BasePercent:        o.BasePercent,
+			BaseCurrency:       baseCurrency,
+			BaseCurrencyLong:   baseCurrencyLong,
 			CurrencyQuantity:   o.CurrencyQuantity,
 			CurrencyPercent:    o.CurrencyPercent,
 			Status:             o.Status,
@@ -457,6 +510,12 @@ func (controller *OrderController) HandleUpdateOrder(c echo.Context) error {
 		}
 	}
 
+	names := strings.Split(r.Data.Order.MarketName, "-")
+	baseCurrency := names[1]
+	baseCurrencyLong := controller.currencies[baseCurrency]
+	marketCurrency := names[0]
+	marketCurrencyLong := controller.currencies[marketCurrency]
+
 	res := &ResponseOrderSuccess{
 		Status: response.Success,
 		Data: &UserOrderData{
@@ -467,10 +526,14 @@ func (controller *OrderController) HandleUpdateOrder(c echo.Context) error {
 				ExchangeOrderID:    r.Data.Order.ExchangeOrderID,
 				ExchangeMarketName: r.Data.Order.ExchangeMarketName,
 				MarketName:         r.Data.Order.MarketName,
+				MarketCurrency:     marketCurrency,
+				MarketCurrencyLong: marketCurrencyLong,
 				Side:               r.Data.Order.Side,
 				OrderType:          r.Data.Order.OrderType,
 				BaseQuantity:       r.Data.Order.BaseQuantity,
 				BasePercent:        r.Data.Order.BasePercent,
+				BaseCurrency:       baseCurrency,
+				BaseCurrencyLong:   baseCurrencyLong,
 				CurrencyQuantity:   r.Data.Order.CurrencyQuantity,
 				CurrencyPercent:    r.Data.Order.CurrencyPercent,
 				Status:             r.Data.Order.Status,
