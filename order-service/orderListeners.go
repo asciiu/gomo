@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"log"
 
-	"github.com/asciiu/gomo/common/consts/side"
+	"github.com/asciiu/gomo/common/constants/side"
 	evt "github.com/asciiu/gomo/common/proto/events"
 	notifications "github.com/asciiu/gomo/notification-service/proto"
 	orderRepo "github.com/asciiu/gomo/order-service/db/sql"
