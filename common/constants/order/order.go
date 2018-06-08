@@ -5,7 +5,7 @@ const (
 	BuyOrder         string = "buy"
 	SellOrder        string = "sell"
 	VirtualBuyOrder  string = "vbuy"
-	VirutalSellOrder string = "vsell"
+	VirtualSellOrder string = "vsell"
 	UnknownOrderType string = "???"
 )
 
@@ -14,7 +14,7 @@ func ValidateOrderType(ot string) bool {
 		BuyOrder,
 		SellOrder,
 		VirtualBuyOrder,
-		VirutalSellOrder,
+		VirtualSellOrder,
 	}
 
 	for _, ty := range ots {
