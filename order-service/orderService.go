@@ -8,6 +8,8 @@ import (
 	"strings"
 
 	balances "github.com/asciiu/gomo/balance-service/proto/balance"
+	"github.com/asciiu/gomo/common/consts/response"
+	"github.com/asciiu/gomo/common/consts/side"
 	evt "github.com/asciiu/gomo/common/proto/events"
 	orderRepo "github.com/asciiu/gomo/order-service/db/sql"
 	orders "github.com/asciiu/gomo/order-service/proto/order"
@@ -25,19 +27,22 @@ type OrderService struct {
 	NewSell micro.Publisher
 }
 
-// These are all private functions
+// private: This is where the order events are published to the rest of the system
+// this function should only be callable from within the OrderService
 func (service *OrderService) publishOrder(publisher micro.Publisher, order *orders.Order) error {
-	// process order here
+
+	// convert order to order event
 	orderEvent := evt.OrderEvent{
-		Exchange:     "Binance",
+		Exchange:     order.Exchange,
 		OrderID:      order.OrderID,
 		UserID:       order.UserID,
 		KeyID:        order.KeyID,
 		MarketName:   order.MarketName,
 		BaseQuantity: order.BaseQuantity,
 		Side:         order.Side,
+		OrderType:    order.OrderType,
 		Conditions:   order.Conditions,
-		Status:       "pending",
+		Status:       order.Status,
 	}
 
 	if err := publisher.Publish(context.Background(), &orderEvent); err != nil {
@@ -104,7 +109,7 @@ func (service *OrderService) LoadSellOrder(ctx context.Context, order *orders.Or
 // AddOrders returns error to conform to protobuf def, but the error will always be returned as nil.
 // Can't return an error with a response object - response object is returned as nil when error is non nil.
 // Therefore, return error in response object.
-func (service *OrderService) AddOrders(ctx context.Context, req *orders.OrdersRequest, response *orders.OrderListResponse) error {
+func (service *OrderService) AddOrders(ctx context.Context, req *orders.OrdersRequest, res *orders.OrderListResponse) error {
 	ordrs := make([]*orders.Order, 0)
 	requestOrders := req.Orders
 
@@ -119,7 +124,7 @@ func (service *OrderService) AddOrders(ctx context.Context, req *orders.OrdersRe
 		currencies := strings.Split(order.MarketName, "-")
 		var currency string
 
-		if order.Side == "buy" {
+		if order.Side == side.Buy {
 			// base currency will be second
 			currency = currencies[1]
 		} else {
@@ -127,31 +132,31 @@ func (service *OrderService) AddOrders(ctx context.Context, req *orders.OrdersRe
 		}
 
 		if err := service.validateBalance(ctx, currency, order.UserID, order.KeyID); err != nil {
-			response.Status = "fail"
-			response.Message = err.Error()
+			res.Status = response.Fail
+			res.Message = err.Error()
 			return nil
 		}
 
 		o, error := orderRepo.InsertOrder(service.DB, order)
 
 		if error != nil {
-			response.Status = "error"
-			response.Message = "ecountered error on Insert: " + error.Error()
+			res.Status = response.Error
+			res.Message = "ecountered error on Insert: " + error.Error()
 			return nil
 		}
 
 		ordrs = append(ordrs, o)
 		var pub micro.Publisher
 
-		if o.Side == "buy" {
+		if o.Side == side.Buy {
 			pub = service.NewBuy
 		} else {
 			pub = service.NewSell
 		}
 
 		if err := service.publishOrder(pub, o); err != nil {
-			response.Status = "error"
-			response.Message = "could not publish order: " + err.Error()
+			res.Status = response.Error
+			res.Message = "could not publish order: " + err.Error()
 			return nil
 		}
 
@@ -169,8 +174,8 @@ func (service *OrderService) AddOrders(ctx context.Context, req *orders.OrdersRe
 		o, error := orderRepo.InsertOrder(service.DB, order)
 
 		if error != nil {
-			response.Status = "error"
-			response.Message = "could not insert order: " + error.Error()
+			res.Status = response.Error
+			res.Message = "could not insert order: " + error.Error()
 			return nil
 		}
 
@@ -178,8 +183,8 @@ func (service *OrderService) AddOrders(ctx context.Context, req *orders.OrdersRe
 		parentOrderID = o.OrderID
 	}
 
-	response.Status = "success"
-	response.Data = &orders.UserOrdersData{
+	res.Status = response.Success
+	res.Data = &orders.UserOrdersData{
 		Orders: ordrs,
 	}
 	return nil
@@ -193,12 +198,12 @@ func (service *OrderService) GetUserOrder(ctx context.Context, req *orders.GetUs
 
 	switch {
 	case error == nil:
-		res.Status = "success"
+		res.Status = response.Success
 		res.Data = &orders.UserOrderData{
 			Order: order,
 		}
 	default:
-		res.Status = "error"
+		res.Status = response.Error
 		res.Message = error.Error()
 	}
 	return nil
@@ -212,12 +217,12 @@ func (service *OrderService) GetUserOrders(ctx context.Context, req *orders.GetU
 
 	switch {
 	case error == nil:
-		res.Status = "success"
+		res.Status = response.Success
 		res.Data = &orders.UserOrdersData{
 			Orders: ordrs,
 		}
 	default:
-		res.Status = "error"
+		res.Status = response.Error
 		res.Message = error.Error()
 	}
 	return nil
@@ -230,9 +235,9 @@ func (service *OrderService) RemoveOrder(ctx context.Context, req *orders.Remove
 	error := orderRepo.DeleteOrder(service.DB, req.OrderID)
 	switch {
 	case error == nil:
-		res.Status = "success"
+		res.Status = response.Success
 	default:
-		res.Status = "error"
+		res.Status = response.Error
 		res.Message = error.Error()
 	}
 	return nil
@@ -245,12 +250,12 @@ func (service *OrderService) UpdateOrder(ctx context.Context, req *orders.OrderR
 	order, error := orderRepo.UpdateOrder(service.DB, req)
 	switch {
 	case error == nil:
-		res.Status = "success"
+		res.Status = response.Success
 		res.Data = &orders.UserOrderData{
 			Order: order,
 		}
 	default:
-		res.Status = "error"
+		res.Status = response.Error
 		res.Message = error.Error()
 	}
 	return nil

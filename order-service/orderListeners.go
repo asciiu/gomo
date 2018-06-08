@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"log"
 
+	"github.com/asciiu/gomo/common/consts/side"
 	evt "github.com/asciiu/gomo/common/proto/events"
 	notifications "github.com/asciiu/gomo/notification-service/proto"
 	orderRepo "github.com/asciiu/gomo/order-service/db/sql"
@@ -46,12 +47,12 @@ func (receiver *OrderFilledReceiver) ProcessEvent(ctx context.Context, orderEven
 		case error != nil:
 			log.Println("order filled error -- ", error.Error())
 
-		case childOrder.Side == "buy":
+		case childOrder.Side == side.Buy:
 			if err := receiver.Service.LoadBuyOrder(ctx, childOrder); err != nil {
 				log.Println("order filled error -- ", err.Error())
 			}
 
-		case childOrder.Side == "sell":
+		case childOrder.Side == side.Sell:
 			if err := receiver.Service.LoadSellOrder(ctx, childOrder); err != nil {
 				log.Println("order filled error -- ", err.Error())
 			}
