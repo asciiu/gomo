@@ -15,10 +15,11 @@ import (
 
 // BuyProcessor will handle all buys
 type BuyProcessor struct {
-	DB        *sql.DB
-	Env       *vm.Env
-	Receiver  *OrderReceiver
-	Publisher micro.Publisher
+	DB            *sql.DB
+	Env           *vm.Env
+	Receiver      *OrderReceiver
+	Publisher     micro.Publisher
+	FillPublisher micro.Publisher
 }
 
 // ProcessEvent will process ExchangeEvents. These events are published from the exchange sockets.
@@ -42,15 +43,19 @@ func (process *BuyProcessor) ProcessEvent(ctx context.Context, event *evt.TradeE
 				// remove this order from the process
 				process.Receiver.Orders = append(buyOrders[:i], buyOrders[i+1:]...)
 
+				evt := buyOrder.EventOrigin
+				evt.Condition = desc
+
 				// if non simulated trigger buy event - exchange service subscribes to these events
+				if err := process.FillPublisher.Publish(ctx, evt); err != nil {
+					log.Println("publish warning: ", err)
+				}
 
 				// if it is a simulated order trigger an update order event
 				if buyOrder.EventOrigin.OrderType == types.VirtualOrder {
-					evt := buyOrder.EventOrigin
 					evt.ExchangeOrderID = types.VirtualOrder
 					evt.ExchangeMarketName = types.VirtualOrder
 					evt.Status = status.Filled
-					evt.Condition = desc
 
 					log.Printf("buy order triggered -- %+v\n", evt)
 

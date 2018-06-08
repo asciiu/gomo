@@ -15,10 +15,11 @@ import (
 
 // SellProcessor will process and handle sell orders.
 type SellProcessor struct {
-	DB        *sql.DB
-	Env       *vm.Env
-	Receiver  *OrderReceiver
-	Publisher micro.Publisher
+	DB            *sql.DB
+	Env           *vm.Env
+	Receiver      *OrderReceiver
+	Publisher     micro.Publisher
+	FillPublisher micro.Publisher
 }
 
 // ProcessEvent will process ExchangeEvents. These events are published from the exchange sockets and
@@ -39,14 +40,19 @@ func (process *SellProcessor) ProcessEvent(ctx context.Context, event *evt.Trade
 			if isValid, desc := evaluateFunc(event.Price); isValid {
 				process.Receiver.Orders = append(sellOrders[:i], sellOrders[i+1:]...)
 				// if non simulated trigger buy event - exchange service subscribes to these events
+				evt := sellOrder.EventOrigin
+				evt.Condition = desc
+
+				// if non simulated trigger buy event - exchange service subscribes to these events
+				if err := process.FillPublisher.Publish(ctx, evt); err != nil {
+					log.Println("publish warning: ", err)
+				}
 
 				// if it is a simulated order trigger an update order event
 				if sellOrder.EventOrigin.OrderType == types.VirtualOrder {
-					evt := sellOrder.EventOrigin
 					evt.ExchangeOrderID = types.VirtualOrder
 					evt.ExchangeMarketName = types.VirtualOrder
 					evt.Status = status.Filled
-					evt.Condition = desc
 
 					log.Printf("sell order triggered -- %+v\n", evt)
 
