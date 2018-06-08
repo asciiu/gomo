@@ -21,5 +21,8 @@ const TopicNewSellOrder = "NewSellOrder"
 // TopicOrderFilled when order has filled
 const TopicOrderFilled = "OrderFilled"
 
+// used to notifiy exchange services to execute an order
+const TopicFillOrder = "FillOrder"
+
 // TopicNotification when a notification is generated
 const TopicNotification = "Notification"
