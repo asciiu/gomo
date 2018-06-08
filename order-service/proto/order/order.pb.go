@@ -44,7 +44,7 @@ const _ = proto.ProtoPackageIsVersion2 // please upgrade the proto package
 
 // Requests
 type OrdersRequest struct {
-	Orders []*OrderRequest `protobuf:"bytes,1,rep,name=orders" json:"orders,omitempty"`
+	Orders []*OrderRequest `protobuf:"bytes,1,rep,name=orders" json:"orders"`
 }
 
 func (m *OrdersRequest) Reset()                    { *m = OrdersRequest{} }
@@ -60,19 +60,19 @@ func (m *OrdersRequest) GetOrders() []*OrderRequest {
 }
 
 type OrderRequest struct {
-	OrderID          string  `protobuf:"bytes,1,opt,name=orderID" json:"orderID,omitempty"`
-	UserID           string  `protobuf:"bytes,2,opt,name=userID" json:"userID,omitempty"`
-	KeyID            string  `protobuf:"bytes,3,opt,name=keyID" json:"keyID,omitempty"`
-	Exchange         string  `protobuf:"bytes,4,opt,name=exchange" json:"exchange,omitempty"`
-	MarketName       string  `protobuf:"bytes,5,opt,name=marketName" json:"marketName,omitempty"`
-	Side             string  `protobuf:"bytes,6,opt,name=side" json:"side,omitempty"`
-	OrderType        string  `protobuf:"bytes,7,opt,name=orderType" json:"orderType,omitempty"`
-	BaseQuantity     float64 `protobuf:"fixed64,8,opt,name=baseQuantity" json:"baseQuantity,omitempty"`
-	BasePercent      float64 `protobuf:"fixed64,9,opt,name=basePercent" json:"basePercent,omitempty"`
-	CurrencyQuantity float64 `protobuf:"fixed64,10,opt,name=currencyQuantity" json:"currencyQuantity,omitempty"`
-	CurrencyPercent  float64 `protobuf:"fixed64,11,opt,name=currencyPercent" json:"currencyPercent,omitempty"`
-	Conditions       string  `protobuf:"bytes,12,opt,name=conditions" json:"conditions,omitempty"`
-	ParentOrderID    string  `protobuf:"bytes,13,opt,name=parentOrderID" json:"parentOrderID,omitempty"`
+	OrderID          string  `protobuf:"bytes,1,opt,name=orderID" json:"orderID"`
+	UserID           string  `protobuf:"bytes,2,opt,name=userID" json:"userID"`
+	KeyID            string  `protobuf:"bytes,3,opt,name=keyID" json:"keyID"`
+	Exchange         string  `protobuf:"bytes,4,opt,name=exchange" json:"exchange"`
+	MarketName       string  `protobuf:"bytes,5,opt,name=marketName" json:"marketName"`
+	Side             string  `protobuf:"bytes,6,opt,name=side" json:"side"`
+	OrderType        string  `protobuf:"bytes,7,opt,name=orderType" json:"orderType"`
+	BaseQuantity     float64 `protobuf:"fixed64,8,opt,name=baseQuantity" json:"baseQuantity"`
+	BasePercent      float64 `protobuf:"fixed64,9,opt,name=basePercent" json:"basePercent"`
+	CurrencyQuantity float64 `protobuf:"fixed64,10,opt,name=currencyQuantity" json:"currencyQuantity"`
+	CurrencyPercent  float64 `protobuf:"fixed64,11,opt,name=currencyPercent" json:"currencyPercent"`
+	Conditions       string  `protobuf:"bytes,12,opt,name=conditions" json:"conditions"`
+	ParentOrderID    string  `protobuf:"bytes,13,opt,name=parentOrderID" json:"parentOrderID"`
 }
 
 func (m *OrderRequest) Reset()                    { *m = OrderRequest{} }
@@ -172,8 +172,8 @@ func (m *OrderRequest) GetParentOrderID() string {
 }
 
 type GetUserOrderRequest struct {
-	OrderID string `protobuf:"bytes,1,opt,name=orderID" json:"orderID,omitempty"`
-	UserID  string `protobuf:"bytes,2,opt,name=userID" json:"userID,omitempty"`
+	OrderID string `protobuf:"bytes,1,opt,name=orderID" json:"orderID"`
+	UserID  string `protobuf:"bytes,2,opt,name=userID" json:"userID"`
 }
 
 func (m *GetUserOrderRequest) Reset()                    { *m = GetUserOrderRequest{} }
@@ -196,7 +196,7 @@ func (m *GetUserOrderRequest) GetUserID() string {
 }
 
 type GetUserOrdersRequest struct {
-	UserID string `protobuf:"bytes,1,opt,name=userID" json:"userID,omitempty"`
+	UserID string `protobuf:"bytes,1,opt,name=userID" json:"userID"`
 }
 
 func (m *GetUserOrdersRequest) Reset()                    { *m = GetUserOrdersRequest{} }
@@ -212,8 +212,8 @@ func (m *GetUserOrdersRequest) GetUserID() string {
 }
 
 type RemoveOrderRequest struct {
-	OrderID string `protobuf:"bytes,1,opt,name=orderID" json:"orderID,omitempty"`
-	UserID  string `protobuf:"bytes,2,opt,name=userID" json:"userID,omitempty"`
+	OrderID string `protobuf:"bytes,1,opt,name=orderID" json:"orderID"`
+	UserID  string `protobuf:"bytes,2,opt,name=userID" json:"userID"`
 }
 
 func (m *RemoveOrderRequest) Reset()                    { *m = RemoveOrderRequest{} }
@@ -237,23 +237,23 @@ func (m *RemoveOrderRequest) GetUserID() string {
 
 // Responses
 type Order struct {
-	OrderID            string  `protobuf:"bytes,1,opt,name=orderID" json:"orderID,omitempty"`
-	UserID             string  `protobuf:"bytes,2,opt,name=userID" json:"userID,omitempty"`
-	KeyID              string  `protobuf:"bytes,3,opt,name=keyID" json:"keyID,omitempty"`
-	Exchange           string  `protobuf:"bytes,4,opt,name=exchange" json:"exchange,omitempty"`
-	ExchangeOrderID    string  `protobuf:"bytes,5,opt,name=exchangeOrderID" json:"exchangeOrderID,omitempty"`
-	ExchangeMarketName string  `protobuf:"bytes,6,opt,name=exchangeMarketName" json:"exchangeMarketName,omitempty"`
-	MarketName         string  `protobuf:"bytes,7,opt,name=marketName" json:"marketName,omitempty"`
-	Side               string  `protobuf:"bytes,8,opt,name=side" json:"side,omitempty"`
-	OrderType          string  `protobuf:"bytes,9,opt,name=orderType" json:"orderType,omitempty"`
-	BaseQuantity       float64 `protobuf:"fixed64,10,opt,name=baseQuantity" json:"baseQuantity,omitempty"`
-	BasePercent        float64 `protobuf:"fixed64,11,opt,name=basePercent" json:"basePercent,omitempty"`
-	CurrencyQuantity   float64 `protobuf:"fixed64,12,opt,name=currencyQuantity" json:"currencyQuantity,omitempty"`
-	CurrencyPercent    float64 `protobuf:"fixed64,13,opt,name=currencyPercent" json:"currencyPercent,omitempty"`
-	Status             string  `protobuf:"bytes,14,opt,name=status" json:"status,omitempty"`
-	Conditions         string  `protobuf:"bytes,15,opt,name=conditions" json:"conditions,omitempty"`
-	Condition          string  `protobuf:"bytes,16,opt,name=condition" json:"condition,omitempty"`
-	ParentOrderID      string  `protobuf:"bytes,17,opt,name=parentOrderID" json:"parentOrderID,omitempty"`
+	OrderID            string  `protobuf:"bytes,1,opt,name=orderID" json:"orderID"`
+	UserID             string  `protobuf:"bytes,2,opt,name=userID" json:"userID"`
+	KeyID              string  `protobuf:"bytes,3,opt,name=keyID" json:"keyID"`
+	Exchange           string  `protobuf:"bytes,4,opt,name=exchange" json:"exchange"`
+	ExchangeOrderID    string  `protobuf:"bytes,5,opt,name=exchangeOrderID" json:"exchangeOrderID"`
+	ExchangeMarketName string  `protobuf:"bytes,6,opt,name=exchangeMarketName" json:"exchangeMarketName"`
+	MarketName         string  `protobuf:"bytes,7,opt,name=marketName" json:"marketName"`
+	Side               string  `protobuf:"bytes,8,opt,name=side" json:"side"`
+	OrderType          string  `protobuf:"bytes,9,opt,name=orderType" json:"orderType"`
+	BaseQuantity       float64 `protobuf:"fixed64,10,opt,name=baseQuantity" json:"baseQuantity"`
+	BasePercent        float64 `protobuf:"fixed64,11,opt,name=basePercent" json:"basePercent"`
+	CurrencyQuantity   float64 `protobuf:"fixed64,12,opt,name=currencyQuantity" json:"currencyQuantity"`
+	CurrencyPercent    float64 `protobuf:"fixed64,13,opt,name=currencyPercent" json:"currencyPercent"`
+	Status             string  `protobuf:"bytes,14,opt,name=status" json:"status"`
+	Conditions         string  `protobuf:"bytes,15,opt,name=conditions" json:"conditions"`
+	Condition          string  `protobuf:"bytes,16,opt,name=condition" json:"condition"`
+	ParentOrderID      string  `protobuf:"bytes,17,opt,name=parentOrderID" json:"parentOrderID"`
 }
 
 func (m *Order) Reset()                    { *m = Order{} }
@@ -381,7 +381,7 @@ func (m *Order) GetParentOrderID() string {
 }
 
 type UserOrderData struct {
-	Order *Order `protobuf:"bytes,1,opt,name=order" json:"order,omitempty"`
+	Order *Order `protobuf:"bytes,1,opt,name=order" json:"order"`
 }
 
 func (m *UserOrderData) Reset()                    { *m = UserOrderData{} }
@@ -397,7 +397,7 @@ func (m *UserOrderData) GetOrder() *Order {
 }
 
 type UserOrdersData struct {
-	Orders []*Order `protobuf:"bytes,1,rep,name=orders" json:"orders,omitempty"`
+	Orders []*Order `protobuf:"bytes,1,rep,name=orders" json:"orders"`
 }
 
 func (m *UserOrdersData) Reset()                    { *m = UserOrdersData{} }
@@ -413,9 +413,9 @@ func (m *UserOrdersData) GetOrders() []*Order {
 }
 
 type OrderResponse struct {
-	Status  string         `protobuf:"bytes,1,opt,name=status" json:"status,omitempty"`
-	Message string         `protobuf:"bytes,2,opt,name=message" json:"message,omitempty"`
-	Data    *UserOrderData `protobuf:"bytes,3,opt,name=data" json:"data,omitempty"`
+	Status  string         `protobuf:"bytes,1,opt,name=status" json:"status"`
+	Message string         `protobuf:"bytes,2,opt,name=message" json:"message"`
+	Data    *UserOrderData `protobuf:"bytes,3,opt,name=data" json:"data"`
 }
 
 func (m *OrderResponse) Reset()                    { *m = OrderResponse{} }
@@ -445,9 +445,9 @@ func (m *OrderResponse) GetData() *UserOrderData {
 }
 
 type OrderListResponse struct {
-	Status  string          `protobuf:"bytes,1,opt,name=status" json:"status,omitempty"`
-	Message string          `protobuf:"bytes,2,opt,name=message" json:"message,omitempty"`
-	Data    *UserOrdersData `protobuf:"bytes,3,opt,name=data" json:"data,omitempty"`
+	Status  string          `protobuf:"bytes,1,opt,name=status" json:"status"`
+	Message string          `protobuf:"bytes,2,opt,name=message" json:"message"`
+	Data    *UserOrdersData `protobuf:"bytes,3,opt,name=data" json:"data"`
 }
 
 func (m *OrderListResponse) Reset()                    { *m = OrderListResponse{} }

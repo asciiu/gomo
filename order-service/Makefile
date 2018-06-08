@@ -1,5 +1,6 @@
 build:
 	protoc -I. --go_out=plugins=micro:$(GOPATH)/src/github.com/asciiu/gomo/order-service proto/order/order.proto
+	find . -name 'order.pb.go' | xargs -n1 -IX bash -c 'sed s/,omitempty// X > X.tmp && mv X{.tmp,}'
 	docker build -t us.gcr.io/fomo-204904/order-service:dev .
 
 stage:
