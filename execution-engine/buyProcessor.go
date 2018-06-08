@@ -6,7 +6,8 @@ import (
 	"log"
 	"strings"
 
-	"github.com/asciiu/gomo/common/consts/status"
+	types "github.com/asciiu/gomo/common/constants/order"
+	"github.com/asciiu/gomo/common/constants/status"
 	evt "github.com/asciiu/gomo/common/proto/events"
 	"github.com/mattn/anko/vm"
 	micro "github.com/micro/go-micro"
@@ -44,16 +45,18 @@ func (process *BuyProcessor) ProcessEvent(ctx context.Context, event *evt.TradeE
 				// if non simulated trigger buy event - exchange service subscribes to these events
 
 				// if it is a simulated order trigger an update order event
-				evt := buyOrder.EventOrigin
-				evt.ExchangeOrderID = "paper"
-				evt.ExchangeMarketName = "paper"
-				evt.Status = status.Filled
-				evt.Condition = desc
+				if buyOrder.EventOrigin.OrderType == types.VirtualBuyOrder {
+					evt := buyOrder.EventOrigin
+					evt.ExchangeOrderID = "virtual"
+					evt.ExchangeMarketName = "virtual"
+					evt.Status = status.Filled
+					evt.Condition = desc
 
-				log.Printf("buy order triggered -- %+v\n", evt)
+					log.Printf("buy order triggered -- %+v\n", evt)
 
-				if err := process.Publisher.Publish(ctx, evt); err != nil {
-					log.Println("publish warning: ", err, evt)
+					if err := process.Publisher.Publish(ctx, evt); err != nil {
+						log.Println("publish warning: ", err, evt)
+					}
 				}
 			}
 		}
