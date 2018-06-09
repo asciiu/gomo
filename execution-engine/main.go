@@ -6,8 +6,9 @@ import (
 	"log"
 	"os"
 
+	msg "github.com/asciiu/gomo/common/constants/messages"
 	"github.com/asciiu/gomo/common/db"
-	msg "github.com/asciiu/gomo/common/messages"
+	evt "github.com/asciiu/gomo/common/proto/events"
 	"github.com/mattn/anko/core"
 	"github.com/mattn/anko/vm"
 	micro "github.com/micro/go-micro"
@@ -48,7 +49,7 @@ func main() {
 	micro.RegisterSubscriber(msg.TopicAggTrade, srv.Server(), &processor)
 
 	starter := micro.NewPublisher(msg.TopicEngineStart, srv.Client())
-	starter.Publish(context.Background(), &processor)
+	starter.Publish(context.Background(), &evt.EngineStartEvent{"replaceIDHERE"})
 
 	if err := srv.Run(); err != nil {
 		log.Fatal(err)

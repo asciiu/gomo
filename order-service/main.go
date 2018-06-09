@@ -6,8 +6,8 @@ import (
 	"os"
 
 	bp "github.com/asciiu/gomo/balance-service/proto/balance"
+	msg "github.com/asciiu/gomo/common/constants/messages"
 	"github.com/asciiu/gomo/common/db"
-	msg "github.com/asciiu/gomo/common/messages"
 	keys "github.com/asciiu/gomo/key-service/proto/key"
 	op "github.com/asciiu/gomo/order-service/proto/order"
 	micro "github.com/micro/go-micro"

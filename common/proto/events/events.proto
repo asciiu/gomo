@@ -37,3 +37,7 @@ message OrderEvent {
   string exchangeMarketName = 15;
   string status = 16;
 }
+
+message EngineStartEvent {
+  string engineID = 1;
+}

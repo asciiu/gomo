@@ -15,12 +15,6 @@ const TopicAggTrade = "ExchangeAggTrade"
 // new order event
 const TopicNewOrder = "NewOrder"
 
-// TopicNewBuyOrder new orders
-//const TopicNewBuyOrder = "NewBuyOrder"
-
-// TopicNewSellOrder new sell order
-//const TopicNewSellOrder = "NewSellOrder"
-
 // TopicOrderFilled when order has filled
 const TopicOrderFilled = "OrderFilled"
 
