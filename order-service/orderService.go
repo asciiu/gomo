@@ -26,13 +26,14 @@ type OrderService struct {
 	DB        *sql.DB
 	Client    balances.BalanceServiceClient
 	KeyClient keys.KeyServiceClient
-	NewBuy    micro.Publisher
-	NewSell   micro.Publisher
+	NewOrder  micro.Publisher
+	//NewBuy    micro.Publisher
+	//NewSell   micro.Publisher
 }
 
 // private: This is where the order events are published to the rest of the system
 // this function should only be callable from within the OrderService
-func (service *OrderService) publishOrder(ctx context.Context, publisher micro.Publisher, order *orders.Order) error {
+func (service *OrderService) publishOrder(ctx context.Context, order *orders.Order) error {
 
 	keyReq := keys.GetUserKeyRequest{
 		UserID: order.UserID,
@@ -60,7 +61,8 @@ func (service *OrderService) publishOrder(ctx context.Context, publisher micro.P
 		Status:       order.Status,
 	}
 
-	if err := publisher.Publish(context.Background(), &orderEvent); err != nil {
+	//if err := publisher.Publish(context.Background(), &orderEvent); err != nil {
+	if err := service.NewOrder.Publish(context.Background(), &orderEvent); err != nil {
 		return fmt.Errorf("publish error -- %s -- %+v", err, &orderEvent)
 	}
 	log.Printf("publish order -- %+v\n", &orderEvent)
@@ -97,7 +99,7 @@ func (service *OrderService) LoadBuyOrder(ctx context.Context, order *orders.Ord
 		return err
 	}
 
-	if err := service.publishOrder(ctx, service.NewBuy, order); err != nil {
+	if err := service.publishOrder(ctx, order); err != nil {
 		return err
 	}
 
@@ -114,7 +116,7 @@ func (service *OrderService) LoadSellOrder(ctx context.Context, order *orders.Or
 		return err
 	}
 
-	if err := service.publishOrder(ctx, service.NewSell, order); err != nil {
+	if err := service.publishOrder(ctx, order); err != nil {
 		return err
 	}
 
@@ -164,13 +166,13 @@ func (service *OrderService) AddOrders(ctx context.Context, req *orders.OrdersRe
 		ordrs = append(ordrs, o)
 		var pub micro.Publisher
 
-		if o.Side == side.Buy {
-			pub = service.NewBuy
-		} else {
-			pub = service.NewSell
-		}
+		//if o.Side == side.Buy {
+		//	pub = service.NewBuy
+		//} else {
+		//	pub = service.NewSell
+		//}
 
-		if err := service.publishOrder(ctx, pub, o); err != nil {
+		if err := service.publishOrder(ctx, o); err != nil {
 			res.Status = response.Error
 			res.Message = "could not publish order: " + err.Error()
 			return nil

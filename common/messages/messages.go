@@ -12,11 +12,14 @@ const TopicBalanceUpdate = "BalanceUpdated"
 // TopicAggTrade emitted after trade event
 const TopicAggTrade = "ExchangeAggTrade"
 
+// new order event
+const TopicNewOrder = "NewOrder"
+
 // TopicNewBuyOrder new orders
-const TopicNewBuyOrder = "NewBuyOrder"
+//const TopicNewBuyOrder = "NewBuyOrder"
 
 // TopicNewSellOrder new sell order
-const TopicNewSellOrder = "NewSellOrder"
+//const TopicNewSellOrder = "NewSellOrder"
 
 // TopicOrderFilled when order has filled
 const TopicOrderFilled = "OrderFilled"

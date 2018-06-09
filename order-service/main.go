@@ -37,8 +37,9 @@ func main() {
 		DB:        gomoDB,
 		Client:    bp.NewBalanceServiceClient("balances", srv.Client()),
 		KeyClient: keys.NewKeyServiceClient("keys", srv.Client()),
-		NewBuy:    micro.NewPublisher(msg.TopicNewBuyOrder, srv.Client()),
-		NewSell:   micro.NewPublisher(msg.TopicNewSellOrder, srv.Client()),
+		NewOrder:  micro.NewPublisher(msg.TopicNewOrder, srv.Client()),
+		//NewBuy:    micro.NewPublisher(msg.TopicNewBuyOrder, srv.Client()),
+		//NewSell:   micro.NewPublisher(msg.TopicNewSellOrder, srv.Client()),
 	}
 
 	filledReceiver := OrderFilledReceiver{

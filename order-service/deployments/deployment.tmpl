@@ -15,7 +15,7 @@ spec:
         containers:
         - name: order-service 
           image: us.gcr.io/fomo-204904/order-service:dev
-          imagePullPolicy: IfNotPresent
+          imagePullPolicy: Always 
           command: [
             "./order-service",
             "--selector=static",
