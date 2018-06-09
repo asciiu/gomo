@@ -58,16 +58,16 @@ type Order struct {
 
 // swagger:parameters addOrder
 type OrderRequest struct {
-	// Required.
+	// Required internal api key ID
 	// in: body
 	KeyID string `json:"keyID"`
-	// Required. Example: ADA-BTC
+	// Required e.g. ADA-BTC
 	// in: body
 	MarketName string `json:"marketName"`
-	// Required. "buy" or "sell"
+	// Required "buy" or "sell"
 	// in: body
 	Side string `json:"side"`
-	// Required. Valid order types are "market", "limit", "virtual". Orders not within these types will be ignored.
+	// Required Valid order types are "market", "limit", "virtual". Orders not within these types will be ignored.
 	// in: body
 	OrderType string `json:"orderType"`
 	// Required for buy side when order is first in chain
@@ -82,7 +82,7 @@ type OrderRequest struct {
 	// Required for sell side for all orders that are chained
 	// in: body
 	CurrencyPercent float64 `json:"currencyPercent"`
-	// Required.
+	// Required
 	// in: body
 	Conditions string `json:"conditions"`
 
@@ -308,6 +308,25 @@ func fail(c echo.Context, msg string) error {
 // create a new order  (protected)
 //
 // This will create a new order in the system.
+// Example request:
+// [
+//	{
+//		"keyID": "680d6bbf-1feb-4122-bd10-0e7ce080676a",
+//		"marketName": "ADA-BTC",
+//		"side": "buy",
+//		"basePercent": 0.50,
+//		"orderType": "market",
+//		"conditions": "price <= 0.00002800"
+//	},
+//	{
+//		"keyID": "680d6bbf-1feb-4122-bd10-0e7ce080676a",
+//		"marketName": "ADA-BTC",
+//		"side": "buy",
+//		"basePercent": 1.0,
+//		"orderType": "market",
+//		"conditions": "price <= 0.00002200"
+//	}
+// ]
 //
 // responses:
 //  200: responseOrdersSuccess "data" will contain list of orders with "status": "success"
@@ -346,7 +365,7 @@ func (controller *OrderController) HandlePostOrder(c echo.Context) error {
 
 		// side, market name, and api key are required
 		if order.Side == "" || order.MarketName == "" || order.KeyID == "" {
-			return fail(c, "side, marketName, and apiKeyID required!")
+			return fail(c, "side, marketName, and keyID required!")
 		}
 
 		// assume the first order is head of a chain if the ParentOrderID is empty

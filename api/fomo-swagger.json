@@ -553,7 +553,7 @@
         }
       },
       "post": {
-        "description": "This will create a new order in the system.",
+        "description": "This will create a new order in the system.\nExample request:\n[\n{\n\"keyID\": \"680d6bbf-1feb-4122-bd10-0e7ce080676a\",\n\"marketName\": \"ADA-BTC\",\n\"side\": \"buy\",\n\"basePercent\": 0.50,\n\"orderType\": \"market\",\n\"conditions\": \"price \u003c= 0.00002800\"\n},\n{\n\"keyID\": \"680d6bbf-1feb-4122-bd10-0e7ce080676a\",\n\"marketName\": \"ADA-BTC\",\n\"side\": \"buy\",\n\"basePercent\": 1.0,\n\"orderType\": \"market\",\n\"conditions\": \"price \u003c= 0.00002200\"\n}\n]",
         "tags": [
           "orders"
         ],
@@ -562,7 +562,7 @@
         "parameters": [
           {
             "x-go-name": "KeyID",
-            "description": "Required.",
+            "description": "Required internal api key ID",
             "name": "keyID",
             "in": "body",
             "schema": {
@@ -570,8 +570,8 @@
             }
           },
           {
-            "example": "ADA-BTC",
             "x-go-name": "MarketName",
+            "description": "Required e.g. ADA-BTC",
             "name": "marketName",
             "in": "body",
             "schema": {
@@ -580,7 +580,7 @@
           },
           {
             "x-go-name": "Side",
-            "description": "Required. \"buy\" or \"sell\"",
+            "description": "Required \"buy\" or \"sell\"",
             "name": "side",
             "in": "body",
             "schema": {
@@ -589,7 +589,7 @@
           },
           {
             "x-go-name": "OrderType",
-            "description": "Required. Valid order types are \"market\", \"limit\", \"virtual\". Orders not within these types will be ignored.",
+            "description": "Required Valid order types are \"market\", \"limit\", \"virtual\". Orders not within these types will be ignored.",
             "name": "orderType",
             "in": "body",
             "schema": {
@@ -638,7 +638,7 @@
           },
           {
             "x-go-name": "Conditions",
-            "description": "Required.",
+            "description": "Required",
             "name": "conditions",
             "in": "body",
             "schema": {
@@ -1574,7 +1574,7 @@
           "x-go-name": "BaseQuantity"
         },
         "conditions": {
-          "description": "Required.\nin: body",
+          "description": "Required\nin: body",
           "type": "string",
           "x-go-name": "Conditions"
         },
@@ -1591,17 +1591,17 @@
           "x-go-name": "CurrencyQuantity"
         },
         "keyID": {
-          "description": "Required.\nin: body",
+          "description": "Required internal api key ID\nin: body",
           "type": "string",
           "x-go-name": "KeyID"
         },
         "marketName": {
+          "description": "Required e.g. ADA-BTC\nin: body",
           "type": "string",
-          "x-go-name": "MarketName",
-          "example": "ADA-BTC"
+          "x-go-name": "MarketName"
         },
         "orderType": {
-          "description": "Required. Valid order types are \"market\", \"limit\", \"virtual\". Orders not within these types will be ignored.\nin: body",
+          "description": "Required Valid order types are \"market\", \"limit\", \"virtual\". Orders not within these types will be ignored.\nin: body",
           "type": "string",
           "x-go-name": "OrderType"
         },
@@ -1611,7 +1611,7 @@
           "x-go-name": "ParentOrderID"
         },
         "side": {
-          "description": "Required. \"buy\" or \"sell\"\nin: body",
+          "description": "Required \"buy\" or \"sell\"\nin: body",
           "type": "string",
           "x-go-name": "Side"
         }
