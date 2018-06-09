@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"log"
 	"os"
@@ -36,18 +37,18 @@ func main() {
 		Env:    env,
 	}
 	processor := Processor{
-		DB:        gomoDB,
-		Receiver:  &orderReceiver,
-		Publisher: micro.NewPublisher(msg.TopicOrderFilled, srv.Client()),
-		Filler:    micro.NewPublisher(msg.TopicFillOrder, srv.Client()),
+		DB:       gomoDB,
+		Receiver: &orderReceiver,
+		Filled:   micro.NewPublisher(msg.TopicOrderFilled, srv.Client()),
+		Filler:   micro.NewPublisher(msg.TopicFillOrder, srv.Client()),
 	}
 
 	// subscribe to new key topic with a key validator
 	micro.RegisterSubscriber(msg.TopicNewOrder, srv.Server(), &orderReceiver)
 	micro.RegisterSubscriber(msg.TopicAggTrade, srv.Server(), &processor)
 
-	//engineStart := micro.NewPublisher(msg.TopicEngineStart, srv.Client())
-	//engineStart.Publish(context.Background(), interface{})
+	starter := micro.NewPublisher(msg.TopicEngineStart, srv.Client())
+	starter.Publish(context.Background(), &processor)
 
 	if err := srv.Run(); err != nil {
 		log.Fatal(err)
