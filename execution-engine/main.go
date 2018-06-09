@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"log"
 	"os"
@@ -58,6 +59,9 @@ func main() {
 	micro.RegisterSubscriber(msg.TopicNewSellOrder, srv.Server(), &sellReceiver)
 	micro.RegisterSubscriber(msg.TopicAggTrade, srv.Server(), &buyProcessor)
 	micro.RegisterSubscriber(msg.TopicAggTrade, srv.Server(), &sellProcessor)
+
+	engineStart := micro.NewPublisher(msg.TopiceEngineStart, srv.Client())
+	engineStart.Publish(context.Background(), interface{})
 
 	if err := srv.Run(); err != nil {
 		log.Fatal(err)

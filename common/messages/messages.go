@@ -26,3 +26,6 @@ const TopicFillOrder = "FillOrder"
 
 // TopicNotification when a notification is generated
 const TopicNotification = "Notification"
+
+// used to notify other services that an engine was started
+const TopicEngineStart = "EngineStart"
