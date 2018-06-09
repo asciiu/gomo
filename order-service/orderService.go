@@ -164,13 +164,6 @@ func (service *OrderService) AddOrders(ctx context.Context, req *orders.OrdersRe
 		}
 
 		ordrs = append(ordrs, o)
-		var pub micro.Publisher
-
-		//if o.Side == side.Buy {
-		//	pub = service.NewBuy
-		//} else {
-		//	pub = service.NewSell
-		//}
 
 		if err := service.publishOrder(ctx, o); err != nil {
 			res.Status = response.Error
