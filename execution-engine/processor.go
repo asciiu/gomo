@@ -13,53 +13,56 @@ import (
 	micro "github.com/micro/go-micro"
 )
 
-// BuyProcessor will handle all buys
-type BuyProcessor struct {
-	DB            *sql.DB
-	Env           *vm.Env
-	Receiver      *OrderReceiver
-	Publisher     micro.Publisher
-	FillPublisher micro.Publisher
+// Processor will process orders
+type Processor struct {
+	DB       *sql.DB
+	Env      *vm.Env
+	Receiver *OrderReceiver
+	Filled   micro.Publisher
+	Filler   micro.Publisher
 }
 
 // ProcessEvent will process ExchangeEvents. These events are published from the exchange sockets.
-func (process *BuyProcessor) ProcessEvent(ctx context.Context, event *evt.TradeEvent) error {
-	buyOrders := process.Receiver.Orders
+func (processor *Processor) ProcessEvent(ctx context.Context, event *evt.TradeEvent) error {
+	orders := processor.Receiver.Orders
 
-	for i, buyOrder := range buyOrders {
+	for i, order := range orders {
 
-		marketName := strings.Replace(buyOrder.EventOrigin.MarketName, "-", "", 1)
+		marketName := strings.Replace(order.EventOrigin.MarketName, "-", "", 1)
 		// market name and exchange must match
-		if marketName != event.MarketName || buyOrder.EventOrigin.Exchange != event.Exchange {
+		if marketName != event.MarketName || order.EventOrigin.Exchange != event.Exchange {
 			continue
 		}
 
-		conditions := buyOrder.Conditions
+		conditions := order.Conditions
 		// eval all conditions for this order
 		for _, evaluateFunc := range conditions {
 
 			// does condition of order eval to true?
 			if isValid, desc := evaluateFunc(event.Price); isValid {
-				// remove this order from the process
-				process.Receiver.Orders = append(buyOrders[:i], buyOrders[i+1:]...)
+				// we have a condition that was true for this order, process this order now!
+				log.Printf("order processed -- %+v\n", order)
 
-				evt := buyOrder.EventOrigin
+				// remove this order from the processor
+				processor.Receiver.Orders = append(orders[:i], orders[i+1:]...)
+
+				evt := order.EventOrigin
 				evt.Condition = desc
 
 				// if non simulated trigger buy event - exchange service subscribes to these events
-				if err := process.FillPublisher.Publish(ctx, evt); err != nil {
+				if err := processor.Filler.Publish(ctx, evt); err != nil {
 					log.Println("publish warning: ", err)
 				}
 
 				// if it is a simulated order trigger an update order event
-				if buyOrder.EventOrigin.OrderType == types.VirtualOrder {
+				if order.EventOrigin.OrderType == types.VirtualOrder {
 					evt.ExchangeOrderID = types.VirtualOrder
 					evt.ExchangeMarketName = types.VirtualOrder
 					evt.Status = status.Filled
 
-					log.Printf("buy order triggered -- %+v\n", evt)
+					log.Printf("order processed -- %+v\n", evt)
 
-					if err := process.Publisher.Publish(ctx, evt); err != nil {
+					if err := processor.Filled.Publish(ctx, evt); err != nil {
 						log.Println("publish warning: ", err, evt)
 					}
 				}

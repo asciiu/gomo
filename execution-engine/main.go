@@ -1,7 +1,6 @@
 package main
 
 import (
-	"context"
 	"fmt"
 	"log"
 	"os"
@@ -31,37 +30,24 @@ func main() {
 	env := vm.NewEnv()
 	core.Import(env)
 
-	buyReceiver := OrderReceiver{
+	orderReceiver := OrderReceiver{
 		DB:     gomoDB,
 		Orders: make([]*Order, 0),
 		Env:    env,
 	}
-	sellReceiver := OrderReceiver{
-		DB:     gomoDB,
-		Orders: make([]*Order, 0),
-		Env:    env,
-	}
-	buyProcessor := BuyProcessor{
-		DB:            gomoDB,
-		Receiver:      &buyReceiver,
-		Publisher:     micro.NewPublisher(msg.TopicOrderFilled, srv.Client()),
-		FillPublisher: micro.NewPublisher(msg.TopicFillOrder, srv.Client()),
-	}
-	sellProcessor := SellProcessor{
-		DB:            gomoDB,
-		Receiver:      &sellReceiver,
-		Publisher:     micro.NewPublisher(msg.TopicOrderFilled, srv.Client()),
-		FillPublisher: micro.NewPublisher(msg.TopicFillOrder, srv.Client()),
+	processor := Processor{
+		DB:        gomoDB,
+		Receiver:  &orderReceiver,
+		Publisher: micro.NewPublisher(msg.TopicOrderFilled, srv.Client()),
+		Filler:    micro.NewPublisher(msg.TopicFillOrder, srv.Client()),
 	}
 
 	// subscribe to new key topic with a key validator
-	micro.RegisterSubscriber(msg.TopicNewBuyOrder, srv.Server(), &buyReceiver)
-	micro.RegisterSubscriber(msg.TopicNewSellOrder, srv.Server(), &sellReceiver)
-	micro.RegisterSubscriber(msg.TopicAggTrade, srv.Server(), &buyProcessor)
-	micro.RegisterSubscriber(msg.TopicAggTrade, srv.Server(), &sellProcessor)
+	micro.RegisterSubscriber(msg.TopicNewOrder, srv.Server(), &orderReceiver)
+	micro.RegisterSubscriber(msg.TopicAggTrade, srv.Server(), &processor)
 
-	engineStart := micro.NewPublisher(msg.TopiceEngineStart, srv.Client())
-	engineStart.Publish(context.Background(), interface{})
+	//engineStart := micro.NewPublisher(msg.TopicEngineStart, srv.Client())
+	//engineStart.Publish(context.Background(), interface{})
 
 	if err := srv.Run(); err != nil {
 		log.Fatal(err)
