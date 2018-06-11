@@ -8,8 +8,8 @@ import (
 	"strings"
 	"sync"
 
-	exchanges "github.com/asciiu/gomo/common/exchanges"
-	msg "github.com/asciiu/gomo/common/messages"
+	"github.com/asciiu/gomo/common/constants/exchange"
+	msg "github.com/asciiu/gomo/common/constants/messages"
 	evt "github.com/asciiu/gomo/common/proto/events"
 	"github.com/gorilla/websocket"
 	micro "github.com/micro/go-micro"
@@ -61,6 +61,11 @@ type BinanceTicker struct {
 	TotalTrades         uint64 `json:"n"`
 }
 
+func closeHandler(code int, text string) error {
+	log.Printf("closed connection %d %s\n", code, text)
+	return nil
+}
+
 func (bconn *BinanceConnection) Ticker() {
 	url := "wss://stream.binance.com:9443/ws/!ticker@arr"
 	log.Printf("connecting to %s", url)
@@ -71,6 +76,8 @@ func (bconn *BinanceConnection) Ticker() {
 	}
 
 	defer conn.Close()
+
+	conn.SetCloseHandler(closeHandler)
 
 	for {
 		_, message, err := conn.ReadMessage()
@@ -107,7 +114,7 @@ func (bconn *BinanceConnection) Ticker() {
 			}
 
 			tickerEvent := evt.TradeEvent{
-				Exchange:   exchanges.Binance,
+				Exchange:   exchange.Binance,
 				MarketName: symbol,
 				Price:      p,
 				//EventTime:  tm.String(),
