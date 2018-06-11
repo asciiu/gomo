@@ -165,6 +165,20 @@ func (service *OrderService) AddOrders(ctx context.Context, req *orders.OrdersRe
 
 		ordrs = append(ordrs, o)
 
+		// we need to get the key for this order so we can publish it
+		// to the engines
+		keyReq := keys.GetUserKeyRequest{
+			UserID: o.UserID,
+			KeyID:  o.KeyID,
+		}
+		keyResponse, _ := service.KeyClient.GetUserKey(ctx, &keyReq)
+		if keyResponse.Status != response.Success {
+			return fmt.Errorf("key is invalid for order -- %s, %#v", keyResponse.Message, order)
+		}
+
+		o.Key = keyResponse.Data.Key.Key
+		o.Secret = keyResponse.Data.Key.Secret
+
 		if err := service.publishOrder(ctx, o); err != nil {
 			res.Status = response.Error
 			res.Message = "could not publish order: " + err.Error()
