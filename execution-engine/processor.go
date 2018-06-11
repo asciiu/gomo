@@ -4,7 +4,6 @@ import (
 	"context"
 	"database/sql"
 	"log"
-	"strings"
 
 	types "github.com/asciiu/gomo/common/constants/order"
 	"github.com/asciiu/gomo/common/constants/status"
@@ -24,11 +23,13 @@ type Processor struct {
 
 // ProcessEvent will process ExchangeEvents. These events are published from the exchange sockets.
 func (processor *Processor) ProcessEvent(ctx context.Context, event *evt.TradeEvent) error {
+	//log.Println("buy recv: ", event)
 	orders := processor.Receiver.Orders
 
 	for i, order := range orders {
 
-		marketName := strings.Replace(order.EventOrigin.MarketName, "-", "", 1)
+		marketName := order.EventOrigin.MarketName
+		//marketName := strings.Replace(order.EventOrigin.MarketName, "-", "", 1)
 		// market name and exchange must match
 		if marketName != event.MarketName || order.EventOrigin.Exchange != event.Exchange {
 			continue
@@ -69,7 +70,6 @@ func (processor *Processor) ProcessEvent(ctx context.Context, event *evt.TradeEv
 			}
 		}
 	}
-	//fmt.Println("buy recv: ", event)
 
 	return nil
 }
