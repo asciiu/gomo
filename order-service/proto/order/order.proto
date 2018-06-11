@@ -50,20 +50,22 @@ message Order {
   string orderID = 1;
   string userID = 2;
   string keyID = 3;
-  string exchange = 4;
-  string exchangeOrderID = 5;
-  string exchangeMarketName = 6;
-  string marketName = 7;
-  string side = 8;
-  string orderType = 9;
-  double baseQuantity = 10;
-  double basePercent = 11;
-  double currencyQuantity = 12;
-  double currencyPercent = 13;
-  string status = 14;
-  string conditions = 15;
-  string condition = 16;
-  string parentOrderID = 17;
+  string key = 4;
+  string secret = 5;
+  string exchange = 6;
+  string exchangeOrderID = 7;
+  string exchangeMarketName = 8;
+  string marketName = 9;
+  string side = 10;
+  string orderType = 11;
+  double baseQuantity = 12;
+  double basePercent = 13;
+  double currencyQuantity = 14;
+  double currencyPercent = 15;
+  string status = 16;
+  string conditions = 17;
+  string condition = 18;
+  string parentOrderID = 19;
 }
 
 message UserOrderData {
