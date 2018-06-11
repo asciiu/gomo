@@ -63,9 +63,9 @@ func (service *OrderService) publishOrder(ctx context.Context, order *orders.Ord
 
 	//if err := publisher.Publish(context.Background(), &orderEvent); err != nil {
 	if err := service.NewOrder.Publish(context.Background(), &orderEvent); err != nil {
-		return fmt.Errorf("publish error -- %s -- %+v", err, &orderEvent)
+		return fmt.Errorf("publish error: %s, orderEvent: %+v", err, &orderEvent)
 	}
-	log.Printf("publish order -- %+v\n", &orderEvent)
+	log.Printf("publish order event: %+v\n", &orderEvent)
 	return nil
 }
 
