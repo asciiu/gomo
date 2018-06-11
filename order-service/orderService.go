@@ -90,27 +90,15 @@ func (service *OrderService) validateBalance(ctx context.Context, currency, user
 
 // LoadBuyOrder should not be invoked by the client. This function was designed to load an
 // order after an order was filled.
-func (service *OrderService) LoadBuyOrder(ctx context.Context, order *orders.Order) error {
+func (service *OrderService) LoadOrder(ctx context.Context, order *orders.Order) error {
 
 	currencies := strings.Split(order.MarketName, "-")
-	baseCurrency := currencies[1]
-
-	if err := service.validateBalance(ctx, baseCurrency, order.UserID, order.KeyID); err != nil {
-		return err
-	}
-
-	if err := service.publishOrder(ctx, order); err != nil {
-		return err
-	}
-
-	return nil
-}
-
-// LoadSellOrder should not be invoked by the client. This function was designed to load an
-// order after an order was filled.
-func (service *OrderService) LoadSellOrder(ctx context.Context, order *orders.Order) error {
-	currencies := strings.Split(order.MarketName, "-")
+	// default market currency
 	currency := currencies[0]
+	if order.Side == side.Buy {
+		// buy uses base currency
+		currency = currencies[1]
+	}
 
 	if err := service.validateBalance(ctx, currency, order.UserID, order.KeyID); err != nil {
 		return err

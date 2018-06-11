@@ -23,7 +23,10 @@ func (receiver *EngineStartReceiver) ProcessEvent(ctx context.Context, engine *e
 		log.Println("could not find open orders: ", error)
 	}
 
-	log.Println(orders)
+	for _, order := range orders {
+		receiver.Service.LoadOrder(ctx, order)
+		log.Printf("loaded order: %+v\n", order)
+	}
 
 	//log.Println("engine started load the open orders for: ", engine)
 	return nil
