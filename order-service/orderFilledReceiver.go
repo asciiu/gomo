@@ -29,7 +29,7 @@ func (receiver *OrderFilledReceiver) ProcessEvent(ctx context.Context, orderEven
 		Description: fmt.Sprintf("orderId: %s status: %s", orderEvent.OrderID, orderEvent.Status),
 	}
 
-	// publish verify key event
+	// publish notification about order fill
 	if err := receiver.NotifyPub.Publish(context.Background(), &notification); err != nil {
 		log.Println("could not publish notification: ", err)
 	}

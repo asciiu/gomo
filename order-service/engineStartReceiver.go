@@ -20,15 +20,15 @@ func (receiver *EngineStartReceiver) ProcessEvent(ctx context.Context, engine *e
 
 	orders, error := orderRepo.FindOpenOrders(receiver.Service.DB)
 	if error != nil {
-		log.Println("could not find open orders: ", error)
+		log.Println("could not find open orders -- ", error)
 	}
 
 	// TODO we need to explore a different approach here that is more efficient.
 	for _, order := range orders {
 		if error = receiver.Service.LoadOrder(ctx, order); error != nil {
-			log.Println("load error: ", error)
+			log.Println("load order error -- ", error)
 		} else {
-			log.Printf("loaded order: %+v\n", order)
+			log.Printf("loaded order -- %+v\n", order)
 		}
 	}
 
