@@ -5,6 +5,8 @@ import (
 	"encoding/json"
 	"log"
 
+	"github.com/asciiu/gomo/common/constants/key"
+	"github.com/asciiu/gomo/common/constants/status"
 	evt "github.com/asciiu/gomo/common/proto/events"
 	orderProto "github.com/asciiu/gomo/order-service/proto/order"
 	"github.com/google/uuid"
@@ -56,6 +58,84 @@ func FindOrderWithParentID(db *sql.DB, parentOrderID string) (*orderProto.Order,
 	}
 
 	return &o, nil
+}
+
+func FindOpenOrders(db *sql.DB) ([]*orderProto.Order, error) {
+	results := make([]*orderProto.Order, 0)
+
+	rows, err := db.Query(`SELECT o.id, 
+		o.user_id, 
+		o.user_key_id, 
+		o.exchange_order_id, 
+		o.exchange_market_name,
+		o.market_name, 
+		o.side, 
+		o.type, 
+		o.base_quantity, 
+		o.base_percent, 
+		o.currency_quantity, 
+		o.currency_percent, 
+		o.status, 
+		o.conditions, 
+		o.condition, 
+		o.parent_order_id, 
+		u.api_key, 
+		u.secret, 
+		u.exchange_name FROM orders o 
+		JOIN user_keys u on u.id = o.user_key_id 
+		WHERE o.status = $1 AND u.status = $2`, status.Open, key.Verified)
+
+	if err != nil {
+		log.Fatal(err)
+		return nil, err
+	}
+
+	defer rows.Close()
+
+	for rows.Next() {
+		var o orderProto.Order
+		var condition sql.NullString
+		err := rows.Scan(&o.OrderID,
+			&o.UserID,
+			&o.KeyID,
+			&o.ExchangeOrderID,
+			&o.ExchangeMarketName,
+			&o.MarketName,
+			&o.Side,
+			&o.OrderType,
+			&o.BaseQuantity,
+			&o.BasePercent,
+			&o.CurrencyQuantity,
+			&o.CurrencyPercent,
+			&o.Status,
+			&o.Conditions,
+			&condition,
+			&o.ParentOrderID,
+			&o.Key,
+			&o.Secret,
+			&o.Exchange)
+
+		if condition.Valid {
+			o.Condition = condition.String
+		}
+
+		if err != nil {
+			log.Fatal(err)
+			return nil, err
+		}
+
+		if err := json.Unmarshal([]byte(o.Conditions), &o.Conditions); err != nil {
+			return nil, err
+		}
+		results = append(results, &o)
+	}
+	err = rows.Err()
+	if err != nil {
+		log.Fatal(err)
+		return nil, err
+	}
+
+	return results, nil
 }
 
 func FindOrdersByUserID(db *sql.DB, req *orderProto.GetUserOrdersRequest) ([]*orderProto.Order, error) {
