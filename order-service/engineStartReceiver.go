@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"log"
+	"time"
 
 	evt "github.com/asciiu/gomo/common/proto/events"
 	orderRepo "github.com/asciiu/gomo/order-service/db/sql"
@@ -22,6 +23,8 @@ func (receiver *EngineStartReceiver) ProcessEvent(ctx context.Context, engine *e
 	if error != nil {
 		log.Println("could not find open orders -- ", error)
 	}
+
+	time.Sleep(2 * time.Second)
 
 	// TODO we need to explore a different approach here that is more efficient.
 	for _, order := range orders {
