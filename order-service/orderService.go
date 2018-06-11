@@ -35,23 +35,13 @@ type OrderService struct {
 // this function should only be callable from within the OrderService
 func (service *OrderService) publishOrder(ctx context.Context, order *orders.Order) error {
 
-	keyReq := keys.GetUserKeyRequest{
-		UserID: order.UserID,
-		KeyID:  order.KeyID,
-	}
-
-	keyResponse, _ := service.KeyClient.GetUserKey(ctx, &keyReq)
-	if keyResponse.Status != response.Success {
-		return fmt.Errorf("key is invalid for order -- %s, %#v", keyResponse.Message, order)
-	}
-
 	// convert order to order event
 	orderEvent := evt.OrderEvent{
 		Exchange:     order.Exchange,
 		OrderID:      order.OrderID,
 		UserID:       order.UserID,
-		Key:          keyResponse.Data.Key.Key,
-		Secret:       keyResponse.Data.Key.Secret,
+		Key:          order.Key,
+		Secret:       order.Secret,
 		KeyID:        order.KeyID,
 		MarketName:   order.MarketName,
 		BaseQuantity: order.BaseQuantity,
