@@ -27,6 +27,7 @@ func main() {
 
 	orderFiller := OrderFiller{
 		FilledPub: filledPub,
+		FailedPub: micro.NewPublisher(msg.TopicNotification, srv.Client()),
 	}
 	// subscribe to new key topic with a key validator
 	micro.RegisterSubscriber(msg.TopicFillOrder, srv.Server(), &orderFiller)
