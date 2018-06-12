@@ -73,7 +73,7 @@ func (receiver *OrderReceiver) ProcessEvent(ctx context.Context, buy *evt.OrderE
 		Conditions:  conditions,
 	}
 	receiver.Orders = append(receiver.Orders, &order)
-	log.Printf("order received -- %+v\n", &order)
+	log.Printf("new order received -- orderID: %s, market: %s\n", order.EventOrigin.OrderID, order.EventOrigin.MarketName)
 
 	return nil
 }
