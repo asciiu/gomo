@@ -61,8 +61,16 @@ type BinanceTicker struct {
 	TotalTrades         uint64 `json:"n"`
 }
 
-func closeHandler(code int, text string) error {
+func handleClose(code int, text string) error {
 	log.Printf("closed connection %d %s\n", code, text)
+	return nil
+}
+func handlePing(appData string) error {
+	log.Printf(appData)
+	return nil
+}
+func handlePong(appData string) error {
+	log.Printf(appData)
 	return nil
 }
 
@@ -77,7 +85,9 @@ func (bconn *BinanceConnection) Ticker() {
 
 	defer conn.Close()
 
-	conn.SetCloseHandler(closeHandler)
+	conn.SetCloseHandler(handleClose)
+	conn.SetPingHandler(handlePing)
+	conn.SetPongHandler(handlePong)
 
 	for {
 		_, message, err := conn.ReadMessage()
@@ -127,6 +137,7 @@ func (bconn *BinanceConnection) Ticker() {
 			}
 		}
 	}
+	log.Println("websocket has stopped!")
 }
 
 func main() {
