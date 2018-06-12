@@ -16,7 +16,6 @@ type OrderFiller struct {
 }
 
 func (filler *OrderFiller) FillOrder(ctx context.Context, orderEvent *evt.OrderEvent) error {
-	log.Println(orderEvent)
 	// ignore events not binance
 	if orderEvent.Exchange != exchange.Binance {
 		return nil
@@ -54,7 +53,7 @@ func (filler *OrderFiller) FillOrder(ctx context.Context, orderEvent *evt.OrderE
 		// 	logger.Log("could not publish verified key event: ", err)
 		// }
 
-		logger.Log("order filled: ", orderEvent.OrderID)
+		log.Println("order filled -- orderID: %s, market: %s", orderEvent.OrderID, orderEvent.MarketName)
 	}()
 	return nil
 }
