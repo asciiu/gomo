@@ -53,7 +53,7 @@ func (filler *OrderFiller) FillOrder(ctx context.Context, orderEvent *evt.OrderE
 		// 	logger.Log("could not publish verified key event: ", err)
 		// }
 
-		log.Println("order filled -- orderID: %s, market: %s", orderEvent.OrderID, orderEvent.MarketName)
+		log.Printf("order filled -- orderID: %s, market: %s\n", orderEvent.OrderID, orderEvent.MarketName)
 	}()
 	return nil
 }
