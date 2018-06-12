@@ -3,7 +3,7 @@ package main
 import (
 	"log"
 
-	msg "github.com/asciiu/gomo/common/messages"
+	msg "github.com/asciiu/gomo/common/constants/messages"
 	micro "github.com/micro/go-micro"
 	k8s "github.com/micro/kubernetes/go/micro"
 )

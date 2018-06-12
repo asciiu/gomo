@@ -2,11 +2,12 @@ package main
 
 import (
 	"context"
+	"log"
 	"os"
 
 	"github.com/asciiu/gomo/common/constants/exchange"
 	evt "github.com/asciiu/gomo/common/proto/events"
-	"github.com/go-kit/kit/log"
+	gokitlog "github.com/go-kit/kit/log"
 	micro "github.com/micro/go-micro"
 )
 
@@ -14,16 +15,17 @@ type OrderFiller struct {
 	FilledPub micro.Publisher
 }
 
-func (filler *OrderFiller) Process(ctx context.Context, orderEvent *evt.OrderEvent) error {
+func (filler *OrderFiller) FillOrder(ctx context.Context, orderEvent *evt.OrderEvent) error {
+	log.Println(orderEvent)
 	// ignore events not binance
 	if orderEvent.Exchange != exchange.Binance {
 		return nil
 	}
 
 	go func() {
-		var logger log.Logger
-		logger = log.NewLogfmtLogger(os.Stdout)
-		logger = log.With(logger, "time", log.DefaultTimestampUTC, "caller", log.DefaultCaller)
+		var logger gokitlog.Logger
+		logger = gokitlog.NewLogfmtLogger(os.Stdout)
+		logger = gokitlog.With(logger, "time", gokitlog.DefaultTimestampUTC, "caller", gokitlog.DefaultCaller)
 
 		// hmacSigner := &binance.HmacSigner{
 		// 	Key: []byte(key.Secret),
