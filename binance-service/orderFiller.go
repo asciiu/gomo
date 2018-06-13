@@ -51,6 +51,7 @@ func (filler *OrderFiller) FillOrder(ctx context.Context, orderEvent *evt.OrderE
 		if orderEvent.Side == side.Sell {
 			sidee = binance.SideSell
 		}
+		//orderEvent.BaseQuantity
 		newOrder, err := b.NewOrder(binance.NewOrderRequest{
 			Symbol:      symbol,
 			Quantity:    100000,

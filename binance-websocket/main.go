@@ -7,6 +7,7 @@ import (
 	"strconv"
 	"strings"
 	"sync"
+	"time"
 
 	"github.com/asciiu/gomo/common/constants/exchange"
 	msg "github.com/asciiu/gomo/common/constants/messages"
@@ -78,16 +79,16 @@ func (bconn *BinanceConnection) Ticker() {
 		conn.Close()
 		return nil
 	})
-	conn.SetPingHandler(func(appData string) error {
-		log.Println("ping: ", appData)
+	conn.SetPingHandler(func(string) error {
+		log.Println("ping: ", time.Now().UTC())
 		if err := conn.WriteMessage(websocket.PongMessage, []byte("pong")); err != nil {
 			log.Println("ping error")
 		}
 
 		return nil
 	})
-	conn.SetPongHandler(func(appData string) error {
-		log.Println("pong: ", appData)
+	conn.SetPongHandler(func(string) error {
+		log.Println("pong: ", time.Now().UTC())
 		if err := conn.WriteMessage(websocket.PingMessage, []byte("ping")); err != nil {
 			log.Println("pong error")
 		}
