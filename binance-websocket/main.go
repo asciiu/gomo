@@ -167,6 +167,11 @@ func (c *BinanceClient) run() {
 	}
 	log.Printf("connected to %s", url)
 
+	conn.SetCloseHandler(func(code int, text string) error {
+		log.Printf("closed connection %d %s\n", code, text)
+		conn.Close()
+		return nil
+	})
 	// close the connection when this function returns
 	defer conn.Close()
 
@@ -174,12 +179,6 @@ func (c *BinanceClient) run() {
 
 	go c.writePump()
 	c.readPump()
-
-	conn.SetCloseHandler(func(code int, text string) error {
-		log.Printf("closed connection %d %s\n", code, text)
-		conn.Close()
-		return nil
-	})
 	log.Println("websocket has stopped!")
 }
 
