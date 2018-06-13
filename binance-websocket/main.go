@@ -6,7 +6,6 @@ import (
 	"log"
 	"strconv"
 	"strings"
-	"sync"
 	"time"
 
 	"github.com/asciiu/gomo/common/constants/exchange"
@@ -17,8 +16,8 @@ import (
 	k8s "github.com/micro/kubernetes/go/micro"
 )
 
-type BinanceConnection struct {
-	group     *sync.WaitGroup
+type BinanceClient struct {
+	ws        *websocket.Conn
 	Publisher micro.Publisher
 }
 
@@ -62,53 +61,68 @@ type BinanceTicker struct {
 	TotalTrades         uint64 `json:"n"`
 }
 
-func (bconn *BinanceConnection) Ticker() {
-	url := "wss://stream.binance.com:9443/ws/!ticker@arr"
+const (
+	// Time allowed to write a message to the peer.
+	writeWait = 10 * time.Second
 
-	conn, _, err := websocket.DefaultDialer.Dial(url, nil)
-	if err != nil {
-		log.Fatal("dial:", err)
+	// Time allowed to read the next pong message from the peer.
+	pongWait = 60 * time.Second
+
+	// Send pings to peer with this period. Must be less than pongWait.
+	pingPeriod = (pongWait * 9) / 10
+
+	// Maximum message size allowed from peer.
+	maxMessageSize = 512
+)
+
+func (c *BinanceClient) writePump() {
+	ticker := time.NewTicker(pingPeriod)
+
+	defer func() {
+		ticker.Stop()
+		c.ws.Close()
+	}()
+
+	for {
+		select {
+		case <-ticker.C:
+			if err := c.write(websocket.PingMessage, []byte{}); err != nil {
+				return
+			}
+		}
 	}
-	log.Printf("connected to %s", url)
+}
 
-	// close the connection when this function returns
-	defer conn.Close()
+func (c *BinanceClient) write(mt int, message []byte) error {
+	c.ws.SetWriteDeadline(time.Now().Add(writeWait))
+	return c.ws.WriteMessage(mt, message)
+}
 
-	conn.SetCloseHandler(func(code int, text string) error {
-		log.Printf("closed connection %d %s\n", code, text)
-		conn.Close()
-		return nil
-	})
-	conn.SetPingHandler(func(string) error {
-		log.Println("ping: ", time.Now().UTC())
-		if err := conn.WriteMessage(websocket.PongMessage, []byte("pong")); err != nil {
-			log.Println("ping error")
-		}
+func (c *BinanceClient) readPump() {
+	defer func() {
+		c.ws.Close()
+	}()
 
-		return nil
-	})
-	conn.SetPongHandler(func(string) error {
-		log.Println("pong: ", time.Now().UTC())
-		if err := conn.WriteMessage(websocket.PingMessage, []byte("ping")); err != nil {
-			log.Println("pong error")
-		}
+	c.ws.SetReadDeadline(time.Now().Add(pongWait))
+	c.ws.SetPongHandler(func(string) error {
+		c.ws.SetReadDeadline(time.Now().Add(pongWait))
 		return nil
 	})
 
 	for {
-		_, message, err := conn.ReadMessage()
+
+		_, message, err := c.ws.ReadMessage()
 		if err != nil {
 			log.Println("websocket err: ", err)
 			return
 		}
 
-		//aggTrade := BinanceAggTrade{}
-		ticker := []*BinanceTicker{}
-		if err = json.Unmarshal(message, &ticker); err != nil {
+		tickers := []*BinanceTicker{}
+		if err = json.Unmarshal(message, &tickers); err != nil {
 			log.Fatal("dial:", err)
 		}
 
-		for _, tick := range ticker {
+		for _, tick := range tickers {
 			//tm := time.Unix(int64(tick.EventTime), 0)
 			p, _ := strconv.ParseFloat(tick.ClosePrice, 64)
 
@@ -133,16 +147,39 @@ func (bconn *BinanceConnection) Ticker() {
 				Exchange:   exchange.Binance,
 				MarketName: symbol,
 				Price:      p,
-				//EventTime:  tm.String(),
 			}
 
 			//fmt.Println(tickerEvent)
 
-			if err := bconn.Publisher.Publish(context.Background(), &tickerEvent); err != nil {
+			if err := c.Publisher.Publish(context.Background(), &tickerEvent); err != nil {
 				log.Println("publish warning: ", err, tickerEvent)
 			}
 		}
 	}
+}
+
+func (c *BinanceClient) run() {
+	url := "wss://stream.binance.com:9443/ws/!ticker@arr"
+
+	conn, _, err := websocket.DefaultDialer.Dial(url, nil)
+	if err != nil {
+		log.Fatal("dial:", err)
+	}
+	log.Printf("connected to %s", url)
+
+	// close the connection when this function returns
+	defer conn.Close()
+
+	c.ws = conn
+
+	go c.writePump()
+	c.readPump()
+
+	conn.SetCloseHandler(func(code int, text string) error {
+		log.Printf("closed connection %d %s\n", code, text)
+		conn.Close()
+		return nil
+	})
 	log.Println("websocket has stopped!")
 }
 
@@ -154,11 +191,11 @@ func main() {
 	srv.Init()
 	tradePublisher := micro.NewPublisher(msg.TopicAggTrade, srv.Client())
 
-	bconn := BinanceConnection{
+	client := BinanceClient{
 		Publisher: tradePublisher,
 	}
 
-	go bconn.Ticker()
+	go client.run()
 
 	if err := srv.Run(); err != nil {
 		log.Fatal(err)
