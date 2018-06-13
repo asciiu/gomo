@@ -64,12 +64,12 @@ type BinanceTicker struct {
 
 func (bconn *BinanceConnection) Ticker() {
 	url := "wss://stream.binance.com:9443/ws/!ticker@arr"
-	log.Printf("connecting to %s", url)
 
 	conn, _, err := websocket.DefaultDialer.Dial(url, nil)
 	if err != nil {
 		log.Fatal("dial:", err)
 	}
+	log.Printf("connected to %s", url)
 
 	// close the connection when this function returns
 	defer conn.Close()
