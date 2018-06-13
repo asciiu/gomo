@@ -7,7 +7,6 @@ import (
 	"strconv"
 	"strings"
 	"sync"
-	"time"
 
 	"github.com/asciiu/gomo/common/constants/exchange"
 	msg "github.com/asciiu/gomo/common/constants/messages"
@@ -62,22 +61,6 @@ type BinanceTicker struct {
 	TotalTrades         uint64 `json:"n"`
 }
 
-func (bconn *BinanceConnection) handleClose(code int, text string) error {
-	log.Printf("closed connection %d %s\n", code, text)
-	time.Sleep(1 * time.Second)
-	// reopen the ticker connection
-	bconn.Ticker()
-	return nil
-}
-func (bconn *BinanceConnection) handlePing(appData string) error {
-	log.Printf(appData)
-	return nil
-}
-func (bconn *BinanceConnection) handlePong(appData string) error {
-	log.Printf(appData)
-	return nil
-}
-
 func (bconn *BinanceConnection) Ticker() {
 	url := "wss://stream.binance.com:9443/ws/!ticker@arr"
 	log.Printf("connecting to %s", url)
@@ -90,9 +73,26 @@ func (bconn *BinanceConnection) Ticker() {
 	// close the connection when this function returns
 	defer conn.Close()
 
-	conn.SetCloseHandler(bconn.handleClose)
-	conn.SetPingHandler(bconn.handlePing)
-	conn.SetPongHandler(bconn.handlePong)
+	conn.SetCloseHandler(func(code int, text string) error {
+		log.Printf("closed connection %d %s\n", code, text)
+		conn.Close()
+		return nil
+	})
+	conn.SetPingHandler(func(appData string) error {
+		log.Println("ping: ", appData)
+		if err := conn.WriteMessage(websocket.PongMessage, []byte("pong")); err != nil {
+			log.Println("ping error")
+		}
+
+		return nil
+	})
+	conn.SetPongHandler(func(appData string) error {
+		log.Println("pong: ", appData)
+		if err := conn.WriteMessage(websocket.PingMessage, []byte("ping")); err != nil {
+			log.Println("pong error")
+		}
+		return nil
+	})
 
 	for {
 		_, message, err := conn.ReadMessage()
