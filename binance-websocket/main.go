@@ -72,7 +72,7 @@ const (
 	pingPeriod = (pongWait * 9) / 10
 
 	// Maximum message size allowed from peer.
-	maxMessageSize = 512
+	maxMessageSize = 1024 * 1024
 )
 
 func (c *BinanceClient) writePump() {
@@ -86,16 +86,13 @@ func (c *BinanceClient) writePump() {
 	for {
 		select {
 		case <-ticker.C:
-			if err := c.write(websocket.PingMessage, []byte{}); err != nil {
+			c.ws.SetWriteDeadline(time.Now().Add(writeWait))
+			if err := c.ws.WriteMessage(websocket.PingMessage, []byte{}); err != nil {
 				return
 			}
+			log.Println("ping: ", time.Now().UTC())
 		}
 	}
-}
-
-func (c *BinanceClient) write(mt int, message []byte) error {
-	c.ws.SetWriteDeadline(time.Now().Add(writeWait))
-	return c.ws.WriteMessage(mt, message)
 }
 
 func (c *BinanceClient) readPump() {
@@ -103,8 +100,10 @@ func (c *BinanceClient) readPump() {
 		c.ws.Close()
 	}()
 
+	c.ws.SetReadLimit(maxMessageSize)
 	c.ws.SetReadDeadline(time.Now().Add(pongWait))
 	c.ws.SetPongHandler(func(string) error {
+		log.Println("pong: ", time.Now().UTC())
 		c.ws.SetReadDeadline(time.Now().Add(pongWait))
 		return nil
 	})
@@ -165,17 +164,13 @@ func (c *BinanceClient) run() {
 	if err != nil {
 		log.Fatal("dial:", err)
 	}
+	c.ws = conn
 	log.Printf("connected to %s", url)
 
 	conn.SetCloseHandler(func(code int, text string) error {
 		log.Printf("closed connection %d %s\n", code, text)
-		conn.Close()
 		return nil
 	})
-	// close the connection when this function returns
-	defer conn.Close()
-
-	c.ws = conn
 
 	go c.writePump()
 	c.readPump()
