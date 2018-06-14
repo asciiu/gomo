@@ -66,7 +66,7 @@ const (
 	writeWait = 10 * time.Second
 
 	// Time allowed to read the next pong message from the peer.
-	pongWait = 60 * time.Second
+	pongWait = 30 * time.Second
 
 	// Send pings to peer with this period. Must be less than pongWait.
 	pingPeriod = (pongWait * 9) / 10
@@ -101,15 +101,15 @@ func (c *BinanceClient) readPump() {
 	}()
 
 	c.ws.SetReadLimit(maxMessageSize)
-	c.ws.SetReadDeadline(time.Now().Add(pongWait))
+	//c.ws.SetReadDeadline(time.Now().Add(pongWait))
 	c.ws.SetPongHandler(func(string) error {
 		log.Println("pong: ", time.Now().UTC())
-		c.ws.SetReadDeadline(time.Now().Add(pongWait))
+		//c.ws.SetReadDeadline(time.Now().Add(pongWait))
 		return nil
 	})
 
 	for {
-
+		c.ws.SetReadDeadline(time.Now().Add(pongWait))
 		_, message, err := c.ws.ReadMessage()
 		if err != nil {
 			log.Println("websocket err: ", err)
