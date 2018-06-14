@@ -17,8 +17,9 @@ import (
 )
 
 type BinanceClient struct {
-	ws        *websocket.Conn
-	Publisher micro.Publisher
+	ws          *websocket.Conn
+	Publisher   micro.Publisher
+	lastReceive time.Time
 }
 
 type BinanceAggTrade struct {
@@ -90,6 +91,11 @@ func (c *BinanceClient) writePump() {
 			if err := c.ws.WriteMessage(websocket.PingMessage, []byte{}); err != nil {
 				return
 			}
+
+			if c.lastReceive.Add(pongWait).Before(time.Now().UTC()) {
+				log.Println("pong time elapsed for receive")
+				return
+			}
 			log.Println("ping: ", time.Now().UTC())
 		}
 	}
@@ -118,7 +124,8 @@ func (c *BinanceClient) readPump() {
 
 		tickers := []*BinanceTicker{}
 		if err = json.Unmarshal(message, &tickers); err != nil {
-			log.Fatal("dial:", err)
+			log.Println("unmarshall error:", err)
+			return
 		}
 
 		for _, tick := range tickers {
@@ -153,6 +160,7 @@ func (c *BinanceClient) readPump() {
 			if err := c.Publisher.Publish(context.Background(), &tickerEvent); err != nil {
 				log.Println("publish warning: ", err, tickerEvent)
 			}
+			c.lastReceive = time.Now().UTC()
 		}
 	}
 }
@@ -186,7 +194,8 @@ func main() {
 	tradePublisher := micro.NewPublisher(msg.TopicAggTrade, srv.Client())
 
 	client := BinanceClient{
-		Publisher: tradePublisher,
+		Publisher:   tradePublisher,
+		lastReceive: time.Now().UTC(),
 	}
 
 	go client.run()
