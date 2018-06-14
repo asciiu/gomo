@@ -57,9 +57,10 @@ type BinanceTicker struct {
 	TotalTradedAssetVol string `json:"q"`
 	OpenTime            uint64 `json:"O"`
 	CloseTime           uint64 `json:"C"`
-	FirstTradeID        uint64 `json:"F"`
-	LastTradeID         uint64 `json:"L"`
-	TotalTrades         uint64 `json:"n"`
+	// these may come in as -1
+	FirstTradeID int64 `json:"F"`
+	LastTradeID  int64 `json:"L"`
+	TotalTrades  int64 `json:"n"`
 }
 
 const (
@@ -67,10 +68,10 @@ const (
 	writeWait = 10 * time.Second
 
 	// Time allowed to read the next pong message from the peer.
-	pongWait = 30 * time.Second
+	pongWait = 10 * time.Second
 
 	// Send pings to peer with this period. Must be less than pongWait.
-	pingPeriod = (pongWait * 9) / 10
+	pingPeriod = (pongWait * 7) / 10
 
 	// Maximum message size allowed from peer.
 	maxMessageSize = 1024 * 1024
@@ -128,6 +129,8 @@ func (c *BinanceClient) readPump() {
 			return
 		}
 
+		c.lastReceive = time.Now().UTC()
+
 		for _, tick := range tickers {
 			//tm := time.Unix(int64(tick.EventTime), 0)
 			p, _ := strconv.ParseFloat(tick.ClosePrice, 64)
@@ -160,7 +163,6 @@ func (c *BinanceClient) readPump() {
 			if err := c.Publisher.Publish(context.Background(), &tickerEvent); err != nil {
 				log.Println("publish warning: ", err, tickerEvent)
 			}
-			c.lastReceive = time.Now().UTC()
 		}
 	}
 }
