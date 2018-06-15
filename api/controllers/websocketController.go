@@ -80,8 +80,8 @@ func (controller *WebsocketController) Ticker() {
 }
 
 // ProcessEvent will process ExchangeEvents. These events are published from the exchange sockets.
-func (controller *WebsocketController) ProcessEvent(ctx context.Context, tradeEvents []*evt.TradeEvent) error {
-	for _, event := range tradeEvents {
+func (controller *WebsocketController) ProcessEvent(ctx context.Context, tradeEvents *evt.TradeEvents) error {
+	for _, event := range tradeEvents.Events {
 		// shorten trade event
 		tevent := evt.TradeEvent{
 			Exchange:   event.Exchange,
