@@ -58,25 +58,26 @@ func (controller *WebsocketController) Connect(c echo.Context) error {
 }
 
 func (controller *WebsocketController) Ticker() {
-	time.Sleep(1 * time.Second)
-	events := controller.buffer
-	controller.buffer = nil
+	for {
+		time.Sleep(1 * time.Second)
+		events := controller.buffer
+		controller.buffer = nil
 
-	// only send out events to clients when non nil
-	if events != nil {
-		// send events to all connected clients
-		for _, conn := range controller.connections {
-			json, err := json.Marshal(events)
-			if err != nil {
-				log.Println(err)
-			}
+		// only send out events to clients when non nil
+		if events != nil {
+			// send events to all connected clients
+			for _, conn := range controller.connections {
+				json, err := json.Marshal(events)
+				if err != nil {
+					log.Println(err)
+				}
 
-			if err := conn.WriteMessage(websocket.TextMessage, json); err != nil {
-				log.Println(err)
+				if err := conn.WriteMessage(websocket.TextMessage, json); err != nil {
+					log.Println(err)
+				}
 			}
 		}
 	}
-	controller.Ticker()
 }
 
 // ProcessEvent will process ExchangeEvents. These events are published from the exchange sockets.
