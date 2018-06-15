@@ -80,27 +80,29 @@ func (controller *WebsocketController) Ticker() {
 }
 
 // ProcessEvent will process ExchangeEvents. These events are published from the exchange sockets.
-func (controller *WebsocketController) ProcessEvent(ctx context.Context, event *evt.TradeEvent) error {
-	// shorten trade event
-	tevent := evt.TradeEvent{
-		Exchange:   event.Exchange,
-		Type:       event.Type,
-		MarketName: event.MarketName,
-		Price:      event.Price,
-	}
-
-	found := false
-	for _, e := range controller.buffer {
-		if e.Exchange == tevent.Exchange && e.MarketName == tevent.MarketName {
-			e.Type = tevent.Type
-			e.Price = tevent.Price
-			found = true
-			break
+func (controller *WebsocketController) ProcessEvent(ctx context.Context, tradeEvents []*evt.TradeEvent) error {
+	for _, event := range tradeEvents {
+		// shorten trade event
+		tevent := evt.TradeEvent{
+			Exchange:   event.Exchange,
+			Type:       event.Type,
+			MarketName: event.MarketName,
+			Price:      event.Price,
 		}
-	}
 
-	if !found {
-		controller.buffer = append(controller.buffer, &tevent)
+		found := false
+		for _, e := range controller.buffer {
+			if e.Exchange == tevent.Exchange && e.MarketName == tevent.MarketName {
+				e.Type = tevent.Type
+				e.Price = tevent.Price
+				found = true
+				break
+			}
+		}
+
+		if !found {
+			controller.buffer = append(controller.buffer, &tevent)
+		}
 	}
 
 	return nil

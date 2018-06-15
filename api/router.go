@@ -9,7 +9,7 @@ import (
 	"github.com/asciiu/gomo/api/controllers"
 	asql "github.com/asciiu/gomo/api/db/sql"
 	"github.com/asciiu/gomo/api/middlewares"
-	msg "github.com/asciiu/gomo/common/messages"
+	msg "github.com/asciiu/gomo/common/constants/messages"
 	"github.com/labstack/echo"
 	micro "github.com/micro/go-micro"
 	"github.com/micro/go-micro/server"

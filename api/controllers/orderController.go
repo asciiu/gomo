@@ -85,6 +85,9 @@ type OrderRequest struct {
 	// Required
 	// in: body
 	Conditions string `json:"conditions"`
+	// Optional
+	// in: body
+	Price float64 `json:"price"`
 
 	// Optional parent order ID to add this chain of orders to
 	ParentOrderID string `json:"parentOrderID"`
@@ -412,6 +415,7 @@ func (controller *OrderController) HandlePostOrder(c echo.Context) error {
 			CurrencyQuantity: order.CurrencyQuantity,
 			CurrencyPercent:  order.CurrencyPercent,
 			ParentOrderID:    order.ParentOrderID,
+			Price:            order.Price,
 		}
 		requests = append(requests, &request)
 	}

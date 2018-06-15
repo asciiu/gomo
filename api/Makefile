@@ -1,5 +1,5 @@
 build:
-	docker build -t us.gcr.io/fomo-204904/api:dev .
+	docker build --no-cache -t us.gcr.io/fomo-204904/api:dev .
 
 stage:
 	docker push us.gcr.io/fomo-204904/api:dev
