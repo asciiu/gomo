@@ -90,50 +90,44 @@ func (c *BinanceClient) writePump() {
 		case <-ticker.C:
 			c.ws.SetWriteDeadline(time.Now().Add(writeWait))
 			if err := c.ws.WriteMessage(websocket.PingMessage, []byte{}); err != nil {
+				log.Println("failed to ping:", err)
 				return
 			}
-
-			if c.lastReceive.Add(pongWait).Before(time.Now().UTC()) {
-				log.Println("pong time elapsed for receive")
-				return
-			}
-			log.Println("ping: ", time.Now().UTC())
 		}
 	}
 }
 
 func (c *BinanceClient) readPump() {
-	defer func() {
-		c.ws.Close()
-	}()
+	defer c.ws.Close()
 
 	c.ws.SetReadLimit(maxMessageSize)
-	//c.ws.SetReadDeadline(time.Now().Add(pongWait))
+	c.ws.SetReadDeadline(time.Now().Add(pongWait))
 	c.ws.SetPongHandler(func(string) error {
 		log.Println("pong: ", time.Now().UTC())
-		//c.ws.SetReadDeadline(time.Now().Add(pongWait))
+		c.ws.SetReadDeadline(time.Now().Add(pongWait))
 		return nil
 	})
 
 	for {
-		c.ws.SetReadDeadline(time.Now().Add(pongWait))
 		_, message, err := c.ws.ReadMessage()
 		if err != nil {
-			log.Println("websocket err: ", err)
+			log.Println("read error: ", err)
 			return
 		}
 
-		tickers := []*BinanceTicker{}
-		if err = json.Unmarshal(message, &tickers); err != nil {
+		binanceTickers := []*BinanceTicker{}
+		if err = json.Unmarshal(message, &binanceTickers); err != nil {
 			log.Println("unmarshall error:", err)
 			return
 		}
 
-		c.lastReceive = time.Now().UTC()
-
-		for _, tick := range tickers {
+		marketTickers := make([]*evt.TradeEvent, 0)
+		for _, tick := range binanceTickers {
 			//tm := time.Unix(int64(tick.EventTime), 0)
-			p, _ := strconv.ParseFloat(tick.ClosePrice, 64)
+			p, err := strconv.ParseFloat(tick.ClosePrice, 64)
+			if err != nil {
+				log.Println("failed to parse float from close price: ", tick.ClosePrice)
+			}
 
 			// marketname must include hyphen
 			symbol := tick.Symbol
@@ -157,12 +151,14 @@ func (c *BinanceClient) readPump() {
 				MarketName: symbol,
 				Price:      p,
 			}
+			marketTickers = append(marketTickers, &tickerEvent)
+		}
+		payload := evt.TradeEvents{
+			Events: marketTickers,
+		}
 
-			//fmt.Println(tickerEvent)
-
-			if err := c.Publisher.Publish(context.Background(), &tickerEvent); err != nil {
-				log.Println("publish warning: ", err, tickerEvent)
-			}
+		if err := c.Publisher.Publish(context.Background(), &payload); err != nil {
+			log.Println("publish warning: ", err)
 		}
 	}
 }
