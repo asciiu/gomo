@@ -35,20 +35,25 @@ type OrderService struct {
 // this function should only be callable from within the OrderService
 func (service *OrderService) publishOrder(ctx context.Context, order *orders.Order) error {
 
+	currencies := strings.Split(order.MarketName, "-")
+	currency := currencies[0]
+
 	// convert order to order event
 	orderEvent := evt.OrderEvent{
-		Exchange:     order.Exchange,
-		OrderID:      order.OrderID,
-		UserID:       order.UserID,
-		Key:          order.Key,
-		Secret:       order.Secret,
-		KeyID:        order.KeyID,
-		MarketName:   order.MarketName,
-		BaseQuantity: order.BaseQuantity,
-		Side:         order.Side,
-		OrderType:    order.OrderType,
-		Conditions:   order.Conditions,
-		Status:       order.Status,
+		Exchange:   order.Exchange,
+		OrderID:    order.OrderID,
+		UserID:     order.UserID,
+		Key:        order.Key,
+		Secret:     order.Secret,
+		KeyID:      order.KeyID,
+		MarketName: order.MarketName,
+		Currency:   currency,
+		Quantity:   order.BaseQuantity,
+		Price:      order.Price,
+		Side:       order.Side,
+		OrderType:  order.OrderType,
+		Conditions: order.Conditions,
+		Status:     order.Status,
 	}
 
 	//if err := publisher.Publish(context.Background(), &orderEvent); err != nil {
