@@ -23,12 +23,13 @@ message OrderRequest {
   string marketName = 5;
   string side = 6;
   string orderType = 7;
-  double baseQuantity = 8;
-  double basePercent = 9;
-  double currencyQuantity = 10;
-  double currencyPercent = 11;
-  string conditions = 12;
-  string parentOrderID = 13;
+  double price = 8;
+  double baseQuantity = 9;
+  double basePercent = 10;
+  double currencyQuantity = 11;
+  double currencyPercent = 12;
+  string conditions = 13;
+  string parentOrderID = 14;
 }
 
 message GetUserOrderRequest {
@@ -58,14 +59,15 @@ message Order {
   string marketName = 9;
   string side = 10;
   string orderType = 11;
-  double baseQuantity = 12;
-  double basePercent = 13;
-  double currencyQuantity = 14;
-  double currencyPercent = 15;
-  string status = 16;
-  string conditions = 17;
-  string condition = 18;
-  string parentOrderID = 19;
+  double price = 13;
+  double baseQuantity = 14;
+  double basePercent = 15;
+  double currencyQuantity = 16;
+  double currencyPercent = 17;
+  string status = 18;
+  string conditions = 19;
+  string condition = 20;
+  string parentOrderID = 21;
 }
 
 message UserOrderData {
