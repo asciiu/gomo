@@ -29,13 +29,14 @@ message OrderEvent {
   string marketName = 7;
   string side = 8;
   string orderType = 9;
-  double baseQuantity = 10;
-  double baseQuantityRemainder = 11;
-  string condition = 12;
-  string conditions = 13;
-  string exchangeOrderID = 14;
-  string exchangeMarketName = 15;
-  string status = 16;
+  string currency = 10;
+  double quantity = 11;
+  double price = 12;
+  string condition = 13;
+  string conditions = 14;
+  string exchangeOrderID = 15;
+  string exchangeMarketName = 16;
+  string status = 17;
 }
 
 message EngineStartEvent {
