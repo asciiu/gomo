@@ -6,10 +6,11 @@ import (
 	"net/http"
 	"time"
 
+	"context"
+
 	evt "github.com/asciiu/gomo/common/proto/events"
 	"github.com/gorilla/websocket"
 	"github.com/labstack/echo"
-	"golang.org/x/net/context"
 )
 
 type WebsocketController struct {
@@ -19,7 +20,8 @@ type WebsocketController struct {
 
 func NewWebsocketController() *WebsocketController {
 	return &WebsocketController{
-		buffer: make([]*evt.TradeEvent, 0),
+		buffer:      make([]*evt.TradeEvent, 0),
+		connections: make([]*websocket.Conn, 0),
 	}
 }
 

@@ -115,14 +115,21 @@ func NewRouter(db *sql.DB) *echo.Echo {
 	protectedApi.GET("/search", searchController.Search)
 
 	service := k8s.NewService(
-		micro.Name("micro.fomo.api"),
+		micro.Name("fomo.api"),
+		micro.Version("latest"),
 	)
 	service.Init()
-	micro.RegisterSubscriber(msg.TopicAggTrade, service.Server(), socketController.ProcessEvent, server.SubscriberQueue("queue.pubsub"))
-	micro.RegisterSubscriber(msg.TopicAggTrade, service.Server(), searchController.ProcessEvent, server.SubscriberQueue("queue.pubsub"))
+	// this does not work but the queue subsciber works - why??
+	//micro.RegisterSubscriber(msg.TopicAggTrade, service.Server(), socketController)
+	micro.RegisterSubscriber(msg.TopicAggTrade, service.Server(), socketController.ProcessEvent, server.SubscriberQueue("socket.pubsub"))
+	//micro.RegisterSubscriber(msg.TopicAggTrade, service.Server(), searchController.ProcessEvent, server.SubscriberQueue("search.pubsub"))
 
 	go socketController.Ticker()
-	go service.Run()
+	go func() {
+		if err := service.Run(); err != nil {
+			log.Println("nope! ", err)
+		}
+	}()
 
 	return e
 }
