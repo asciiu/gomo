@@ -10,6 +10,7 @@ import (
 	asql "github.com/asciiu/gomo/api/db/sql"
 	orderValidator "github.com/asciiu/gomo/common/constants/order"
 	"github.com/asciiu/gomo/common/constants/response"
+	"github.com/asciiu/gomo/common/constants/side"
 	orders "github.com/asciiu/gomo/order-service/proto/order"
 	jwt "github.com/dgrijalva/jwt-go"
 	"github.com/labstack/echo"
@@ -58,38 +59,38 @@ type Order struct {
 
 // swagger:parameters addOrder
 type OrderRequest struct {
-	// Required internal api key ID
+	// Required this is our api key ID (string uuid) assigned to the user's exchange key and secret.
 	// in: body
 	KeyID string `json:"keyID"`
-	// Required e.g. ADA-BTC
+	// Required e.g. ADA-BTC. Base pair should be the suffix.
 	// in: body
 	MarketName string `json:"marketName"`
 	// Required "buy" or "sell"
 	// in: body
 	Side string `json:"side"`
-	// Required Valid order types are "market", "limit", "virtual". Orders not within these types will be ignored.
+	// Required Valid order types are "market", "limit", "virtual". Orders not within these types will be rejected.
 	// in: body
 	OrderType string `json:"orderType"`
-	// Required for buy side when order is first in chain
+	// Required for buy side when order is first in chain. This will designate the reserve base balance to use during the execution of the chained order stategy.
 	// in: body
 	BaseQuantity float64 `json:"baseQuantity"`
-	// Required for buy side on chained orders
+	// Required for buy side on chained orders. Specifies the precent of the reserve balance to allocate for the order.
 	// in: body
 	BasePercent float64 `json:"basePercent"`
-	// Required for sell side when an order is first in a chain
+	// Required for sell side when an order is first in a chain. This is the quantity of market currency to sell.
 	// in: body
 	CurrencyQuantity float64 `json:"currencyQuantity"`
-	// Required for sell side for all orders that are chained
+	// Required for sell side for all orders that are chained. Similar to the basePercent, but for sell orders.
 	// in: body
 	CurrencyPercent float64 `json:"currencyPercent"`
-	// Required
+	// Required these are the conditions that trigger the order to execute. Example: ???
 	// in: body
 	Conditions string `json:"conditions"`
-	// Optional
+	// Optional this is required only when the order type is 'limit'. This is the limit order price.
 	// in: body
 	Price float64 `json:"price"`
 
-	// Optional parent order ID to add this chain of orders to
+	// Optional parent order ID to add this chain of orders to. When you want to add children to an existing order.
 	ParentOrderID string `json:"parentOrderID"`
 }
 
@@ -308,28 +309,34 @@ func fail(c echo.Context, msg string) error {
 
 // swagger:route POST /orders orders addOrder
 //
-// create a new order  (protected)
+// create a new order chain (protected)
 //
-// This will create a new order in the system.
-// Example request:
+// This will create a new chain of orders for the user.
+// Example:
 // [
 //	{
 //		"keyID": "680d6bbf-1feb-4122-bd10-0e7ce080676a",
 //		"marketName": "ADA-BTC",
 //		"side": "buy",
-//		"basePercent": 0.50,
+//		"baseQuantity": 0.50,
 //		"orderType": "market",
 //		"conditions": "price <= 0.00002800"
 //	},
 //	{
 //		"keyID": "680d6bbf-1feb-4122-bd10-0e7ce080676a",
 //		"marketName": "ADA-BTC",
-//		"side": "buy",
-//		"basePercent": 1.0,
+//		"side": "sell",
+//		"currencyPercent": 1.0,
 //		"orderType": "market",
-//		"conditions": "price <= 0.00002200"
+//		"conditions": "price <= 0.00002200 or trailingStopPts(0, 0.0)"
 //	}
 // ]
+//
+// The order chain starts out with a reserve base balance of 0.5 BTC. This order chain will buy 0.5 BTC at
+// market price when the market price reaches 2800 satoshi or less. The following sell order will sell 100% of the order
+// strategy's (i.e. chain of orders) cardano balance. Cardano balance should in theory be dictated by the Cardano that this
+// chain bought - 100% does not mean 100% of user's cardano balance. The conditions will likely be a json string of conditionLabel: condition.
+// example: "stopLoss: price <= 0.00002200, takeProfit: ...."
 //
 // responses:
 //  200: responseOrdersSuccess "data" will contain list of orders with "status": "success"
@@ -363,7 +370,7 @@ func (controller *OrderController) HandlePostOrder(c echo.Context) error {
 	// error check all orders
 	for i, order := range ordrs {
 		if !orderValidator.ValidateOrderType(order.OrderType) {
-			return fail(c, "what kind of order type is this?")
+			return fail(c, "market, limit, or virtual orders only!")
 		}
 
 		// side, market name, and api key are required
@@ -374,24 +381,24 @@ func (controller *OrderController) HandlePostOrder(c echo.Context) error {
 		// assume the first order is head of a chain if the ParentOrderID is empty
 		// this means that a new chain of orders has been submitted because the
 		// ParentOrderID has not been assigned yet.
-		if i == 0 && order.ParentOrderID == "" && order.Side == "buy" && order.BasePercent == 0.0 {
-			return fail(c, "head buy in chain requires a basePercent")
+		if i == 0 && order.ParentOrderID == "" && order.Side == side.Buy && order.BaseQuantity == 0.0 {
+			return fail(c, "first buy in order chain requires a baseQuantity")
 		}
 
 		// if the head order side is sell we need a currency quantity
-		if i == 0 && order.ParentOrderID == "" && order.Side == "sell" && order.CurrencyPercent == 0.0 {
-			return fail(c, "head sell in chain requires a currencyPercent")
+		if i == 0 && order.ParentOrderID == "" && order.Side == side.Sell && order.CurrencyQuantity == 0.0 {
+			return fail(c, "first sell in order chain requires a currencyQuantity")
 		}
 
 		// need to use basePercent for chained buys
-		//if i != 0 && order.Side == "buy" && order.BasePercent == 0.0 {
-		//	return fail(c, "chained buys require a basePercent")
-		//}
+		if i != 0 && order.Side == side.Buy && order.BasePercent == 0.0 {
+			return fail(c, "child buy orders require a basePercent")
+		}
 
-		//// need to use currencyPercent for chained buys
-		//if i != 0 && order.Side == "sell" && order.CurrencyQuantity == 0.0 {
-		//	return fail(c, "chained sells require a currencyPercent")
-		//}
+		// need to use currencyPercent for chained sells
+		if i != 0 && order.Side == side.Sell && order.CurrencyQuantity == 0.0 {
+			return fail(c, "child sell orders require a currencyPercent")
+		}
 
 		// market name should be formatted as
 		// currency-base (e.g. ADA-BTC)

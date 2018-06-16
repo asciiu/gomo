@@ -553,16 +553,16 @@
         }
       },
       "post": {
-        "description": "This will create a new order in the system.\nExample request:\n[\n{\n\"keyID\": \"680d6bbf-1feb-4122-bd10-0e7ce080676a\",\n\"marketName\": \"ADA-BTC\",\n\"side\": \"buy\",\n\"basePercent\": 0.50,\n\"orderType\": \"market\",\n\"conditions\": \"price \u003c= 0.00002800\"\n},\n{\n\"keyID\": \"680d6bbf-1feb-4122-bd10-0e7ce080676a\",\n\"marketName\": \"ADA-BTC\",\n\"side\": \"buy\",\n\"basePercent\": 1.0,\n\"orderType\": \"market\",\n\"conditions\": \"price \u003c= 0.00002200\"\n}\n]",
+        "description": "This will create a new chain of orders for the user.\nExample:\n[\n{\n\"keyID\": \"680d6bbf-1feb-4122-bd10-0e7ce080676a\",\n\"marketName\": \"ADA-BTC\",\n\"side\": \"buy\",\n\"baseQuantity\": 0.50,\n\"orderType\": \"market\",\n\"conditions\": \"price \u003c= 0.00002800\"\n},\n{\n\"keyID\": \"680d6bbf-1feb-4122-bd10-0e7ce080676a\",\n\"marketName\": \"ADA-BTC\",\n\"side\": \"sell\",\n\"currencyPercent\": 1.0,\n\"orderType\": \"market\",\n\"conditions\": \"price \u003c= 0.00002200 or trailingStopPts(0, 0.0)\"\n}\n]\n\nThe order chain starts out with a reserve base balance of 0.5 BTC. This order chain will buy 0.5 BTC at\nmarket price when the market price reaches 2800 satoshi or less. The following sell order will sell 100% of the order\nstrategy's (i.e. chain of orders) cardano balance. Cardano balance should in theory be dictated by the Cardano that this\nchain bought - 100% does not mean 100% of user's cardano balance. The conditions will likely be a json string of conditionLabel: condition.\nexample: \"stopLoss: price \u003c= 0.00002200, takeProfit: ....\"",
         "tags": [
           "orders"
         ],
-        "summary": "create a new order  (protected)",
+        "summary": "create a new order chain (protected)",
         "operationId": "addOrder",
         "parameters": [
           {
             "x-go-name": "KeyID",
-            "description": "Required internal api key ID",
+            "description": "Required this is our api key ID (string uuid) assigned to the user's exchange key and secret.",
             "name": "keyID",
             "in": "body",
             "schema": {
@@ -571,7 +571,7 @@
           },
           {
             "x-go-name": "MarketName",
-            "description": "Required e.g. ADA-BTC",
+            "description": "Required e.g. ADA-BTC. Base pair should be the suffix.",
             "name": "marketName",
             "in": "body",
             "schema": {
@@ -589,7 +589,7 @@
           },
           {
             "x-go-name": "OrderType",
-            "description": "Required Valid order types are \"market\", \"limit\", \"virtual\". Orders not within these types will be ignored.",
+            "description": "Required Valid order types are \"market\", \"limit\", \"virtual\". Orders not within these types will be rejected.",
             "name": "orderType",
             "in": "body",
             "schema": {
@@ -598,7 +598,7 @@
           },
           {
             "x-go-name": "BaseQuantity",
-            "description": "Required for buy side when order is first in chain",
+            "description": "Required for buy side when order is first in chain. This will designate the reserve base balance to use during the execution of the chained order stategy.",
             "name": "baseQuantity",
             "in": "body",
             "schema": {
@@ -608,7 +608,7 @@
           },
           {
             "x-go-name": "BasePercent",
-            "description": "Required for buy side on chained orders",
+            "description": "Required for buy side on chained orders. Specifies the precent of the reserve balance to allocate for the order.",
             "name": "basePercent",
             "in": "body",
             "schema": {
@@ -618,7 +618,7 @@
           },
           {
             "x-go-name": "CurrencyQuantity",
-            "description": "Required for sell side when an order is first in a chain",
+            "description": "Required for sell side when an order is first in a chain. This is the quantity of market currency to sell.",
             "name": "currencyQuantity",
             "in": "body",
             "schema": {
@@ -628,7 +628,7 @@
           },
           {
             "x-go-name": "CurrencyPercent",
-            "description": "Required for sell side for all orders that are chained",
+            "description": "Required for sell side for all orders that are chained. Similar to the basePercent, but for sell orders.",
             "name": "currencyPercent",
             "in": "body",
             "schema": {
@@ -637,8 +637,8 @@
             }
           },
           {
+            "example": "???",
             "x-go-name": "Conditions",
-            "description": "Required",
             "name": "conditions",
             "in": "body",
             "schema": {
@@ -646,9 +646,19 @@
             }
           },
           {
+            "x-go-name": "Price",
+            "description": "Optional this is required only when the order type is 'limit'. This is the limit order price.",
+            "name": "price",
+            "in": "body",
+            "schema": {
+              "type": "number",
+              "format": "double"
+            }
+          },
+          {
             "type": "string",
             "x-go-name": "ParentOrderID",
-            "description": "Optional parent order ID to add this chain of orders to",
+            "description": "Optional parent order ID to add this chain of orders to. When you want to add children to an existing order.",
             "name": "parentOrderID",
             "in": "query"
           }
@@ -1562,53 +1572,59 @@
       "type": "object",
       "properties": {
         "basePercent": {
-          "description": "Required for buy side on chained orders\nin: body",
+          "description": "Required for buy side on chained orders. Specifies the precent of the reserve balance to allocate for the order.\nin: body",
           "type": "number",
           "format": "double",
           "x-go-name": "BasePercent"
         },
         "baseQuantity": {
-          "description": "Required for buy side when order is first in chain\nin: body",
+          "description": "Required for buy side when order is first in chain. This will designate the reserve base balance to use during the execution of the chained order stategy.\nin: body",
           "type": "number",
           "format": "double",
           "x-go-name": "BaseQuantity"
         },
         "conditions": {
-          "description": "Required\nin: body",
           "type": "string",
-          "x-go-name": "Conditions"
+          "x-go-name": "Conditions",
+          "example": "???"
         },
         "currencyPercent": {
-          "description": "Required for sell side for all orders that are chained\nin: body",
+          "description": "Required for sell side for all orders that are chained. Similar to the basePercent, but for sell orders.\nin: body",
           "type": "number",
           "format": "double",
           "x-go-name": "CurrencyPercent"
         },
         "currencyQuantity": {
-          "description": "Required for sell side when an order is first in a chain\nin: body",
+          "description": "Required for sell side when an order is first in a chain. This is the quantity of market currency to sell.\nin: body",
           "type": "number",
           "format": "double",
           "x-go-name": "CurrencyQuantity"
         },
         "keyID": {
-          "description": "Required internal api key ID\nin: body",
+          "description": "Required this is our api key ID (string uuid) assigned to the user's exchange key and secret.\nin: body",
           "type": "string",
           "x-go-name": "KeyID"
         },
         "marketName": {
-          "description": "Required e.g. ADA-BTC\nin: body",
+          "description": "Required e.g. ADA-BTC. Base pair should be the suffix.\nin: body",
           "type": "string",
           "x-go-name": "MarketName"
         },
         "orderType": {
-          "description": "Required Valid order types are \"market\", \"limit\", \"virtual\". Orders not within these types will be ignored.\nin: body",
+          "description": "Required Valid order types are \"market\", \"limit\", \"virtual\". Orders not within these types will be rejected.\nin: body",
           "type": "string",
           "x-go-name": "OrderType"
         },
         "parentOrderID": {
-          "description": "Optional parent order ID to add this chain of orders to",
+          "description": "Optional parent order ID to add this chain of orders to. When you want to add children to an existing order.",
           "type": "string",
           "x-go-name": "ParentOrderID"
+        },
+        "price": {
+          "description": "Optional this is required only when the order type is 'limit'. This is the limit order price.\nin: body",
+          "type": "number",
+          "format": "double",
+          "x-go-name": "Price"
         },
         "side": {
           "description": "Required \"buy\" or \"sell\"\nin: body",
