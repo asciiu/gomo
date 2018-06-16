@@ -6,8 +6,6 @@ import (
 	"net/http"
 	"time"
 
-	"context"
-
 	evt "github.com/asciiu/gomo/common/proto/events"
 	"github.com/gorilla/websocket"
 	"github.com/labstack/echo"
@@ -51,7 +49,7 @@ func (controller *WebsocketController) Connect(c echo.Context) error {
 	// block until client closes
 	if _, _, err := ws.ReadMessage(); err != nil {
 		// client closes this will read: websocket: close 1005 (no status)
-		log.Println("read:", err)
+		log.Println(err)
 	}
 
 	// remove the connection from the connect pool
@@ -83,7 +81,7 @@ func (controller *WebsocketController) Ticker() {
 }
 
 // ProcessEvent will process ExchangeEvents. These events are published from the exchange sockets.
-func (controller *WebsocketController) ProcessEvent(ctx context.Context, tradeEvents *evt.TradeEvents) error {
+func (controller *WebsocketController) CacheEvents(tradeEvents *evt.TradeEvents) error {
 	for _, event := range tradeEvents.Events {
 		// shorten trade event
 		tevent := evt.TradeEvent{

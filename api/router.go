@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"database/sql"
 	"log"
 	"net/http"
@@ -10,6 +11,7 @@ import (
 	asql "github.com/asciiu/gomo/api/db/sql"
 	"github.com/asciiu/gomo/api/middlewares"
 	msg "github.com/asciiu/gomo/common/constants/messages"
+	evt "github.com/asciiu/gomo/common/proto/events"
 	"github.com/labstack/echo"
 	micro "github.com/micro/go-micro"
 	"github.com/micro/go-micro/server"
@@ -121,7 +123,13 @@ func NewRouter(db *sql.DB) *echo.Echo {
 	service.Init()
 	// this does not work but the queue subsciber works - why??
 	//micro.RegisterSubscriber(msg.TopicAggTrade, service.Server(), socketController)
-	micro.RegisterSubscriber(msg.TopicAggTrade, service.Server(), socketController.ProcessEvent, server.SubscriberQueue("socket.pubsub"))
+	var fun = func(ctx context.Context, tradeEvents *evt.TradeEvents) error {
+		socketController.CacheEvents(tradeEvents)
+		searchController.CacheEvents(tradeEvents)
+		return nil
+	}
+	micro.RegisterSubscriber(msg.TopicAggTrade, service.Server(), fun, server.SubscriberQueue("api.pubsub"))
+	//micro.RegisterSubscriber(msg.TopicAggTrade, service.Server(), socketController.ProcessEvent, server.SubscriberQueue("socket.pubsub"))
 	//micro.RegisterSubscriber(msg.TopicAggTrade, service.Server(), searchController.ProcessEvent, server.SubscriberQueue("search.pubsub"))
 
 	go socketController.Ticker()

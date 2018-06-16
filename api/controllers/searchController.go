@@ -11,7 +11,6 @@ import (
 	asql "github.com/asciiu/gomo/api/db/sql"
 	evt "github.com/asciiu/gomo/common/proto/events"
 	"github.com/labstack/echo"
-	"golang.org/x/net/context"
 )
 
 // A ResponseSearchSuccess will always contain a status of "successful".
@@ -107,31 +106,33 @@ func (controller *SearchController) Search(c echo.Context) error {
 }
 
 // ProcessEvent will process ExchangeEvents. These events are published from the exchange sockets.
-func (controller *SearchController) ProcessEvent(ctx context.Context, event *evt.TradeEvent) error {
-	names := strings.Split(event.MarketName, "-")
-	baseCurrency := names[1]
-	baseCurrencyName := controller.currencies[baseCurrency]
-	marketCurrency := names[0]
-	marketCurrencyName := controller.currencies[marketCurrency]
+func (controller *SearchController) CacheEvents(tradeEvents *evt.TradeEvents) error {
+	for _, event := range tradeEvents.Events {
+		names := strings.Split(event.MarketName, "-")
+		baseCurrency := names[1]
+		baseCurrencyName := controller.currencies[baseCurrency]
+		marketCurrency := names[0]
+		marketCurrencyName := controller.currencies[marketCurrency]
 
-	// shorten trade event
-	tevent := Market{
-		BaseCurrency:       baseCurrency,
-		BaseCurrencyLong:   baseCurrencyName,
-		Exchange:           event.Exchange,
-		ExchangeMarketName: names[0] + names[1],
-		MarketCurrency:     marketCurrency,
-		MarketCurrencyLong: marketCurrencyName,
-		MarketName:         event.MarketName,
-		MarketPrice:        fmt.Sprintf("%.8f", event.Price),
-		MinTradeSize:       "0.0001",
+		// shorten trade event
+		tevent := Market{
+			BaseCurrency:       baseCurrency,
+			BaseCurrencyLong:   baseCurrencyName,
+			Exchange:           event.Exchange,
+			ExchangeMarketName: names[0] + names[1],
+			MarketCurrency:     marketCurrency,
+			MarketCurrencyLong: marketCurrencyName,
+			MarketName:         event.MarketName,
+			MarketPrice:        fmt.Sprintf("%.8f", event.Price),
+			MinTradeSize:       "0.0001",
+		}
+
+		key := fmt.Sprintf("%s-%s", event.Exchange, event.MarketName)
+		//key = key
+		controller.mux.Lock()
+		controller.markets[key] = &tevent
+		controller.mux.Unlock()
 	}
-
-	key := fmt.Sprintf("%s-%s", event.Exchange, event.MarketName)
-	//key = key
-	controller.mux.Lock()
-	controller.markets[key] = &tevent
-	controller.mux.Unlock()
 
 	return nil
 }
