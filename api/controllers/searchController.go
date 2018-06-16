@@ -106,7 +106,7 @@ func (controller *SearchController) Search(c echo.Context) error {
 }
 
 // ProcessEvent will process ExchangeEvents. These events are published from the exchange sockets.
-func (controller *SearchController) CacheEvents(tradeEvents *evt.TradeEvents) error {
+func (controller *SearchController) CacheEvents(tradeEvents *evt.TradeEvents) {
 	for _, event := range tradeEvents.Events {
 		names := strings.Split(event.MarketName, "-")
 		baseCurrency := names[1]
@@ -133,6 +133,4 @@ func (controller *SearchController) CacheEvents(tradeEvents *evt.TradeEvents) er
 		controller.markets[key] = &tevent
 		controller.mux.Unlock()
 	}
-
-	return nil
 }
