@@ -21,15 +21,27 @@ func DeleteOrder(db *sql.DB, orderID string) error {
 // FindOrderByID ...
 func FindOrderByID(db *sql.DB, req *orderProto.GetUserOrderRequest) (*orderProto.Order, error) {
 	var o orderProto.Order
+	var condition sql.NullString
+	var exchangeOrderID sql.NullString
+	var exchangeMarketName sql.NullString
 	err := db.QueryRow(`SELECT id, user_id, user_key_id, exchange_name, exchange_order_id, exchange_market_name,
 		 market_name, side, type, base_quantity, base_percent, currency_quantity, currency_percent, status, 
 		 conditions, condition, parent_order_id FROM orders WHERE id = $1`, req.OrderID).
-		Scan(&o.OrderID, &o.UserID, &o.KeyID, &o.Exchange, &o.ExchangeOrderID, &o.ExchangeMarketName,
+		Scan(&o.OrderID, &o.UserID, &o.KeyID, &o.Exchange, &exchangeOrderID, &exchangeMarketName,
 			&o.MarketName, &o.Side, &o.OrderType, &o.BaseQuantity, &o.BasePercent, &o.CurrencyQuantity,
-			&o.CurrencyPercent, &o.Status, &o.Conditions, &o.Condition, &o.ParentOrderID)
+			&o.CurrencyPercent, &o.Status, &o.Conditions, &condition, &o.ParentOrderID)
 
 	if err != nil {
 		return nil, err
+	}
+	if condition.Valid {
+		o.Condition = condition.String
+	}
+	if exchangeOrderID.Valid {
+		o.ExchangeOrderID = exchangeOrderID.String
+	}
+	if exchangeMarketName.Valid {
+		o.ExchangeMarketName = exchangeMarketName.String
 	}
 
 	if err := json.Unmarshal([]byte(o.Conditions), &o.Conditions); err != nil {
@@ -96,11 +108,13 @@ func FindOpenOrders(db *sql.DB) ([]*orderProto.Order, error) {
 	for rows.Next() {
 		var o orderProto.Order
 		var condition sql.NullString
+		var exchangeOrderID sql.NullString
+		var exchangeMarketName sql.NullString
 		err := rows.Scan(&o.OrderID,
 			&o.UserID,
 			&o.KeyID,
-			&o.ExchangeOrderID,
-			&o.ExchangeMarketName,
+			&exchangeOrderID,
+			&exchangeMarketName,
 			&o.MarketName,
 			&o.Side,
 			&o.OrderType,
@@ -116,13 +130,18 @@ func FindOpenOrders(db *sql.DB) ([]*orderProto.Order, error) {
 			&o.Secret,
 			&o.Exchange)
 
-		if condition.Valid {
-			o.Condition = condition.String
-		}
-
 		if err != nil {
 			log.Fatal(err)
 			return nil, err
+		}
+		if condition.Valid {
+			o.Condition = condition.String
+		}
+		if exchangeOrderID.Valid {
+			o.ExchangeOrderID = exchangeOrderID.String
+		}
+		if exchangeMarketName.Valid {
+			o.ExchangeMarketName = exchangeMarketName.String
 		}
 
 		if err := json.Unmarshal([]byte(o.Conditions), &o.Conditions); err != nil {
@@ -155,13 +174,25 @@ func FindOrdersByUserID(db *sql.DB, req *orderProto.GetUserOrdersRequest) ([]*or
 
 	for rows.Next() {
 		var o orderProto.Order
-		err := rows.Scan(&o.OrderID, &o.UserID, &o.KeyID, &o.Exchange, &o.ExchangeOrderID, &o.ExchangeMarketName,
+		var condition sql.NullString
+		var exchangeOrderID sql.NullString
+		var exchangeMarketName sql.NullString
+		err := rows.Scan(&o.OrderID, &o.UserID, &o.KeyID, &o.Exchange, &exchangeOrderID, &exchangeMarketName,
 			&o.MarketName, &o.Side, &o.OrderType, &o.BaseQuantity, &o.BasePercent, &o.CurrencyQuantity,
-			&o.CurrencyPercent, &o.Status, &o.Conditions, &o.Condition, &o.ParentOrderID)
+			&o.CurrencyPercent, &o.Status, &o.Conditions, &condition, &o.ParentOrderID)
 
 		if err != nil {
 			log.Fatal(err)
 			return nil, err
+		}
+		if condition.Valid {
+			o.Condition = condition.String
+		}
+		if exchangeOrderID.Valid {
+			o.ExchangeOrderID = exchangeOrderID.String
+		}
+		if exchangeMarketName.Valid {
+			o.ExchangeMarketName = exchangeMarketName.String
 		}
 
 		if err := json.Unmarshal([]byte(o.Conditions), &o.Conditions); err != nil {
