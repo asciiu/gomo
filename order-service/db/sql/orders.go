@@ -60,6 +60,7 @@ func FindOrderWithParentID(db *sql.DB, parentOrderID string) (*orderProto.Order,
 	return &o, nil
 }
 
+// Find all open orders in the DB. This wil load the keys for each order.
 func FindOpenOrders(db *sql.DB) ([]*orderProto.Order, error) {
 	results := make([]*orderProto.Order, 0)
 
@@ -188,11 +189,11 @@ func InsertOrder(db *sql.DB, req *orderProto.OrderRequest, status string) (*orde
 	// the exchange_order_id and exchange_market_name must be "" and not null
 	// when scanning in order data null cannot be set on a type string. Therefore,
 	// just default those cols to "".
-	sqlStatement := `insert into orders (id, user_id, user_key_id, exchange_name, exchange_order_id, 
-		exchange_market_name, market_name, side, type, base_quantity, base_percent, 
-		currency_quantity, currency_percent, status, conditions, parent_order_id) 
-		values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16)`
-	_, err = db.Exec(sqlStatement, newID, req.UserID, req.KeyID, req.Exchange, "", "", req.MarketName,
+	sqlStatement := `insert into orders (id, user_id, user_key_id, exchange_name, market_name, 
+		side, type, base_quantity, base_percent, currency_quantity, currency_percent, status, 
+		conditions, parent_order_id) 
+		values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)`
+	_, err = db.Exec(sqlStatement, newID, req.UserID, req.KeyID, req.Exchange, req.MarketName,
 		req.Side, req.OrderType, req.BaseQuantity, req.BasePercent, req.CurrencyQuantity, req.CurrencyPercent,
 		status, jsonCond, req.ParentOrderID)
 
@@ -201,8 +202,8 @@ func InsertOrder(db *sql.DB, req *orderProto.OrderRequest, status string) (*orde
 	}
 	order := &orderProto.Order{
 		OrderID:          newID.String(),
-		KeyID:            req.KeyID,
 		UserID:           req.UserID,
+		KeyID:            req.KeyID,
 		Exchange:         req.Exchange,
 		MarketName:       req.MarketName,
 		Side:             req.Side,

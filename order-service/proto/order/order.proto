@@ -23,12 +23,12 @@ message OrderRequest {
   string marketName = 5;
   string side = 6;
   string orderType = 7;
-  double price = 8;
-  double baseQuantity = 9;
-  double basePercent = 10;
-  double currencyQuantity = 11;
-  double currencyPercent = 12;
-  string conditions = 13;
+  double baseQuantity = 8;
+  double basePercent = 9;
+  double currencyQuantity = 10;
+  double currencyPercent = 11;
+  string conditions = 12;
+  double price = 13;
   string parentOrderID = 14;
 }
 

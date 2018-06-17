@@ -7,10 +7,13 @@ import (
 	"net/http"
 	"strings"
 
+	"github.com/asciiu/gomo/common/constants/key"
+
 	asql "github.com/asciiu/gomo/api/db/sql"
 	orderValidator "github.com/asciiu/gomo/common/constants/order"
 	"github.com/asciiu/gomo/common/constants/response"
 	"github.com/asciiu/gomo/common/constants/side"
+	keys "github.com/asciiu/gomo/key-service/proto/key"
 	orders "github.com/asciiu/gomo/order-service/proto/order"
 	jwt "github.com/dgrijalva/jwt-go"
 	"github.com/labstack/echo"
@@ -22,6 +25,7 @@ import (
 type OrderController struct {
 	DB     *sql.DB
 	Orders orders.OrderServiceClient
+	Keys   keys.KeyServiceClient
 	// map of ticker symbol to full name
 	currencies map[string]string
 }
@@ -34,6 +38,7 @@ type UserOrdersData struct {
 	Orders []*Order `json:"orders"`
 }
 
+// This is the response struct for order
 type Order struct {
 	OrderID            string  `json:"orderID"`
 	KeyID              string  `json:"keyID"`
@@ -41,20 +46,21 @@ type Order struct {
 	ExchangeOrderID    string  `json:"exchangeOrderID"`
 	ExchangeMarketName string  `json:"exchangeMarketName"`
 	MarketName         string  `json:"marketName"`
-	MarketCurrency     string  `json:"marketCurrency"`
-	MarketCurrencyLong string  `json:"marketCurrencyLong"`
 	Side               string  `json:"side"`
 	OrderType          string  `json:"orderType"`
-	BaseCurrency       string  `json:"baseCurrency"`
-	BaseCurrencyLong   string  `json:"baseCurrencyLong"`
+	BaseCurrencySymbol string  `json:"baseCurrencySymbol"`
+	BaseCurrencyName   string  `json:"baseCurrencyName"`
 	BaseQuantity       float64 `json:"baseQuantity"`
 	BasePercent        float64 `json:"basePercent"`
+	CurrencySymbol     string  `json:"currencySymbol"`
+	CurrencyName       string  `json:"currencyName"`
 	CurrencyQuantity   float64 `json:"currencyQuantity"`
 	CurrencyPercent    float64 `json:"currencyPercent"`
 	Status             string  `json:"status"`
 	Conditions         string  `json:"conditions"`
 	Condition          string  `json:"condition"`
 	ParentOrderID      string  `json:"parentOrderID"`
+	Price              float64 `json:"price"`
 }
 
 // swagger:parameters addOrder
@@ -132,6 +138,7 @@ func NewOrderController(db *sql.DB) *OrderController {
 	controller := OrderController{
 		DB:         db,
 		Orders:     orders.NewOrderServiceClient("orders", service.Client()),
+		Keys:       keys.NewKeyServiceClient("keys", service.Client()),
 		currencies: make(map[string]string),
 	}
 
@@ -186,10 +193,10 @@ func (controller *OrderController) HandleGetOrder(c echo.Context) error {
 	}
 
 	names := strings.Split(r.Data.Order.MarketName, "-")
-	baseCurrency := names[1]
-	baseCurrencyLong := controller.currencies[baseCurrency]
-	marketCurrency := names[0]
-	marketCurrencyLong := controller.currencies[marketCurrency]
+	baseCurrencySymbol := names[1]
+	baseCurrencyName := controller.currencies[baseCurrencySymbol]
+	currencySymbol := names[0]
+	currencyName := controller.currencies[currencySymbol]
 
 	res := &ResponseOrderSuccess{
 		Status: response.Success,
@@ -201,20 +208,21 @@ func (controller *OrderController) HandleGetOrder(c echo.Context) error {
 				ExchangeOrderID:    r.Data.Order.ExchangeOrderID,
 				ExchangeMarketName: r.Data.Order.ExchangeMarketName,
 				MarketName:         r.Data.Order.MarketName,
-				MarketCurrency:     marketCurrency,
-				MarketCurrencyLong: marketCurrencyLong,
 				Side:               r.Data.Order.Side,
 				OrderType:          r.Data.Order.OrderType,
-				BaseCurrency:       baseCurrency,
-				BaseCurrencyLong:   baseCurrencyLong,
+				BaseCurrencySymbol: baseCurrencySymbol,
+				BaseCurrencyName:   baseCurrencyName,
 				BaseQuantity:       r.Data.Order.BaseQuantity,
 				BasePercent:        r.Data.Order.BasePercent,
+				CurrencySymbol:     currencySymbol,
+				CurrencyName:       currencyName,
 				CurrencyQuantity:   r.Data.Order.CurrencyQuantity,
 				CurrencyPercent:    r.Data.Order.CurrencyPercent,
 				Status:             r.Data.Order.Status,
 				Conditions:         r.Data.Order.Conditions,
 				Condition:          r.Data.Order.Condition,
 				ParentOrderID:      r.Data.Order.ParentOrderID,
+				Price:              r.Data.Order.Price,
 			},
 		},
 	}
@@ -259,10 +267,10 @@ func (controller *OrderController) HandleListOrders(c echo.Context) error {
 	for i, o := range r.Data.Orders {
 
 		names := strings.Split(o.MarketName, "-")
-		baseCurrency := names[1]
-		baseCurrencyLong := controller.currencies[baseCurrency]
-		marketCurrency := names[0]
-		marketCurrencyLong := controller.currencies[marketCurrency]
+		baseCurrencySymbol := names[1]
+		baseCurrencyName := controller.currencies[baseCurrencySymbol]
+		currencySymbol := names[0]
+		currencyName := controller.currencies[currencySymbol]
 
 		data[i] = &Order{
 			OrderID:            o.OrderID,
@@ -271,20 +279,21 @@ func (controller *OrderController) HandleListOrders(c echo.Context) error {
 			ExchangeOrderID:    o.ExchangeOrderID,
 			ExchangeMarketName: o.ExchangeMarketName,
 			MarketName:         o.MarketName,
-			MarketCurrency:     marketCurrency,
-			MarketCurrencyLong: marketCurrencyLong,
 			Side:               o.Side,
 			OrderType:          o.OrderType,
-			BaseCurrency:       baseCurrency,
-			BaseCurrencyLong:   baseCurrencyLong,
+			BaseCurrencySymbol: baseCurrencySymbol,
+			BaseCurrencyName:   baseCurrencyName,
 			BaseQuantity:       o.BaseQuantity,
 			BasePercent:        o.BasePercent,
+			CurrencySymbol:     currencySymbol,
+			CurrencyName:       currencyName,
 			CurrencyQuantity:   o.CurrencyQuantity,
 			CurrencyPercent:    o.CurrencyPercent,
 			Status:             o.Status,
 			Conditions:         o.Conditions,
 			Condition:          o.Condition,
 			ParentOrderID:      o.ParentOrderID,
+			Price:              o.Price,
 		}
 	}
 
@@ -340,13 +349,15 @@ func fail(c echo.Context, msg string) error {
 //
 // responses:
 //  200: responseOrdersSuccess "data" will contain list of orders with "status": "success"
-//  400: responseError missing params with "status": "fail"
+//  400: responseError missing or incorrect params with "status": "fail"
 //  500: responseError the message will state what the internal server error was with "status": "error"
 func (controller *OrderController) HandlePostOrder(c echo.Context) error {
 	defer c.Request().Body.Close()
 	token := c.Get("user").(*jwt.Token)
 	claims := token.Claims.(jwt.MapClaims)
 	userID := claims["jti"].(string)
+	keyID := ""
+	exchangeName := ""
 
 	ordrs := make([]*OrderRequest, 0)
 	requests := make([]*orders.OrderRequest, 0)
@@ -410,19 +421,58 @@ func (controller *OrderController) HandlePostOrder(c echo.Context) error {
 			order.ParentOrderID = "00000000-0000-0000-0000-000000000000"
 		}
 
+		// on first iteration of loop set the keyID
+		if keyID == "" {
+			keyID = order.KeyID
+			getRequest := keys.GetUserKeyRequest{
+				KeyID:  keyID,
+				UserID: userID,
+			}
+
+			// ask key service for key
+			r, _ := controller.Keys.GetUserKey(context.Background(), &getRequest)
+			if r.Status != response.Success {
+				res := &ResponseError{
+					Status:  r.Status,
+					Message: r.Message,
+				}
+
+				if r.Status == response.Fail {
+					return c.JSON(http.StatusBadRequest, res)
+				}
+				if r.Status == response.Error {
+					return c.JSON(http.StatusInternalServerError, res)
+				}
+				if r.Status == response.Nonentity {
+					return fail(c, "invalid key")
+				}
+			}
+			// if key found it must be verified status
+			if r.Data.Key.Status != key.Verified {
+				return fail(c, "invalid key")
+			}
+			exchangeName = r.Data.Key.Exchange
+		}
+
+		// all orders in the chain must use the same key ID
+		if keyID != "" && order.KeyID != keyID {
+			return fail(c, "all orders must use the same keyID")
+		}
+
 		request := orders.OrderRequest{
 			UserID:           userID,
 			KeyID:            order.KeyID,
+			Exchange:         exchangeName,
 			MarketName:       order.MarketName,
 			Side:             order.Side,
-			Conditions:       order.Conditions,
 			OrderType:        order.OrderType,
 			BaseQuantity:     order.BaseQuantity,
 			BasePercent:      order.BasePercent,
 			CurrencyQuantity: order.CurrencyQuantity,
 			CurrencyPercent:  order.CurrencyPercent,
-			ParentOrderID:    order.ParentOrderID,
+			Conditions:       order.Conditions,
 			Price:            order.Price,
+			ParentOrderID:    order.ParentOrderID,
 		}
 		requests = append(requests, &request)
 	}
@@ -450,10 +500,10 @@ func (controller *OrderController) HandlePostOrder(c echo.Context) error {
 	data := make([]*Order, len(r.Data.Orders))
 	for i, o := range r.Data.Orders {
 		names := strings.Split(o.MarketName, "-")
-		baseCurrency := names[1]
-		baseCurrencyLong := controller.currencies[baseCurrency]
-		marketCurrency := names[0]
-		marketCurrencyLong := controller.currencies[marketCurrency]
+		baseCurrencySymbol := names[1]
+		baseCurrencyName := controller.currencies[baseCurrencySymbol]
+		currencySymbol := names[0]
+		currencyName := controller.currencies[currencySymbol]
 
 		data[i] = &Order{
 			OrderID:            o.OrderID,
@@ -462,20 +512,21 @@ func (controller *OrderController) HandlePostOrder(c echo.Context) error {
 			ExchangeOrderID:    o.ExchangeOrderID,
 			ExchangeMarketName: o.ExchangeMarketName,
 			MarketName:         o.MarketName,
-			MarketCurrency:     marketCurrency,
-			MarketCurrencyLong: marketCurrencyLong,
 			Side:               o.Side,
 			OrderType:          o.OrderType,
+			BaseCurrencySymbol: baseCurrencySymbol,
+			BaseCurrencyName:   baseCurrencyName,
 			BaseQuantity:       o.BaseQuantity,
 			BasePercent:        o.BasePercent,
-			BaseCurrency:       baseCurrency,
-			BaseCurrencyLong:   baseCurrencyLong,
+			CurrencySymbol:     currencySymbol,
+			CurrencyName:       currencyName,
 			CurrencyQuantity:   o.CurrencyQuantity,
 			CurrencyPercent:    o.CurrencyPercent,
 			Status:             o.Status,
 			Conditions:         o.Conditions,
 			Condition:          o.Condition,
 			ParentOrderID:      o.ParentOrderID,
+			Price:              o.Price,
 		}
 	}
 
@@ -541,10 +592,10 @@ func (controller *OrderController) HandleUpdateOrder(c echo.Context) error {
 	}
 
 	names := strings.Split(r.Data.Order.MarketName, "-")
-	baseCurrency := names[1]
-	baseCurrencyLong := controller.currencies[baseCurrency]
-	marketCurrency := names[0]
-	marketCurrencyLong := controller.currencies[marketCurrency]
+	baseCurrencySymbol := names[1]
+	baseCurrencyName := controller.currencies[baseCurrencySymbol]
+	currencySymbol := names[0]
+	currencyName := controller.currencies[currencySymbol]
 
 	res := &ResponseOrderSuccess{
 		Status: response.Success,
@@ -556,20 +607,21 @@ func (controller *OrderController) HandleUpdateOrder(c echo.Context) error {
 				ExchangeOrderID:    r.Data.Order.ExchangeOrderID,
 				ExchangeMarketName: r.Data.Order.ExchangeMarketName,
 				MarketName:         r.Data.Order.MarketName,
-				MarketCurrency:     marketCurrency,
-				MarketCurrencyLong: marketCurrencyLong,
 				Side:               r.Data.Order.Side,
 				OrderType:          r.Data.Order.OrderType,
+				BaseCurrencySymbol: baseCurrencySymbol,
+				BaseCurrencyName:   baseCurrencyName,
 				BaseQuantity:       r.Data.Order.BaseQuantity,
 				BasePercent:        r.Data.Order.BasePercent,
-				BaseCurrency:       baseCurrency,
-				BaseCurrencyLong:   baseCurrencyLong,
+				CurrencySymbol:     currencySymbol,
+				CurrencyName:       currencyName,
 				CurrencyQuantity:   r.Data.Order.CurrencyQuantity,
 				CurrencyPercent:    r.Data.Order.CurrencyPercent,
 				Status:             r.Data.Order.Status,
 				Conditions:         r.Data.Order.Conditions,
 				Condition:          r.Data.Order.Condition,
 				ParentOrderID:      r.Data.Order.ParentOrderID,
+				Price:              r.Data.Order.Price,
 			},
 		},
 	}
