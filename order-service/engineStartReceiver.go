@@ -19,7 +19,7 @@ type EngineStartReceiver struct {
 // ProcessEvent handles OrderEvents. These events are published by when an order was filled.
 func (receiver *EngineStartReceiver) ProcessEvent(ctx context.Context, engine *evt.EngineStartEvent) error {
 
-	orders, error := orderRepo.FindOpenOrders(receiver.Service.DB)
+	orders, error := orderRepo.FindActiveOrders(receiver.Service.DB)
 	if error != nil {
 		log.Println("could not find open orders -- ", error)
 	}

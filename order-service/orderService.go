@@ -138,7 +138,7 @@ func (service *OrderService) AddOrders(ctx context.Context, req *orders.OrdersRe
 		}
 
 		// this order will be published to the executor so mark its status as Open
-		o, error := orderRepo.InsertOrder(service.DB, order, status.Open)
+		o, error := orderRepo.InsertOrder(service.DB, order, status.Active)
 
 		if error != nil {
 			res.Status = response.Error
