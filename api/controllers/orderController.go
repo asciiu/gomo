@@ -96,7 +96,8 @@ type OrderRequest struct {
 	// Optional this is required only when the order type is 'limit'. This is the limit order price.
 	// in: body
 	Price float64 `json:"price"`
-	// Optional to set the chain status to active (default true for active)
+	// Optional to set the chain status (default true for active)
+	// in: body
 	Active bool `json:"active"`
 
 	// Optional parent order ID to add this chain of orders to. When you want to add children to an existing order.
@@ -222,6 +223,7 @@ func (controller *OrderController) HandleGetOrder(c echo.Context) error {
 				CurrencyQuantity:   r.Data.Order.CurrencyQuantity,
 				CurrencyPercent:    r.Data.Order.CurrencyPercent,
 				Status:             r.Data.Order.Status,
+				ChainStatus:        r.Data.Order.ChainStatus,
 				Conditions:         r.Data.Order.Conditions,
 				Condition:          r.Data.Order.Condition,
 				ParentOrderID:      r.Data.Order.ParentOrderID,
@@ -293,6 +295,7 @@ func (controller *OrderController) HandleListOrders(c echo.Context) error {
 			CurrencyQuantity:   o.CurrencyQuantity,
 			CurrencyPercent:    o.CurrencyPercent,
 			Status:             o.Status,
+			ChainStatus:        o.ChainStatus,
 			Conditions:         o.Conditions,
 			Condition:          o.Condition,
 			ParentOrderID:      o.ParentOrderID,
@@ -469,13 +472,14 @@ func (controller *OrderController) HandlePostOrder(c echo.Context) error {
 			MarketName:       order.MarketName,
 			Side:             order.Side,
 			OrderType:        order.OrderType,
+			Price:            order.Price,
 			BaseQuantity:     order.BaseQuantity,
 			BasePercent:      order.BasePercent,
 			CurrencyQuantity: order.CurrencyQuantity,
 			CurrencyPercent:  order.CurrencyPercent,
 			Conditions:       order.Conditions,
-			Price:            order.Price,
 			ParentOrderID:    order.ParentOrderID,
+			Active:           order.Active,
 		}
 		requests = append(requests, &request)
 	}
@@ -517,6 +521,7 @@ func (controller *OrderController) HandlePostOrder(c echo.Context) error {
 			MarketName:         o.MarketName,
 			Side:               o.Side,
 			OrderType:          o.OrderType,
+			Price:              o.Price,
 			BaseCurrencySymbol: baseCurrencySymbol,
 			BaseCurrencyName:   baseCurrencyName,
 			BaseQuantity:       o.BaseQuantity,
@@ -529,7 +534,7 @@ func (controller *OrderController) HandlePostOrder(c echo.Context) error {
 			Conditions:         o.Conditions,
 			Condition:          o.Condition,
 			ParentOrderID:      o.ParentOrderID,
-			Price:              o.Price,
+			ChainStatus:        o.ChainStatus,
 		}
 	}
 
@@ -611,6 +616,7 @@ func (controller *OrderController) HandleUpdateOrder(c echo.Context) error {
 				ExchangeMarketName: r.Data.Order.ExchangeMarketName,
 				MarketName:         r.Data.Order.MarketName,
 				Side:               r.Data.Order.Side,
+				Price:              r.Data.Order.Price,
 				OrderType:          r.Data.Order.OrderType,
 				BaseCurrencySymbol: baseCurrencySymbol,
 				BaseCurrencyName:   baseCurrencyName,
@@ -621,10 +627,10 @@ func (controller *OrderController) HandleUpdateOrder(c echo.Context) error {
 				CurrencyQuantity:   r.Data.Order.CurrencyQuantity,
 				CurrencyPercent:    r.Data.Order.CurrencyPercent,
 				Status:             r.Data.Order.Status,
+				ChainStatus:        r.Data.Order.ChainStatus,
 				Conditions:         r.Data.Order.Conditions,
 				Condition:          r.Data.Order.Condition,
 				ParentOrderID:      r.Data.Order.ParentOrderID,
-				Price:              r.Data.Order.Price,
 			},
 		},
 	}
