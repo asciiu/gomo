@@ -30,6 +30,7 @@ message OrderRequest {
   string conditions = 12;
   double price = 13;
   string parentOrderID = 14;
+  bool active = 15;
 }
 
 message GetUserOrderRequest {
@@ -65,9 +66,10 @@ message Order {
   double currencyQuantity = 16;
   double currencyPercent = 17;
   string status = 18;
-  string conditions = 19;
-  string condition = 20;
-  string parentOrderID = 21;
+  string chainStatus = 19;
+  string conditions = 20;
+  string condition = 21;
+  string parentOrderID = 22;
 }
 
 message UserOrderData {
