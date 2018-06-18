@@ -7,18 +7,20 @@ CREATE TABLE orders (
  exchange_name text NOT NULL,
  exchange_order_id text,
  exchange_market_name text,
+ parent_order_id UUID NOT NULL, 
  market_name text NOT NULL,
  side text NOT NULL,
  "type" text NOT NULL,
+ price decimal, 
  base_quantity decimal,
  base_percent decimal,
  base_quantity_remainder decimal,
  currency_quantity decimal,
  currency_percent decimal,
- status text NOT NULL,
  conditions jsonb NOT NULL,
  condition text,
- parent_order_id UUID NOT NULL, 
+ status text NOT NULL,                -- order status can be cancelled, filled, active, pending
+ chain_status text NOT NULL,          -- chain status can be active, inactive
  created_on TIMESTAMP DEFAULT now(),
  updated_on TIMESTAMP DEFAULT current_timestamp
 );

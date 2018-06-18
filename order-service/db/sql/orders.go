@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"log"
 
+	"github.com/asciiu/gomo/common/constants/chain"
 	"github.com/asciiu/gomo/common/constants/key"
 	"github.com/asciiu/gomo/common/constants/status"
 	evt "github.com/asciiu/gomo/common/proto/events"
@@ -24,12 +25,46 @@ func FindOrderByID(db *sql.DB, req *orderProto.GetUserOrderRequest) (*orderProto
 	var condition sql.NullString
 	var exchangeOrderID sql.NullString
 	var exchangeMarketName sql.NullString
-	err := db.QueryRow(`SELECT id, user_id, user_key_id, exchange_name, exchange_order_id, exchange_market_name,
-		 market_name, side, type, base_quantity, base_percent, currency_quantity, currency_percent, status, 
-		 conditions, condition, parent_order_id FROM orders WHERE id = $1`, req.OrderID).
-		Scan(&o.OrderID, &o.UserID, &o.KeyID, &o.Exchange, &exchangeOrderID, &exchangeMarketName,
-			&o.MarketName, &o.Side, &o.OrderType, &o.BaseQuantity, &o.BasePercent, &o.CurrencyQuantity,
-			&o.CurrencyPercent, &o.Status, &o.Conditions, &condition, &o.ParentOrderID)
+	var price sql.NullFloat64
+	err := db.QueryRow(`SELECT id, 
+		user_id, 
+		user_key_id, 
+		exchange_name, 
+		exchange_order_id, 
+		exchange_market_name,
+		market_name, 
+		side, 
+		type, 
+		price,
+		base_quantity, 
+		base_percent, 
+		currency_quantity, 
+		currency_percent, 
+		status, 
+		chain_status, 
+		conditions, 
+		condition, 
+		parent_order_id 
+		FROM orders WHERE id = $1`, req.OrderID).
+		Scan(&o.OrderID,
+			&o.UserID,
+			&o.KeyID,
+			&o.Exchange,
+			&exchangeOrderID,
+			&exchangeMarketName,
+			&o.MarketName,
+			&o.Side,
+			&o.OrderType,
+			&price,
+			&o.BaseQuantity,
+			&o.BasePercent,
+			&o.CurrencyQuantity,
+			&o.CurrencyPercent,
+			&o.Status,
+			&o.ChainStatus,
+			&o.Conditions,
+			&condition,
+			&o.ParentOrderID)
 
 	if err != nil {
 		return nil, err
@@ -43,6 +78,9 @@ func FindOrderByID(db *sql.DB, req *orderProto.GetUserOrderRequest) (*orderProto
 	if exchangeMarketName.Valid {
 		o.ExchangeMarketName = exchangeMarketName.String
 	}
+	if price.Valid {
+		o.Price = price.Float64
+	}
 
 	if err := json.Unmarshal([]byte(o.Conditions), &o.Conditions); err != nil {
 		return nil, err
@@ -52,17 +90,48 @@ func FindOrderByID(db *sql.DB, req *orderProto.GetUserOrderRequest) (*orderProto
 }
 
 // FindOrderWithParentID will be invoked by the order listeners after an order has been filled
-// and when the filled order has a child order
+// and when the filled order has a child order. Chain must be active.
 func FindOrderWithParentID(db *sql.DB, parentOrderID string) (*orderProto.Order, error) {
 	var o orderProto.Order
-	err := db.QueryRow(`SELECT id, user_id, user_key_id,
-		 market_name, side, type, base_quantity, base_percent, currency_quantity, currency_percent, status, 
-		 conditions, parent_order_id FROM orders WHERE parent_order_id = $1`, parentOrderID).
-		Scan(&o.OrderID, &o.UserID, &o.KeyID, &o.MarketName, &o.Side, &o.OrderType, &o.BaseQuantity,
-			&o.BasePercent, &o.CurrencyQuantity, &o.CurrencyPercent, &o.Status, &o.Conditions, &o.ParentOrderID)
+	var price sql.NullFloat64
+
+	err := db.QueryRow(`SELECT id, 
+		user_id, 
+		user_key_id,
+		market_name, 
+		side, 
+		type, 
+		price,
+		base_quantity, 
+		base_percent, 
+		currency_quantity, 
+		currency_percent, 
+		status, 
+		conditions, 
+		parent_order_id 
+		FROM orders 
+		WHERE parent_order_id = $1 and chain_status = $2`, parentOrderID, chain.Active).
+		Scan(&o.OrderID,
+			&o.UserID,
+			&o.KeyID,
+			&o.MarketName,
+			&o.Side,
+			&o.OrderType,
+			&price,
+			&o.BaseQuantity,
+			&o.BasePercent,
+			&o.CurrencyQuantity,
+			&o.CurrencyPercent,
+			&o.Status,
+			&o.Conditions,
+			&o.ParentOrderID)
 
 	if err != nil {
 		return nil, err
+	}
+
+	if price.Valid {
+		o.Price = price.Float64
 	}
 
 	if err := json.Unmarshal([]byte(o.Conditions), &o.Conditions); err != nil {
@@ -72,18 +141,21 @@ func FindOrderWithParentID(db *sql.DB, parentOrderID string) (*orderProto.Order,
 	return &o, nil
 }
 
-// Find all open orders in the DB. This wil load the keys for each order.
-func FindOpenOrders(db *sql.DB) ([]*orderProto.Order, error) {
+// Find all active orders in the DB. This wil load the keys for each order.
+func FindActiveOrders(db *sql.DB) ([]*orderProto.Order, error) {
 	results := make([]*orderProto.Order, 0)
 
+	// chain must be active
 	rows, err := db.Query(`SELECT o.id, 
 		o.user_id, 
 		o.user_key_id, 
+		o.exchange_name,
 		o.exchange_order_id, 
 		o.exchange_market_name,
 		o.market_name, 
 		o.side, 
 		o.type, 
+		o.price,
 		o.base_quantity, 
 		o.base_percent, 
 		o.currency_quantity, 
@@ -93,10 +165,10 @@ func FindOpenOrders(db *sql.DB) ([]*orderProto.Order, error) {
 		o.condition, 
 		o.parent_order_id, 
 		u.api_key, 
-		u.secret, 
-		u.exchange_name FROM orders o 
+		u.secret 
+		FROM orders o 
 		JOIN user_keys u on u.id = o.user_key_id 
-		WHERE o.status = $1 AND u.status = $2`, status.Open, key.Verified)
+		WHERE o.status = $1 AND u.status = $2 AND o.chain_status = $3`, status.Active, key.Verified, chain.Active)
 
 	if err != nil {
 		log.Fatal(err)
@@ -110,14 +182,17 @@ func FindOpenOrders(db *sql.DB) ([]*orderProto.Order, error) {
 		var condition sql.NullString
 		var exchangeOrderID sql.NullString
 		var exchangeMarketName sql.NullString
+		var price sql.NullFloat64
 		err := rows.Scan(&o.OrderID,
 			&o.UserID,
 			&o.KeyID,
+			&o.Exchange,
 			&exchangeOrderID,
 			&exchangeMarketName,
 			&o.MarketName,
 			&o.Side,
 			&o.OrderType,
+			&price,
 			&o.BaseQuantity,
 			&o.BasePercent,
 			&o.CurrencyQuantity,
@@ -127,8 +202,7 @@ func FindOpenOrders(db *sql.DB) ([]*orderProto.Order, error) {
 			&condition,
 			&o.ParentOrderID,
 			&o.Key,
-			&o.Secret,
-			&o.Exchange)
+			&o.Secret)
 
 		if err != nil {
 			log.Fatal(err)
@@ -142,6 +216,9 @@ func FindOpenOrders(db *sql.DB) ([]*orderProto.Order, error) {
 		}
 		if exchangeMarketName.Valid {
 			o.ExchangeMarketName = exchangeMarketName.String
+		}
+		if price.Valid {
+			o.Price = price.Float64
 		}
 
 		if err := json.Unmarshal([]byte(o.Conditions), &o.Conditions); err != nil {
@@ -161,9 +238,26 @@ func FindOpenOrders(db *sql.DB) ([]*orderProto.Order, error) {
 func FindOrdersByUserID(db *sql.DB, req *orderProto.GetUserOrdersRequest) ([]*orderProto.Order, error) {
 	results := make([]*orderProto.Order, 0)
 
-	rows, err := db.Query(`SELECT id, user_id, user_key_id, exchange_name, exchange_order_id, exchange_market_name,
-		market_name, side, type, base_quantity, base_percent, currency_quantity, currency_percent, status, 
-		conditions, condition, parent_order_id FROM orders WHERE user_id = $1`, req.UserID)
+	rows, err := db.Query(`SELECT id, 
+		user_id, 
+		user_key_id, 
+		exchange_name, 
+		exchange_order_id, 
+		exchange_market_name,
+		market_name, 
+		side, 
+		type, 
+		price,
+		base_quantity, 
+		base_percent, 
+		currency_quantity, 
+		currency_percent, 
+		status, 
+		chain_status,
+		conditions, 
+		condition, 
+		parent_order_id 
+		FROM orders WHERE user_id = $1`, req.UserID)
 
 	if err != nil {
 		log.Fatal(err)
@@ -177,9 +271,26 @@ func FindOrdersByUserID(db *sql.DB, req *orderProto.GetUserOrdersRequest) ([]*or
 		var condition sql.NullString
 		var exchangeOrderID sql.NullString
 		var exchangeMarketName sql.NullString
-		err := rows.Scan(&o.OrderID, &o.UserID, &o.KeyID, &o.Exchange, &exchangeOrderID, &exchangeMarketName,
-			&o.MarketName, &o.Side, &o.OrderType, &o.BaseQuantity, &o.BasePercent, &o.CurrencyQuantity,
-			&o.CurrencyPercent, &o.Status, &o.Conditions, &condition, &o.ParentOrderID)
+		var price sql.NullFloat64
+		err := rows.Scan(&o.OrderID,
+			&o.UserID,
+			&o.KeyID,
+			&o.Exchange,
+			&exchangeOrderID,
+			&exchangeMarketName,
+			&o.MarketName,
+			&o.Side,
+			&o.OrderType,
+			&price,
+			&o.BaseQuantity,
+			&o.BasePercent,
+			&o.CurrencyQuantity,
+			&o.CurrencyPercent,
+			&o.Status,
+			&o.ChainStatus,
+			&o.Conditions,
+			&condition,
+			&o.ParentOrderID)
 
 		if err != nil {
 			log.Fatal(err)
@@ -193,6 +304,9 @@ func FindOrdersByUserID(db *sql.DB, req *orderProto.GetUserOrdersRequest) ([]*or
 		}
 		if exchangeMarketName.Valid {
 			o.ExchangeMarketName = exchangeMarketName.String
+		}
+		if price.Valid {
+			o.Price = price.Float64
 		}
 
 		if err := json.Unmarshal([]byte(o.Conditions), &o.Conditions); err != nil {
@@ -216,17 +330,48 @@ func InsertOrder(db *sql.DB, req *orderProto.OrderRequest, status string) (*orde
 	if err != nil {
 		return nil, err
 	}
+	chainStatus := chain.Active
+	if !req.Active {
+		chainStatus = chain.Inactive
+	}
 
 	// the exchange_order_id and exchange_market_name must be "" and not null
 	// when scanning in order data null cannot be set on a type string. Therefore,
 	// just default those cols to "".
-	sqlStatement := `insert into orders (id, user_id, user_key_id, exchange_name, market_name, 
-		side, type, base_quantity, base_percent, currency_quantity, currency_percent, status, 
-		conditions, parent_order_id) 
-		values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)`
-	_, err = db.Exec(sqlStatement, newID, req.UserID, req.KeyID, req.Exchange, req.MarketName,
-		req.Side, req.OrderType, req.BaseQuantity, req.BasePercent, req.CurrencyQuantity, req.CurrencyPercent,
-		status, jsonCond, req.ParentOrderID)
+	sqlStatement := `insert into orders (id, 
+		user_id, 
+		user_key_id, 
+		exchange_name, 
+		market_name, 
+		side, 
+		type, 
+		price,
+		base_quantity, 
+		base_percent, 
+		currency_quantity, 
+		currency_percent, 
+		status, 
+		chain_status,
+		conditions, 
+		parent_order_id) 
+		values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16)`
+	_, err = db.Exec(sqlStatement,
+		newID,
+		req.UserID,
+		req.KeyID,
+		req.Exchange,
+		req.MarketName,
+		req.Side,
+		req.OrderType,
+		req.Price,
+		req.BaseQuantity,
+		req.BasePercent,
+		req.CurrencyQuantity,
+		req.CurrencyPercent,
+		status,
+		chainStatus,
+		jsonCond,
+		req.ParentOrderID)
 
 	if err != nil {
 		return nil, err
@@ -239,11 +384,13 @@ func InsertOrder(db *sql.DB, req *orderProto.OrderRequest, status string) (*orde
 		MarketName:       req.MarketName,
 		Side:             req.Side,
 		OrderType:        req.OrderType,
+		Price:            req.Price,
 		BaseQuantity:     req.BaseQuantity,
 		BasePercent:      req.BasePercent,
 		CurrencyQuantity: req.CurrencyQuantity,
 		CurrencyPercent:  req.CurrencyPercent,
 		Status:           status,
+		ChainStatus:      chainStatus,
 		Conditions:       req.Conditions,
 		ParentOrderID:    req.ParentOrderID,
 	}
@@ -252,28 +399,32 @@ func InsertOrder(db *sql.DB, req *orderProto.OrderRequest, status string) (*orde
 
 // UpdateOrder should be an update head chain buy order
 // todo add sql for update other types of orders - UpdateHeadBuyOrder, UpdateHeadSellOrder, UpdateChainBuyOrder, UpdateChainSellOrder
+// TODO needs work!!
 func UpdateOrder(db *sql.DB, req *orderProto.OrderRequest) (*orderProto.Order, error) {
-	sqlStatement := `UPDATE orders SET conditions = $1, base_quantity = $2,
-	WHERE id = $4 and user_id = $5 RETURNING id, user_id, exchange_name, market_name, user_key, side, 
-	base_quantity, base_quantity_remainder, status, conditions, parent_order_id`
+	// sqlStatement := `UPDATE orders SET
+	// conditions = $1,
+	// base_quantity = $2,
+	// WHERE id = $4 and user_id = $5
+	// RETURNING id, user_id, exchange_name, market_name, user_key, side,
+	// base_quantity, base_quantity_remainder, status, conditions, parent_order_id`
 
-	jsonCond, err := json.Marshal(req.Conditions)
-	if err != nil {
-		return nil, err
-	}
+	// jsonCond, err := json.Marshal(req.Conditions)
+	// if err != nil {
+	// 	return nil, err
+	// }
 
 	var o orderProto.Order
-	err = db.QueryRow(sqlStatement, jsonCond, req.BaseQuantity, req.BaseQuantity, req.OrderID, req.UserID).
-		Scan(&o.OrderID, &o.UserID, &o.Exchange, &o.MarketName, &o.KeyID,
-			&o.Side, &o.BaseQuantity, &o.Status, &o.Conditions, &o.ParentOrderID)
+	// err = db.QueryRow(sqlStatement, jsonCond, req.BaseQuantity, req.BaseQuantity, req.OrderID, req.UserID).
+	// 	Scan(&o.OrderID, &o.UserID, &o.Exchange, &o.MarketName, &o.KeyID,
+	// 		&o.Side, &o.BaseQuantity, &o.Status, &o.Conditions, &o.ParentOrderID)
 
-	if err != nil {
-		return nil, err
-	}
+	// if err != nil {
+	// 	return nil, err
+	// }
 
-	if err := json.Unmarshal([]byte(o.Conditions), &o.Conditions); err != nil {
-		return nil, err
-	}
+	// if err := json.Unmarshal([]byte(o.Conditions), &o.Conditions); err != nil {
+	// 	return nil, err
+	// }
 
 	return &o, nil
 }

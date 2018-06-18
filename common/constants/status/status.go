@@ -2,9 +2,9 @@ package status
 
 const (
 	// order status
-	Cancelled          string = "cancelled"
+	Failed             string = "failed"
 	Filled             string = "filled"
-	Open               string = "active"
+	Active             string = "active"
 	Pending            string = "pending"
 	UnknownOrderStatus string = "???"
 )

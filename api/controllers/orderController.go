@@ -40,6 +40,7 @@ type UserOrdersData struct {
 
 // This is the response struct for order
 type Order struct {
+	ParentOrderID      string  `json:"parentOrderID"`
 	OrderID            string  `json:"orderID"`
 	KeyID              string  `json:"keyID"`
 	Exchange           string  `json:"exchange"`
@@ -48,6 +49,7 @@ type Order struct {
 	MarketName         string  `json:"marketName"`
 	Side               string  `json:"side"`
 	OrderType          string  `json:"orderType"`
+	Price              float64 `json:"price"`
 	BaseCurrencySymbol string  `json:"baseCurrencySymbol"`
 	BaseCurrencyName   string  `json:"baseCurrencyName"`
 	BaseQuantity       float64 `json:"baseQuantity"`
@@ -57,10 +59,9 @@ type Order struct {
 	CurrencyQuantity   float64 `json:"currencyQuantity"`
 	CurrencyPercent    float64 `json:"currencyPercent"`
 	Status             string  `json:"status"`
+	ChainStatus        string  `json:"chainStatus"`
 	Conditions         string  `json:"conditions"`
 	Condition          string  `json:"condition"`
-	ParentOrderID      string  `json:"parentOrderID"`
-	Price              float64 `json:"price"`
 }
 
 // swagger:parameters addOrder
@@ -95,6 +96,8 @@ type OrderRequest struct {
 	// Optional this is required only when the order type is 'limit'. This is the limit order price.
 	// in: body
 	Price float64 `json:"price"`
+	// Optional to set the chain status to active (default true for active)
+	Active bool `json:"active"`
 
 	// Optional parent order ID to add this chain of orders to. When you want to add children to an existing order.
 	ParentOrderID string `json:"parentOrderID"`
