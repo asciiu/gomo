@@ -656,6 +656,15 @@
             }
           },
           {
+            "x-go-name": "Active",
+            "description": "Optional to set the chain status (default true for active)",
+            "name": "active",
+            "in": "body",
+            "schema": {
+              "type": "boolean"
+            }
+          },
+          {
             "type": "string",
             "x-go-name": "ParentOrderID",
             "description": "Optional parent order ID to add this chain of orders to. When you want to add children to an existing order.",
@@ -671,7 +680,7 @@
             }
           },
           "400": {
-            "description": "missing params with \"status\": \"fail\"",
+            "description": "missing or incorrect params with \"status\": \"fail\"",
             "schema": {
               "$ref": "#/definitions/responseError"
             }
@@ -1467,15 +1476,16 @@
       "x-go-package": "github.com/asciiu/gomo/notification-service/proto"
     },
     "Order": {
+      "description": "This is the response struct for order",
       "type": "object",
       "properties": {
-        "baseCurrency": {
+        "baseCurrencyName": {
           "type": "string",
-          "x-go-name": "BaseCurrency"
+          "x-go-name": "BaseCurrencyName"
         },
-        "baseCurrencyLong": {
+        "baseCurrencySymbol": {
           "type": "string",
-          "x-go-name": "BaseCurrencyLong"
+          "x-go-name": "BaseCurrencySymbol"
         },
         "basePercent": {
           "type": "number",
@@ -1487,6 +1497,10 @@
           "format": "double",
           "x-go-name": "BaseQuantity"
         },
+        "chainStatus": {
+          "type": "string",
+          "x-go-name": "ChainStatus"
+        },
         "condition": {
           "type": "string",
           "x-go-name": "Condition"
@@ -1494,6 +1508,10 @@
         "conditions": {
           "type": "string",
           "x-go-name": "Conditions"
+        },
+        "currencyName": {
+          "type": "string",
+          "x-go-name": "CurrencyName"
         },
         "currencyPercent": {
           "type": "number",
@@ -1504,6 +1522,10 @@
           "type": "number",
           "format": "double",
           "x-go-name": "CurrencyQuantity"
+        },
+        "currencySymbol": {
+          "type": "string",
+          "x-go-name": "CurrencySymbol"
         },
         "exchange": {
           "type": "string",
@@ -1521,14 +1543,6 @@
           "type": "string",
           "x-go-name": "KeyID"
         },
-        "marketCurrency": {
-          "type": "string",
-          "x-go-name": "MarketCurrency"
-        },
-        "marketCurrencyLong": {
-          "type": "string",
-          "x-go-name": "MarketCurrencyLong"
-        },
         "marketName": {
           "type": "string",
           "x-go-name": "MarketName"
@@ -1544,6 +1558,11 @@
         "parentOrderID": {
           "type": "string",
           "x-go-name": "ParentOrderID"
+        },
+        "price": {
+          "type": "number",
+          "format": "double",
+          "x-go-name": "Price"
         },
         "side": {
           "type": "string",
@@ -1562,6 +1581,9 @@
         "DB": {
           "$ref": "#/definitions/DB"
         },
+        "Keys": {
+          "$ref": "#/definitions/KeyServiceClient"
+        },
         "Orders": {
           "$ref": "#/definitions/OrderServiceClient"
         }
@@ -1571,6 +1593,11 @@
     "OrderRequest": {
       "type": "object",
       "properties": {
+        "active": {
+          "description": "Optional to set the chain status (default true for active)\nin: body",
+          "type": "boolean",
+          "x-go-name": "Active"
+        },
         "basePercent": {
           "description": "Required for buy side on chained orders. Specifies the precent of the reserve balance to allocate for the order.\nin: body",
           "type": "number",
