@@ -1,0 +1,93 @@
+syntax = "proto3";
+
+package fomo.orders; 
+
+service OrderService {
+  rpc AddOrders(OrdersRequest) returns (OrderListResponse) {}
+  rpc GetUserOrder(GetUserOrderRequest) returns (OrderResponse) {}
+  rpc GetUserOrders(GetUserOrdersRequest) returns (OrderListResponse) {}
+  rpc RemoveOrder(RemoveOrderRequest) returns (OrderResponse) {}
+  rpc UpdateOrder(OrderRequest) returns (OrderResponse) {}
+}
+
+// Requests
+message OrdersRequest {
+  repeated OrderRequest orders = 1; 
+}
+
+message OrderRequest {
+  string orderID = 1;
+  string userID = 2;
+  string keyID = 3;
+  string exchange = 4;
+  string marketName = 5;
+  string side = 6;
+  string orderType = 7;
+  double baseQuantity = 8;
+  double basePercent = 9;
+  double currencyQuantity = 10;
+  double currencyPercent = 11;
+  string conditions = 12;
+  double price = 13;
+  string parentOrderID = 14;
+  bool active = 15;
+}
+
+message GetUserOrderRequest {
+  string orderID = 1;
+  string userID = 2;
+}
+
+message GetUserOrdersRequest {
+    string userID = 1;
+}
+
+message RemoveOrderRequest {
+  string orderID = 1;
+  string userID = 2;
+}
+
+// Responses
+message Order {
+  string orderID = 1;
+  string userID = 2;
+  string keyID = 3;
+  string key = 4;
+  string secret = 5;
+  string exchange = 6;
+  string exchangeOrderID = 7;
+  string exchangeMarketName = 8;
+  string marketName = 9;
+  string side = 10;
+  string orderType = 11;
+  double price = 13;
+  double baseQuantity = 14;
+  double basePercent = 15;
+  double currencyQuantity = 16;
+  double currencyPercent = 17;
+  string status = 18;
+  string chainStatus = 19;
+  string conditions = 20;
+  string condition = 21;
+  string parentOrderID = 22;
+}
+
+message UserOrderData {
+  Order order = 1;
+}
+
+message UserOrdersData {
+  repeated Order orders = 1;
+}
+
+message OrderResponse {
+  string status = 1;
+  string message = 2;
+  UserOrderData data = 3;
+}
+
+message OrderListResponse {
+  string status = 1;
+  string message = 2;
+  UserOrdersData data = 3;
+}
