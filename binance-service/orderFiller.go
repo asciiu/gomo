@@ -10,6 +10,7 @@ import (
 
 	binance "github.com/asciiu/go-binance"
 	"github.com/asciiu/gomo/common/constants/exchange"
+	"github.com/asciiu/gomo/common/constants/order"
 	"github.com/asciiu/gomo/common/constants/side"
 	evt "github.com/asciiu/gomo/common/proto/events"
 	notifications "github.com/asciiu/gomo/notification-service/proto"
@@ -46,19 +47,28 @@ func (filler *OrderFiller) FillOrder(ctx context.Context, orderEvent *evt.OrderE
 		)
 		b := binance.NewBinance(binanceService)
 
+		// binance expects the symbol to be formatted as a single word: e.g. BNBBTC
 		symbol := strings.Replace(orderEvent.MarketName, "-", "", 1)
-		sidee := binance.SideBuy
+		// buy or sell
+		ellado := binance.SideBuy
 		if orderEvent.Side == side.Sell {
-			sidee = binance.SideSell
+			ellado = binance.SideSell
+		}
+		// order type can be market or limit
+		orderType := binance.TypeMarket
+		if orderEvent.OrderType == order.LimitOrder {
+			orderType = binance.TypeLimit
 		}
 		//orderEvent.BaseQuantity
+		// https://github.com/binance-exchange/binance-official-api-docs/blob/master/rest-api.md
+		// Limit type orders require a price
 		newOrder, err := b.NewOrder(binance.NewOrderRequest{
 			Symbol:      symbol,
-			Quantity:    100000,
-			Price:       0.000010,
-			Side:        sidee,
+			Quantity:    orderEvent.Quantity,
+			Side:        ellado,
+			Price:       orderEvent.Price,
 			TimeInForce: binance.GTC,
-			Type:        binance.TypeLimit,
+			Type:        orderType,
 			Timestamp:   time.Now(),
 		})
 		if err != nil {
