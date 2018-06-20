@@ -432,6 +432,7 @@ func (controller *StrategyController) HandlePostStrategy(c echo.Context) error {
 
 	//exchangeName = r.Data.Key.Exchange
 	//request := orders.StrategyRequest{
+
 	//		UserID:           userID,
 	//		KeyID:            order.KeyID,
 	//		Exchange:         exchangeName,

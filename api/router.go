@@ -58,6 +58,7 @@ func NewRouter(db *sql.DB) *echo.Echo {
 	userController := controllers.NewUserController(db)
 	socketController := controllers.NewWebsocketController()
 	searchController := controllers.NewSearchController(db)
+	strategyController := controllers.NewStrategyController(db)
 
 	// websocket ticker
 	e.GET("/ticker", socketController.Connect)
@@ -111,6 +112,13 @@ func NewRouter(db *sql.DB) *echo.Echo {
 	protectedApi.GET("/orders/:orderID", orderController.HandleGetOrder)
 	protectedApi.PUT("/orders/:orderID", orderController.HandleUpdateOrder)
 	protectedApi.DELETE("/orders/:orderID", orderController.HandleDeleteOrder)
+
+	// strategy management endpoints
+	protectedApi.GET("/orders", strategyController.HandleListStrategies)
+	protectedApi.POST("/strategies", strategyController.HandlePostStrategy)
+	//protectedApi.GET("/orders/:orderID", orderController.HandleGetOrder)
+	//protectedApi.PUT("/orders/:orderID", orderController.HandleUpdateOrder)
+	//protectedApi.DELETE("/orders/:orderID", orderController.HandleDeleteOrder)
 
 	// search endpoint
 	protectedApi.GET("/search", searchController.Search)
