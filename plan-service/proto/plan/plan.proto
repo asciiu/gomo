@@ -1,0 +1,100 @@
+syntax = "proto3";
+
+package fomo.plans; 
+
+service PlanService {
+  rpc AddPlan(PlanRequest) returns (PlanResponse) {}
+  rpc GetUserPlan(GetUserPlanRequest) returns (PlanResponse) {}
+  rpc GetUserPlans(GetUserPlansRequest) returns (PlansResponse) {}
+  rpc DeletePlan(DeletePlanRequest) returns (PlanResponse) {}
+  rpc UpdateOrder(PlanRequest) returns (PlanResponse) {}
+}
+
+// Requests
+message PlanRequest {
+  string planID = 1;
+  string userID = 2;
+  string keyID = 3;
+  string exchange = 4;
+  string marketName = 5;
+  double baseBalance = 6;
+  double currencyBalance = 7;
+  bool active = 8;
+  repeated OrderRequest orders = 9; 
+}
+
+message OrderRequest {
+  string side = 1;
+  string orderType = 2;
+  double basePercent = 3;
+  double currencyPercent = 4;
+  string conditions = 5;
+  double price = 6;
+  bool active = 7;
+}
+
+message GetUserPlanRequest {
+  string planID = 1;
+  string userID = 2;
+}
+
+message GetUserPlansRequest {
+    string userID = 1;
+    string exchange = 2; 
+    string marketName = 3;
+    string status = 4;
+}
+
+message DeletePlanRequest {
+  string planID = 1;
+  string userID = 2;
+}
+
+// Responses
+message Plan {
+  string planID = 1;
+  string userID = 2;
+  string keyID = 3;
+  string key = 4;
+  string secret = 5;
+  string exchange = 6;
+  string exchangeOrderID = 7;
+  string exchangeMarketName = 8;
+  string marketName = 9;
+  double baseBalance = 10;
+  double currencyBalance = 11;
+  string status = 12;
+  repeated Order orders = 13; 
+}
+
+message Order {
+  string side = 1;
+  string orderType = 2;
+  double price = 3;
+  double basePercent = 4;
+  double currencyPercent = 5;
+  string status = 6;
+  string conditions = 7;
+  string condition = 8;
+}
+
+
+message PlanData {
+  Plan plan = 1;
+}
+
+message PlansData {
+  repeated Plan plans = 1;
+}
+
+message PlanResponse {
+  string status = 1;
+  string message = 2;
+  PlanData data = 3;
+}
+
+message PlansResponse {
+  string status = 1;
+  string message = 2;
+  PlansData data = 3;
+}
