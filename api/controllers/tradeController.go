@@ -21,7 +21,7 @@ import (
 	"golang.org/x/net/context"
 )
 
-type StrategyController struct {
+type TradeController struct {
 	DB     *sql.DB
 	Orders orders.OrderServiceClient
 	Keys   keys.KeyServiceClient
@@ -143,12 +143,12 @@ type ResponseStategiesSuccess struct {
 	Data   *UserOrdersData `json:"data"`
 }
 
-func NewStrategyController(db *sql.DB) *StrategyController {
+func NewTradeController(db *sql.DB) *TradeController {
 	// Create a new service. Optionally include some options here.
 	service := k8s.NewService(micro.Name("apikey.client"))
 	service.Init()
 
-	controller := StrategyController{
+	controller := TradeController{
 		DB:         db,
 		Orders:     orders.NewOrderServiceClient("orders", service.Client()),
 		Keys:       keys.NewKeyServiceClient("keys", service.Client()),
@@ -179,7 +179,7 @@ func NewStrategyController(db *sql.DB) *StrategyController {
 // responses:
 //  200: responseOrderSuccess "data" will contain order stuffs with "status": "success"
 //  500: responseError the message will state what the internal server error was with "status": "error"
-func (controller *StrategyController) HandleGetOrder(c echo.Context) error {
+func (controller *TradeController) HandleGetTrade(c echo.Context) error {
 	return nil
 	// token := c.Get("user").(*jwt.Token)
 	// claims := token.Claims.(jwt.MapClaims)
@@ -254,7 +254,7 @@ func (controller *StrategyController) HandleGetOrder(c echo.Context) error {
 // responses:
 //  200: responseOrdersSuccess "data" will contain a list of order info with "status": "success"
 //  500: responseError the message will state what the internal server error was with "status": "error"
-func (controller *StrategyController) HandleListStrategies(c echo.Context) error {
+func (controller *TradeController) HandleListTrades(c echo.Context) error {
 	return nil
 	// token := c.Get("user").(*jwt.Token)
 	// claims := token.Claims.(jwt.MapClaims)
@@ -333,30 +333,33 @@ func (controller *StrategyController) HandleListStrategies(c echo.Context) error
 // 	return c.JSON(http.StatusBadRequest, res)
 // }
 
-// swagger:route POST /orders orders addOrder
+// swagger:route POST /strategies orders addOrder
 //
-// create a new order chain (protected)
+// create a new strategy (protected)
 //
 // This will create a new chain of orders for the user.
 // Example:
-// [
-//	{
-//		"keyID": "680d6bbf-1feb-4122-bd10-0e7ce080676a",
-//		"marketName": "ADA-BTC",
-//		"side": "buy",
-//		"baseQuantity": 0.50,
-//		"orderType": "market",
-//		"conditions": "price <= 0.00002800"
-//	},
-//	{
-//		"keyID": "680d6bbf-1feb-4122-bd10-0e7ce080676a",
-//		"marketName": "ADA-BTC",
-//		"side": "sell",
-//		"currencyPercent": 1.0,
-//		"orderType": "market",
-//		"conditions": "price <= 0.00002200 or trailingStopPts(0, 0.0)"
-//	}
-// ]
+//{
+//    "keyID": "680d6bbf-1feb-4122-bd10-0e7ce080676a",
+//    "marketName": "ADA-BTC",
+//    "baseBalance": 0.1,
+//    "currencyBalance": 0.0,
+//    "live": true,
+//    "orders": [
+//        {
+//            "side": "buy",
+//            "basePercent": 0.1,
+//            "orderType": "market",
+//            "conditions": "price <= 0.00002800"
+//        },
+//        {
+//            "side": "sell",
+//            "currencyPercent": 1.0,
+//            "orderType": "market",
+//            "conditions": "price <= 0.00002200"
+//        }
+//    ]
+//}
 //
 // The order chain starts out with a reserve base balance of 0.5 BTC. This order chain will buy 0.5 BTC at
 // market price when the market price reaches 2800 satoshi or less. The following sell order will sell 100% of the order
@@ -368,7 +371,7 @@ func (controller *StrategyController) HandleListStrategies(c echo.Context) error
 //  200: responseOrdersSuccess "data" will contain list of orders with "status": "success"
 //  400: responseError missing or incorrect params with "status": "fail"
 //  500: responseError the message will state what the internal server error was with "status": "error"
-func (controller *StrategyController) HandlePostStrategy(c echo.Context) error {
+func (controller *TradeController) HandlePostTrade(c echo.Context) error {
 	//defer c.Request().Body.Close()
 	token := c.Get("user").(*jwt.Token)
 	claims := token.Claims.(jwt.MapClaims)
@@ -527,7 +530,7 @@ func (controller *StrategyController) HandlePostStrategy(c echo.Context) error {
 //  200: responseOrderSuccess "data" will contain order info with "status": "success"
 //  400: responseError missing params with "status": "fail"
 //  500: responseError the message will state what the internal server error was with "status": "error"
-// func (controller *StrategyController) HandleUpdateOrder(c echo.Context) error {
+// func (controller *TradeController) HandleUpdateOrder(c echo.Context) error {
 // 	token := c.Get("user").(*jwt.Token)
 // 	claims := token.Claims.(jwt.MapClaims)
 // 	userID := claims["jti"].(string)
@@ -616,7 +619,7 @@ func (controller *StrategyController) HandlePostStrategy(c echo.Context) error {
 // responses:
 //  200: responseOrderSuccess data will be null with "status": "success"
 //  500: responseError the message will state what the internal server error was with "status": "error"
-// func (controller *StrategyController) HandleDeleteOrder(c echo.Context) error {
+// func (controller *TradeController) HandleDeleteOrder(c echo.Context) error {
 // 	token := c.Get("user").(*jwt.Token)
 // 	claims := token.Claims.(jwt.MapClaims)
 // 	userID := claims["jti"].(string)
