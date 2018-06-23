@@ -1,6 +1,6 @@
 -- +goose Up
 -- SQL in this section is executed when the migration is applied.
-CREATE TABLE strategies (
+CREATE TABLE plans (
  id UUID PRIMARY KEY NOT NULL,
  user_id UUID NOT NULL REFERENCES users (id) ON DELETE CASCADE,
  user_key_id UUID NOT NULL REFERENCES user_keys (id) ON DELETE CASCADE,
@@ -16,4 +16,4 @@ CREATE TABLE strategies (
 
 -- +goose Down
 -- SQL in this section is executed when the migration is rolled back.
-DROP TABLE strategies;
+DROP TABLE plans;
