@@ -1,4 +1,4 @@
-package chain
+package plan
 
 const (
 	// chain status

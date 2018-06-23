@@ -30,7 +30,6 @@ message OrderRequest {
   double currencyPercent = 4;
   string conditions = 5;
   double price = 6;
-  bool active = 7;
 }
 
 message GetUserPlanRequest {
@@ -58,24 +57,24 @@ message Plan {
   string key = 4;
   string secret = 5;
   string exchange = 6;
-  string exchangeOrderID = 7;
-  string exchangeMarketName = 8;
-  string marketName = 9;
-  double baseBalance = 10;
-  double currencyBalance = 11;
-  string status = 12;
-  repeated Order orders = 13; 
+  string exchangeMarketName = 7;
+  string marketName = 8;
+  double baseBalance = 9;
+  double currencyBalance = 10;
+  string status = 11;
+  repeated Order orders = 12; 
 }
 
 message Order {
-  string side = 1;
-  string orderType = 2;
-  double price = 3;
-  double basePercent = 4;
-  double currencyPercent = 5;
-  string status = 6;
-  string conditions = 7;
-  string condition = 8;
+  string orderID = 1;
+  string side = 2;
+  string orderType = 3;
+  double price = 4;
+  double basePercent = 5;
+  double currencyPercent = 6;
+  string status = 7;
+  string conditions = 8;
+  string condition = 9; 
 }
 
 
