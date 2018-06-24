@@ -5,8 +5,8 @@ import (
 	"encoding/json"
 	"log"
 
-	"github.com/asciiu/gomo/common/constants/chain"
 	"github.com/asciiu/gomo/common/constants/key"
+	"github.com/asciiu/gomo/common/constants/plan"
 	"github.com/asciiu/gomo/common/constants/status"
 	evt "github.com/asciiu/gomo/common/proto/events"
 	orderProto "github.com/asciiu/gomo/order-service/proto/order"
@@ -110,7 +110,7 @@ func FindOrderWithParentID(db *sql.DB, parentOrderID string) (*orderProto.Order,
 		conditions, 
 		parent_order_id 
 		FROM orders 
-		WHERE parent_order_id = $1 and chain_status = $2`, parentOrderID, chain.Active).
+		WHERE parent_order_id = $1 and chain_status = $2`, parentOrderID, plan.Active).
 		Scan(&o.OrderID,
 			&o.UserID,
 			&o.KeyID,
@@ -168,7 +168,7 @@ func FindActiveOrders(db *sql.DB) ([]*orderProto.Order, error) {
 		u.secret 
 		FROM orders o 
 		JOIN user_keys u on u.id = o.user_key_id 
-		WHERE o.status = $1 AND u.status = $2 AND o.chain_status = $3`, status.Active, key.Verified, chain.Active)
+		WHERE o.status = $1 AND u.status = $2 AND o.chain_status = $3`, status.Active, key.Verified, plan.Active)
 
 	if err != nil {
 		log.Fatal(err)
@@ -330,9 +330,9 @@ func InsertOrder(db *sql.DB, req *orderProto.OrderRequest, status string) (*orde
 	if err != nil {
 		return nil, err
 	}
-	chainStatus := chain.Active
+	chainStatus := plan.Active
 	if !req.Active {
-		chainStatus = chain.Inactive
+		chainStatus = plan.Inactive
 	}
 
 	// the exchange_order_id and exchange_market_name must be "" and not null
