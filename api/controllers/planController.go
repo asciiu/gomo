@@ -8,7 +8,6 @@ import (
 	"strings"
 
 	asql "github.com/asciiu/gomo/api/db/sql"
-	"github.com/asciiu/gomo/common/constants/key"
 	orderValidator "github.com/asciiu/gomo/common/constants/order"
 	"github.com/asciiu/gomo/common/constants/response"
 	sideValidator "github.com/asciiu/gomo/common/constants/side"
@@ -29,38 +28,29 @@ type PlanController struct {
 	currencies map[string]string
 }
 
-type UserStrategyData struct {
-	Strategy *Strategy `json:"strategy"`
+type UserPlanData struct {
+	Plan *Plan `json:"plan"`
 }
 
-type UserStrategiesData struct {
-	Strategies []*Strategy `json:"strategies"`
+type UserPlansData struct {
+	PLans []*Plan `json:"plans"`
 }
 
 // This is the response struct for order
-type Strategy struct {
-	ParentOrderID      string  `json:"parentOrderID"`
-	OrderID            string  `json:"orderID"`
-	KeyID              string  `json:"keyID"`
-	Exchange           string  `json:"exchange"`
-	ExchangeOrderID    string  `json:"exchangeOrderID"`
-	ExchangeMarketName string  `json:"exchangeMarketName"`
-	MarketName         string  `json:"marketName"`
-	Side               string  `json:"side"`
-	OrderType          string  `json:"orderType"`
-	Price              float64 `json:"price"`
-	BaseCurrencySymbol string  `json:"baseCurrencySymbol"`
-	BaseCurrencyName   string  `json:"baseCurrencyName"`
-	BaseQuantity       float64 `json:"baseQuantity"`
-	BasePercent        float64 `json:"basePercent"`
-	CurrencySymbol     string  `json:"currencySymbol"`
-	CurrencyName       string  `json:"currencyName"`
-	CurrencyQuantity   float64 `json:"currencyQuantity"`
-	CurrencyPercent    float64 `json:"currencyPercent"`
-	Status             string  `json:"status"`
-	ChainStatus        string  `json:"chainStatus"`
-	Conditions         string  `json:"conditions"`
-	Condition          string  `json:"condition"`
+type Plan struct {
+	PlanID             string         `json:"planID"`
+	KeyID              string         `json:"keyID"`
+	Exchange           string         `json:"exchange"`
+	ExchangeMarketName string         `json:"exchangeMarketName"`
+	MarketName         string         `json:"marketName"`
+	BaseCurrencySymbol string         `json:"baseCurrencySymbol"`
+	BaseCurrencyName   string         `json:"baseCurrencyName"`
+	BaseBalance        float64        `json:"baseBalance"`
+	CurrencySymbol     string         `json:"currencySymbol"`
+	CurrencyName       string         `json:"currencyName"`
+	CurrencyBalance    float64        `json:"currencyBalance"`
+	Status             string         `json:"status"`
+	Orders             []*plans.Order `json:"orders"`
 }
 
 // swagger:parameters addPlan
@@ -132,8 +122,8 @@ type UpdatePlanRequest struct {
 // A ResponseKeySuccess will always contain a status of "successful".
 // swagger:model responseOrderSuccess
 type ResponsePlanSuccess struct {
-	Status string         `json:"status"`
-	Data   *UserOrderData `json:"data"`
+	Status string        `json:"status"`
+	Data   *UserPlanData `json:"data"`
 }
 
 // A ResponseKeysSuccess will always contain a status of "successful".
@@ -333,11 +323,11 @@ func (controller *PlanController) HandleListPlans(c echo.Context) error {
 // 	return c.JSON(http.StatusBadRequest, res)
 // }
 
-// swagger:route POST /strategies orders addOrder
+// swagger:route POST /plans plans addPlan
 //
-// create a new strategy (protected)
+// create a new planned strategy (protected)
 //
-// This will create a new chain of orders for the user.
+// This will create a new chain of orders for the user. All orders are encapsulated within a plan.
 // Example:
 //{
 //    "keyID": "680d6bbf-1feb-4122-bd10-0e7ce080676a",
@@ -378,22 +368,23 @@ func (controller *PlanController) HandlePostPlan(c echo.Context) error {
 	userID := claims["jti"].(string)
 
 	// read strategy from post body
-	strategy := new(PlanRequest)
-	err := json.NewDecoder(c.Request().Body).Decode(&strategy)
+	newPlan := new(PlanRequest)
+	err := json.NewDecoder(c.Request().Body).Decode(&newPlan)
 	if err != nil {
 		return fail(c, err.Error())
 	}
 
 	// market name and api key are required
-	if strategy.MarketName == "" || strategy.KeyID == "" {
+	if newPlan.MarketName == "" || newPlan.KeyID == "" {
 		return fail(c, "marketName and keyID required!")
 	}
-	if !strings.Contains(strategy.MarketName, "-") {
+	if !strings.Contains(newPlan.MarketName, "-") {
 		return fail(c, "marketName must be currency-base: e.g. ADA-BTC")
 	}
 
 	// error check all orders
-	for i, order := range strategy.Orders {
+	orders := make([]*plans.OrderRequest, 0)
+	for i, order := range newPlan.Orders {
 		log.Printf("order %d: %+v\n", i, order)
 
 		if !orderValidator.ValidateOrderType(order.OrderType) {
@@ -403,15 +394,29 @@ func (controller *PlanController) HandlePostPlan(c echo.Context) error {
 		if !sideValidator.ValidateSide(order.Side) {
 			return fail(c, "buy or sell required for side!")
 		}
+		or := plans.OrderRequest{
+			Side:            order.Side,
+			OrderType:       order.OrderType,
+			BasePercent:     order.BasePercent,
+			CurrencyPercent: order.CurrencyPercent,
+			Conditions:      order.Conditions,
+			Price:           order.Price,
+		}
+		orders = append(orders, &or)
 	}
 
-	getRequest := keys.GetUserKeyRequest{
-		KeyID:  strategy.KeyID,
-		UserID: userID,
+	newPlanRequest := plans.PlanRequest{
+		UserID:          userID,
+		KeyID:           newPlan.KeyID,
+		MarketName:      newPlan.MarketName,
+		BaseBalance:     newPlan.BaseBalance,
+		CurrencyBalance: newPlan.CurrencyBalance,
+		Active:          newPlan.Live,
+		Orders:          orders,
 	}
 
-	// ask key service for key
-	r, _ := controller.Keys.GetUserKey(context.Background(), &getRequest)
+	// add plan returns nil for error
+	r, _ := controller.Plans.AddPlan(context.Background(), &newPlanRequest)
 	if r.Status != response.Success {
 		res := &ResponseError{
 			Status:  r.Status,
@@ -424,100 +429,38 @@ func (controller *PlanController) HandlePostPlan(c echo.Context) error {
 		if r.Status == response.Error {
 			return c.JSON(http.StatusInternalServerError, res)
 		}
-		if r.Status == response.Nonentity {
-			return fail(c, "invalid key")
-		}
-	}
-	// key must be verified status
-	if r.Data.Key.Status != key.Verified {
-		return fail(c, "key must be verified")
 	}
 
-	//exchangeName = r.Data.Key.Exchange
-	//request := orders.StrategyRequest{
+	names := strings.Split(r.Data.Plan.MarketName, "-")
+	baseCurrencySymbol := names[1]
+	baseCurrencyName := controller.currencies[baseCurrencySymbol]
+	currencySymbol := names[0]
+	currencyName := controller.currencies[currencySymbol]
 
-	//		UserID:           userID,
-	//		KeyID:            order.KeyID,
-	//		Exchange:         exchangeName,
-	//		MarketName:       order.MarketName,
-	//      Live:             stratgey.Live,
-	//      Orders:           &orders,
-	//}
+	data := Plan{
+		PlanID:             r.Data.Plan.PlanID,
+		KeyID:              r.Data.Plan.KeyID,
+		Exchange:           r.Data.Plan.Exchange,
+		ExchangeMarketName: r.Data.Plan.ExchangeMarketName,
+		MarketName:         r.Data.Plan.MarketName,
+		BaseCurrencySymbol: baseCurrencySymbol,
+		BaseCurrencyName:   baseCurrencyName,
+		BaseBalance:        r.Data.Plan.BaseBalance,
+		CurrencySymbol:     currencySymbol,
+		CurrencyName:       currencyName,
+		CurrencyBalance:    r.Data.Plan.CurrencyBalance,
+		Status:             r.Data.Plan.Status,
+		Orders:             r.Data.Plan.Orders,
+	}
 
-	//		Side:             order.Side,
-	//		OrderType:        order.OrderType,
-	//		Price:            order.Price,
-	//		BaseQuantity:     order.BaseQuantity,
-	//		BasePercent:      order.BasePercent,
-	//		CurrencyQuantity: order.CurrencyQuantity,
-	//		CurrencyPercent:  order.CurrencyPercent,
-	//		Conditions:       order.Conditions,
-	//	}
-	//	requests = append(requests, &request)
-	//}
+	res := &ResponsePlanSuccess{
+		Status: response.Success,
+		Data: &UserPlanData{
+			Plan: &data,
+		},
+	}
 
-	//orderRequests := orders.OrdersRequest{
-	//	Orders: requests,
-	//}
-
-	//// add order returns nil for error
-	//r, _ := controller.Orders.AddOrders(context.Background(), &orderRequests)
-	//if r.Status != response.Success {
-	//	res := &ResponseError{
-	//		Status:  r.Status,
-	//		Message: r.Message,
-	//	}
-
-	//	if r.Status == response.Fail {
-	//		return c.JSON(http.StatusBadRequest, res)
-	//	}
-	//	if r.Status == response.Error {
-	//		return c.JSON(http.StatusInternalServerError, res)
-	//	}
-	//}
-
-	//data := make([]*Order, len(r.Data.Orders))
-	//for i, o := range r.Data.Orders {
-	//	names := strings.Split(o.MarketName, "-")
-	//	baseCurrencySymbol := names[1]
-	//	baseCurrencyName := controller.currencies[baseCurrencySymbol]
-	//	currencySymbol := names[0]
-	//	currencyName := controller.currencies[currencySymbol]
-
-	//	data[i] = &Order{
-	//		OrderID:            o.OrderID,
-	//		KeyID:              o.KeyID,
-	//		Exchange:           o.Exchange,
-	//		ExchangeOrderID:    o.ExchangeOrderID,
-	//		ExchangeMarketName: o.ExchangeMarketName,
-	//		MarketName:         o.MarketName,
-	//		Side:               o.Side,
-	//		OrderType:          o.OrderType,
-	//		Price:              o.Price,
-	//		BaseCurrencySymbol: baseCurrencySymbol,
-	//		BaseCurrencyName:   baseCurrencyName,
-	//		BaseQuantity:       o.BaseQuantity,
-	//		BasePercent:        o.BasePercent,
-	//		CurrencySymbol:     currencySymbol,
-	//		CurrencyName:       currencyName,
-	//		CurrencyQuantity:   o.CurrencyQuantity,
-	//		CurrencyPercent:    o.CurrencyPercent,
-	//		Status:             o.Status,
-	//		Conditions:         o.Conditions,
-	//		Condition:          o.Condition,
-	//		ParentOrderID:      o.ParentOrderID,
-	//		ChainStatus:        o.ChainStatus,
-	//	}
-	//}
-
-	//res := &ResponseOrdersSuccess{
-	//	Status: response.Success,
-	//	Data: &UserOrdersData{
-	//		Orders: data,
-	//	},
-	//}
-
-	return c.JSON(http.StatusOK, "ok")
+	return c.JSON(http.StatusOK, res)
 }
 
 // swagger:route PUT /orders/:orderID orders updateOrder
