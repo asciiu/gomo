@@ -7,7 +7,7 @@ service PlanService {
   rpc GetUserPlan(GetUserPlanRequest) returns (PlanResponse) {}
   rpc GetUserPlans(GetUserPlansRequest) returns (PlansResponse) {}
   rpc DeletePlan(DeletePlanRequest) returns (PlanResponse) {}
-  rpc UpdateOrder(PlanRequest) returns (PlanResponse) {}
+  rpc UpdatePlan(PlanRequest) returns (PlanResponse) {}
 }
 
 // Requests

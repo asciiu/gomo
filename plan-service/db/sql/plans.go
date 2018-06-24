@@ -274,9 +274,8 @@ func InsertPlan(db *sql.DB, req *protoPlan.PlanRequest) (*protoPlan.Plan, error)
 		}
 
 		orderID := uuid.New()
-		sqlInsertOrder := `insert into orders (
+		sqlInsertOrder := `insert into plan_orders (
 			id, 
-			user_id, 
 			plan_id, 
 			base_percent, 
 			currency_percent, 
@@ -287,7 +286,6 @@ func InsertPlan(db *sql.DB, req *protoPlan.PlanRequest) (*protoPlan.Plan, error)
 			values ($1, $2, $3, $4, $5, $6, $7, $8)`
 		_, err = db.Exec(sqlInsertOrder,
 			orderID,
-			req.UserID,
 			planID,
 			or.BasePercent,
 			or.CurrencyPercent,
@@ -320,7 +318,7 @@ func InsertPlan(db *sql.DB, req *protoPlan.PlanRequest) (*protoPlan.Plan, error)
 		market_name, 
 		base_balance, 
 		currency_balance, 
-		order_ids,
+		plan_order_ids,
 		status) 
 		values ($1, $2, $3, $4, $5, $6, $7, $8, $9)`
 	_, err := db.Exec(sqlStatement,

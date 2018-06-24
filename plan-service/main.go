@@ -9,7 +9,7 @@ import (
 	msg "github.com/asciiu/gomo/common/constants/messages"
 	"github.com/asciiu/gomo/common/db"
 	keys "github.com/asciiu/gomo/key-service/proto/key"
-	op "github.com/asciiu/gomo/order-service/proto/order"
+	protoPlan "github.com/asciiu/gomo/plan-service/proto/plan"
 	micro "github.com/micro/go-micro"
 	k8s "github.com/micro/kubernetes/go/micro"
 )
@@ -37,17 +37,17 @@ func main() {
 		DB:        gomoDB,
 		Client:    bp.NewBalanceServiceClient("balances", srv.Client()),
 		KeyClient: keys.NewKeyServiceClient("keys", srv.Client()),
-		NewOrder:  micro.NewPublisher(msg.TopicNewOrder, srv.Client()),
+		NewPlan:   micro.NewPublisher(msg.TopicNewOrder, srv.Client()),
 	}
 
 	filledReceiver := OrderFilledReceiver{
 		DB:        gomoDB,
-		Service:   &orderService,
+		Service:   &planService,
 		NotifyPub: micro.NewPublisher(msg.TopicNotification, srv.Client()),
 	}
 
 	engineReceiver := EngineStartReceiver{
-		Service: &orderService,
+		Service: &planService,
 	}
 
 	micro.RegisterSubscriber(msg.TopicOrderFilled, srv.Server(), &filledReceiver)
@@ -56,7 +56,7 @@ func main() {
 	// Register our service with the gRPC server, this will tie our
 	// implementation into the auto-generated interface code for our
 	// protobuf definition.
-	op.RegisterOrderServiceHandler(srv.Server(), &orderService)
+	protoPlan.RegisterPlanServiceHandler(srv.Server(), &planService)
 
 	if err := srv.Run(); err != nil {
 		log.Fatal(err)

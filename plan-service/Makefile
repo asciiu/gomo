@@ -4,7 +4,7 @@ build:
 	docker build --no-cache -t us.gcr.io/fomo-204904/plan-service:dev .
 
 stage:
-	docker push us.gcr.io/fomo-204904/order-service:dev 
+	docker push us.gcr.io/fomo-204904/plan-service:dev 
 
 run:
 	sed "s/{{ UPDATED_AT }}/$(shell date)/g" ./deployments/deployment.tmpl > ./deployments/deployment.yml
