@@ -4,9 +4,11 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"log"
 	"strings"
 
 	balances "github.com/asciiu/gomo/balance-service/proto/balance"
+	"github.com/asciiu/gomo/common/constants/key"
 	"github.com/asciiu/gomo/common/constants/plan"
 	"github.com/asciiu/gomo/common/constants/response"
 	keys "github.com/asciiu/gomo/key-service/proto/key"
@@ -103,6 +105,36 @@ func (service *PlanService) LoadPlan(ctx context.Context, order *protoPlan.Plan)
 	return nil
 }
 
+func (service *PlanService) fetchKey(keyID, userID string) (*keys.Key, error) {
+	getRequest := keys.GetUserKeyRequest{
+		KeyID:  keyID,
+		UserID: userID,
+	}
+
+	// ask key service for key
+	r, _ := service.KeyClient.GetUserKey(context.Background(), &getRequest)
+	//	if keyResponse.Status != response.Success {
+	//		return fmt.Errorf("key is invalid for order -- %s, %#v", keyResponse.Message, order)
+	//	}
+
+	if r.Status != response.Success {
+		if r.Status == response.Fail {
+			return nil, fmt.Errorf(r.Message)
+		}
+		if r.Status == response.Error {
+			return nil, fmt.Errorf(r.Message)
+		}
+		if r.Status == response.Nonentity {
+			return nil, fmt.Errorf("invalid key")
+		}
+	}
+	// key must be verified status
+	if r.Data.Key.Status != key.Verified {
+		return nil, fmt.Errorf("key must be verified")
+	}
+	return r.Data.Key, nil
+}
+
 // AddPlans returns error to conform to protobuf def, but the error will always be returned as nil.
 // Can't return an error with a response object - response object is returned as nil when error is non nil.
 // Therefore, return error in response object.
@@ -131,6 +163,17 @@ func (service *PlanService) AddPlan(ctx context.Context, req *protoPlan.PlanRequ
 		return nil
 	}
 
+	// validate key
+	ky, err := service.fetchKey(req.KeyID, req.UserID)
+	if err != nil {
+		res.Status = response.Fail
+		res.Message = err.Error()
+		return nil
+	}
+
+	// insert the exchange name from the key
+	req.Exchange = ky.Exchange
+
 	pln, error := planRepo.InsertPlan(service.DB, req)
 
 	if error != nil {
@@ -147,6 +190,8 @@ func (service *PlanService) AddPlan(ctx context.Context, req *protoPlan.PlanRequ
 		return nil
 	}
 
+	log.Println(ky.Key)
+	log.Println(ky.Secret)
 	//	// we need to get the key for this order so we can publish it
 	//	// to the engines
 	//	keyReq := keys.GetUserKeyRequest{
