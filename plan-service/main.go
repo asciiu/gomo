@@ -20,7 +20,7 @@ func main() {
 	// Create a new service. Include some options here.
 	srv := k8s.NewService(
 		// This name must match the package name given in your protobuf definition
-		micro.Name("fomo.orders"),
+		micro.Name("fomo.plans"),
 		micro.Version("latest"),
 	)
 

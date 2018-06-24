@@ -13,7 +13,7 @@ import (
 	"github.com/asciiu/gomo/common/constants/response"
 	sideValidator "github.com/asciiu/gomo/common/constants/side"
 	keys "github.com/asciiu/gomo/key-service/proto/key"
-	orders "github.com/asciiu/gomo/order-service/proto/order"
+	plans "github.com/asciiu/gomo/plan-service/proto/plan"
 	jwt "github.com/dgrijalva/jwt-go"
 	"github.com/labstack/echo"
 	micro "github.com/micro/go-micro"
@@ -21,10 +21,10 @@ import (
 	"golang.org/x/net/context"
 )
 
-type TradeController struct {
-	DB     *sql.DB
-	Orders orders.OrderServiceClient
-	Keys   keys.KeyServiceClient
+type PlanController struct {
+	DB    *sql.DB
+	Plans plans.PlanServiceClient
+	Keys  keys.KeyServiceClient
 	// map of ticker symbol to full name
 	currencies map[string]string
 }
@@ -63,8 +63,8 @@ type Strategy struct {
 	Condition          string  `json:"condition"`
 }
 
-// swagger:parameters addOrder
-type StrategyRequest struct {
+// swagger:parameters addPlan
+type PlanRequest struct {
 	// Required this is our api key ID (string uuid) assigned to the user's exchange key and secret.
 	// in: body
 	KeyID string `json:"keyID"`
@@ -114,7 +114,7 @@ type OrderReq struct {
 }
 
 // swagger:parameters updateOrder
-type UpdateStrategyRequest struct {
+type UpdatePlanRequest struct {
 	// Optional.
 	// in: body
 	OrderType string `json:"orderType"`
@@ -131,7 +131,7 @@ type UpdateStrategyRequest struct {
 
 // A ResponseKeySuccess will always contain a status of "successful".
 // swagger:model responseOrderSuccess
-type ResponseStrategySuccess struct {
+type ResponsePlanSuccess struct {
 	Status string         `json:"status"`
 	Data   *UserOrderData `json:"data"`
 }
@@ -143,14 +143,14 @@ type ResponseStategiesSuccess struct {
 	Data   *UserOrdersData `json:"data"`
 }
 
-func NewTradeController(db *sql.DB) *TradeController {
+func NewPlanController(db *sql.DB) *PlanController {
 	// Create a new service. Optionally include some options here.
 	service := k8s.NewService(micro.Name("apikey.client"))
 	service.Init()
 
-	controller := TradeController{
+	controller := PlanController{
 		DB:         db,
-		Orders:     orders.NewOrderServiceClient("orders", service.Client()),
+		Plans:      plans.NewPlanServiceClient("plans", service.Client()),
 		Keys:       keys.NewKeyServiceClient("keys", service.Client()),
 		currencies: make(map[string]string),
 	}
@@ -179,7 +179,7 @@ func NewTradeController(db *sql.DB) *TradeController {
 // responses:
 //  200: responseOrderSuccess "data" will contain order stuffs with "status": "success"
 //  500: responseError the message will state what the internal server error was with "status": "error"
-func (controller *TradeController) HandleGetTrade(c echo.Context) error {
+func (controller *PlanController) HandleGetPlan(c echo.Context) error {
 	return nil
 	// token := c.Get("user").(*jwt.Token)
 	// claims := token.Claims.(jwt.MapClaims)
@@ -254,7 +254,7 @@ func (controller *TradeController) HandleGetTrade(c echo.Context) error {
 // responses:
 //  200: responseOrdersSuccess "data" will contain a list of order info with "status": "success"
 //  500: responseError the message will state what the internal server error was with "status": "error"
-func (controller *TradeController) HandleListTrades(c echo.Context) error {
+func (controller *PlanController) HandleListPlans(c echo.Context) error {
 	return nil
 	// token := c.Get("user").(*jwt.Token)
 	// claims := token.Claims.(jwt.MapClaims)
@@ -371,14 +371,14 @@ func (controller *TradeController) HandleListTrades(c echo.Context) error {
 //  200: responseOrdersSuccess "data" will contain list of orders with "status": "success"
 //  400: responseError missing or incorrect params with "status": "fail"
 //  500: responseError the message will state what the internal server error was with "status": "error"
-func (controller *TradeController) HandlePostTrade(c echo.Context) error {
+func (controller *PlanController) HandlePostPlan(c echo.Context) error {
 	//defer c.Request().Body.Close()
 	token := c.Get("user").(*jwt.Token)
 	claims := token.Claims.(jwt.MapClaims)
 	userID := claims["jti"].(string)
 
 	// read strategy from post body
-	strategy := new(StrategyRequest)
+	strategy := new(PlanRequest)
 	err := json.NewDecoder(c.Request().Body).Decode(&strategy)
 	if err != nil {
 		return fail(c, err.Error())
