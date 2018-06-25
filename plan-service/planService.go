@@ -11,6 +11,7 @@ import (
 	"github.com/asciiu/gomo/common/constants/key"
 	"github.com/asciiu/gomo/common/constants/plan"
 	"github.com/asciiu/gomo/common/constants/response"
+	evt "github.com/asciiu/gomo/common/proto/events"
 	keys "github.com/asciiu/gomo/key-service/proto/key"
 	planRepo "github.com/asciiu/gomo/plan-service/db/sql"
 	protoPlan "github.com/asciiu/gomo/plan-service/proto/plan"
@@ -32,34 +33,35 @@ type PlanService struct {
 
 // private: This is where the order events are published to the rest of the system
 // this function should only be callable from within the PlanService
-func (service *PlanService) publishOrder(ctx context.Context, order *protoPlan.Plan) error {
+func (service *PlanService) publishPlan(ctx context.Context, plan *protoPlan.Plan) error {
 
-	// currencies := strings.Split(order.MarketName, "-")
-	// currency := currencies[0]
+	currencies := strings.Split(plan.MarketName, "-")
+	currency := currencies[0]
 
 	// // convert order to order event
-	// orderEvent := evt.OrderEvent{
-	// 	Exchange:   order.Exchange,
-	// 	PlanID:     order.PlanID,
-	// 	UserID:     order.UserID,
-	// 	Key:        order.Key,
-	// 	Secret:     order.Secret,
-	// 	KeyID:      order.KeyID,
-	// 	MarketName: order.MarketName,
-	// 	Currency:   currency,
-	// 	Quantity:   order.BaseQuantity,
-	// 	Price:      order.Price,
-	// 	Side:       order.Side,
-	// 	PlanType:   order.PlanType,
-	// 	Conditions: order.Conditions,
-	// 	Status:     order.Status,
-	// }
+	orderEvent := evt.OrderEvent{
+		Exchange: plan.Exchange,
+		//PlanID:   plan.PlanID,
+		UserID: plan.UserID,
+		// 	Key:        order.Key,
+		// 	Secret:     order.Secret,
+		KeyID:      plan.KeyID,
+		MarketName: plan.MarketName,
+		Currency:   currency,
+		// 	Quantity:   order.BaseQuantity,
+		//Price: plan.Price,
+		//Side:  order.Side,
+		//  NextOrderID: ...
+		// 	PlanType:   order.PlanType,
+		// 	Conditions: order.Conditions,
+		// 	Status:     order.Status,
+	}
 
 	// //if err := publisher.Publish(context.Background(), &orderEvent); err != nil {
 	// if err := service.NewPlan.Publish(context.Background(), &orderEvent); err != nil {
 	// 	return fmt.Errorf("publish error: %s -- orderEvent: %+v", err, &orderEvent)
 	// }
-	// log.Printf("publish order event -- %+v\n", &orderEvent)
+	log.Printf("publish order event -- %+v\n", &orderEvent)
 	return nil
 }
 
@@ -164,6 +166,7 @@ func (service *PlanService) AddPlan(ctx context.Context, req *protoPlan.PlanRequ
 	}
 
 	// validate key
+	// TODO we need to get the secret with this key
 	ky, err := service.fetchKey(req.KeyID, req.UserID)
 	if err != nil {
 		res.Status = response.Fail
@@ -182,63 +185,19 @@ func (service *PlanService) AddPlan(ctx context.Context, req *protoPlan.PlanRequ
 		return nil
 	}
 
-	if pln.Status == plan.Inactive {
-		res.Status = response.Success
-		res.Data = &protoPlan.PlanData{
-			Plan: pln,
+	if pln.Status == plan.Active {
+		if err := service.publishPlan(ctx, pln); err != nil {
+			// TODO return a warning here
+			res.Status = response.Error
+			res.Message = "could not publish first order: " + err.Error()
+			return nil
 		}
-		return nil
 	}
 
-	log.Println(ky.Key)
-	log.Println(ky.Secret)
-	//	// we need to get the key for this order so we can publish it
-	//	// to the engines
-	//	keyReq := keys.GetUserKeyRequest{
-	//		UserID: o.UserID,
-	//		KeyID:  o.KeyID,
-	//	}
-	//	keyResponse, _ := service.KeyClient.GetUserKey(ctx, &keyReq)
-	//	if keyResponse.Status != response.Success {
-	//		return fmt.Errorf("key is invalid for order -- %s, %#v", keyResponse.Message, order)
-	//	}
-
-	//	o.Key = keyResponse.Data.Key.Key
-	//	o.Secret = keyResponse.Data.Key.Secret
-
-	//	if err := service.publishPlan(ctx, o); err != nil {
-	//		res.Status = response.Error
-	//		res.Message = "could not publish order: " + err.Error()
-	//		return nil
-	//	}
-
-	//	requestPlans = requestPlans[1:]
-	//	parentPlanID = o.PlanID
-	//}
-
-	// loop through and insert the rest of the chain
-	//for i := 0; i < len(requestPlans); i++ {
-	//	order = requestPlans[i]
-
-	//	// assign the parent order id for following plans
-	//	order.ParentPlanID = parentPlanID
-
-	//	o, error := orderRepo.InsertPlan(service.DB, order, status.Pending)
-
-	//	if error != nil {
-	//		res.Status = response.Error
-	//		res.Message = "could not insert order: " + error.Error()
-	//		return nil
-	//	}
-
-	//	ordrs = append(ordrs, o)
-	//	parentPlanID = o.PlanID
-	//}
-
-	//res.Status = response.Success
-	//res.Data = &plans.UserPlansData{
-	//	Plans: ordrs,
-	//}
+	res.Status = response.Success
+	res.Data = &protoPlan.PlanData{
+		Plan: pln,
+	}
 	return nil
 }
 
