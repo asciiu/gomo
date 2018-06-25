@@ -8,6 +8,7 @@ import (
 	"github.com/asciiu/gomo/common/constants/status"
 	protoPlan "github.com/asciiu/gomo/plan-service/proto/plan"
 	"github.com/google/uuid"
+	"github.com/lib/pq"
 )
 
 // DeletePlan is a hard delete
@@ -285,7 +286,7 @@ func InsertPlan(db *sql.DB, req *protoPlan.PlanRequest) (*protoPlan.Plan, error)
 		req.MarketName,
 		req.BaseBalance,
 		req.CurrencyBalance,
-		orderIDs,
+		pq.Array(orderIDs),
 		planStatus)
 
 	if err != nil {
