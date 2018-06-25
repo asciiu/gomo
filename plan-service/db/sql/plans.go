@@ -261,6 +261,37 @@ func InsertPlan(db *sql.DB, req *protoPlan.PlanRequest) (*protoPlan.Plan, error)
 		planStatus = plan.Inactive
 	}
 
+	// generate order ids
+	for range req.Orders {
+		orderIDs = append(orderIDs, uuid.New())
+	}
+
+	sqlStatement := `insert into plans (id, 
+		user_id, 
+		user_key_id, 
+		exchange_name, 
+		market_name, 
+		base_balance, 
+		currency_balance, 
+		plan_order_ids,
+		status) 
+		values ($1, $2, $3, $4, $5, $6, $7, $8, $9)`
+
+	_, err := db.Exec(sqlStatement,
+		planID,
+		req.UserID,
+		req.KeyID,
+		req.Exchange,
+		req.MarketName,
+		req.BaseBalance,
+		req.CurrencyBalance,
+		orderIDs,
+		planStatus)
+
+	if err != nil {
+		return nil, err
+	}
+
 	// loop through and insert orders
 	for i, or := range req.Orders {
 		orderStatus := status.Pending
@@ -273,7 +304,7 @@ func InsertPlan(db *sql.DB, req *protoPlan.PlanRequest) (*protoPlan.Plan, error)
 			return nil, err
 		}
 
-		orderID := uuid.New()
+		orderID := orderIDs[i]
 		sqlInsertOrder := `insert into plan_orders (
 			id, 
 			plan_id, 
@@ -297,7 +328,6 @@ func InsertPlan(db *sql.DB, req *protoPlan.PlanRequest) (*protoPlan.Plan, error)
 		if err != nil {
 			return nil, err
 		}
-		orderIDs = append(orderIDs, orderID)
 		order := protoPlan.Order{
 			OrderID:         orderID.String(),
 			OrderType:       or.OrderType,
@@ -309,31 +339,6 @@ func InsertPlan(db *sql.DB, req *protoPlan.PlanRequest) (*protoPlan.Plan, error)
 			Conditions:      or.Conditions,
 		}
 		orders = append(orders, &order)
-	}
-
-	sqlStatement := `insert into plans (id, 
-		user_id, 
-		user_key_id, 
-		exchange_name, 
-		market_name, 
-		base_balance, 
-		currency_balance, 
-		plan_order_ids,
-		status) 
-		values ($1, $2, $3, $4, $5, $6, $7, $8, $9)`
-	_, err := db.Exec(sqlStatement,
-		planID,
-		req.UserID,
-		req.KeyID,
-		req.Exchange,
-		req.MarketName,
-		req.BaseBalance,
-		req.CurrencyBalance,
-		orderIDs,
-		planStatus)
-
-	if err != nil {
-		return nil, err
 	}
 
 	plan := protoPlan.Plan{
