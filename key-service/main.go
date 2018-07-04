@@ -5,8 +5,8 @@ import (
 	"log"
 	"os"
 
+	msg "github.com/asciiu/gomo/common/constants/messages"
 	"github.com/asciiu/gomo/common/db"
-	msg "github.com/asciiu/gomo/common/messages"
 	kp "github.com/asciiu/gomo/key-service/proto/key"
 	micro "github.com/micro/go-micro"
 	k8s "github.com/micro/kubernetes/go/micro"

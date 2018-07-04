@@ -7,7 +7,7 @@ import (
 	"log"
 	"strings"
 
-	"github.com/asciiu/gomo/common/exchanges"
+	"github.com/asciiu/gomo/common/constants/exchange"
 
 	repo "github.com/asciiu/gomo/key-service/db/sql"
 	kp "github.com/asciiu/gomo/key-service/proto/key"
@@ -21,7 +21,7 @@ type KeyService struct {
 
 // IMPORTANT! When adding support for new exchanges we must add there names here!
 // TODO: read these from a config or from the DB
-var supported = [...]string{exchanges.Binance}
+var supported = [...]string{exchange.Binance}
 
 func stringInSupported(a string) bool {
 	for _, b := range supported {
@@ -92,6 +92,7 @@ func (service *KeyService) GetUserKey(ctx context.Context, req *kp.GetUserKeyReq
 				UserID:      apiKey.UserID,
 				Exchange:    apiKey.Exchange,
 				Key:         apiKey.Key,
+				Secret:      apiKey.Secret,
 				Description: apiKey.Description,
 				Status:      apiKey.Status,
 			},
