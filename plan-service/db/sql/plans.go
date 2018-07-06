@@ -79,7 +79,7 @@ func FindActivePlans(db *sql.DB) ([]*protoPlan.Plan, error) {
 	rows, err := db.Query(`SELECT p.id,
 		p.user_id,
 		p.user_key_id,
-		k.key,
+		k.api_key,
 		k.secret,
 		p.exchange_name,
 		p.market_name,
@@ -110,11 +110,12 @@ func FindActivePlans(db *sql.DB) ([]*protoPlan.Plan, error) {
 	for rows.Next() {
 		var plan protoPlan.Plan
 		var order protoPlan.Order
-		var planOrderIds []string
+		var planOrderIds pq.StringArray
 
 		var price sql.NullFloat64
 		var basePercent sql.NullFloat64
 		var currencyPercent sql.NullFloat64
+		var nextOrderID sql.NullString
 		err := rows.Scan(
 			&plan.PlanID,
 			&plan.UserID,
@@ -134,6 +135,7 @@ func FindActivePlans(db *sql.DB) ([]*protoPlan.Plan, error) {
 			&order.OrderType,
 			&order.Conditions,
 			&price,
+			&nextOrderID,
 			&order.Status)
 
 		if err != nil {
@@ -148,6 +150,9 @@ func FindActivePlans(db *sql.DB) ([]*protoPlan.Plan, error) {
 		}
 		if price.Valid {
 			order.Price = price.Float64
+		}
+		if nextOrderID.Valid {
+			order.NextOrderID = nextOrderID.String
 		}
 		if err := json.Unmarshal([]byte(order.Conditions), &order.Conditions); err != nil {
 			return nil, err
@@ -308,6 +313,11 @@ func InsertPlan(db *sql.DB, req *protoPlan.PlanRequest) (*protoPlan.Plan, error)
 		}
 
 		orderID := orderIDs[i]
+		var nextOrderID uuid.UUID
+		var nextIndex = i + 1
+		if nextIndex < len(orderIDs) {
+			nextOrderID = orderIDs[nextIndex]
+		}
 		sqlInsertOrder := `insert into plan_orders (
 			id, 
 			plan_id, 
@@ -317,8 +327,9 @@ func InsertPlan(db *sql.DB, req *protoPlan.PlanRequest) (*protoPlan.Plan, error)
 			order_type,
 			conditions,
 			price,
+			next_plan_order_id,
 			status) 
-			values ($1, $2, $3, $4, $5, $6, $7, $8)`
+			values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)`
 		_, err = db.Exec(sqlInsertOrder,
 			orderID,
 			planID,
@@ -328,6 +339,7 @@ func InsertPlan(db *sql.DB, req *protoPlan.PlanRequest) (*protoPlan.Plan, error)
 			or.OrderType,
 			jsonCond,
 			or.Price,
+			nextOrderID,
 			orderStatus)
 
 		if err != nil {

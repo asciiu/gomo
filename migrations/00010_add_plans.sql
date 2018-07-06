@@ -23,8 +23,8 @@ CREATE TABLE plan_orders (
  order_type text NOT NULL,           -- limit, market, paper
  conditions jsonb NOT NULL,
  price decimal DEFAULT 0,
+ next_plan_order_id UUID,            -- this would be the following order after this one
  status text NOT NULL,               -- pending, active, failed, etc
- next_plan_order_id UUID,
  created_on TIMESTAMP DEFAULT now(),
  updated_on TIMESTAMP DEFAULT current_timestamp
 );

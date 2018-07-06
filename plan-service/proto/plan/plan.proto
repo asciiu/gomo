@@ -75,6 +75,7 @@ message Order {
   string status = 7;
   string conditions = 8;
   string condition = 9; 
+  string nextOrderID = 10;
 }
 
 
