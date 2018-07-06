@@ -20,6 +20,7 @@ CREATE TABLE plan_orders (
  base_percent decimal DEFAULT 0,
  currency_percent decimal DEFAULT 0,
  side text NOT NULL,
+ order_type text NOT NULL,           -- limit, market, paper
  conditions jsonb NOT NULL,
  price decimal DEFAULT 0,
  status text NOT NULL,               -- pending, active, failed, etc
