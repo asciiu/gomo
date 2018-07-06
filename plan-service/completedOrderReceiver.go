@@ -3,9 +3,11 @@ package main
 import (
 	"context"
 	"database/sql"
+	"fmt"
 	"log"
 
 	evt "github.com/asciiu/gomo/common/proto/events"
+	notifications "github.com/asciiu/gomo/notification-service/proto"
 	micro "github.com/micro/go-micro"
 )
 
@@ -20,12 +22,12 @@ type CompletedOrderReceiver struct {
 func (receiver *CompletedOrderReceiver) ProcessEvent(ctx context.Context, completedOrderEvent *evt.CompletedOrderEvent) error {
 
 	log.Printf("order completed -- %+v\n", completedOrderEvent)
-	return nil
 
-	// notification := notifications.Notification{
-	// 	UserID:      orderEvent.UserID,
-	// 	Description: fmt.Sprintf("orderId: %s status: %s", orderEvent.OrderID, orderEvent.Status),
-	// }
+	notification := notifications.Notification{
+		UserID:      completedOrderEvent.UserID,
+		Description: fmt.Sprintf("orderId: %s status: %s", completedOrderEvent.OrderID, completedOrderEvent.Status),
+	}
+	return nil
 
 	// // publish notification about order fill
 	// if err := receiver.NotifyPub.Publish(context.Background(), &notification); err != nil {
