@@ -4,7 +4,7 @@ const (
 	// order types here
 	LimitOrder       string = "limit"
 	MarketOrder      string = "market"
-	VirtualOrder     string = "virtual"
+	VirtualOrder     string = "paper"
 	UnknownOrderType string = "???"
 )
 

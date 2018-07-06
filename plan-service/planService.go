@@ -41,13 +41,8 @@ func (service *PlanService) publishPlan(ctx context.Context, plan *protoPlan.Pla
 	// Buy-market: plan.baseBalance / trigger.Price (can only determine this at trigger time)
 	// Sell-limit: currencyBalance
 	// Sell-market: currencyBalance
-	nextOrders := make([]string, 0)
-	for i, order := range plan.Orders {
-		if i == 0 {
-			continue
-		}
-		nextOrders = append(nextOrders, order.OrderID)
-	}
+
+	// the first plan order will always be the active one
 	planOrder := plan.Orders[0]
 
 	// convert order to order event
@@ -68,7 +63,7 @@ func (service *PlanService) publishPlan(ctx context.Context, plan *protoPlan.Pla
 		OrderType:       planOrder.OrderType,
 		Price:           planOrder.Price,
 		Conditions:      planOrder.Conditions,
-		NextOrders:      nextOrders,
+		NextOrderID:     planOrder.NextOrderID,
 	}
 
 	// //if err := publisher.Publish(context.Background(), &orderEvent); err != nil {
