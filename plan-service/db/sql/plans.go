@@ -3,7 +3,9 @@ package sql
 import (
 	"database/sql"
 	"encoding/json"
+	"log"
 
+	"github.com/asciiu/gomo/common/constants/key"
 	"github.com/asciiu/gomo/common/constants/plan"
 	"github.com/asciiu/gomo/common/constants/status"
 	protoPlan "github.com/asciiu/gomo/plan-service/proto/plan"
@@ -70,98 +72,98 @@ func DeletePlan(db *sql.DB, planID string) error {
 // }
 
 // Find all active orders in the DB. This wil load the keys for each order.
-// func FindActiveOrders(db *sql.DB) ([]*orderProto.Order, error) {
-// 	results := make([]*orderProto.Order, 0)
+// Returns active plans that have a verified key only.
+func FindActivePlans(db *sql.DB) ([]*protoPlan.Plan, error) {
+	results := make([]*protoPlan.Plan, 0)
 
-// 	// chain must be active
-// 	rows, err := db.Query(`SELECT o.id,
-// 		o.user_id,
-// 		o.user_key_id,
-// 		o.exchange_name,
-// 		o.exchange_order_id,
-// 		o.exchange_market_name,
-// 		o.market_name,
-// 		o.side,
-// 		o.type,
-// 		o.price,
-// 		o.base_quantity,
-// 		o.base_percent,
-// 		o.currency_quantity,
-// 		o.currency_percent,
-// 		o.status,
-// 		o.conditions,
-// 		o.condition,
-// 		o.parent_order_id,
-// 		u.api_key,
-// 		u.secret
-// 		FROM orders o
-// 		JOIN user_keys u on u.id = o.user_key_id
-// 		WHERE o.status = $1 AND u.status = $2 AND o.chain_status = $3`, status.Active, key.Verified, chain.Active)
+	rows, err := db.Query(`SELECT p.id,
+		p.user_id,
+		p.user_key_id,
+		k.key,
+		k.secret,
+		p.exchange_name,
+		p.market_name,
+		p.plan_order_ids,
+		p.base_balance,
+		p.currency_balance,
+		p.status,
+		po.id,
+		po.base_percent,
+		po.currency_percent,
+		po.side,
+		po.order_type,
+		po.conditions,
+		po.price, 
+		po.status
+		FROM plans p 
+		JOIN plan_orders po on p.id = po.plan_id
+		JOIN user_keys k on p.user_key_id = k.id
+		WHERE p.status = $1 AND po.status = $2 AND k.status = $3`, plan.Active, status.Active, key.Verified)
 
-// 	if err != nil {
-// 		log.Fatal(err)
-// 		return nil, err
-// 	}
+	if err != nil {
+		log.Fatal(err)
+		return nil, err
+	}
 
-// 	defer rows.Close()
+	defer rows.Close()
 
-// 	for rows.Next() {
-// 		var o orderProto.Order
-// 		var condition sql.NullString
-// 		var exchangeOrderID sql.NullString
-// 		var exchangeMarketName sql.NullString
-// 		var price sql.NullFloat64
-// 		err := rows.Scan(&o.OrderID,
-// 			&o.UserID,
-// 			&o.KeyID,
-// 			&o.Exchange,
-// 			&exchangeOrderID,
-// 			&exchangeMarketName,
-// 			&o.MarketName,
-// 			&o.Side,
-// 			&o.OrderType,
-// 			&price,
-// 			&o.BaseQuantity,
-// 			&o.BasePercent,
-// 			&o.CurrencyQuantity,
-// 			&o.CurrencyPercent,
-// 			&o.Status,
-// 			&o.Conditions,
-// 			&condition,
-// 			&o.ParentOrderID,
-// 			&o.Key,
-// 			&o.Secret)
+	for rows.Next() {
+		var plan protoPlan.Plan
+		var order protoPlan.Order
+		var planOrderIds []string
 
-// 		if err != nil {
-// 			log.Fatal(err)
-// 			return nil, err
-// 		}
-// 		if condition.Valid {
-// 			o.Condition = condition.String
-// 		}
-// 		if exchangeOrderID.Valid {
-// 			o.ExchangeOrderID = exchangeOrderID.String
-// 		}
-// 		if exchangeMarketName.Valid {
-// 			o.ExchangeMarketName = exchangeMarketName.String
-// 		}
-// 		if price.Valid {
-// 			o.Price = price.Float64
-// 		}
+		var price sql.NullFloat64
+		var basePercent sql.NullFloat64
+		var currencyPercent sql.NullFloat64
+		err := rows.Scan(
+			&plan.PlanID,
+			&plan.UserID,
+			&plan.KeyID,
+			&plan.Key,
+			&plan.Secret,
+			&plan.Exchange,
+			&plan.MarketName,
+			&planOrderIds,
+			&plan.BaseBalance,
+			&plan.CurrencyBalance,
+			&plan.Status,
+			&order.OrderID,
+			&basePercent,
+			&currencyPercent,
+			&order.Side,
+			&order.OrderType,
+			&order.Conditions,
+			&price,
+			&order.Status)
 
-// 		if err := json.Unmarshal([]byte(o.Conditions), &o.Conditions); err != nil {
-// 			return nil, err
-// 		}
-// 		results = append(results, &o)
-// 	}
-// 	err = rows.Err()
-// 	if err != nil {
-// 		log.Fatal(err)
-// 		return nil, err
-// 	}
+		if err != nil {
+			log.Fatal(err)
+			return nil, err
+		}
+		if basePercent.Valid {
+			order.BasePercent = basePercent.Float64
+		}
+		if currencyPercent.Valid {
+			order.CurrencyPercent = currencyPercent.Float64
+		}
+		if price.Valid {
+			order.Price = price.Float64
+		}
+		if err := json.Unmarshal([]byte(order.Conditions), &order.Conditions); err != nil {
+			return nil, err
+		}
+		plan.Orders = append(plan.Orders, &order)
+		results = append(results, &plan)
+	}
 
-// 	return results, nil
-// }
+	err = rows.Err()
+	if err != nil {
+		log.Fatal(err)
+		return nil, err
+	}
+
+	return results, nil
+}
 
 // func FindOrdersByUserID(db *sql.DB, req *orderProto.GetUserOrdersRequest) ([]*orderProto.Order, error) {
 // 	results := make([]*orderProto.Order, 0)
@@ -312,6 +314,7 @@ func InsertPlan(db *sql.DB, req *protoPlan.PlanRequest) (*protoPlan.Plan, error)
 			base_percent, 
 			currency_percent, 
 			side,
+			order_type,
 			conditions,
 			price,
 			status) 
@@ -322,6 +325,7 @@ func InsertPlan(db *sql.DB, req *protoPlan.PlanRequest) (*protoPlan.Plan, error)
 			or.BasePercent,
 			or.CurrencyPercent,
 			or.Side,
+			or.OrderType,
 			jsonCond,
 			or.Price,
 			orderStatus)

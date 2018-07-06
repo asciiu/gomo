@@ -50,7 +50,7 @@ func main() {
 		Service: &planService,
 	}
 
-	micro.RegisterSubscriber(msg.TopicOrderFilled, srv.Server(), &filledReceiver)
+	micro.RegisterSubscriber(msg.TopicCompletedOrder, srv.Server(), &filledReceiver)
 	micro.RegisterSubscriber(msg.TopicEngineStart, srv.Server(), &engineReceiver)
 
 	// Register our service with the gRPC server, this will tie our

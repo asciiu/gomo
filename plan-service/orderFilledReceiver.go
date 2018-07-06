@@ -17,7 +17,7 @@ type OrderFilledReceiver struct {
 }
 
 // ProcessEvent handles OrderEvents. These events are published by when an order was filled.
-func (receiver *OrderFilledReceiver) ProcessEvent(ctx context.Context, orderEvent *evt.OrderEvent) error {
+func (receiver *OrderFilledReceiver) ProcessEvent(ctx context.Context, orderEvent *evt.CompletedOrderEvent) error {
 
 	log.Printf("order filled -- %+v\n", orderEvent)
 	return nil
