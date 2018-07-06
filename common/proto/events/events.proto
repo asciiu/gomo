@@ -60,7 +60,7 @@ message ActiveOrderEvent {
   string orderType = 14;
   double price = 15;
   string conditions = 16;
-  repeated string nextOrders = 17;
+  string nextOrderID = 17;
 }
 
 message TriggeredOrderEvent {
@@ -81,7 +81,7 @@ message TriggeredOrderEvent {
   double price = 15;
   double triggeredPrice = 16;
   string triggeredCondition = 17;
-  repeated string nextOrders = 18;
+  string nextOrderID = 18;
 }
 
 message CompletedOrderEvent {
@@ -94,7 +94,7 @@ message CompletedOrderEvent {
   string exchangeOrderID = 7;
   string exchangeMarketName = 8;
   string status = 9;
-  repeated string nextOrders = 10;
+  string nextOrderID = 10;
 }
 
 message EngineStartEvent {
