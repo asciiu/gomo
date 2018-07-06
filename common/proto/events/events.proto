@@ -49,16 +49,18 @@ message ActivateOrderEvent {
   string planID = 3;
   string userID = 4;
   double baseBalance = 5;
-  double currencyBalance = 6;
-  string keyID = 7;
-  string key = 8;
-  string secret = 9;
-  string marketName = 10;
-  string side = 11;
-  string orderType = 12;
-  double price = 13;
-  string conditions = 14;
-  repeated string nextOrders = 15;
+  double basePercent = 6;
+  double currencyBalance = 7;
+  double currencyPercent = 8;
+  string keyID = 9;
+  string key = 10;
+  string secret = 11;
+  string marketName = 12;
+  string side = 13;
+  string orderType = 14;
+  double price = 15;
+  string conditions = 16;
+  repeated string nextOrders = 17;
 }
 
 message TriggeredOrderEvent {

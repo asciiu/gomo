@@ -42,7 +42,10 @@ func (service *PlanService) publishPlan(ctx context.Context, plan *protoPlan.Pla
 	// Sell-limit: currencyBalance
 	// Sell-market: currencyBalance
 	nextOrders := make([]string, 0)
-	for _, order := range plan.Orders {
+	for i, order := range plan.Orders {
+		if i == 0 {
+			continue
+		}
 		nextOrders = append(nextOrders, order.OrderID)
 	}
 	planOrder := plan.Orders[0]
@@ -54,7 +57,9 @@ func (service *PlanService) publishPlan(ctx context.Context, plan *protoPlan.Pla
 		PlanID:          plan.PlanID,
 		UserID:          plan.UserID,
 		BaseBalance:     plan.BaseBalance,
+		BasePercent:     planOrder.BasePercent,
 		CurrencyBalance: plan.CurrencyBalance,
+		CurrencyPercent: planOrder.CurrencyPercent,
 		KeyID:           plan.KeyID,
 		Key:             plan.Key,
 		Secret:          plan.Secret,
