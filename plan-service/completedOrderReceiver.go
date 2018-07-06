@@ -27,12 +27,13 @@ func (receiver *CompletedOrderReceiver) ProcessEvent(ctx context.Context, comple
 		UserID:      completedOrderEvent.UserID,
 		Description: fmt.Sprintf("orderId: %s status: %s", completedOrderEvent.OrderID, completedOrderEvent.Status),
 	}
-	return nil
 
-	// // publish notification about order fill
-	// if err := receiver.NotifyPub.Publish(context.Background(), &notification); err != nil {
-	// 	log.Println("could not publish notification: ", err)
-	// }
+	// notifiy the user of completed order
+	if err := receiver.NotifyPub.Publish(context.Background(), &notification); err != nil {
+		log.Println("could not publish notification: ", err)
+	}
+
+	return nil
 
 	// parentOrder, error := orderRepo.UpdateOrderStatus(receiver.DB, orderEvent)
 	// switch {

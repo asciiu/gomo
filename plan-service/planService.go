@@ -11,6 +11,7 @@ import (
 	"github.com/asciiu/gomo/common/constants/key"
 	"github.com/asciiu/gomo/common/constants/plan"
 	"github.com/asciiu/gomo/common/constants/response"
+	"github.com/asciiu/gomo/common/constants/side"
 	evt "github.com/asciiu/gomo/common/proto/events"
 	keys "github.com/asciiu/gomo/key-service/proto/key"
 	planRepo "github.com/asciiu/gomo/plan-service/db/sql"
@@ -95,23 +96,26 @@ func (service *PlanService) validateBalance(ctx context.Context, currency string
 
 // LoadBuyPlan should not be invoked by the client. This function was designed to load an
 // order after an order was filled.
-func (service *PlanService) LoadPlan(ctx context.Context, order *protoPlan.Plan) error {
+func (service *PlanService) LoadPlanOrder(ctx context.Context, plan *protoPlan.Plan) error {
 
-	// currencies := strings.Split(order.MarketName, "-")
-	// // default market currency
-	// currency := currencies[0]
-	// if order.Side == side.Buy {
-	// 	// buy uses base currency
-	// 	currency = currencies[1]
-	// }
+	planOrder := plan.Orders[0]
+	currencies := strings.Split(plan.MarketName, "-")
+	// default market currency
+	currency := currencies[0]
+	balance := plan.CurrencyBalance
+	if planOrder.Side == side.Buy {
+		// buy uses base currency
+		currency = currencies[1]
+		balance = plan.BaseBalance
+	}
 
-	// if err := service.validateBalance(ctx, currency, order.UserID, order.KeyID); err != nil {
-	// 	return err
-	// }
+	if err := service.validateBalance(ctx, currency, balance, plan.UserID, plan.KeyID); err != nil {
+		return err
+	}
 
-	// if err := service.publishPlan(ctx, order); err != nil {
-	// 	return err
-	// }
+	if err := service.publishPlan(ctx, plan); err != nil {
+		return err
+	}
 
 	return nil
 }

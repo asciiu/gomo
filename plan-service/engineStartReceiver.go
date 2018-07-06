@@ -28,16 +28,14 @@ func (receiver *EngineStartReceiver) ProcessEvent(ctx context.Context, engine *e
 	// because engine might not have fully started yet
 	time.Sleep(2 * time.Second)
 
-	log.Println(plans)
-
-	// // TODO we need to explore a different approach here that is more efficient.
-	// for _, order := range orders {
-	// 	if error = receiver.Service.LoadOrder(ctx, order); error != nil {
-	// 		log.Println("load order error -- ", error)
-	// 	} else {
-	// 		log.Printf("loaded order -- %+v\n", order)
-	// 	}
-	// }
+	// TODO we need to explore a different approach here that is more efficient.
+	for _, plan := range plans {
+		if error = receiver.Service.LoadPlanOrder(ctx, plan); error != nil {
+			log.Println("load plan error -- ", error)
+		} else {
+			log.Printf("loaded plan -- %+v\n", plan)
+		}
+	}
 
 	return nil
 }

@@ -84,7 +84,7 @@ func (processor *Processor) ProcessEvent(ctx context.Context, payload *evt.Trade
 							Price:              order.EventOrigin.Price,
 							TriggeredPrice:     event.Price,
 							TriggeredCondition: desc,
-							NextOrders:         order.EventOrigin.NextOrders,
+							NextOrderID:        order.EventOrigin.NextOrderID,
 						}
 
 						// Never log the secrets contained in the event

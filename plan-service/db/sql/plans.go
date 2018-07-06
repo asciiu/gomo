@@ -94,6 +94,7 @@ func FindActivePlans(db *sql.DB) ([]*protoPlan.Plan, error) {
 		po.order_type,
 		po.conditions,
 		po.price, 
+		po.next_plan_order_id,
 		po.status
 		FROM plans p 
 		JOIN plan_orders po on p.id = po.plan_id
