@@ -43,10 +43,6 @@ message OrderEvent {
   string status = 17;
 }
 
-message OrderQueue {
-  repeated string orderID = 1;
-}
-
 message ActivateOrderEvent {
   string exchange = 1;
   string orderID = 2;
@@ -62,7 +58,7 @@ message ActivateOrderEvent {
   string orderType = 12;
   double price = 13;
   string conditions = 14;
-  OrderQueue nextOrders = 15; 
+  repeated string nextOrders = 15;
 }
 
 message TriggeredOrderEvent {
@@ -81,7 +77,7 @@ message TriggeredOrderEvent {
   double price = 13;
   double triggeredPrice = 14;
   string triggeredCondition = 15;
-  OrderQueue nextOrders = 16; 
+  repeated string nextOrders = 16;
 }
 
 message FilledOrderEvent {
@@ -93,7 +89,7 @@ message FilledOrderEvent {
   string triggeredCondition = 6;
   string exchangeOrderID = 7;
   string exchangeMarketName = 8;
-  OrderQueue nextOrders = 9; 
+  repeated string nextOrders = 9;
 }
 
 message EngineStartEvent {

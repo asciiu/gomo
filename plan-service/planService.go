@@ -26,44 +26,51 @@ type PlanService struct {
 	DB        *sql.DB
 	Client    balances.BalanceServiceClient
 	KeyClient keys.KeyServiceClient
-	NewPlan   micro.Publisher
+	OrderPub  micro.Publisher
 	//NewBuy    micro.Publisher
 	//NewSell   micro.Publisher
 }
 
 // private: This is where the order events are published to the rest of the system
-// this function should only be callable from within the PlanService
+// this function should only be callable from within the PlanService. When a plan is
+// published the first order of the plan will be emmitted as an ActiveOrderEvent to the
+// system.
 func (service *PlanService) publishPlan(ctx context.Context, plan *protoPlan.Plan) error {
-
-	currencies := strings.Split(plan.MarketName, "-")
-	currency := currencies[0]
-
+	// TODO compute quantity as
+	// Buy-limit: plan.baseBalance / planOrder.Price
+	// Buy-market: plan.baseBalance / trigger.Price (can only determine this at trigger time)
+	// Sell-limit: currencyBalance
+	// Sell-market: currencyBalance
+	nextOrders := make([]string, 0)
+	for _, order := range plan.Orders {
+		nextOrders = append(nextOrders, order.OrderID)
+	}
 	planOrder := plan.Orders[0]
 
-	// // convert order to order event
-	orderEvent := evt.OrderEvent{
-		Exchange: plan.Exchange,
-		//PlanID:     plan.PlanID,
-		UserID:     plan.UserID,
-		Key:        plan.Key,
-		Secret:     plan.Secret,
-		KeyID:      plan.KeyID,
-		MarketName: plan.MarketName,
-		Currency:   currency,
-		// 	Quantity:   order.BaseQuantity,
-		Price: planOrder.Price,
-		Side:  planOrder.Side,
-		//  NextOrderID: ...
-		OrderType:  planOrder.OrderType,
-		Conditions: planOrder.Conditions,
-		Status:     planOrder.Status,
+	// convert order to order event
+	activeOrder := evt.ActivateOrderEvent{
+		Exchange:        plan.Exchange,
+		OrderID:         planOrder.OrderID,
+		PlanID:          plan.PlanID,
+		UserID:          plan.UserID,
+		BaseBalance:     plan.BaseBalance,
+		CurrencyBalance: plan.CurrencyBalance,
+		KeyID:           plan.KeyID,
+		Key:             plan.Key,
+		Secret:          plan.Secret,
+		MarketName:      plan.MarketName,
+		Side:            planOrder.Side,
+		OrderType:       planOrder.OrderType,
+		Price:           planOrder.Price,
+		Conditions:      planOrder.Conditions,
+		NextOrders:      nextOrders,
 	}
 
 	// //if err := publisher.Publish(context.Background(), &orderEvent); err != nil {
-	// if err := service.NewPlan.Publish(context.Background(), &orderEvent); err != nil {
-	// 	return fmt.Errorf("publish error: %s -- orderEvent: %+v", err, &orderEvent)
-	// }
-	log.Printf("publish order event -- %+v\n", &orderEvent)
+	if err := service.OrderPub.Publish(context.Background(), &activeOrder); err != nil {
+		return fmt.Errorf("publish error: %s -- ActiveOrderEvent %+v", err, &activeOrder)
+	}
+	log.Printf("publish active order -- %+v\n", &activeOrder)
 	return nil
 }
 
