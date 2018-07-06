@@ -16,10 +16,10 @@ const TopicAggTrade = "ExchangeAggTrade"
 const TopicNewOrder = "NewOrder"
 
 // TopicOrderFilled when order has filled
-const TopicOrderFilled = "OrderFilled"
+const TopicCompletedOrder = "OrderCompleted"
 
 // used to notifiy exchange services to execute an order
-const TopicFillOrder = "FillOrder"
+const TopicTriggeredOrder = "TriggeredOrder"
 
 // TopicNotification when a notification is generated
 const TopicNotification = "Notification"

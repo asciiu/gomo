@@ -51,7 +51,7 @@ func (service *PlanService) publishPlan(ctx context.Context, plan *protoPlan.Pla
 	planOrder := plan.Orders[0]
 
 	// convert order to order event
-	activeOrder := evt.ActivateOrderEvent{
+	activeOrder := evt.ActiveOrderEvent{
 		Exchange:        plan.Exchange,
 		OrderID:         planOrder.OrderID,
 		PlanID:          plan.PlanID,

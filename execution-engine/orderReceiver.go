@@ -14,7 +14,7 @@ import (
 
 // Order has conditions
 type Order struct {
-	EventOrigin *evt.OrderEvent
+	EventOrigin *evt.ActiveOrderEvent
 	Conditions  []ConditionFunc
 }
 
@@ -25,10 +25,10 @@ type OrderReceiver struct {
 	Env    *vm.Env
 }
 
-// ProcessEvent handles buy OrderEvents. These events are published by a micro publisher.
-func (receiver *OrderReceiver) ProcessEvent(ctx context.Context, buy *evt.OrderEvent) error {
+// ProcessEvent handles ActiveOrderEvents. These events are published by the plan service.
+func (receiver *OrderReceiver) ProcessEvent(ctx context.Context, activeOrder *evt.ActiveOrderEvent) error {
 	// convert OrderEvent to Order with conditions here
-	strConditions := strings.Split(buy.Conditions, " or ")
+	strConditions := strings.Split(activeOrder.Conditions, " or ")
 	conditions := make([]ConditionFunc, 0)
 
 	trailingPoint := regexp.MustCompile(`^.*?TrailingStopPoint\((0\.\d{2,}),\s(\d+\.\d+).*?`)
@@ -69,7 +69,7 @@ func (receiver *OrderReceiver) ProcessEvent(ctx context.Context, buy *evt.OrderE
 	}
 
 	order := Order{
-		EventOrigin: buy,
+		EventOrigin: activeOrder,
 		Conditions:  conditions,
 	}
 	receiver.Orders = append(receiver.Orders, &order)

@@ -38,10 +38,10 @@ func main() {
 		Env:    env,
 	}
 	processor := Processor{
-		DB:       gomoDB,
-		Receiver: &orderReceiver,
-		Filled:   micro.NewPublisher(msg.TopicOrderFilled, srv.Client()),
-		Filler:   micro.NewPublisher(msg.TopicFillOrder, srv.Client()),
+		DB:        gomoDB,
+		Receiver:  &orderReceiver,
+		Completed: micro.NewPublisher(msg.TopicCompletedOrder, srv.Client()),
+		Triggered: micro.NewPublisher(msg.TopicTriggeredOrder, srv.Client()),
 	}
 
 	// subscribe to new key topic with a key validator

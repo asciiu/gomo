@@ -43,7 +43,7 @@ message OrderEvent {
   string status = 17;
 }
 
-message ActivateOrderEvent {
+message ActiveOrderEvent {
   string exchange = 1;
   string orderID = 2;
   string planID = 3;
@@ -69,20 +69,22 @@ message TriggeredOrderEvent {
   string planID = 3;
   string userID = 4;
   double baseBalance = 5;
-  double currencyBalance = 6;
-  string keyID = 7;
-  string key = 8;
-  string secret = 9;
-  string marketName = 10;
-  string side = 11;
-  string orderType = 12;
-  double price = 13;
-  double triggeredPrice = 14;
-  string triggeredCondition = 15;
-  repeated string nextOrders = 16;
+  double basePercent = 6;
+  double currencyBalance = 7;
+  double currencyPercent = 8;
+  string keyID = 9;
+  string key = 10;
+  string secret = 11;
+  string marketName = 12;
+  string side = 13;
+  string orderType = 14;
+  double price = 15;
+  double triggeredPrice = 16;
+  string triggeredCondition = 17;
+  repeated string nextOrders = 18;
 }
 
-message FilledOrderEvent {
+message CompletedOrderEvent {
   string orderID = 1;
   string currency = 2;
   string side = 3;
@@ -91,7 +93,8 @@ message FilledOrderEvent {
   string triggeredCondition = 6;
   string exchangeOrderID = 7;
   string exchangeMarketName = 8;
-  repeated string nextOrders = 9;
+  string status = 9;
+  repeated string nextOrders = 10;
 }
 
 message EngineStartEvent {

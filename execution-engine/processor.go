@@ -14,11 +14,11 @@ import (
 
 // Processor will process orders
 type Processor struct {
-	DB       *sql.DB
-	Env      *vm.Env
-	Receiver *OrderReceiver
-	Filled   micro.Publisher
-	Filler   micro.Publisher
+	DB        *sql.DB
+	Env       *vm.Env
+	Receiver  *OrderReceiver
+	Completed micro.Publisher
+	Triggered micro.Publisher
 }
 
 // ProcessEvent will process ExchangeEvents. These events are published from the exchange sockets.
@@ -26,6 +26,7 @@ func (processor *Processor) ProcessEvent(ctx context.Context, payload *evt.Trade
 	//log.Println("buy recv: ", event)
 	orders := processor.Receiver.Orders
 
+	// every order check trade event price with order conditions
 	for i, order := range orders {
 		for _, event := range payload.Events {
 			marketName := order.EventOrigin.MarketName
@@ -44,26 +45,51 @@ func (processor *Processor) ProcessEvent(ctx context.Context, payload *evt.Trade
 					// remove this order from the processor
 					processor.Receiver.Orders = append(orders[:i], orders[i+1:]...)
 
-					event := order.EventOrigin
-					event.Condition = desc
-
 					switch {
 					case order.EventOrigin.OrderType == types.VirtualOrder:
-						event.ExchangeOrderID = types.VirtualOrder
-						event.ExchangeMarketName = types.VirtualOrder
-						event.Status = status.Filled
+						completedEvent := evt.CompletedOrderEvent{
+							OrderID:            order.EventOrigin.OrderID,
+							Side:               order.EventOrigin.Side,
+							TriggeredPrice:     event.Price,
+							TriggeredCondition: desc,
+							ExchangeOrderID:    types.VirtualOrder,
+							ExchangeMarketName: types.VirtualOrder,
+							Status:             status.Filled,
+						}
 
 						// Never log the secrets contained in the event
-						log.Printf("virtual order processed -- orderID: %s, market: %s\n", event.OrderID, event.MarketName)
+						log.Printf("virtual order processed -- orderID: %s, market: %s\n", order.EventOrigin.OrderID, order.EventOrigin.MarketName)
 
-						if err := processor.Filled.Publish(ctx, event); err != nil {
-							log.Println("publish warning: ", err, event)
+						if err := processor.Completed.Publish(ctx, &completedEvent); err != nil {
+							log.Println("publish warning: ", err, completedEvent)
 						}
 					default:
+						// convert this active order event to a triggered order event
+						triggeredEvent := evt.TriggeredOrderEvent{
+							Exchange:           order.EventOrigin.Exchange,
+							OrderID:            order.EventOrigin.OrderID,
+							PlanID:             order.EventOrigin.PlanID,
+							UserID:             order.EventOrigin.UserID,
+							BaseBalance:        order.EventOrigin.BaseBalance,
+							BasePercent:        order.EventOrigin.BasePercent,
+							CurrencyBalance:    order.EventOrigin.CurrencyBalance,
+							CurrencyPercent:    order.EventOrigin.CurrencyPercent,
+							KeyID:              order.EventOrigin.KeyID,
+							Key:                order.EventOrigin.Key,
+							Secret:             order.EventOrigin.Secret,
+							MarketName:         order.EventOrigin.MarketName,
+							Side:               order.EventOrigin.Side,
+							OrderType:          order.EventOrigin.OrderType,
+							Price:              order.EventOrigin.Price,
+							TriggeredPrice:     event.Price,
+							TriggeredCondition: desc,
+							NextOrders:         order.EventOrigin.NextOrders,
+						}
+
 						// Never log the secrets contained in the event
-						log.Printf("order processed -- orderID: %s, market: %s\n", event.OrderID, event.MarketName)
+						log.Printf("triggered order -- orderID: %s, market: %s\n", order.EventOrigin.OrderID, order.EventOrigin.MarketName)
 						// if non simulated trigger buy event - exchange service subscribes to these events
-						if err := processor.Filler.Publish(ctx, event); err != nil {
+						if err := processor.Triggered.Publish(ctx, &triggeredEvent); err != nil {
 							log.Println("publish warning: ", err)
 						}
 					}
