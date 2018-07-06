@@ -48,6 +48,7 @@ func (processor *Processor) ProcessEvent(ctx context.Context, payload *evt.Trade
 					switch {
 					case order.EventOrigin.OrderType == types.VirtualOrder:
 						completedEvent := evt.CompletedOrderEvent{
+							UserID:             order.EventOrigin.UserID,
 							OrderID:            order.EventOrigin.OrderID,
 							Side:               order.EventOrigin.Side,
 							TriggeredPrice:     event.Price,
