@@ -10,16 +10,16 @@ import (
 )
 
 // OrderFilledReceiver handles order filled events
-type OrderFilledReceiver struct {
+type CompletedOrderReceiver struct {
 	DB        *sql.DB
 	Service   *PlanService
 	NotifyPub micro.Publisher
 }
 
 // ProcessEvent handles OrderEvents. These events are published by when an order was filled.
-func (receiver *OrderFilledReceiver) ProcessEvent(ctx context.Context, orderEvent *evt.CompletedOrderEvent) error {
+func (receiver *CompletedOrderReceiver) ProcessEvent(ctx context.Context, completedOrderEvent *evt.CompletedOrderEvent) error {
 
-	log.Printf("order filled -- %+v\n", orderEvent)
+	log.Printf("order completed -- %+v\n", completedOrderEvent)
 	return nil
 
 	// notification := notifications.Notification{
