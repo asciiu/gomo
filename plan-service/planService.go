@@ -38,23 +38,25 @@ func (service *PlanService) publishPlan(ctx context.Context, plan *protoPlan.Pla
 	currencies := strings.Split(plan.MarketName, "-")
 	currency := currencies[0]
 
+	planOrder := plan.Orders[0]
+
 	// // convert order to order event
 	orderEvent := evt.OrderEvent{
 		Exchange: plan.Exchange,
-		//PlanID:   plan.PlanID,
-		UserID: plan.UserID,
-		// 	Key:        order.Key,
-		// 	Secret:     order.Secret,
+		//PlanID:     plan.PlanID,
+		UserID:     plan.UserID,
+		Key:        plan.Key,
+		Secret:     plan.Secret,
 		KeyID:      plan.KeyID,
 		MarketName: plan.MarketName,
 		Currency:   currency,
 		// 	Quantity:   order.BaseQuantity,
-		//Price: plan.Price,
-		//Side:  order.Side,
+		Price: planOrder.Price,
+		Side:  planOrder.Side,
 		//  NextOrderID: ...
-		// 	PlanType:   order.PlanType,
-		// 	Conditions: order.Conditions,
-		// 	Status:     order.Status,
+		OrderType:  planOrder.OrderType,
+		Conditions: planOrder.Conditions,
+		Status:     planOrder.Status,
 	}
 
 	// //if err := publisher.Publish(context.Background(), &orderEvent); err != nil {
@@ -113,12 +115,7 @@ func (service *PlanService) fetchKey(keyID, userID string) (*keys.Key, error) {
 		UserID: userID,
 	}
 
-	// ask key service for key
 	r, _ := service.KeyClient.GetUserKey(context.Background(), &getRequest)
-	//	if keyResponse.Status != response.Success {
-	//		return fmt.Errorf("key is invalid for order -- %s, %#v", keyResponse.Message, order)
-	//	}
-
 	if r.Status != response.Success {
 		if r.Status == response.Fail {
 			return nil, fmt.Errorf(r.Message)
@@ -130,6 +127,7 @@ func (service *PlanService) fetchKey(keyID, userID string) (*keys.Key, error) {
 			return nil, fmt.Errorf("invalid key")
 		}
 	}
+
 	// key must be verified status
 	if r.Data.Key.Status != key.Verified {
 		return nil, fmt.Errorf("key must be verified")
@@ -165,8 +163,7 @@ func (service *PlanService) AddPlan(ctx context.Context, req *protoPlan.PlanRequ
 		return nil
 	}
 
-	// validate key
-	// TODO we need to get the secret with this key
+	// validate plan key
 	ky, err := service.fetchKey(req.KeyID, req.UserID)
 	if err != nil {
 		res.Status = response.Fail
@@ -178,14 +175,18 @@ func (service *PlanService) AddPlan(ctx context.Context, req *protoPlan.PlanRequ
 	req.Exchange = ky.Exchange
 
 	pln, error := planRepo.InsertPlan(service.DB, req)
-
 	if error != nil {
 		res.Status = response.Error
 		res.Message = "AddPlan error: " + error.Error()
 		return nil
 	}
 
+	// activate first plan order if plan is active
 	if pln.Status == plan.Active {
+		// send key and secret with plan
+		pln.Key = ky.Key
+		pln.Secret = ky.Secret
+
 		if err := service.publishPlan(ctx, pln); err != nil {
 			// TODO return a warning here
 			res.Status = response.Error

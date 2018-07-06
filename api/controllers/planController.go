@@ -381,6 +381,9 @@ func (controller *PlanController) HandlePostPlan(c echo.Context) error {
 	if !strings.Contains(newPlan.MarketName, "-") {
 		return fail(c, "marketName must be currency-base: e.g. ADA-BTC")
 	}
+	if len(newPlan.Orders) == 0 {
+		return fail(c, "at least one order required for a trade plan")
+	}
 
 	// error check all orders
 	orders := make([]*plans.OrderRequest, 0)
