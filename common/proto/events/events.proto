@@ -43,6 +43,24 @@ message OrderEvent {
   string status = 17;
 }
 
+message ActivateOrderEvent {
+  string exchange = 1;
+  string orderID = 2;
+  string planID = 3;
+  string userID = 4;
+  double baseBalance = 5;
+  double currencyBalance = 6;
+  string keyID = 7;
+  string key = 8;
+  string secret = 9;
+  string marketName = 10;
+  string side = 11;
+  string orderType = 12;
+  double price = 14;
+  string conditions = 16;
+  string status = 19;
+}
+
 message EngineStartEvent {
   string engineID = 1;
 }
