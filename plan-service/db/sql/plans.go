@@ -171,12 +171,10 @@ func FindActivePlans(db *sql.DB) ([]*protoPlan.Plan, error) {
 	return results, nil
 }
 
-// Find all active orders in the DB. This wil load the keys for each order.
-// Returns active plans that have a verified key only.
+// Returns plan with specific order that has a verified key.
 func FindPlanWithOrderID(db *sql.DB, orderID string) (*protoPlan.Plan, error) {
 	var plan protoPlan.Plan
 	var order protoPlan.Order
-	var planOrderIds pq.StringArray
 
 	var price sql.NullFloat64
 	var basePercent sql.NullFloat64
@@ -191,7 +189,6 @@ func FindPlanWithOrderID(db *sql.DB, orderID string) (*protoPlan.Plan, error) {
 		k.secret,
 		p.exchange_name,
 		p.market_name,
-		p.plan_order_ids,
 		p.base_balance,
 		p.currency_balance,
 		p.status,
@@ -215,7 +212,6 @@ func FindPlanWithOrderID(db *sql.DB, orderID string) (*protoPlan.Plan, error) {
 		&plan.Secret,
 		&plan.Exchange,
 		&plan.MarketName,
-		&planOrderIds,
 		&plan.BaseBalance,
 		&plan.CurrencyBalance,
 		&plan.Status,
