@@ -96,7 +96,8 @@ message CompletedOrderEvent {
   string exchangeOrderID = 9;
   string exchangeMarketName = 10;
   string status = 11;
-  string nextOrderID = 12;
+  string details = 12;
+  string nextOrderID = 13;
 }
 
 message EngineStartEvent {
