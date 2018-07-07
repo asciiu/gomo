@@ -355,6 +355,7 @@ func InsertPlan(db *sql.DB, req *protoPlan.PlanRequest) (*protoPlan.Plan, error)
 			CurrencyPercent: or.CurrencyPercent,
 			Status:          orderStatus,
 			Conditions:      or.Conditions,
+			NextOrderID:     nextOrderID.String(),
 		}
 		orders = append(orders, &order)
 	}
