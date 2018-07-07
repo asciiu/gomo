@@ -226,7 +226,6 @@ func FindPlanWithOrderID(db *sql.DB, orderID string) (*protoPlan.Plan, error) {
 		&order.Status)
 
 	if err != nil {
-		log.Fatal(err)
 		return nil, err
 	}
 
