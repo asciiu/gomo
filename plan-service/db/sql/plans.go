@@ -502,7 +502,7 @@ func UpdateOrderStatus(db *sql.DB, orderID, status string) (*protoPlan.Order, er
 }
 
 func UpdatePlanStatus(db *sql.DB, planID, status string) (*protoPlan.Plan, error) {
-	sqlStatement := `UPDATE plan SET status = $1 WHERE id = $2 
+	sqlStatement := `UPDATE plans SET status = $1 WHERE id = $2 
 	RETURNING id`
 
 	var p protoPlan.Plan
