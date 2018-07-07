@@ -6,8 +6,10 @@ import (
 	"fmt"
 	"log"
 
+	"github.com/asciiu/gomo/common/constants/status"
 	evt "github.com/asciiu/gomo/common/proto/events"
 	notifications "github.com/asciiu/gomo/notification-service/proto"
+	planRepo "github.com/asciiu/gomo/plan-service/db/sql"
 	micro "github.com/micro/go-micro"
 )
 
@@ -33,30 +35,31 @@ func (receiver *CompletedOrderReceiver) ProcessEvent(ctx context.Context, comple
 		log.Println("could not publish notification: ", err)
 	}
 
-	return nil
+	order, error := planRepo.UpdateOrderStatus(receiver.DB, completedOrderEvent.OrderID, completedOrderEvent.Status)
+	switch {
+	case error == nil:
+		next, error := planRepo.FindPlanWithOrderID(receiver.DB, order.NextOrderID)
 
-	// parentOrder, error := orderRepo.UpdateOrderStatus(receiver.DB, orderEvent)
-	// switch {
-	// case error == nil:
-	// 	childOrder, error := orderRepo.FindOrderWithParentID(receiver.DB, parentOrder.OrderID)
+		switch {
+		case error == sql.ErrNoRows:
+			return nil
 
-	// 	switch {
-	// 	case error == sql.ErrNoRows:
-	// 		return nil
+		case error != nil:
+			log.Println("completed order error on find plan -- ", error.Error())
 
-	// 	case error != nil:
-	// 		log.Println("order filled error -- ", error.Error())
+		default:
+			if err := receiver.Service.LoadPlanOrder(ctx, next); err != nil {
+				log.Println("completed order error load plan-- ", err.Error())
+			}
+			if _, err := planRepo.UpdateOrderStatus(receiver.DB, next.Orders[0].OrderID, status.Active); err != nil {
+				log.Println("completed order error trying to update order to active -- ", err.Error())
+			}
+		}
 
-	// 	default:
-	// 		if err := receiver.Service.LoadOrder(ctx, childOrder); err != nil {
-	// 			log.Println("order filled error -- ", err.Error())
-	// 		}
-	// 	}
+		return nil
 
-	// 	return nil
-
-	// default:
-	// 	log.Println("order filled error -- ", error)
-	// 	return error
-	// }
+	default:
+		log.Println("completed order error on update status -- ", error)
+		return error
+	}
 }

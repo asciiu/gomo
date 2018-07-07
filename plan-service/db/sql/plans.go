@@ -171,6 +171,89 @@ func FindActivePlans(db *sql.DB) ([]*protoPlan.Plan, error) {
 	return results, nil
 }
 
+// Find all active orders in the DB. This wil load the keys for each order.
+// Returns active plans that have a verified key only.
+func FindPlanWithOrderID(db *sql.DB, orderID string) (*protoPlan.Plan, error) {
+	var plan protoPlan.Plan
+	var order protoPlan.Order
+	var planOrderIds pq.StringArray
+
+	var price sql.NullFloat64
+	var basePercent sql.NullFloat64
+	var currencyPercent sql.NullFloat64
+	var nextOrderID sql.NullString
+
+	err := db.QueryRow(`SELECT 
+		p.id,
+		p.user_id,
+		p.user_key_id,
+		k.api_key,
+		k.secret,
+		p.exchange_name,
+		p.market_name,
+		p.plan_order_ids,
+		p.base_balance,
+		p.currency_balance,
+		p.status,
+		po.id,
+		po.base_percent,
+		po.currency_percent,
+		po.side,
+		po.order_type,
+		po.conditions,
+		po.price, 
+		po.next_plan_order_id,
+		po.status
+		FROM plans p 
+		JOIN plan_orders po on p.id = po.plan_id
+		JOIN user_keys k on p.user_key_id = k.id
+		WHERE po.id = $1 AND k.status = $2`, orderID, key.Verified).Scan(
+		&plan.PlanID,
+		&plan.UserID,
+		&plan.KeyID,
+		&plan.Key,
+		&plan.Secret,
+		&plan.Exchange,
+		&plan.MarketName,
+		&planOrderIds,
+		&plan.BaseBalance,
+		&plan.CurrencyBalance,
+		&plan.Status,
+		&order.OrderID,
+		&basePercent,
+		&currencyPercent,
+		&order.Side,
+		&order.OrderType,
+		&order.Conditions,
+		&price,
+		&nextOrderID,
+		&order.Status)
+
+	if err != nil {
+		log.Fatal(err)
+		return nil, err
+	}
+
+	if basePercent.Valid {
+		order.BasePercent = basePercent.Float64
+	}
+	if currencyPercent.Valid {
+		order.CurrencyPercent = currencyPercent.Float64
+	}
+	if price.Valid {
+		order.Price = price.Float64
+	}
+	if nextOrderID.Valid {
+		order.NextOrderID = nextOrderID.String
+	}
+	if err := json.Unmarshal([]byte(order.Conditions), &order.Conditions); err != nil {
+		return nil, err
+	}
+	plan.Orders = append(plan.Orders, &order)
+
+	return &plan, nil
+}
+
 // func FindOrdersByUserID(db *sql.DB, req *orderProto.GetUserOrdersRequest) ([]*orderProto.Order, error) {
 // 	results := make([]*orderProto.Order, 0)
 
@@ -406,23 +489,19 @@ func InsertPlan(db *sql.DB, req *protoPlan.PlanRequest) (*protoPlan.Plan, error)
 // 	return &o, nil
 // }
 
-// func UpdateOrderStatus(db *sql.DB, evt *evt.OrderEvent) (*orderProto.Order, error) {
-// 	sqlStatement := `UPDATE orders SET status = $1, condition = $2, exchange_order_id = $3, exchange_market_name = $4
-// 	WHERE id = $5 RETURNING id, user_id, exchange_name, market_name, user_key_id, side, base_quantity,
-// 	base_percent, currency_quantity, currency_percent, status, conditions`
+// Maybe this should return more of the updated order but all I need from this
+// as of now is the next_plan_order_id so I can load the next order.
+func UpdateOrderStatus(db *sql.DB, orderID, status string) (*protoPlan.Order, error) {
+	sqlStatement := `UPDATE plan_orders SET status = $1 WHERE id = $2 
+	RETURNING next_plan_order_id`
 
-// 	var o orderProto.Order
-// 	err := db.QueryRow(sqlStatement, evt.Status, evt.Condition, evt.ExchangeOrderID, evt.ExchangeMarketName, evt.OrderID).
-// 		Scan(&o.OrderID, &o.UserID, &o.Exchange, &o.MarketName, &o.KeyID, &o.Side, &o.BaseQuantity,
-// 			&o.BasePercent, &o.CurrencyQuantity, &o.CurrencyPercent, &o.Status, &o.Conditions)
+	var o protoPlan.Order
+	err := db.QueryRow(sqlStatement, status, orderID).
+		Scan(&o.NextOrderID)
 
-// 	if err != nil {
-// 		return nil, err
-// 	}
+	if err != nil {
+		return nil, err
+	}
 
-// 	if err := json.Unmarshal([]byte(o.Conditions), &o.Conditions); err != nil {
-// 		return nil, err
-// 	}
-
-// 	return &o, nil
-// }
+	return &o, nil
+}
