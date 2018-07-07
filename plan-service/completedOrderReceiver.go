@@ -28,7 +28,7 @@ func (receiver *CompletedOrderReceiver) ProcessEvent(ctx context.Context, comple
 
 	notification := notifications.Notification{
 		UserID:      completedOrderEvent.UserID,
-		Description: fmt.Sprintf("orderId: %s status: %s", completedOrderEvent.OrderID, completedOrderEvent.Status),
+		Description: fmt.Sprintf("orderId: %s %s", completedOrderEvent.OrderID, completedOrderEvent.Details),
 	}
 
 	// notifiy the user of completed order

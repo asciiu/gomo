@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"fmt"
 	"log"
 	"os"
 	"strings"
@@ -12,15 +11,14 @@ import (
 	"github.com/asciiu/gomo/common/constants/exchange"
 	"github.com/asciiu/gomo/common/constants/order"
 	"github.com/asciiu/gomo/common/constants/side"
+	"github.com/asciiu/gomo/common/constants/status"
 	evt "github.com/asciiu/gomo/common/proto/events"
-	notifications "github.com/asciiu/gomo/notification-service/proto"
 	gokitlog "github.com/go-kit/kit/log"
 	micro "github.com/micro/go-micro"
 )
 
 type OrderFulfiller struct {
-	FilledPub micro.Publisher
-	FailedPub micro.Publisher
+	CompletedPub micro.Publisher
 }
 
 func (filler *OrderFulfiller) FillOrder(ctx context.Context, triggerEvent *evt.TriggeredOrderEvent) error {
@@ -91,20 +89,36 @@ func (filler *OrderFulfiller) FillOrder(ctx context.Context, triggerEvent *evt.T
 		})
 		if err != nil {
 			log.Printf("failed new order binance call -- orderID: %s, market: %s\n", triggerEvent.OrderID, triggerEvent.MarketName)
-			title := fmt.Sprintf("%s %s ordered failed", triggerEvent.MarketName, triggerEvent.Side)
-			notification := notifications.Notification{
-				UserID:           triggerEvent.UserID,
-				NotificationType: "order",
-				ObjectID:         triggerEvent.OrderID,
-				Title:            title,
-				Description:      err.Error(),
-				Timestamp:        time.Now().UTC().Format(time.RFC3339),
+			//title := fmt.Sprintf("%s %s ordered failed", triggerEvent.MarketName, triggerEvent.Side)
+			// notification := notifications.Notification{
+			// 	UserID:           triggerEvent.UserID,
+			// 	NotificationType: "order",
+			// 	ObjectID:         triggerEvent.OrderID,
+			// 	Title:            title,
+			// 	Description:      err.Error(),
+			// 	Timestamp:        time.Now().UTC().Format(time.RFC3339),
+			// }
+
+			// // publish verify key event
+			// if err := filler.FailedPub.Publish(context.Background(), &notification); err != nil {
+			// 	log.Println("could not publish failed order: ", err)
+			// }
+
+			completedEvent := evt.CompletedOrderEvent{
+				UserID:             triggerEvent.UserID,
+				PlanID:             triggerEvent.PlanID,
+				OrderID:            triggerEvent.OrderID,
+				Side:               triggerEvent.Side,
+				TriggeredPrice:     triggerEvent.TriggeredPrice,
+				TriggeredCondition: triggerEvent.TriggeredCondition,
+				Status:             status.Failed,
+				Details:            err.Error(),
 			}
 
-			// publish verify key event
-			if err := filler.FailedPub.Publish(context.Background(), &notification); err != nil {
-				log.Println("could not publish failed order: ", err)
+			if err := filler.CompletedPub.Publish(ctx, &completedEvent); err != nil {
+				log.Println("publish warning: ", err, completedEvent)
 			}
+
 		} else {
 			//if err := filler.FilledPub.Publish(ctx, orderEvent); err != nil {
 			//	log.Println("publish warning: ", err, orderEvent)

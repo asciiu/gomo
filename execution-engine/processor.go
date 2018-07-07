@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"database/sql"
+	"fmt"
 	"log"
 
 	types "github.com/asciiu/gomo/common/constants/order"
@@ -47,6 +48,7 @@ func (processor *Processor) ProcessEvent(ctx context.Context, payload *evt.Trade
 
 					switch {
 					case order.EventOrigin.OrderType == types.VirtualOrder:
+						details := fmt.Sprintf("%s %s -- %s", order.EventOrigin.Side, order.EventOrigin.MarketName, status.Filled)
 						completedEvent := evt.CompletedOrderEvent{
 							UserID:             order.EventOrigin.UserID,
 							PlanID:             order.EventOrigin.PlanID,
@@ -57,6 +59,7 @@ func (processor *Processor) ProcessEvent(ctx context.Context, payload *evt.Trade
 							ExchangeOrderID:    types.VirtualOrder,
 							ExchangeMarketName: types.VirtualOrder,
 							Status:             status.Filled,
+							Details:            details,
 						}
 
 						// Never log the secrets contained in the event
