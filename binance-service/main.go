@@ -17,7 +17,7 @@ func main() {
 
 	verifiedPub := micro.NewPublisher(msg.TopicKeyVerified, srv.Client())
 	balancePub := micro.NewPublisher(msg.TopicBalanceUpdate, srv.Client())
-	filledPub := micro.NewPublisher(msg.TopicOrderFilled, srv.Client())
+	filledPub := micro.NewPublisher(msg.TopicCompletedOrder, srv.Client())
 	keyValidator := KeyValidator{
 		KeyVerifiedPub: verifiedPub,
 		BalancePub:     balancePub,
@@ -25,12 +25,12 @@ func main() {
 	// subscribe to new key topic with a key validator
 	micro.RegisterSubscriber(msg.TopicNewKey, srv.Server(), &keyValidator)
 
-	orderFiller := OrderFiller{
+	fulfiller := OrderFulfiller{
 		FilledPub: filledPub,
 		FailedPub: micro.NewPublisher(msg.TopicNotification, srv.Client()),
 	}
 	// subscribe to new key topic with a key validator
-	micro.RegisterSubscriber(msg.TopicFillOrder, srv.Server(), &orderFiller)
+	micro.RegisterSubscriber(msg.TopicTriggeredOrder, srv.Server(), &fulfiller)
 
 	if err := srv.Run(); err != nil {
 		log.Fatal(err)

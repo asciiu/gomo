@@ -18,14 +18,17 @@ import (
 	micro "github.com/micro/go-micro"
 )
 
-type OrderFiller struct {
+type OrderFulfiller struct {
 	FilledPub micro.Publisher
 	FailedPub micro.Publisher
 }
 
-func (filler *OrderFiller) FillOrder(ctx context.Context, orderEvent *evt.OrderEvent) error {
+func (filler *OrderFulfiller) FillOrder(ctx context.Context, triggerEvent *evt.TriggeredOrderEvent) error {
 	// ignore events not binance
-	if orderEvent.Exchange != exchange.Binance {
+	// perhaps we can have this handler only receive binance triggers but for the sake of
+	// simplicity when adding new exchanges let's just have each exchange service do a check
+	// on the exchange
+	if triggerEvent.Exchange != exchange.Binance {
 		return nil
 	}
 
@@ -35,49 +38,64 @@ func (filler *OrderFiller) FillOrder(ctx context.Context, orderEvent *evt.OrderE
 		logger = gokitlog.With(logger, "time", gokitlog.DefaultTimestampUTC, "caller", gokitlog.DefaultCaller)
 
 		hmacSigner := &binance.HmacSigner{
-			Key: []byte(orderEvent.Secret),
+			Key: []byte(triggerEvent.Secret),
 		}
 
 		binanceService := binance.NewAPIService(
 			"https://www.binance.com",
-			orderEvent.Key,
+			triggerEvent.Key,
 			hmacSigner,
 			logger,
 			ctx,
 		)
 		b := binance.NewBinance(binanceService)
 
+		quantity := 0.0
+		switch {
+		case triggerEvent.Side == side.Buy && triggerEvent.OrderType == order.LimitOrder:
+			quantity = triggerEvent.BaseBalance * triggerEvent.BasePercent / triggerEvent.Price
+
+		case triggerEvent.Side == side.Buy && triggerEvent.OrderType == order.MarketOrder:
+			quantity = triggerEvent.BaseBalance * triggerEvent.BasePercent / triggerEvent.TriggeredPrice
+
+		default:
+			quantity = triggerEvent.CurrencyBalance * triggerEvent.CurrencyPercent
+		}
+		// Buy-limit: plan.baseBalance / planOrder.Price
+		// Buy-market: plan.baseBalance / trigger.Price (can only determine this at trigger time)
+		// Sell-limit: currencyBalance
+		// Sell-market: currencyBalance
+
 		// binance expects the symbol to be formatted as a single word: e.g. BNBBTC
-		symbol := strings.Replace(orderEvent.MarketName, "-", "", 1)
+		symbol := strings.Replace(triggerEvent.MarketName, "-", "", 1)
 		// buy or sell
 		ellado := binance.SideBuy
-		if orderEvent.Side == side.Sell {
+		if triggerEvent.Side == side.Sell {
 			ellado = binance.SideSell
 		}
 		// order type can be market or limit
 		orderType := binance.TypeMarket
-		if orderEvent.OrderType == order.LimitOrder {
+		if triggerEvent.OrderType == order.LimitOrder {
 			orderType = binance.TypeLimit
 		}
-		//orderEvent.BaseQuantity
 		// https://github.com/binance-exchange/binance-official-api-docs/blob/master/rest-api.md
 		// Limit type orders require a price
 		newOrder, err := b.NewOrder(binance.NewOrderRequest{
 			Symbol:      symbol,
-			Quantity:    orderEvent.Quantity,
+			Quantity:    quantity,
 			Side:        ellado,
-			Price:       orderEvent.Price,
+			Price:       triggerEvent.Price,
 			TimeInForce: binance.GTC,
 			Type:        orderType,
 			Timestamp:   time.Now(),
 		})
 		if err != nil {
-			log.Printf("failed new order binance call -- orderID: %s, market: %s\n", orderEvent.OrderID, orderEvent.MarketName)
-			title := fmt.Sprintf("%s %s ordered failed", orderEvent.MarketName, orderEvent.Side)
+			log.Printf("failed new order binance call -- orderID: %s, market: %s\n", triggerEvent.OrderID, triggerEvent.MarketName)
+			title := fmt.Sprintf("%s %s ordered failed", triggerEvent.MarketName, triggerEvent.Side)
 			notification := notifications.Notification{
-				UserID:           orderEvent.UserID,
+				UserID:           triggerEvent.UserID,
 				NotificationType: "order",
-				ObjectID:         orderEvent.OrderID,
+				ObjectID:         triggerEvent.OrderID,
 				Title:            title,
 				Description:      err.Error(),
 				Timestamp:        time.Now().UTC().Format(time.RFC3339),
@@ -88,17 +106,11 @@ func (filler *OrderFiller) FillOrder(ctx context.Context, orderEvent *evt.OrderE
 				log.Println("could not publish failed order: ", err)
 			}
 		} else {
+			//if err := filler.FilledPub.Publish(ctx, orderEvent); err != nil {
+			//	log.Println("publish warning: ", err, orderEvent)
+			//}
 
-			fmt.Println("Success: ", newOrder)
-
-			orderEvent.ExchangeMarketName = "binance"
-			orderEvent.ExchangeOrderID = "binance"
-
-			if err := filler.FilledPub.Publish(ctx, orderEvent); err != nil {
-				log.Println("publish warning: ", err, orderEvent)
-			}
-
-			log.Printf("order filled -- orderID: %s, market: %s\n", orderEvent.OrderID, orderEvent.MarketName)
+			log.Printf("processed order -- orderID: %s, details: %+v\n", triggerEvent.OrderID, newOrder)
 		}
 	}()
 	return nil
