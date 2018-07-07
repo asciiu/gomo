@@ -501,3 +501,18 @@ func UpdateOrderStatus(db *sql.DB, orderID, status string) (*protoPlan.Order, er
 
 	return &o, nil
 }
+
+func UpdatePlanStatus(db *sql.DB, planID, status string) (*protoPlan.Plan, error) {
+	sqlStatement := `UPDATE plan SET status = $1 WHERE id = $2 
+	RETURNING id`
+
+	var p protoPlan.Plan
+	err := db.QueryRow(sqlStatement, status, planID).
+		Scan(&p.PlanID)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return &p, nil
+}

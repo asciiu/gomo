@@ -49,6 +49,7 @@ func (processor *Processor) ProcessEvent(ctx context.Context, payload *evt.Trade
 					case order.EventOrigin.OrderType == types.VirtualOrder:
 						completedEvent := evt.CompletedOrderEvent{
 							UserID:             order.EventOrigin.UserID,
+							PlanID:             order.EventOrigin.PlanID,
 							OrderID:            order.EventOrigin.OrderID,
 							Side:               order.EventOrigin.Side,
 							TriggeredPrice:     event.Price,

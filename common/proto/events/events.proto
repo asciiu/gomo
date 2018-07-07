@@ -86,16 +86,17 @@ message TriggeredOrderEvent {
 
 message CompletedOrderEvent {
   string userID = 1;
-  string orderID = 2;
-  string currency = 3;
-  string side = 4;
-  double quantity = 5; 
-  double triggeredPrice = 6;
-  string triggeredCondition = 7;
-  string exchangeOrderID = 8;
-  string exchangeMarketName = 9;
-  string status = 10;
-  string nextOrderID = 11;
+  string planID = 2;
+  string orderID = 3;
+  string currency = 4; 
+  string side = 5;
+  double quantity = 6; 
+  double triggeredPrice = 7;
+  string triggeredCondition = 8;
+  string exchangeOrderID = 9;
+  string exchangeMarketName = 10;
+  string status = 11;
+  string nextOrderID = 12;
 }
 
 message EngineStartEvent {
