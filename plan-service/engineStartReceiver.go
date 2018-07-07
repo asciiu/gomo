@@ -32,8 +32,6 @@ func (receiver *EngineStartReceiver) ProcessEvent(ctx context.Context, engine *e
 	for _, plan := range plans {
 		if error = receiver.Service.LoadPlanOrder(ctx, plan); error != nil {
 			log.Println("load plan error -- ", error)
-		} else {
-			log.Printf("loaded plan -- %+v\n", plan)
 		}
 	}
 
