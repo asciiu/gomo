@@ -7,6 +7,7 @@ import (
 	"log"
 
 	types "github.com/asciiu/gomo/common/constants/order"
+	"github.com/asciiu/gomo/common/constants/side"
 	"github.com/asciiu/gomo/common/constants/status"
 	evt "github.com/asciiu/gomo/common/proto/events"
 	"github.com/mattn/anko/vm"
@@ -60,6 +61,21 @@ func (processor *Processor) ProcessEvent(ctx context.Context, payload *evt.Trade
 							ExchangeMarketName: types.VirtualOrder,
 							Status:             status.Filled,
 							Details:            details,
+						}
+
+						// adjust balances for buy
+						if order.EventOrigin.Side == side.Buy {
+							currencyQuantity := order.EventOrigin.BaseBalance * order.EventOrigin.BasePercent / event.Price
+							spent := currencyQuantity * event.Price
+							completedEvent.BaseBalance = order.EventOrigin.BaseBalance - spent
+							completedEvent.CurrencyBalance = order.EventOrigin.CurrencyBalance + currencyQuantity
+						}
+
+						// adjust balances for sell
+						if order.EventOrigin.Side == side.Sell {
+							currencyQuantity := order.EventOrigin.CurrencyBalance * order.EventOrigin.CurrencyPercent
+							completedEvent.BaseBalance = currencyQuantity*event.Price + order.EventOrigin.BaseBalance
+							completedEvent.CurrencyBalance = order.EventOrigin.CurrencyBalance - currencyQuantity
 						}
 
 						// Never log the secrets contained in the event
