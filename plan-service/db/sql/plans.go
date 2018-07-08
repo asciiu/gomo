@@ -249,93 +249,175 @@ func FindPlanWithOrderID(db *sql.DB, orderID string) (*protoPlan.Plan, error) {
 	return &plan, nil
 }
 
-// func FindOrdersByUserID(db *sql.DB, req *orderProto.GetUserOrdersRequest) ([]*orderProto.Order, error) {
-// 	results := make([]*orderProto.Order, 0)
+func FindUserPlansWithStatus(db *sql.DB, userID, status string, page, pageSize uint32) (*protoPlan.PlansPage, error) {
 
-// 	rows, err := db.Query(`SELECT id,
-// 		user_id,
-// 		user_key_id,
-// 		exchange_name,
-// 		exchange_order_id,
-// 		exchange_market_name,
-// 		market_name,
-// 		side,
-// 		type,
-// 		price,
-// 		base_quantity,
-// 		base_percent,
-// 		currency_quantity,
-// 		currency_percent,
-// 		status,
-// 		chain_status,
-// 		conditions,
-// 		condition,
-// 		parent_order_id
-// 		FROM orders WHERE user_id = $1`, req.UserID)
+	var count uint32
+	queryCount := `SELECT count(*) FROM plans WHERE user_id = $1 AND status = $2`
+	err := db.QueryRow(queryCount, userID, status).Scan(&count)
 
-// 	if err != nil {
-// 		log.Fatal(err)
-// 		return nil, err
-// 	}
+	plans := make([]*protoPlan.Plan, 0)
+	query := `SELECT 
+		id,
+		user_key_id,
+		exchange_name,
+		market_name,
+		base_balance,
+		currency_balance,
+		status
+		FROM plans 
+		WHERE user_id = $1 AND status = $2 OFFSET $3 LIMIT $4`
 
-// 	defer rows.Close()
+	rows, err := db.Query(query, userID, status, page, pageSize)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	for rows.Next() {
+		var plan protoPlan.Plan
+		err := rows.Scan(
+			&plan.PlanID,
+			&plan.KeyID,
+			&plan.Exchange,
+			&plan.MarketName,
+			&plan.BaseBalance,
+			&plan.CurrencyBalance,
+			&plan.Status)
 
-// 	for rows.Next() {
-// 		var o orderProto.Order
-// 		var condition sql.NullString
-// 		var exchangeOrderID sql.NullString
-// 		var exchangeMarketName sql.NullString
-// 		var price sql.NullFloat64
-// 		err := rows.Scan(&o.OrderID,
-// 			&o.UserID,
-// 			&o.KeyID,
-// 			&o.Exchange,
-// 			&exchangeOrderID,
-// 			&exchangeMarketName,
-// 			&o.MarketName,
-// 			&o.Side,
-// 			&o.OrderType,
-// 			&price,
-// 			&o.BaseQuantity,
-// 			&o.BasePercent,
-// 			&o.CurrencyQuantity,
-// 			&o.CurrencyPercent,
-// 			&o.Status,
-// 			&o.ChainStatus,
-// 			&o.Conditions,
-// 			&condition,
-// 			&o.ParentOrderID)
+		if err != nil {
+			return nil, err
+		}
 
-// 		if err != nil {
-// 			log.Fatal(err)
-// 			return nil, err
-// 		}
-// 		if condition.Valid {
-// 			o.Condition = condition.String
-// 		}
-// 		if exchangeOrderID.Valid {
-// 			o.ExchangeOrderID = exchangeOrderID.String
-// 		}
-// 		if exchangeMarketName.Valid {
-// 			o.ExchangeMarketName = exchangeMarketName.String
-// 		}
-// 		if price.Valid {
-// 			o.Price = price.Float64
-// 		}
+		plans = append(plans, &plan)
+	}
+	err = rows.Err()
+	if err != nil {
+		log.Fatal(err)
+		return nil, err
+	}
 
-// 		if err := json.Unmarshal([]byte(o.Conditions), &o.Conditions); err != nil {
-// 			return nil, err
-// 		}
-// 		results = append(results, &o)
-// 	}
-// 	err = rows.Err()
-// 	if err != nil {
-// 		log.Fatal(err)
-// 		return nil, err
-// 	}
+	result := protoPlan.PlansPage{
+		Page:     page,
+		PageSize: pageSize,
+		Total:    count,
+		Plans:    plans,
+	}
 
-// 	return results, nil
-// }
+	return &result, nil
+}
+
+// Find all user plans for exchange with status
+func FindUserExchangePlansWithStatus(db *sql.DB, userID, status, exchange string, page, pageSize uint32) (*protoPlan.PlansPage, error) {
+
+	var count uint32
+	queryCount := `SELECT count(*) FROM plans WHERE user_id = $1 AND status = $2 AND exchange_name = $3`
+	err := db.QueryRow(queryCount, userID, status, exchange).Scan(&count)
+
+	plans := make([]*protoPlan.Plan, 0)
+	query := `SELECT 
+		id,
+		user_key_id,
+		exchange_name,
+		market_name,
+		base_balance,
+		currency_balance,
+		status
+		FROM plans 
+		WHERE user_id = $1 AND status = $2 AND exchange_name = $3 OFFSET $4 LIMIT $5`
+
+	rows, err := db.Query(query, userID, status, exchange, page, pageSize)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	for rows.Next() {
+		var plan protoPlan.Plan
+		err := rows.Scan(
+			&plan.PlanID,
+			&plan.KeyID,
+			&plan.Exchange,
+			&plan.MarketName,
+			&plan.BaseBalance,
+			&plan.CurrencyBalance,
+			&plan.Status)
+
+		if err != nil {
+			return nil, err
+		}
+
+		plans = append(plans, &plan)
+	}
+	err = rows.Err()
+	if err != nil {
+		log.Fatal(err)
+		return nil, err
+	}
+
+	result := protoPlan.PlansPage{
+		Page:     page,
+		PageSize: pageSize,
+		Total:    count,
+		Plans:    plans,
+	}
+
+	return &result, nil
+}
+
+// Find all user plans for exchange with status
+func FindUserMarketPlansWithStatus(db *sql.DB, userID, status, exchange, marketName string, page, pageSize uint32) (*protoPlan.PlansPage, error) {
+
+	var count uint32
+	queryCount := `SELECT count(*) FROM plans WHERE user_id = $1 AND status = $2 AND exchange_name = $3 AND market_name = $4`
+	err := db.QueryRow(queryCount, userID, status, exchange, marketName).Scan(&count)
+
+	plans := make([]*protoPlan.Plan, 0)
+	query := `SELECT 
+		id,
+		user_key_id,
+		exchange_name,
+		market_name,
+		base_balance,
+		currency_balance,
+		status
+		FROM plans 
+		WHERE user_id = $1 AND status = $2 AND exchange_name = $3 AND market_name = $4 OFFSET $5 LIMIT $6`
+
+	rows, err := db.Query(query, userID, status, exchange, marketName, page, pageSize)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	for rows.Next() {
+		var plan protoPlan.Plan
+		err := rows.Scan(
+			&plan.PlanID,
+			&plan.KeyID,
+			&plan.Exchange,
+			&plan.MarketName,
+			&plan.BaseBalance,
+			&plan.CurrencyBalance,
+			&plan.Status)
+
+		if err != nil {
+			return nil, err
+		}
+
+		plans = append(plans, &plan)
+	}
+	err = rows.Err()
+	if err != nil {
+		log.Fatal(err)
+		return nil, err
+	}
+
+	result := protoPlan.PlansPage{
+		Page:     page,
+		PageSize: pageSize,
+		Total:    count,
+		Plans:    plans,
+	}
+
+	return &result, nil
+}
 
 // TODO this should be inserted as a transaction
 func InsertPlan(db *sql.DB, req *protoPlan.PlanRequest) (*protoPlan.Plan, error) {

@@ -235,19 +235,32 @@ func (service *PlanService) GetUserPlan(ctx context.Context, req *protoPlan.GetU
 // GetUserPlans returns error to conform to protobuf def, but the error will always be returned as nil.
 // Can't return an error with a response object - response object is returned as nil when error is non nil.
 // Therefore, return error in response object.
-func (service *PlanService) GetUserPlans(ctx context.Context, req *protoPlan.GetUserPlansRequest, res *protoPlan.PlansResponse) error {
-	// ordrs, error := orderRepo.FindPlansByUserID(service.DB, req)
+func (service *PlanService) GetUserPlans(ctx context.Context, req *protoPlan.GetUserPlansRequest, res *protoPlan.PlansPageResponse) error {
 
-	// switch {
-	// case error == nil:
-	// 	res.Status = response.Success
-	// 	res.Data = &plans.UserPlansData{
-	// 		Plans: ordrs,
-	// 	}
-	// default:
-	// 	res.Status = response.Error
-	// 	res.Message = error.Error()
-	// }
+	var page *protoPlan.PlansPage
+	var err error
+
+	switch {
+	case req.MarketName == "":
+		// search by userID, exchange, status when no marketName
+		page, err = planRepo.FindUserExchangePlansWithStatus(service.DB, req.UserID, req.Status, req.Exchange, req.Page, req.PageSize)
+	case req.MarketName != "":
+		// search by userID, exchange, marketName, status
+		page, err = planRepo.FindUserExchangePlansWithStatus(service.DB, req.UserID, req.Status, req.Exchange, req.Page, req.PageSize)
+	default:
+		// search by userID and status
+		page, err = planRepo.FindUserPlansWithStatus(service.DB, req.UserID, req.Status, req.Page, req.PageSize)
+	}
+
+	switch {
+	case err == nil:
+		res.Status = response.Success
+		res.Data = page
+	default:
+		res.Status = response.Error
+		res.Message = err.Error()
+	}
+
 	return nil
 }
 

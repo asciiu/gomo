@@ -5,7 +5,7 @@ package fomo.plans;
 service PlanService {
   rpc AddPlan(PlanRequest) returns (PlanResponse) {}
   rpc GetUserPlan(GetUserPlanRequest) returns (PlanResponse) {}
-  rpc GetUserPlans(GetUserPlansRequest) returns (PlansResponse) {}
+  rpc GetUserPlans(GetUserPlansRequest) returns (PlansPageResponse) {}
   rpc DeletePlan(DeletePlanRequest) returns (PlanResponse) {}
   rpc UpdatePlan(PlanRequest) returns (PlanResponse) {}
 }
@@ -42,6 +42,8 @@ message GetUserPlansRequest {
     string exchange = 2; 
     string marketName = 3;
     string status = 4;
+    uint32 page = 5;
+    uint32 pageSize = 6;
 }
 
 message DeletePlanRequest {
@@ -93,8 +95,15 @@ message PlanResponse {
   PlanData data = 3;
 }
 
-message PlansResponse {
+message PlansPageResponse {
   string status = 1;
   string message = 2;
-  PlansData data = 3;
+  PlansPage data = 3;
+}
+
+message PlansPage {
+  uint32 page = 1;
+  uint32 pageSize = 2; 
+  uint32 total = 3;
+  repeated Plan plans = 4; 
 }
