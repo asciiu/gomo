@@ -381,7 +381,7 @@ func InsertPlan(db *sql.DB, req *protoPlan.PlanRequest) (*protoPlan.Plan, error)
 
 	// loop through and insert orders
 	for i, or := range req.Orders {
-		orderStatus := status.Pending
+		orderStatus := status.Inactive
 		// first order of active plan is active
 		if i == 0 && planStatus == plan.Active {
 			orderStatus = status.Active
