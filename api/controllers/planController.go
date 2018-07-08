@@ -5,10 +5,12 @@ import (
 	"encoding/json"
 	"log"
 	"net/http"
+	"strconv"
 	"strings"
 
 	asql "github.com/asciiu/gomo/api/db/sql"
 	orderValidator "github.com/asciiu/gomo/common/constants/order"
+	"github.com/asciiu/gomo/common/constants/plan"
 	"github.com/asciiu/gomo/common/constants/response"
 	sideValidator "github.com/asciiu/gomo/common/constants/side"
 	keys "github.com/asciiu/gomo/key-service/proto/key"
@@ -26,6 +28,20 @@ type PlanController struct {
 	Keys  keys.KeyServiceClient
 	// map of ticker symbol to full name
 	currencies map[string]string
+}
+
+// A ResponsePlansSuccess will always contain a status of "successful".
+// swagger:model responsePlansSuccess
+type ResponsePlansSuccess struct {
+	Status string     `json:"status"`
+	Data   *PlansPage `json:"data"`
+}
+
+type PlansPage struct {
+	Page     uint32  `json:"page"`
+	PageSize uint32  `json:"pageSize"`
+	Total    uint32  `json:"total"`
+	Plans    []*Plan `json:"plans"`
 }
 
 type UserPlanData struct {
@@ -235,9 +251,9 @@ func (controller *PlanController) HandleGetPlan(c echo.Context) error {
 	// return c.JSON(http.StatusOK, res)
 }
 
-// swagger:route GET /orders orders getAllOrders
+// swagger:route GET /plans plans getUserPlans
 //
-// get all orders (protected)
+// get user plans (protected)
 //
 // Currently returns all orders. Eventually going to add params to filter orders.
 //
@@ -245,73 +261,89 @@ func (controller *PlanController) HandleGetPlan(c echo.Context) error {
 //  200: responseOrdersSuccess "data" will contain a list of order info with "status": "success"
 //  500: responseError the message will state what the internal server error was with "status": "error"
 func (controller *PlanController) HandleListPlans(c echo.Context) error {
-	return nil
-	// token := c.Get("user").(*jwt.Token)
-	// claims := token.Claims.(jwt.MapClaims)
-	// userID := claims["jti"].(string)
+	token := c.Get("user").(*jwt.Token)
+	claims := token.Claims.(jwt.MapClaims)
+	userID := claims["jti"].(string)
+	exchange := c.QueryParam("exchange")
+	marketName := c.QueryParam("marketName")
+	status := c.QueryParam("status")
 
-	// getRequest := orders.GetUserOrdersRequest{
-	// 	UserID: userID,
-	// }
+	pageStr := c.QueryParam("page")
+	pageSizeStr := c.QueryParam("pageSize")
 
-	// r, _ := controller.Orders.GetUserOrders(context.Background(), &getRequest)
-	// if r.Status != response.Success {
-	// 	res := &ResponseError{
-	// 		Status:  r.Status,
-	// 		Message: r.Message,
-	// 	}
+	// defaults for page and page size here
+	// ignore the errors and assume the values are int
+	page, _ := strconv.ParseUint(pageStr, 10, 32)
+	pageSize, _ := strconv.ParseUint(pageSizeStr, 10, 32)
+	if pageSize == 0 {
+		pageSize = 50
+	}
 
-	// 	if r.Status == response.Fail {
-	// 		return c.JSON(http.StatusBadRequest, res)
-	// 	}
-	// 	if r.Status == response.Error {
-	// 		return c.JSON(http.StatusInternalServerError, res)
-	// 	}
-	// }
+	// default status should be active plans
+	if status == "" {
+		status = plan.Active
+	}
 
-	// data := make([]*Order, len(r.Data.Orders))
-	// for i, o := range r.Data.Orders {
+	getRequest := plans.GetUserPlansRequest{
+		UserID:     userID,
+		Page:       uint32(page),
+		PageSize:   uint32(pageSize),
+		Exchange:   exchange,
+		MarketName: marketName,
+		Status:     status,
+	}
 
-	// 	names := strings.Split(o.MarketName, "-")
-	// 	baseCurrencySymbol := names[1]
-	// 	baseCurrencyName := controller.currencies[baseCurrencySymbol]
-	// 	currencySymbol := names[0]
-	// 	currencyName := controller.currencies[currencySymbol]
+	r, _ := controller.Plans.GetUserPlans(context.Background(), &getRequest)
+	if r.Status != response.Success {
+		res := &ResponseError{
+			Status:  r.Status,
+			Message: r.Message,
+		}
 
-	// 	data[i] = &Order{
-	// 		OrderID:            o.OrderID,
-	// 		KeyID:              o.KeyID,
-	// 		Exchange:           o.Exchange,
-	// 		ExchangeOrderID:    o.ExchangeOrderID,
-	// 		ExchangeMarketName: o.ExchangeMarketName,
-	// 		MarketName:         o.MarketName,
-	// 		Side:               o.Side,
-	// 		OrderType:          o.OrderType,
-	// 		BaseCurrencySymbol: baseCurrencySymbol,
-	// 		BaseCurrencyName:   baseCurrencyName,
-	// 		BaseQuantity:       o.BaseQuantity,
-	// 		BasePercent:        o.BasePercent,
-	// 		CurrencySymbol:     currencySymbol,
-	// 		CurrencyName:       currencyName,
-	// 		CurrencyQuantity:   o.CurrencyQuantity,
-	// 		CurrencyPercent:    o.CurrencyPercent,
-	// 		Status:             o.Status,
-	// 		ChainStatus:        o.ChainStatus,
-	// 		Conditions:         o.Conditions,
-	// 		Condition:          o.Condition,
-	// 		ParentOrderID:      o.ParentOrderID,
-	// 		Price:              o.Price,
-	// 	}
-	// }
+		if r.Status == response.Fail {
+			return c.JSON(http.StatusBadRequest, res)
+		}
+		if r.Status == response.Error {
+			return c.JSON(http.StatusInternalServerError, res)
+		}
+	}
 
-	// res := &ResponseOrdersSuccess{
-	// 	Status: response.Success,
-	// 	Data: &UserOrdersData{
-	// 		Orders: data,
-	// 	},
-	// }
+	plans := make([]*Plan, 0)
+	for _, plan := range r.Data.Plans {
+		names := strings.Split(plan.MarketName, "-")
+		baseCurrencySymbol := names[1]
+		baseCurrencyName := controller.currencies[baseCurrencySymbol]
+		currencySymbol := names[0]
+		currencyName := controller.currencies[currencySymbol]
 
-	// return c.JSON(http.StatusOK, res)
+		pln := Plan{
+			PlanID:             plan.PlanID,
+			KeyID:              plan.KeyID,
+			Exchange:           plan.Exchange,
+			ExchangeMarketName: plan.ExchangeMarketName,
+			MarketName:         plan.MarketName,
+			BaseCurrencySymbol: baseCurrencySymbol,
+			BaseCurrencyName:   baseCurrencyName,
+			BaseBalance:        plan.BaseBalance,
+			CurrencySymbol:     currencySymbol,
+			CurrencyName:       currencyName,
+			CurrencyBalance:    plan.CurrencyBalance,
+			Status:             plan.Status,
+		}
+		plans = append(plans, &pln)
+	}
+
+	res := &ResponsePlansSuccess{
+		Status: response.Success,
+		Data: &PlansPage{
+			Page:     r.Data.Page,
+			PageSize: r.Data.PageSize,
+			Total:    r.Data.Total,
+			Plans:    plans,
+		},
+	}
+
+	return c.JSON(http.StatusOK, res)
 }
 
 // func fail(c echo.Context, msg string) error {
