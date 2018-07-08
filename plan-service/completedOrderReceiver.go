@@ -38,11 +38,18 @@ func (receiver *CompletedOrderReceiver) ProcessEvent(ctx context.Context, comple
 
 	order, error := planRepo.UpdateOrderStatus(receiver.DB, completedOrderEvent.OrderID, completedOrderEvent.Status)
 	switch {
+	case completedOrderEvent.Status == status.Failed:
+		// failed orders should result in a failed plan
+		if _, err := planRepo.UpdatePlanStatus(receiver.DB, completedOrderEvent.PlanID, plan.Failed); err != nil {
+			log.Println("completed order error trying to update the plan status to completed -- ", err.Error())
+		}
+
 	case error == nil:
 		next, error := planRepo.FindPlanWithOrderID(receiver.DB, order.NextOrderID)
 
 		switch {
 		case error == sql.ErrNoRows:
+			// TODO if order status is failed the plan status should also be failed
 			// set plan status to complete
 			if _, err := planRepo.UpdatePlanStatus(receiver.DB, completedOrderEvent.PlanID, plan.Completed); err != nil {
 				log.Println("completed order error trying to update the plan status to completed -- ", err.Error())
@@ -60,10 +67,9 @@ func (receiver *CompletedOrderReceiver) ProcessEvent(ctx context.Context, comple
 			}
 		}
 
-		return nil
-
 	default:
 		log.Println("completed order error on update status -- ", error)
 		return error
 	}
+	return nil
 }
