@@ -85,19 +85,21 @@ message TriggeredOrderEvent {
 }
 
 message CompletedOrderEvent {
-  string userID = 1;
+  string orderID = 1;
   string planID = 2;
-  string orderID = 3;
-  string currency = 4; 
-  string side = 5;
-  double quantity = 6; 
-  double triggeredPrice = 7;
-  string triggeredCondition = 8;
-  string exchangeOrderID = 9;
-  string exchangeMarketName = 10;
-  string status = 11;
-  string details = 12;
-  string nextOrderID = 13;
+  string userID = 3;
+  double baseBalance = 4;
+  double currencyBalance = 5;
+  string currency = 6; 
+  string side = 7;
+  double quantity = 8; 
+  double triggeredPrice = 9;
+  string triggeredCondition = 10;
+  string exchangeOrderID = 11;
+  string exchangeMarketName = 12;
+  string status = 13;
+  string details = 14;
+  string nextOrderID = 15;
 }
 
 message EngineStartEvent {
