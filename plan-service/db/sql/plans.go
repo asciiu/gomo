@@ -501,6 +501,13 @@ func UpdateOrderStatus(db *sql.DB, orderID, status string) (*protoPlan.Order, er
 	return &o, nil
 }
 
+func UpdatePlanBalances(db *sql.DB, planID string, base, currency float64) error {
+	sqlStatement := `UPDATE plans SET base_balance = $1, currency_balance = $2 WHERE id = $3`
+
+	_, error := db.Exec(sqlStatement, base, currency, planID)
+	return error
+}
+
 func UpdatePlanStatus(db *sql.DB, planID, status string) (*protoPlan.Plan, error) {
 	sqlStatement := `UPDATE plans SET status = $1 WHERE id = $2 
 	RETURNING id`

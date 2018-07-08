@@ -37,6 +37,11 @@ func (receiver *CompletedOrderReceiver) ProcessEvent(ctx context.Context, comple
 	}
 
 	order, error := planRepo.UpdateOrderStatus(receiver.DB, completedOrderEvent.OrderID, completedOrderEvent.Status)
+	if _, err := planRepo.UpdatePlanStatus(receiver.DB, completedOrderEvent.PlanID, plan.Failed); err != nil {
+		log.Println("completed order error trying to update the order status to filled -- ", err.Error())
+		return nil
+	}
+
 	switch {
 	case completedOrderEvent.Status == status.Failed:
 		// failed orders should result in a failed plan
@@ -44,8 +49,13 @@ func (receiver *CompletedOrderReceiver) ProcessEvent(ctx context.Context, comple
 			log.Println("completed order error trying to update the plan status to completed -- ", err.Error())
 		}
 
-	case error == nil:
-		next, error := planRepo.FindPlanWithOrderID(receiver.DB, order.NextOrderID)
+	case completedOrderEvent.Status == status.Filled:
+		if err := planRepo.UpdatePlanBalances(receiver.DB, completedOrderEvent.PlanID, completedOrderEvent.BaseBalance, completedOrderEvent.CurrencyBalance); err != nil {
+			log.Println("completed order error trying to update the plan balances -- ", err.Error())
+			return nil
+		}
+
+		nextPlanOrder, error := planRepo.FindPlanWithOrderID(receiver.DB, order.NextOrderID)
 
 		switch {
 		case error == sql.ErrNoRows:
@@ -59,10 +69,10 @@ func (receiver *CompletedOrderReceiver) ProcessEvent(ctx context.Context, comple
 			log.Println("completed order error on find plan -- ", error.Error())
 
 		default:
-			if err := receiver.Service.LoadPlanOrder(ctx, next); err != nil {
+			if err := receiver.Service.LoadPlanOrder(ctx, nextPlanOrder); err != nil {
 				log.Println("completed order error load plan-- ", err.Error())
 			}
-			if _, err := planRepo.UpdateOrderStatus(receiver.DB, next.Orders[0].OrderID, status.Active); err != nil {
+			if _, err := planRepo.UpdateOrderStatus(receiver.DB, nextPlanOrder.Orders[0].OrderID, status.Active); err != nil {
 				log.Println("completed order error trying to update order to active -- ", err.Error())
 			}
 		}
