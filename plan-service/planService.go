@@ -241,10 +241,10 @@ func (service *PlanService) GetUserPlans(ctx context.Context, req *protoPlan.Get
 	var err error
 
 	switch {
-	case req.MarketName == "":
+	case req.MarketName == "" && req.Exchange != "":
 		// search by userID, exchange, status when no marketName
 		page, err = planRepo.FindUserExchangePlansWithStatus(service.DB, req.UserID, req.Status, req.Exchange, req.Page, req.PageSize)
-	case req.MarketName != "":
+	case req.MarketName != "" && req.Exchange != "":
 		// search by userID, exchange, marketName, status
 		page, err = planRepo.FindUserExchangePlansWithStatus(service.DB, req.UserID, req.Status, req.Exchange, req.Page, req.PageSize)
 	default:
