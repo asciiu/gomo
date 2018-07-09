@@ -135,8 +135,8 @@ type UpdatePlanRequest struct {
 	Conditions string `json:"conditions"`
 }
 
-// A ResponseKeySuccess will always contain a status of "successful".
-// swagger:model responseOrderSuccess
+// A ResponsePlanSuccess will always contain a status of "successful".
+// swagger:model ResponsePlanSuccess
 type ResponsePlanSuccess struct {
 	Status string        `json:"status"`
 	Data   *UserPlanData `json:"data"`
@@ -255,10 +255,18 @@ func (controller *PlanController) HandleGetPlan(c echo.Context) error {
 //
 // get user plans (protected)
 //
-// Currently returns all orders. Eventually going to add params to filter orders.
+// Returns a summary of user plans.
+// Query Params: status, marketName, exchange, page, pageSize
+//
+// The defaults for the params are:
+// status - active
+// page - 0
+// pageSize - 50
+//
+// example: /plans?status=failed&exchange=binance
 //
 // responses:
-//  200: responseOrdersSuccess "data" will contain a list of order info with "status": "success"
+//  200: responsePlansSuccess "data" will contain an array of plan summaries
 //  500: responseError the message will state what the internal server error was with "status": "error"
 func (controller *PlanController) HandleListPlans(c echo.Context) error {
 	token := c.Get("user").(*jwt.Token)
@@ -346,15 +354,6 @@ func (controller *PlanController) HandleListPlans(c echo.Context) error {
 	return c.JSON(http.StatusOK, res)
 }
 
-// func fail(c echo.Context, msg string) error {
-// 	res := &ResponseError{
-// 		Status:  response.Fail,
-// 		Message: msg,
-// 	}
-
-// 	return c.JSON(http.StatusBadRequest, res)
-// }
-
 // swagger:route POST /plans plans addPlan
 //
 // create a new planned strategy (protected)
@@ -364,13 +363,13 @@ func (controller *PlanController) HandleListPlans(c echo.Context) error {
 //{
 //    "keyID": "680d6bbf-1feb-4122-bd10-0e7ce080676a",
 //    "marketName": "ADA-BTC",
-//    "baseBalance": 0.1,
+//    "baseBalance": 1.0,
 //    "currencyBalance": 0.0,
 //    "live": true,
 //    "orders": [
 //        {
 //            "side": "buy",
-//            "basePercent": 0.1,
+//            "basePercent": 0.5,
 //            "orderType": "market",
 //            "conditions": "price <= 0.00002800"
 //        },
@@ -383,14 +382,14 @@ func (controller *PlanController) HandleListPlans(c echo.Context) error {
 //    ]
 //}
 //
-// The order chain starts out with a reserve base balance of 0.5 BTC. This order chain will buy 0.5 BTC at
-// market price when the market price reaches 2800 satoshi or less. The following sell order will sell 100% of the order
+// The order chain starts out with a reserve base balance of 1.0 BTC. This order chain will buy 0.5 BTC at
+// market price when the trigger price is less than or equal to 2800 satoshi. The following sell order will sell 100% of the order
 // strategy's (i.e. chain of orders) cardano balance. Cardano balance should in theory be dictated by the Cardano that this
 // chain bought - 100% does not mean 100% of user's cardano balance. The conditions will likely be a json string of conditionLabel: condition.
 // example: "stopLoss: price <= 0.00002200, takeProfit: ...."
 //
 // responses:
-//  200: responseOrdersSuccess "data" will contain list of orders with "status": "success"
+//  200: ResponsePlanSuccess "data" will contain list of orders with "status": "success"
 //  400: responseError missing or incorrect params with "status": "fail"
 //  500: responseError the message will state what the internal server error was with "status": "error"
 func (controller *PlanController) HandlePostPlan(c echo.Context) error {
