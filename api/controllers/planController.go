@@ -263,10 +263,12 @@ func (controller *PlanController) HandleGetPlan(c echo.Context) error {
 			Message: r.Message,
 		}
 
-		if r.Status == response.Fail {
+		switch {
+		case r.Status == response.Nonentity:
+			return c.JSON(http.StatusNotFound, res)
+		case r.Status == response.Fail:
 			return c.JSON(http.StatusBadRequest, res)
-		}
-		if r.Status == response.Error {
+		default:
 			return c.JSON(http.StatusInternalServerError, res)
 		}
 	}

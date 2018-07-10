@@ -224,6 +224,9 @@ func (service *PlanService) GetUserPlan(ctx context.Context, req *protoPlan.GetU
 	case error == nil:
 		res.Status = response.Success
 		res.Data = pagedPlan
+	case pagedPlan.OrdersPage.Total < (req.PageSize * req.Page):
+		res.Status = response.Nonentity
+		res.Message = "page index out of bounds"
 	default:
 		res.Status = response.Error
 		res.Message = error.Error()
