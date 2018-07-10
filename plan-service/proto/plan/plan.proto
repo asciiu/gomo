@@ -4,10 +4,10 @@ package fomo.plans;
 
 service PlanService {
   rpc AddPlan(PlanRequest) returns (PlanResponse) {}
-  rpc GetUserPlan(GetUserPlanRequest) returns (PlanResponse) {}
+  rpc GetUserPlan(GetUserPlanRequest) returns (PlanWithPagedOrdersResponse) {}
   rpc GetUserPlans(GetUserPlansRequest) returns (PlansPageResponse) {}
-  rpc DeletePlan(DeletePlanRequest) returns (PlanResponse) {}
-  rpc UpdatePlan(PlanRequest) returns (PlanResponse) {}
+  //rpc DeletePlan(DeletePlanRequest) returns (PlanResponse) {}
+  //rpc UpdatePlan(PlanRequest) returns (PlanResponse) {}
 }
 
 // Requests
@@ -15,26 +15,30 @@ message PlanRequest {
   string planID = 1;
   string userID = 2;
   string keyID = 3;
-  string exchange = 4;
-  string marketName = 5;
-  double baseBalance = 6;
-  double currencyBalance = 7;
-  bool active = 8;
-  repeated OrderRequest orders = 9; 
+  string planTemplateID = 4;
+  string exchange = 5;
+  string marketName = 6;
+  double baseBalance = 7;
+  double currencyBalance = 8;
+  bool active = 9;
+  repeated OrderRequest orders = 10; 
 }
 
 message OrderRequest {
   string side = 1;
   string orderType = 2;
-  double basePercent = 3;
-  double currencyPercent = 4;
-  string conditions = 5;
-  double price = 6;
+  string orderTemplateID = 3;
+  double basePercent = 4;
+  double currencyPercent = 5;
+  string conditions = 6;
+  double price = 7;
 }
 
 message GetUserPlanRequest {
   string planID = 1;
   string userID = 2;
+  uint32 page = 3;
+  uint32 pageSize = 4;
 }
 
 message GetUserPlansRequest {
@@ -54,6 +58,22 @@ message DeletePlanRequest {
 // Responses
 message Plan {
   string planID = 1;
+  string planTemplateID = 2;
+  string userID = 3;
+  string keyID = 4;
+  string key = 5;
+  string secret = 6;
+  string exchange = 7;
+  string exchangeMarketName = 8;
+  string marketName = 9;
+  double baseBalance = 10;
+  double currencyBalance = 11;
+  string status = 12;
+  repeated Order orders = 13; 
+}
+
+message PlanWithPagedOrders {
+  string planID = 1;
   string userID = 2;
   string keyID = 3;
   string key = 4;
@@ -64,29 +84,27 @@ message Plan {
   double baseBalance = 9;
   double currencyBalance = 10;
   string status = 11;
-  repeated Order orders = 12; 
+  OrdersPage orders = 12;
 }
 
 message Order {
   string orderID = 1;
   string side = 2;
-  string orderType = 3;
-  double price = 4;
-  double basePercent = 5;
-  double currencyPercent = 6;
-  string status = 7;
-  string conditions = 8;
-  string condition = 9; 
-  string nextOrderID = 10;
+  string orderTemplateID = 3;
+  int32 orderNumber = 4;
+  string orderType = 5;
+  double price = 6;
+  double basePercent = 7;
+  double currencyPercent = 8;
+  string status = 9;
+  string conditions = 10;
+  string condition = 11; 
+  string nextOrderID = 12;
 }
 
 
 message PlanData {
   Plan plan = 1;
-}
-
-message PlansData {
-  repeated Plan plans = 1;
 }
 
 message PlanResponse {
@@ -95,10 +113,23 @@ message PlanResponse {
   PlanData data = 3;
 }
 
+message PlanWithPagedOrdersResponse {
+  string status = 1;
+  string message = 2;
+  PlanWithPagedOrders data = 3;
+}
+
 message PlansPageResponse {
   string status = 1;
   string message = 2;
   PlansPage data = 3;
+}
+
+message OrdersPage {
+  uint32 page = 1;
+  uint32 pageSize = 2; 
+  uint32 total = 3;
+  repeated Order orders = 4; 
 }
 
 message PlansPage {

@@ -216,7 +216,7 @@ func (service *PlanService) AddPlan(ctx context.Context, req *protoPlan.PlanRequ
 // GetUserPlan returns error to conform to protobuf def, but the error will always be returned as nil.
 // Can't return an error with a response object - response object is returned as nil when error is non nil.
 // Therefore, return error in response object.
-func (service *PlanService) GetUserPlan(ctx context.Context, req *protoPlan.GetUserPlanRequest, res *protoPlan.PlanResponse) error {
+func (service *PlanService) GetUserPlan(ctx context.Context, req *protoPlan.GetUserPlanRequest, res *protoPlan.PlanWithPagedOrdersResponse) error {
 	// order, error := orderRepo.FindPlanByID(service.DB, req)
 
 	// switch {

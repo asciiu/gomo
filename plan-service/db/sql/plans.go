@@ -19,57 +19,150 @@ func DeletePlan(db *sql.DB, planID string) error {
 	return err
 }
 
-// FindOrderByID ...
-// func FindPlanByID(db *sql.DB, req *protoPlan.GetUserPlanRequest) (*protoPlan.Plan, error) {
-// 	var p protoPlan.Plan
-// 	var condition sql.NullString
-// 	var exchangeOrderID sql.NullString
-// 	var exchangeMarketName sql.NullString
-// 	var price sql.NullFloat64
-// 	var ids []string
-// 	err := db.QueryRow(`SELECT id,
-// 		user_id,
-// 		user_key_id,
-// 		exchange_name,
-// 		exchange_order_id,
-// 		exchange_market_name,
-// 		market_name,
-// 		order_ids,
-// 		base_balance,
-// 		currency_balance,
-// 		status
-// 		FROM plans WHERE id = $1`, req.PlanID).
-// 		Scan(&p.PlanID,
-// 			&p.UserID,
-// 			&p.KeyID,
-// 			&p.Exchange,
-// 			&exchangeOrderID,
-// 			&exchangeMarketName,
-// 			&p.MarketName,
-// 			&ids,
-// 			&p.BaseBalance,
-// 			&p.CurrencyBalance,
-// 			&p.Status)
+// FindPlanWithPagedOrders ...
+func FindPlanWithPagedOrders(db *sql.DB, req *protoPlan.GetUserPlanRequest) (*protoPlan.PlanWithPagedOrders, error) {
 
-// 	// if err != nil {
-// 	// 	return nil, err
-// 	// }
-// 	// if exchangeOrderID.Valid {
-// 	// 	p.ExchangeOrderID = exchangeOrderID.String
-// 	// }
-// 	// if exchangeMarketName.Valid {
-// 	// 	p.ExchangeMarketName = exchangeMarketName.String
-// 	// }
-// 	// if price.Valid {
-// 	// 	o.Price = price.Float64
-// 	// }
+	var p protoPlan.PlanWithPagedOrders
+	// rows, err := db.Query(`SELECT p.id,
+	// 	p.user_id,
+	// 	p.user_key_id,
+	// 	k.api_key,
+	// 	k.description,
+	// 	p.exchange_name,
+	// 	p.market_name,
+	// 	p.plan_order_ids,
+	// 	p.base_balance,
+	// 	p.currency_balance,
+	// 	p.status,
+	// 	po.id,
+	// 	po.base_percent,
+	// 	po.currency_percent,
+	// 	po.side,
+	// 	po.order_type,
+	// 	po.conditions,
+	// 	po.price,
+	// 	po.next_plan_order_id,
+	// 	po.status
+	// 	FROM plans p
+	// 	JOIN plan_orders po on p.id = po.plan_id
+	// 	JOIN user_keys k on p.user_key_id = k.id
+	// 	WHERE p.id = $1 OFFSET $2 LIMIT $3 ORDER BY po.order_number`, req.PlanID, req.Page, req.PageSize)
 
-// 	// if err := json.Unmarshal([]byte(o.Conditions), &o.Conditions); err != nil {
-// 	// 	return nil, err
-// 	// }
+	// if err != nil {
+	// 	log.Fatal(err)
+	// 	return nil, err
+	// }
 
-// 	return &p, nil
-// }
+	// defer rows.Close()
+
+	// for rows.Next() {
+	// 	var plan protoPlan.Plan
+	// 	var order protoPlan.Order
+	// 	var planOrderIds pq.StringArray
+
+	// 	var price sql.NullFloat64
+	// 	var basePercent sql.NullFloat64
+	// 	var currencyPercent sql.NullFloat64
+	// 	var nextOrderID sql.NullString
+	// 	err := rows.Scan(
+	// 		&plan.PlanID,
+	// 		&plan.UserID,
+	// 		&plan.KeyID,
+	// 		&plan.Key,
+	// 		&plan.Secret,
+	// 		&plan.Exchange,
+	// 		&plan.MarketName,
+	// 		&planOrderIds,
+	// 		&plan.BaseBalance,
+	// 		&plan.CurrencyBalance,
+	// 		&plan.Status,
+	// 		&order.OrderID,
+	// 		&basePercent,
+	// 		&currencyPercent,
+	// 		&order.Side,
+	// 		&order.OrderType,
+	// 		&order.Conditions,
+	// 		&price,
+	// 		&nextOrderID,
+	// 		&order.Status)
+
+	// 	if err != nil {
+	// 		log.Fatal(err)
+	// 		return nil, err
+	// 	}
+	// 	if basePercent.Valid {
+	// 		order.BasePercent = basePercent.Float64
+	// 	}
+	// 	if currencyPercent.Valid {
+	// 		order.CurrencyPercent = currencyPercent.Float64
+	// 	}
+	// 	if price.Valid {
+	// 		order.Price = price.Float64
+	// 	}
+	// 	if nextOrderID.Valid {
+	// 		order.NextOrderID = nextOrderID.String
+	// 	}
+	// 	if err := json.Unmarshal([]byte(order.Conditions), &order.Conditions); err != nil {
+	// 		return nil, err
+	// 	}
+	// 	plan.Orders = append(plan.Orders, &order)
+	// 	results = append(results, &plan)
+	// }
+
+	// err = rows.Err()
+	// if err != nil {
+	// 	log.Fatal(err)
+	// 	return nil, err
+	// }
+
+	// 	var condition sql.NullString
+	// 	var exchangeOrderID sql.NullString
+	// 	var exchangeMarketName sql.NullString
+	// 	var price sql.NullFloat64
+	// 	var ids []string
+	// 	err := db.QueryRow(`SELECT id,
+	// 		user_id,
+	// 		user_key_id,
+	// 		exchange_name,
+	// 		exchange_order_id,
+	// 		exchange_market_name,
+	// 		market_name,
+	// 		order_ids,
+	// 		base_balance,
+	// 		currency_balance,
+	// 		status
+	// 		FROM plans WHERE id = $1`, req.PlanID).
+	// 		Scan(&p.PlanID,
+	// 			&p.UserID,
+	// 			&p.KeyID,
+	// 			&p.Exchange,
+	// 			&exchangeOrderID,
+	// 			&exchangeMarketName,
+	// 			&p.MarketName,
+	// 			&ids,
+	// 			&p.BaseBalance,
+	// 			&p.CurrencyBalance,
+	// 			&p.Status)
+
+	// 	// if err != nil {
+	// 	// 	return nil, err
+	// 	// }
+	// 	// if exchangeOrderID.Valid {
+	// 	// 	p.ExchangeOrderID = exchangeOrderID.String
+	// 	// }
+	// 	// if exchangeMarketName.Valid {
+	// 	// 	p.ExchangeMarketName = exchangeMarketName.String
+	// 	// }
+	// 	// if price.Valid {
+	// 	// 	o.Price = price.Float64
+	// 	// }
+
+	// 	// if err := json.Unmarshal([]byte(o.Conditions), &o.Conditions); err != nil {
+	// 	// 	return nil, err
+	// 	// }
+
+	return &p, nil
+}
 
 // Find all active orders in the DB. This wil load the keys for each order.
 // Returns active plans that have a verified key only.
@@ -438,18 +531,20 @@ func InsertPlan(db *sql.DB, req *protoPlan.PlanRequest) (*protoPlan.Plan, error)
 	sqlStatement := `insert into plans (id, 
 		user_id, 
 		user_key_id, 
+		plan_template_id,
 		exchange_name, 
 		market_name, 
 		base_balance, 
 		currency_balance, 
 		plan_order_ids,
 		status) 
-		values ($1, $2, $3, $4, $5, $6, $7, $8, $9)`
+		values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)`
 
 	_, err := db.Exec(sqlStatement,
 		planID,
 		req.UserID,
 		req.KeyID,
+		req.PlanTemplateID,
 		req.Exchange,
 		req.MarketName,
 		req.BaseBalance,
@@ -485,18 +580,22 @@ func InsertPlan(db *sql.DB, req *protoPlan.PlanRequest) (*protoPlan.Plan, error)
 			base_percent, 
 			currency_percent, 
 			side,
+			order_template_id,
+			order_number,
 			order_type,
 			conditions,
 			price,
 			next_plan_order_id,
 			status) 
-			values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)`
+			values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)`
 		_, err = db.Exec(sqlInsertOrder,
 			orderID,
 			planID,
 			or.BasePercent,
 			or.CurrencyPercent,
 			or.Side,
+			or.OrderTemplateID,
+			i,
 			or.OrderType,
 			jsonCond,
 			or.Price,
@@ -509,6 +608,7 @@ func InsertPlan(db *sql.DB, req *protoPlan.PlanRequest) (*protoPlan.Plan, error)
 		order := protoPlan.Order{
 			OrderID:         orderID.String(),
 			OrderType:       or.OrderType,
+			OrderTemplateID: or.OrderTemplateID,
 			Side:            or.Side,
 			Price:           or.Price,
 			BasePercent:     or.BasePercent,
@@ -522,6 +622,7 @@ func InsertPlan(db *sql.DB, req *protoPlan.PlanRequest) (*protoPlan.Plan, error)
 
 	plan := protoPlan.Plan{
 		PlanID:          planID.String(),
+		PlanTemplateID:  req.PlanTemplateID,
 		UserID:          req.UserID,
 		KeyID:           req.KeyID,
 		Exchange:        req.Exchange,
