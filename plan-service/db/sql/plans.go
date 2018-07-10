@@ -351,6 +351,7 @@ func FindUserPlansWithStatus(db *sql.DB, userID, status string, page, pageSize u
 	plans := make([]*protoPlan.Plan, 0)
 	query := `SELECT 
 		id,
+		plan_template_id,
 		user_key_id,
 		exchange_name,
 		market_name,
@@ -367,8 +368,11 @@ func FindUserPlansWithStatus(db *sql.DB, userID, status string, page, pageSize u
 	defer rows.Close()
 	for rows.Next() {
 		var plan protoPlan.Plan
+		var planTemplateID sql.NullString
+
 		err := rows.Scan(
 			&plan.PlanID,
+			planTemplateID,
 			&plan.KeyID,
 			&plan.Exchange,
 			&plan.MarketName,
@@ -378,6 +382,9 @@ func FindUserPlansWithStatus(db *sql.DB, userID, status string, page, pageSize u
 
 		if err != nil {
 			return nil, err
+		}
+		if planTemplateID.Valid {
+			plan.PlanTemplateID = planTemplateID.String
 		}
 
 		plans = append(plans, &plan)
@@ -408,6 +415,7 @@ func FindUserExchangePlansWithStatus(db *sql.DB, userID, status, exchange string
 	plans := make([]*protoPlan.Plan, 0)
 	query := `SELECT 
 		id,
+		plan_template_id,
 		user_key_id,
 		exchange_name,
 		market_name,
@@ -424,8 +432,11 @@ func FindUserExchangePlansWithStatus(db *sql.DB, userID, status, exchange string
 	defer rows.Close()
 	for rows.Next() {
 		var plan protoPlan.Plan
+		var planTemplateID sql.NullString
+
 		err := rows.Scan(
 			&plan.PlanID,
+			&planTemplateID,
 			&plan.KeyID,
 			&plan.Exchange,
 			&plan.MarketName,
@@ -435,6 +446,9 @@ func FindUserExchangePlansWithStatus(db *sql.DB, userID, status, exchange string
 
 		if err != nil {
 			return nil, err
+		}
+		if planTemplateID.Valid {
+			plan.PlanTemplateID = planTemplateID.String
 		}
 
 		plans = append(plans, &plan)
@@ -465,6 +479,7 @@ func FindUserMarketPlansWithStatus(db *sql.DB, userID, status, exchange, marketN
 	plans := make([]*protoPlan.Plan, 0)
 	query := `SELECT 
 		id,
+		plan_template_id,
 		user_key_id,
 		exchange_name,
 		market_name,
@@ -481,8 +496,11 @@ func FindUserMarketPlansWithStatus(db *sql.DB, userID, status, exchange, marketN
 	defer rows.Close()
 	for rows.Next() {
 		var plan protoPlan.Plan
+		var planTemplateID sql.NullString
+
 		err := rows.Scan(
 			&plan.PlanID,
+			&planTemplateID,
 			&plan.KeyID,
 			&plan.Exchange,
 			&plan.MarketName,
@@ -492,6 +510,9 @@ func FindUserMarketPlansWithStatus(db *sql.DB, userID, status, exchange, marketN
 
 		if err != nil {
 			return nil, err
+		}
+		if planTemplateID.Valid {
+			plan.PlanTemplateID = planTemplateID.String
 		}
 
 		plans = append(plans, &plan)
