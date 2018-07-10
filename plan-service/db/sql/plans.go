@@ -346,7 +346,7 @@ func FindUserPlansWithStatus(db *sql.DB, userID, status string, page, pageSize u
 
 		err := rows.Scan(
 			&plan.PlanID,
-			planTemplateID,
+			&planTemplateID,
 			&plan.KeyID,
 			&plan.Exchange,
 			&plan.MarketName,
