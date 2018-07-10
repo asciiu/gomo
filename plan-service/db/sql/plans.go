@@ -34,7 +34,7 @@ func FindPlanWithPagedOrders(db *sql.DB, req *protoPlan.GetUserPlanRequest) (*pr
 
 	var count uint32
 	queryCount := `SELECT count(*) FROM plan_orders WHERE plan_id = $1`
-	err := db.QueryRow(queryCount, req.UserID).Scan(&count)
+	err := db.QueryRow(queryCount, req.PlanID).Scan(&count)
 
 	rows, err := db.Query(`SELECT 
 		p.id,
@@ -62,10 +62,9 @@ func FindPlanWithPagedOrders(db *sql.DB, req *protoPlan.GetUserPlanRequest) (*pr
 		FROM plans p
 		JOIN plan_orders po on p.id = po.plan_id
 		JOIN user_keys k on p.user_key_id = k.id
-		WHERE p.id = $1 OFFSET $2 LIMIT $3 ORDER BY po.order_number`, req.PlanID, req.Page, req.PageSize)
+		WHERE p.id = $1 ORDER BY po.order_number OFFSET $2 LIMIT $3`, req.PlanID, req.Page, req.PageSize)
 
 	if err != nil {
-		log.Fatal(err)
 		return nil, err
 	}
 
