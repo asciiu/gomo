@@ -531,9 +531,8 @@ func InsertPlan(db *sql.DB, req *protoPlan.PlanRequest) (*protoPlan.Plan, error)
 		market_name, 
 		base_balance, 
 		currency_balance, 
-		plan_order_ids,
 		status) 
-		values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)`
+		values ($1, $2, $3, $4, $5, $6, $7, $8, $9)`
 
 	_, err := db.Exec(sqlStatement,
 		planID,
@@ -544,7 +543,6 @@ func InsertPlan(db *sql.DB, req *protoPlan.PlanRequest) (*protoPlan.Plan, error)
 		req.MarketName,
 		req.BaseBalance,
 		req.CurrencyBalance,
-		pq.Array(orderIDs),
 		planStatus)
 
 	if err != nil {
