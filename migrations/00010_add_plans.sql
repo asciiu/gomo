@@ -2,7 +2,7 @@
 -- SQL in this section is executed when the migration is applied.
 CREATE TABLE plans (
   id UUID PRIMARY KEY NOT NULL,
-  plan_template_id UUID,             -- optional frontend plan template used with this plan - (Leo wanted this) 
+  plan_template_id text,             -- optional frontend plan template used with this plan - (Leo wanted this) 
   user_id UUID NOT NULL REFERENCES users (id) ON DELETE CASCADE,
   user_key_id UUID NOT NULL REFERENCES user_keys (id) ON DELETE CASCADE,
   exchange_name text NOT NULL,
@@ -17,7 +17,7 @@ CREATE TABLE plans (
 CREATE TABLE plan_orders (
   id UUID PRIMARY KEY NOT NULL,
   plan_id UUID NOT NULL REFERENCES plans (id) ON DELETE CASCADE,
-  order_template_id UUID,             -- optional frontend template used for this order 
+  order_template_id text,             -- optional frontend template used for this order 
   base_percent decimal DEFAULT 0,
   currency_percent decimal DEFAULT 0,
   side text NOT NULL,
