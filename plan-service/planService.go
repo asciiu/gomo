@@ -58,7 +58,7 @@ func (service *PlanService) publishPlan(ctx context.Context, plan *protoPlan.Pla
 		CurrencyPercent: planOrder.CurrencyPercent,
 		KeyID:           plan.KeyID,
 		Key:             plan.Key,
-		Secret:          plan.Secret,
+		Secret:          plan.KeySecret,
 		MarketName:      plan.MarketName,
 		Side:            planOrder.Side,
 		OrderType:       planOrder.OrderType,
@@ -196,7 +196,7 @@ func (service *PlanService) AddPlan(ctx context.Context, req *protoPlan.PlanRequ
 	if pln.Status == plan.Active {
 		// send key and secret with plan
 		pln.Key = ky.Key
-		pln.Secret = ky.Secret
+		pln.KeySecret = ky.Secret
 
 		if err := service.publishPlan(ctx, pln); err != nil {
 			// TODO return a warning here
@@ -217,18 +217,16 @@ func (service *PlanService) AddPlan(ctx context.Context, req *protoPlan.PlanRequ
 // Can't return an error with a response object - response object is returned as nil when error is non nil.
 // Therefore, return error in response object.
 func (service *PlanService) GetUserPlan(ctx context.Context, req *protoPlan.GetUserPlanRequest, res *protoPlan.PlanWithPagedOrdersResponse) error {
-	// order, error := orderRepo.FindPlanByID(service.DB, req)
+	pagedPlan, error := planRepo.FindPlanWithPagedOrders(service.DB, req)
 
-	// switch {
-	// case error == nil:
-	// 	res.Status = response.Success
-	// 	res.Data = &plans.UserPlanData{
-	// 		Plan: order,
-	// 	}
-	// default:
-	// 	res.Status = response.Error
-	// 	res.Message = error.Error()
-	// }
+	switch {
+	case error == nil:
+		res.Status = response.Success
+		res.Data = pagedPlan
+	default:
+		res.Status = response.Error
+		res.Message = error.Error()
+	}
 	return nil
 }
 

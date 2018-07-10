@@ -62,29 +62,32 @@ message Plan {
   string userID = 3;
   string keyID = 4;
   string key = 5;
-  string secret = 6;
-  string exchange = 7;
-  string exchangeMarketName = 8;
-  string marketName = 9;
-  double baseBalance = 10;
-  double currencyBalance = 11;
-  string status = 12;
-  repeated Order orders = 13; 
+  string keySecret = 6;
+  string keyDescription = 7;
+  string exchange = 8;
+  string exchangeMarketName = 9;
+  string marketName = 10;
+  double baseBalance = 11;
+  double currencyBalance = 12;
+  string status = 13;
+  repeated Order orders = 14; 
 }
 
 message PlanWithPagedOrders {
   string planID = 1;
-  string userID = 2;
-  string keyID = 3;
-  string key = 4;
-  string secret = 5;
-  string exchange = 6;
-  string exchangeMarketName = 7;
-  string marketName = 8;
-  double baseBalance = 9;
-  double currencyBalance = 10;
-  string status = 11;
-  OrdersPage orders = 12;
+  string planTemplateID = 2;
+  string userID = 3;
+  string keyID = 4;
+  string key = 5;
+  string keySecret = 6;
+  string keyDescription = 7;
+  string exchange = 8;
+  string exchangeMarketName = 9;
+  string marketName = 10;
+  double baseBalance = 11;
+  double currencyBalance = 12;
+  string status = 13;
+  OrdersPage orders = 14;
 }
 
 message Order {

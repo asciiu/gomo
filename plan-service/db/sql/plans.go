@@ -22,146 +22,120 @@ func DeletePlan(db *sql.DB, planID string) error {
 // FindPlanWithPagedOrders ...
 func FindPlanWithPagedOrders(db *sql.DB, req *protoPlan.GetUserPlanRequest) (*protoPlan.PlanWithPagedOrders, error) {
 
-	var p protoPlan.PlanWithPagedOrders
-	// rows, err := db.Query(`SELECT p.id,
-	// 	p.user_id,
-	// 	p.user_key_id,
-	// 	k.api_key,
-	// 	k.description,
-	// 	p.exchange_name,
-	// 	p.market_name,
-	// 	p.plan_order_ids,
-	// 	p.base_balance,
-	// 	p.currency_balance,
-	// 	p.status,
-	// 	po.id,
-	// 	po.base_percent,
-	// 	po.currency_percent,
-	// 	po.side,
-	// 	po.order_type,
-	// 	po.conditions,
-	// 	po.price,
-	// 	po.next_plan_order_id,
-	// 	po.status
-	// 	FROM plans p
-	// 	JOIN plan_orders po on p.id = po.plan_id
-	// 	JOIN user_keys k on p.user_key_id = k.id
-	// 	WHERE p.id = $1 OFFSET $2 LIMIT $3 ORDER BY po.order_number`, req.PlanID, req.Page, req.PageSize)
+	var planPaged protoPlan.PlanWithPagedOrders
+	var page protoPlan.OrdersPage
 
-	// if err != nil {
-	// 	log.Fatal(err)
-	// 	return nil, err
-	// }
+	var planTemp sql.NullString
+	var orderTemp sql.NullString
+	var price sql.NullFloat64
+	var basePercent sql.NullFloat64
+	var currencyPercent sql.NullFloat64
+	var nextOrderID sql.NullString
 
-	// defer rows.Close()
+	var count uint32
+	queryCount := `SELECT count(*) FROM plan_orders WHERE plan_id = $1`
+	err := db.QueryRow(queryCount, req.UserID).Scan(&count)
 
-	// for rows.Next() {
-	// 	var plan protoPlan.Plan
-	// 	var order protoPlan.Order
-	// 	var planOrderIds pq.StringArray
+	rows, err := db.Query(`SELECT 
+		p.id,
+		p.plan_template_id,
+		p.user_id,
+		p.user_key_id,
+		k.api_key,
+		k.description,
+		p.exchange_name,
+		p.market_name,
+		p.base_balance,
+		p.currency_balance,
+		p.status,
+		po.id,
+		po.base_percent,
+		po.currency_percent,
+		po.side,
+		po.order_number,
+		po.order_type,
+		po.order_template_id,
+		po.conditions,
+		po.price,
+		po.next_plan_order_id,
+		po.status
+		FROM plans p
+		JOIN plan_orders po on p.id = po.plan_id
+		JOIN user_keys k on p.user_key_id = k.id
+		WHERE p.id = $1 OFFSET $2 LIMIT $3 ORDER BY po.order_number`, req.PlanID, req.Page, req.PageSize)
 
-	// 	var price sql.NullFloat64
-	// 	var basePercent sql.NullFloat64
-	// 	var currencyPercent sql.NullFloat64
-	// 	var nextOrderID sql.NullString
-	// 	err := rows.Scan(
-	// 		&plan.PlanID,
-	// 		&plan.UserID,
-	// 		&plan.KeyID,
-	// 		&plan.Key,
-	// 		&plan.Secret,
-	// 		&plan.Exchange,
-	// 		&plan.MarketName,
-	// 		&planOrderIds,
-	// 		&plan.BaseBalance,
-	// 		&plan.CurrencyBalance,
-	// 		&plan.Status,
-	// 		&order.OrderID,
-	// 		&basePercent,
-	// 		&currencyPercent,
-	// 		&order.Side,
-	// 		&order.OrderType,
-	// 		&order.Conditions,
-	// 		&price,
-	// 		&nextOrderID,
-	// 		&order.Status)
+	if err != nil {
+		log.Fatal(err)
+		return nil, err
+	}
 
-	// 	if err != nil {
-	// 		log.Fatal(err)
-	// 		return nil, err
-	// 	}
-	// 	if basePercent.Valid {
-	// 		order.BasePercent = basePercent.Float64
-	// 	}
-	// 	if currencyPercent.Valid {
-	// 		order.CurrencyPercent = currencyPercent.Float64
-	// 	}
-	// 	if price.Valid {
-	// 		order.Price = price.Float64
-	// 	}
-	// 	if nextOrderID.Valid {
-	// 		order.NextOrderID = nextOrderID.String
-	// 	}
-	// 	if err := json.Unmarshal([]byte(order.Conditions), &order.Conditions); err != nil {
-	// 		return nil, err
-	// 	}
-	// 	plan.Orders = append(plan.Orders, &order)
-	// 	results = append(results, &plan)
-	// }
+	defer rows.Close()
 
-	// err = rows.Err()
-	// if err != nil {
-	// 	log.Fatal(err)
-	// 	return nil, err
-	// }
+	for rows.Next() {
+		var order protoPlan.Order
 
-	// 	var condition sql.NullString
-	// 	var exchangeOrderID sql.NullString
-	// 	var exchangeMarketName sql.NullString
-	// 	var price sql.NullFloat64
-	// 	var ids []string
-	// 	err := db.QueryRow(`SELECT id,
-	// 		user_id,
-	// 		user_key_id,
-	// 		exchange_name,
-	// 		exchange_order_id,
-	// 		exchange_market_name,
-	// 		market_name,
-	// 		order_ids,
-	// 		base_balance,
-	// 		currency_balance,
-	// 		status
-	// 		FROM plans WHERE id = $1`, req.PlanID).
-	// 		Scan(&p.PlanID,
-	// 			&p.UserID,
-	// 			&p.KeyID,
-	// 			&p.Exchange,
-	// 			&exchangeOrderID,
-	// 			&exchangeMarketName,
-	// 			&p.MarketName,
-	// 			&ids,
-	// 			&p.BaseBalance,
-	// 			&p.CurrencyBalance,
-	// 			&p.Status)
+		err := rows.Scan(
+			&planPaged.PlanID,
+			planTemp,
+			&planPaged.UserID,
+			&planPaged.KeyID,
+			&planPaged.Key,
+			&planPaged.KeyDescription,
+			&planPaged.Exchange,
+			&planPaged.MarketName,
+			&planPaged.BaseBalance,
+			&planPaged.CurrencyBalance,
+			&planPaged.Status,
+			&order.OrderID,
+			&basePercent,
+			&currencyPercent,
+			&order.Side,
+			&order.OrderNumber,
+			&order.OrderType,
+			orderTemp,
+			&order.Conditions,
+			&price,
+			&nextOrderID,
+			&order.Status)
 
-	// 	// if err != nil {
-	// 	// 	return nil, err
-	// 	// }
-	// 	// if exchangeOrderID.Valid {
-	// 	// 	p.ExchangeOrderID = exchangeOrderID.String
-	// 	// }
-	// 	// if exchangeMarketName.Valid {
-	// 	// 	p.ExchangeMarketName = exchangeMarketName.String
-	// 	// }
-	// 	// if price.Valid {
-	// 	// 	o.Price = price.Float64
-	// 	// }
+		if err != nil {
+			log.Fatal(err)
+			return nil, err
+		}
+		if basePercent.Valid {
+			order.BasePercent = basePercent.Float64
+		}
+		if currencyPercent.Valid {
+			order.CurrencyPercent = currencyPercent.Float64
+		}
+		if price.Valid {
+			order.Price = price.Float64
+		}
+		if nextOrderID.Valid {
+			order.NextOrderID = nextOrderID.String
+		}
+		if orderTemp.Valid {
+			order.OrderTemplateID = orderTemp.String
+		}
+		if planTemp.Valid {
+			planPaged.PlanTemplateID = planTemp.String
+		}
+		if err := json.Unmarshal([]byte(order.Conditions), &order.Conditions); err != nil {
+			return nil, err
+		}
+		page.Orders = append(page.Orders, &order)
+	}
 
-	// 	// if err := json.Unmarshal([]byte(o.Conditions), &o.Conditions); err != nil {
-	// 	// 	return nil, err
-	// 	// }
+	err = rows.Err()
+	if err != nil {
+		return nil, err
+	}
+	page.Page = req.Page
+	page.PageSize = req.PageSize
+	page.Total = count
+	planPaged.Orders = &page
 
-	return &p, nil
+	return &planPaged, nil
 }
 
 // Find all active orders in the DB. This wil load the keys for each order.
@@ -215,7 +189,7 @@ func FindActivePlans(db *sql.DB) ([]*protoPlan.Plan, error) {
 			&plan.UserID,
 			&plan.KeyID,
 			&plan.Key,
-			&plan.Secret,
+			&plan.KeySecret,
 			&plan.Exchange,
 			&plan.MarketName,
 			&planOrderIds,
@@ -302,7 +276,7 @@ func FindPlanWithOrderID(db *sql.DB, orderID string) (*protoPlan.Plan, error) {
 		&plan.UserID,
 		&plan.KeyID,
 		&plan.Key,
-		&plan.Secret,
+		&plan.KeySecret,
 		&plan.Exchange,
 		&plan.MarketName,
 		&plan.BaseBalance,
