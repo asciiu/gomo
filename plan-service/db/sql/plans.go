@@ -75,7 +75,7 @@ func FindPlanWithPagedOrders(db *sql.DB, req *protoPlan.GetUserPlanRequest) (*pr
 
 		err := rows.Scan(
 			&planPaged.PlanID,
-			planTemp,
+			&planTemp,
 			&planPaged.UserID,
 			&planPaged.KeyID,
 			&planPaged.Key,
@@ -91,14 +91,13 @@ func FindPlanWithPagedOrders(db *sql.DB, req *protoPlan.GetUserPlanRequest) (*pr
 			&order.Side,
 			&order.OrderNumber,
 			&order.OrderType,
-			orderTemp,
+			&orderTemp,
 			&order.Conditions,
 			&price,
 			&nextOrderID,
 			&order.Status)
 
 		if err != nil {
-			log.Fatal(err)
 			return nil, err
 		}
 		if basePercent.Valid {
