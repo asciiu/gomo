@@ -211,6 +211,7 @@ func (service *PlanService) AddPlan(ctx context.Context, req *protoPlan.PlanRequ
 		Plan: pln,
 	}
 	return nil
+
 }
 
 // GetUserPlan returns error to conform to protobuf def, but the error will always be returned as nil.
@@ -265,32 +266,32 @@ func (service *PlanService) GetUserPlans(ctx context.Context, req *protoPlan.Get
 // RemovePlan returns error to conform to protobuf def, but the error will always be returned as nil.
 // Can't return an error with a response object - response object is returned as nil when error is non nil.
 // Therefore, return error in response object.
-func (service *PlanService) DeletePlan(ctx context.Context, req *protoPlan.DeletePlanRequest, res *protoPlan.PlanResponse) error {
-	// error := orderRepo.DeletePlan(service.DB, req.PlanID)
-	// switch {
-	// case error == nil:
-	// 	res.Status = response.Success
-	// default:
-	// 	res.Status = response.Error
-	// 	res.Message = error.Error()
-	// }
-	return nil
-}
+//func (service *PlanService) DeletePlan(ctx context.Context, req *protoPlan.DeletePlanRequest, res *protoPlan.PlanResponse) error {
+// error := orderRepo.DeletePlan(service.DB, req.PlanID)
+// switch {
+// case error == nil:
+// 	res.Status = response.Success
+// default:
+// 	res.Status = response.Error
+// 	res.Message = error.Error()
+// }
+//	return nil
+//}
 
 // UpdatePlan returns error to conform to protobuf def, but the error will always be returned as nil.
 // Can't return an error with a response object - response object is returned as nil when error is non nil.
 // Therefore, return error in response object.
-func (service *PlanService) UpdatePlan(ctx context.Context, req *protoPlan.PlanRequest, res *protoPlan.PlanResponse) error {
-	// order, error := orderRepo.UpdatePlan(service.DB, req)
-	// switch {
-	// case error == nil:
-	// 	res.Status = response.Success
-	// 	res.Data = &plans.UserPlanData{
-	// 		Plan: order,
-	// 	}
-	// default:
-	// 	res.Status = response.Error
-	// 	res.Message = error.Error()
-	// }
-	return nil
-}
+//func (service *PlanService) UpdatePlan(ctx context.Context, req *protoPlan.PlanRequest, res *protoPlan.PlanResponse) error {
+// order, error := orderRepo.UpdatePlan(service.DB, req)
+// switch {
+// case error == nil:
+// 	res.Status = response.Success
+// 	res.Data = &plans.UserPlanData{
+// 		Plan: order,
+// 	}
+// default:
+// 	res.Status = response.Error
+// 	res.Message = error.Error()
+// }
+//	return nil
+//}

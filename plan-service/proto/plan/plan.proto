@@ -87,7 +87,7 @@ message PlanWithPagedOrders {
   double baseBalance = 11;
   double currencyBalance = 12;
   string status = 13;
-  OrdersPage orders = 14;
+  OrdersPage ordersPage = 14;
 }
 
 message Order {
@@ -104,7 +104,6 @@ message Order {
   string condition = 11; 
   string nextOrderID = 12;
 }
-
 
 message PlanData {
   Plan plan = 1;

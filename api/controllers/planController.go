@@ -37,6 +37,20 @@ type ResponsePlansSuccess struct {
 	Data   *PlansPage `json:"data"`
 }
 
+// A ResponsePlanWithOrderPageSuccess will always contain a status of "successful".
+// swagger:model ResponsePlanWithOrderPageSuccess
+type ResponsePlanWithOrderPageSuccess struct {
+	Status string             `json:"status"`
+	Data   *PlanWithOrderPage `json:"data"`
+}
+
+// A ResponsePlanSuccess will always contain a status of "successful".
+// swagger:model ResponsePlanSuccess
+type ResponsePlanSuccess struct {
+	Status string `json:"status"`
+	Data   *Plan  `json:"data"`
+}
+
 type PlansPage struct {
 	Page     uint32  `json:"page"`
 	PageSize uint32  `json:"pageSize"`
@@ -44,8 +58,28 @@ type PlansPage struct {
 	Plans    []*Plan `json:"plans"`
 }
 
-type UserPlanData struct {
-	Plan *Plan `json:"plan"`
+type PlanWithOrderPage struct {
+	PlanID             string            `json:"planID"`
+	PlanTemplateID     string            `json:"planTemplateID"`
+	KeyID              string            `json:"keyID"`
+	Exchange           string            `json:"exchange"`
+	ExchangeMarketName string            `json:"exchangeMarketName"`
+	MarketName         string            `json:"marketName"`
+	BaseCurrencySymbol string            `json:"baseCurrencySymbol"`
+	BaseCurrencyName   string            `json:"baseCurrencyName"`
+	BaseBalance        float64           `json:"baseBalance"`
+	CurrencySymbol     string            `json:"currencySymbol"`
+	CurrencyName       string            `json:"currencyName"`
+	CurrencyBalance    float64           `json:"currencyBalance"`
+	Status             string            `json:"status"`
+	OrdersPage         *plans.OrdersPage `json:"ordersPage"`
+}
+
+type OrdersPage struct {
+	Page     uint32         `json:"page"`
+	PageSize uint32         `json:"pageSize"`
+	Total    uint32         `json:"total"`
+	Orders   []*plans.Order `json:"orders"`
 }
 
 type UserPlansData struct {
@@ -55,7 +89,26 @@ type UserPlansData struct {
 // This is the response struct for order
 type Plan struct {
 	PlanID             string         `json:"planID"`
+	PlanTemplateID     string         `json:"planTemplateID"`
 	KeyID              string         `json:"keyID"`
+	Exchange           string         `json:"exchange"`
+	ExchangeMarketName string         `json:"exchangeMarketName"`
+	MarketName         string         `json:"marketName"`
+	BaseCurrencySymbol string         `json:"baseCurrencySymbol"`
+	BaseCurrencyName   string         `json:"baseCurrencyName"`
+	BaseBalance        float64        `json:"baseBalance"`
+	CurrencySymbol     string         `json:"currencySymbol"`
+	CurrencyName       string         `json:"currencyName"`
+	CurrencyBalance    float64        `json:"currencyBalance"`
+	Status             string         `json:"status"`
+	Orders             []*plans.Order `json:"orders"`
+}
+
+type PagedPlan struct {
+	PlanID             string         `json:"planID"`
+	PlanTemplateID     string         `json:"planTemplateID"`
+	KeyID              string         `json:"keyID"`
+	KeyDescription     string         `json:"description"`
 	Exchange           string         `json:"exchange"`
 	ExchangeMarketName string         `json:"exchangeMarketName"`
 	MarketName         string         `json:"marketName"`
@@ -71,6 +124,9 @@ type Plan struct {
 
 // swagger:parameters addPlan
 type PlanRequest struct {
+	// Optional plan template ID.
+	// in: body
+	PlanTemplateID string `json:"planTemplateID"`
 	// Required this is our api key ID (string uuid) assigned to the user's exchange key and secret.
 	// in: body
 	KeyID string `json:"keyID"`
@@ -96,6 +152,9 @@ type OrderReq struct {
 	// Required "buy" or "sell"
 	// in: body
 	Side string `json:"side"`
+	// Optional order template ID.
+	// in: body
+	OrderTemplateID string `json:"orderTemplateID"`
 	// Required Valid order types are "market", "limit", "virtual". Orders not within these types will be rejected.
 	// in: body
 	OrderType string `json:"orderType"`
@@ -137,17 +196,6 @@ type UpdatePlanRequest struct {
 
 // A ResponsePlanSuccess will always contain a status of "successful".
 // swagger:model ResponsePlanSuccess
-type ResponsePlanSuccess struct {
-	Status string        `json:"status"`
-	Data   *UserPlanData `json:"data"`
-}
-
-// A ResponseKeysSuccess will always contain a status of "successful".
-// swagger:model responseOrdersSuccess
-type ResponseStategiesSuccess struct {
-	Status string          `json:"status"`
-	Data   *UserOrdersData `json:"data"`
-}
 
 func NewPlanController(db *sql.DB) *PlanController {
 	// Create a new service. Optionally include some options here.
@@ -186,76 +234,76 @@ func NewPlanController(db *sql.DB) *PlanController {
 //  200: responseOrderSuccess "data" will contain order stuffs with "status": "success"
 //  500: responseError the message will state what the internal server error was with "status": "error"
 func (controller *PlanController) HandleGetPlan(c echo.Context) error {
-	return nil
-	// token := c.Get("user").(*jwt.Token)
-	// claims := token.Claims.(jwt.MapClaims)
-	// userID := claims["jti"].(string)
-	// orderID := c.Param("orderID")
+	token := c.Get("user").(*jwt.Token)
+	claims := token.Claims.(jwt.MapClaims)
+	userID := claims["jti"].(string)
+	planID := c.Param("planID")
 
-	// getRequest := orders.GetUserOrderRequest{
-	// 	OrderID: orderID,
-	// 	UserID:  userID,
-	// }
+	pageStr := c.QueryParam("page")
+	pageSizeStr := c.QueryParam("pageSize")
+	// defaults for page and page size here
+	// ignore the errors and assume the values are int
+	page, _ := strconv.ParseUint(pageStr, 10, 32)
+	pageSize, _ := strconv.ParseUint(pageSizeStr, 10, 32)
+	if pageSize == 0 {
+		pageSize = 20
+	}
 
-	// r, _ := controller.Orders.GetUserOrder(context.Background(), &getRequest)
-	// if r.Status != response.Success {
-	// 	res := &ResponseError{
-	// 		Status:  r.Status,
-	// 		Message: r.Message,
-	// 	}
+	getRequest := plans.GetUserPlanRequest{
+		PlanID:   planID,
+		UserID:   userID,
+		Page:     uint32(page),
+		PageSize: uint32(pageSize),
+	}
 
-	// 	if r.Status == response.Fail {
-	// 		return c.JSON(http.StatusBadRequest, res)
-	// 	}
-	// 	if r.Status == response.Error {
-	// 		return c.JSON(http.StatusInternalServerError, res)
-	// 	}
-	// }
+	r, _ := controller.Plans.GetUserPlan(context.Background(), &getRequest)
+	if r.Status != response.Success {
+		res := &ResponseError{
+			Status:  r.Status,
+			Message: r.Message,
+		}
 
-	// names := strings.Split(r.Data.Order.MarketName, "-")
-	// baseCurrencySymbol := names[1]
-	// baseCurrencyName := controller.currencies[baseCurrencySymbol]
-	// currencySymbol := names[0]
-	// currencyName := controller.currencies[currencySymbol]
+		if r.Status == response.Fail {
+			return c.JSON(http.StatusBadRequest, res)
+		}
+		if r.Status == response.Error {
+			return c.JSON(http.StatusInternalServerError, res)
+		}
+	}
 
-	// res := &ResponseOrderSuccess{
-	// 	Status: response.Success,
-	// 	Data: &UserOrderData{
-	// 		Order: &Order{
-	// 			OrderID:            r.Data.Order.OrderID,
-	// 			KeyID:              r.Data.Order.KeyID,
-	// 			Exchange:           r.Data.Order.Exchange,
-	// 			ExchangeOrderID:    r.Data.Order.ExchangeOrderID,
-	// 			ExchangeMarketName: r.Data.Order.ExchangeMarketName,
-	// 			MarketName:         r.Data.Order.MarketName,
-	// 			Side:               r.Data.Order.Side,
-	// 			OrderType:          r.Data.Order.OrderType,
-	// 			BaseCurrencySymbol: baseCurrencySymbol,
-	// 			BaseCurrencyName:   baseCurrencyName,
-	// 			BaseQuantity:       r.Data.Order.BaseQuantity,
-	// 			BasePercent:        r.Data.Order.BasePercent,
-	// 			CurrencySymbol:     currencySymbol,
-	// 			CurrencyName:       currencyName,
-	// 			CurrencyQuantity:   r.Data.Order.CurrencyQuantity,
-	// 			CurrencyPercent:    r.Data.Order.CurrencyPercent,
-	// 			Status:             r.Data.Order.Status,
-	// 			ChainStatus:        r.Data.Order.ChainStatus,
-	// 			Conditions:         r.Data.Order.Conditions,
-	// 			Condition:          r.Data.Order.Condition,
-	// 			ParentOrderID:      r.Data.Order.ParentOrderID,
-	// 			Price:              r.Data.Order.Price,
-	// 		},
-	// 	},
-	// }
+	names := strings.Split(r.Data.MarketName, "-")
+	baseCurrencySymbol := names[1]
+	baseCurrencyName := controller.currencies[baseCurrencySymbol]
+	currencySymbol := names[0]
+	currencyName := controller.currencies[currencySymbol]
 
-	// return c.JSON(http.StatusOK, res)
+	res := &ResponsePlanWithOrderPageSuccess{
+		Status: response.Success,
+		Data: &PlanWithOrderPage{
+			PlanID:             r.Data.PlanID,
+			PlanTemplateID:     r.Data.PlanTemplateID,
+			KeyID:              r.Data.KeyID,
+			Exchange:           r.Data.Exchange,
+			MarketName:         r.Data.MarketName,
+			BaseCurrencySymbol: baseCurrencySymbol,
+			BaseCurrencyName:   baseCurrencyName,
+			BaseBalance:        r.Data.BaseBalance,
+			CurrencySymbol:     currencySymbol,
+			CurrencyName:       currencyName,
+			CurrencyBalance:    r.Data.CurrencyBalance,
+			Status:             r.Data.Status,
+			OrdersPage:         r.Data.OrdersPage,
+		},
+	}
+
+	return c.JSON(http.StatusOK, res)
 }
 
 // swagger:route GET /plans plans getUserPlans
 //
 // get user plans (protected)
 //
-// Returns a summary of user plans.
+// Returns a summary of user plans. The plan orders will not be returned and will be null.
 // Query Params: status, marketName, exchange, page, pageSize
 //
 // The defaults for the params are:
@@ -325,6 +373,7 @@ func (controller *PlanController) HandleListPlans(c echo.Context) error {
 		currencyName := controller.currencies[currencySymbol]
 
 		pln := Plan{
+			PlanTemplateID:     plan.PlanTemplateID,
 			PlanID:             plan.PlanID,
 			KeyID:              plan.KeyID,
 			Exchange:           plan.Exchange,
@@ -430,6 +479,7 @@ func (controller *PlanController) HandlePostPlan(c echo.Context) error {
 		}
 		or := plans.OrderRequest{
 			Side:            order.Side,
+			OrderTemplateID: order.OrderTemplateID,
 			OrderType:       order.OrderType,
 			BasePercent:     order.BasePercent,
 			CurrencyPercent: order.CurrencyPercent,
@@ -440,6 +490,7 @@ func (controller *PlanController) HandlePostPlan(c echo.Context) error {
 	}
 
 	newPlanRequest := plans.PlanRequest{
+		PlanTemplateID:  newPlan.PlanTemplateID,
 		UserID:          userID,
 		KeyID:           newPlan.KeyID,
 		MarketName:      newPlan.MarketName,
@@ -473,6 +524,7 @@ func (controller *PlanController) HandlePostPlan(c echo.Context) error {
 
 	data := Plan{
 		PlanID:             r.Data.Plan.PlanID,
+		PlanTemplateID:     r.Data.Plan.PlanTemplateID,
 		KeyID:              r.Data.Plan.KeyID,
 		Exchange:           r.Data.Plan.Exchange,
 		ExchangeMarketName: r.Data.Plan.ExchangeMarketName,
@@ -489,9 +541,7 @@ func (controller *PlanController) HandlePostPlan(c echo.Context) error {
 
 	res := &ResponsePlanSuccess{
 		Status: response.Success,
-		Data: &UserPlanData{
-			Plan: &data,
-		},
+		Data:   &data,
 	}
 
 	return c.JSON(http.StatusOK, res)

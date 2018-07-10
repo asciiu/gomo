@@ -133,7 +133,7 @@ func FindPlanWithPagedOrders(db *sql.DB, req *protoPlan.GetUserPlanRequest) (*pr
 	page.Page = req.Page
 	page.PageSize = req.PageSize
 	page.Total = count
-	planPaged.Orders = &page
+	planPaged.OrdersPage = &page
 
 	return &planPaged, nil
 }

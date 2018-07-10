@@ -116,7 +116,7 @@ func NewRouter(db *sql.DB) *echo.Echo {
 	// strategy management endpoints
 	protectedApi.GET("/plans", planController.HandleListPlans)
 	protectedApi.POST("/plans", planController.HandlePostPlan)
-	//protectedApi.GET("/orders/:orderID", orderController.HandleGetOrder)
+	protectedApi.GET("/plans/:planID", planController.HandleGetPlan)
 	//protectedApi.PUT("/orders/:orderID", orderController.HandleUpdateOrder)
 	//protectedApi.DELETE("/orders/:orderID", orderController.HandleDeleteOrder)
 
