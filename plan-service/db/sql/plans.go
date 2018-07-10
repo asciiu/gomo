@@ -523,7 +523,8 @@ func InsertPlan(db *sql.DB, req *protoPlan.PlanRequest) (*protoPlan.Plan, error)
 		orderIDs = append(orderIDs, uuid.New())
 	}
 
-	sqlStatement := `insert into plans (id, 
+	sqlStatement := `insert into plans (
+		id, 
 		user_id, 
 		user_key_id, 
 		plan_template_id,
@@ -600,6 +601,7 @@ func InsertPlan(db *sql.DB, req *protoPlan.PlanRequest) (*protoPlan.Plan, error)
 		}
 		order := protoPlan.Order{
 			OrderID:         orderID.String(),
+			OrderNumber:     int32(i),
 			OrderType:       or.OrderType,
 			OrderTemplateID: or.OrderTemplateID,
 			Side:            or.Side,
