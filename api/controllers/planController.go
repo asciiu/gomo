@@ -139,9 +139,9 @@ type PlanRequest struct {
 	// Required When first order is buy. Base should be in suffix of market name.
 	// in: body
 	CurrencyBalance float64 `json:"currencyBalance"`
-	// Optional make this strategy live immeadiately - live (true) or make inactive (false)
+	// Optional make this strategy live immeadiately with status=active. Valid input status is active, inactive, or past
 	// in: body
-	Live bool `json:"live"`
+	Status string `json:"status"`
 
 	// Required array of orders. The sequence of orders is assumed to be the sequence of execution.
 	// in: body
@@ -175,7 +175,7 @@ type OrderReq struct {
 	Conditions string `json:"conditions"`
 	// Optional this is required only when the order type is 'limit'. This is the limit order price.
 	// in: body
-	Price float64 `json:"price"`
+	Price float64 `json:"limitPrice"`
 }
 
 // swagger:parameters updateOrder
@@ -466,6 +466,9 @@ func (controller *PlanController) HandlePostPlan(c echo.Context) error {
 	if len(newPlan.Orders) == 0 {
 		return fail(c, "at least one order required for a trade plan")
 	}
+	if !plan.ValidatePlanInputStatus(newPlan.Status) {
+		return fail(c, "valid status is active, inactive, or past")
+	}
 
 	// error check all orders
 	orders := make([]*plans.OrderRequest, 0)
@@ -498,7 +501,7 @@ func (controller *PlanController) HandlePostPlan(c echo.Context) error {
 		MarketName:      newPlan.MarketName,
 		BaseBalance:     newPlan.BaseBalance,
 		CurrencyBalance: newPlan.CurrencyBalance,
-		Active:          newPlan.Live,
+		Active:          newPlan.Status,
 		Orders:          orders,
 	}
 

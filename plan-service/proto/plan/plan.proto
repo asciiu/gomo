@@ -20,7 +20,7 @@ message PlanRequest {
   string marketName = 6;
   double baseBalance = 7;
   double currencyBalance = 8;
-  bool active = 9;
+  string status = 9;
   repeated OrderRequest orders = 10; 
 }
 

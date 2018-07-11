@@ -511,11 +511,6 @@ func InsertPlan(db *sql.DB, req *protoPlan.PlanRequest) (*protoPlan.Plan, error)
 	orderIDs := make([]uuid.UUID, 0)
 	orders := make([]*protoPlan.Order, 0)
 
-	planStatus := plan.Active
-	if !req.Active {
-		planStatus = plan.Inactive
-	}
-
 	// generate order ids
 	for range req.Orders {
 		orderIDs = append(orderIDs, uuid.New())
@@ -542,7 +537,7 @@ func InsertPlan(db *sql.DB, req *protoPlan.PlanRequest) (*protoPlan.Plan, error)
 		req.MarketName,
 		req.BaseBalance,
 		req.CurrencyBalance,
-		planStatus)
+		req.Status)
 
 	if err != nil {
 		return nil, err
