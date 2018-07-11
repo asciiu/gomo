@@ -62,7 +62,7 @@ func (service *PlanService) publishPlan(ctx context.Context, plan *protoPlan.Pla
 		MarketName:      plan.MarketName,
 		Side:            planOrder.Side,
 		OrderType:       planOrder.OrderType,
-		Price:           planOrder.Price,
+		Price:           planOrder.LimitPrice,
 		Conditions:      planOrder.Conditions,
 		NextOrderID:     planOrder.NextOrderID,
 	}

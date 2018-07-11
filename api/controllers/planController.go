@@ -175,7 +175,7 @@ type OrderReq struct {
 	Conditions string `json:"conditions"`
 	// Optional this is required only when the order type is 'limit'. This is the limit order price.
 	// in: body
-	Price float64 `json:"limitPrice"`
+	LimitPrice float64 `json:"limitPrice"`
 }
 
 // swagger:parameters updateOrder
@@ -489,7 +489,7 @@ func (controller *PlanController) HandlePostPlan(c echo.Context) error {
 			BasePercent:     order.BasePercent,
 			CurrencyPercent: order.CurrencyPercent,
 			Conditions:      order.Conditions,
-			Price:           order.Price,
+			LimitPrice:      order.LimitPrice,
 		}
 		orders = append(orders, &or)
 	}

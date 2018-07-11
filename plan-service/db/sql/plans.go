@@ -107,7 +107,7 @@ func FindPlanWithPagedOrders(db *sql.DB, req *protoPlan.GetUserPlanRequest) (*pr
 			order.CurrencyPercent = currencyPercent.Float64
 		}
 		if price.Valid {
-			order.Price = price.Float64
+			order.LimitPrice = price.Float64
 		}
 		if nextOrderID.Valid {
 			order.NextOrderID = nextOrderID.String
@@ -215,7 +215,7 @@ func FindActivePlans(db *sql.DB) ([]*protoPlan.Plan, error) {
 			order.CurrencyPercent = currencyPercent.Float64
 		}
 		if price.Valid {
-			order.Price = price.Float64
+			order.LimitPrice = price.Float64
 		}
 		if nextOrderID.Valid {
 			order.NextOrderID = nextOrderID.String
@@ -301,7 +301,7 @@ func FindPlanWithOrderID(db *sql.DB, orderID string) (*protoPlan.Plan, error) {
 		order.CurrencyPercent = currencyPercent.Float64
 	}
 	if price.Valid {
-		order.Price = price.Float64
+		order.LimitPrice = price.Float64
 	}
 	if nextOrderID.Valid {
 		order.NextOrderID = nextOrderID.String
@@ -585,7 +585,7 @@ func InsertPlan(db *sql.DB, req *protoPlan.PlanRequest) (*protoPlan.Plan, error)
 			i,
 			or.OrderType,
 			jsonCond,
-			or.Price,
+			or.LimitPrice,
 			nextOrderID,
 			orderStatus)
 
@@ -598,7 +598,7 @@ func InsertPlan(db *sql.DB, req *protoPlan.PlanRequest) (*protoPlan.Plan, error)
 			OrderType:       or.OrderType,
 			OrderTemplateID: or.OrderTemplateID,
 			Side:            or.Side,
-			Price:           or.Price,
+			LimitPrice:      or.LimitPrice,
 			BasePercent:     or.BasePercent,
 			CurrencyPercent: or.CurrencyPercent,
 			Status:          orderStatus,

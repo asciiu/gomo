@@ -31,7 +31,7 @@ message OrderRequest {
   double basePercent = 4;
   double currencyPercent = 5;
   string conditions = 6;
-  double price = 7;
+  double limitPrice = 7;
 }
 
 message GetUserPlanRequest {
@@ -96,7 +96,7 @@ message Order {
   string orderTemplateID = 3;
   int32 orderNumber = 4;
   string orderType = 5;
-  double price = 6;
+  double limitPrice = 6;
   double basePercent = 7;
   double currencyPercent = 8;
   string status = 9;
