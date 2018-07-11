@@ -31,7 +31,7 @@ type PlanController struct {
 }
 
 // A ResponsePlansSuccess will always contain a status of "successful".
-// swagger:model responsePlansSuccess
+// swagger:model ResponsePlansSuccess
 type ResponsePlansSuccess struct {
 	Status string     `json:"status"`
 	Data   *PlansPage `json:"data"`
@@ -86,7 +86,7 @@ type UserPlansData struct {
 	PLans []*Plan `json:"plans"`
 }
 
-// This is the response struct for order
+// This response should never return the key secret
 type Plan struct {
 	PlanID             string         `json:"planID"`
 	PlanTemplateID     string         `json:"planTemplateID"`
@@ -122,81 +122,6 @@ type PagedPlan struct {
 	Orders             []*plans.Order `json:"orders"`
 }
 
-// swagger:parameters addPlan
-type PlanRequest struct {
-	// Optional plan template ID.
-	// in: body
-	PlanTemplateID string `json:"planTemplateID"`
-	// Required this is our api key ID (string uuid) assigned to the user's exchange key and secret.
-	// in: body
-	KeyID string `json:"keyID"`
-	// Required e.g. ADA-BTC. Base pair should be the suffix.
-	// in: body
-	MarketName string `json:"marketName"`
-	// Required When first order is buy. Base should be in suffix of market name.
-	// in: body
-	BaseBalance float64 `json:"baseBalance"`
-	// Required When first order is buy. Base should be in suffix of market name.
-	// in: body
-	CurrencyBalance float64 `json:"currencyBalance"`
-	// Optional make this strategy live immeadiately with status=active. Valid input status is active, inactive, or historic
-	// in: body
-	Status string `json:"status"`
-
-	// Required array of orders. The sequence of orders is assumed to be the sequence of execution.
-	// in: body
-	Orders []*OrderReq `json:"orders"`
-}
-
-type OrderReq struct {
-	// Required "buy" or "sell"
-	// in: body
-	Side string `json:"side"`
-	// Optional order template ID.
-	// in: body
-	OrderTemplateID string `json:"orderTemplateID"`
-	// Required Valid order types are "market", "limit", "virtual". Orders not within these types will be rejected.
-	// in: body
-	OrderType string `json:"orderType"`
-	// Required for buy side when order is first in chain. This will designate the reserve base balance to use during the execution of the chained order stategy.
-	// in: body
-	BaseQuantity float64 `json:"baseQuantity"`
-	// Required for buy side on chained orders. Specifies the precent of the reserve balance to allocate for the order.
-	// in: body
-	BasePercent float64 `json:"basePercent"`
-	// Required for sell side when an order is first in a chain. This is the quantity of market currency to sell.
-	// in: body
-	CurrencyQuantity float64 `json:"currencyQuantity"`
-	// Required for sell side for all orders that are chained. Similar to the basePercent, but for sell orders.
-	// in: body
-	CurrencyPercent float64 `json:"currencyPercent"`
-	// Required these are the conditions that trigger the order to execute. Example: ???
-	// in: body
-	Conditions string `json:"conditions"`
-	// Optional this is required only when the order type is 'limit'. This is the limit order price.
-	// in: body
-	LimitPrice float64 `json:"limitPrice"`
-}
-
-// swagger:parameters updateOrder
-type UpdatePlanRequest struct {
-	// Optional.
-	// in: body
-	OrderType string `json:"orderType"`
-	// Optional.
-	// in: body
-	Price float64 `json:"price"`
-	// Optional.
-	// in: body
-	BaseQuantity float64 `json:"baseQuantity"`
-	// Optional.
-	// in: body
-	Conditions string `json:"conditions"`
-}
-
-// A ResponsePlanSuccess will always contain a status of "successful".
-// swagger:model ResponsePlanSuccess
-
 func NewPlanController(db *sql.DB) *PlanController {
 	// Create a new service. Optionally include some options here.
 	service := k8s.NewService(micro.Name("apikey.client"))
@@ -224,14 +149,43 @@ func NewPlanController(db *sql.DB) *PlanController {
 
 }
 
-// swagger:route GET /orders/:orderID orders getOrder
+// swagger:route DELETE /plans/:planID plans DeletePlan
 //
-// show order (protected)
+// deletes a plan (protected)
 //
-// Get info about an order.
+// You may delete a plan if it has not executed. That is, the plan has no filled orders. Delete plan becomes cancel plan
+// when an order has been filled. In theory, this should kill all active orders for a plan and set the status for the plan
+// as 'aborted'. Once a plan has been 'aborted' you cannot update or restart that plan.
 //
 // responses:
-//  200: responseOrderSuccess "data" will contain order stuffs with "status": "success"
+//  200: ResponsePlanSuccess "data" will contain plan summary with null orders.
+//  500: responseError the message will state what the internal server error was with "status": "error"
+func (controller *PlanController) HandleDeletePlan(c echo.Context) error {
+	//token := c.Get("user").(*jwt.Token)
+	//claims := token.Claims.(jwt.MapClaims)
+	//userID := claims["jti"].(string)
+	//planID := c.Param("planID")
+	return c.JSON(http.StatusNoContent, "")
+}
+
+// required for swaggered, otherwise never used
+// swagger:parameters GetPlanParams
+type GetPlanParams struct {
+	Page     uint32 `json:"page"`
+	PageSize uint32 `json:"pageSize"`
+}
+
+// swagger:route GET /plans/:planID plans GetPlanParams
+//
+// get plan with planID (protected)
+//
+// Returns a plan with completd currency and base currency names. There is no limit on planned orders - these are the
+// orders that belong to a trade plan. Therefore, the response data will contain a paged structure for the plan orders.
+//
+// example: /plans/:some_plan_id?page0&pageSize=50
+//
+// responses:
+//  200: ResponsePlanWithOrderPageSuccess "data" will contain paged orders
 //  500: responseError the message will state what the internal server error was with "status": "error"
 func (controller *PlanController) HandleGetPlan(c echo.Context) error {
 	token := c.Get("user").(*jwt.Token)
@@ -301,11 +255,21 @@ func (controller *PlanController) HandleGetPlan(c echo.Context) error {
 	return c.JSON(http.StatusOK, res)
 }
 
-// swagger:route GET /plans plans getUserPlans
+// required for swaggered, otherwise never used
+// swagger:parameters GetUserPlansParams
+type GetUserPlansParams struct {
+	Exchange   string `json:"exchange"`
+	MarketName string `json:"marketName"`
+	Status     string `json:"status"`
+	Page       uint32 `json:"page"`
+	PageSize   uint32 `json:"pageSize"`
+}
+
+// swagger:route GET /plans plans GetUserPlansParams
 //
 // get user plans (protected)
 //
-// Returns a summary of user plans. The plan orders will not be returned and will be null.
+// Returns a summary of plans. The plan orders will not be returned and will be null.
 // Query Params: status, marketName, exchange, page, pageSize
 //
 // The defaults for the params are:
@@ -313,10 +277,10 @@ func (controller *PlanController) HandleGetPlan(c echo.Context) error {
 // page - 0
 // pageSize - 50
 //
-// example: /plans?status=failed&exchange=binance
+// example: /plans?exchange=binance
 //
 // responses:
-//  200: responsePlansSuccess "data" will contain an array of plan summaries
+//  200: ResponsePlansSuccess "data" will contain an array of plan summaries
 //  500: responseError the message will state what the internal server error was with "status": "error"
 func (controller *PlanController) HandleListPlans(c echo.Context) error {
 	token := c.Get("user").(*jwt.Token)
@@ -405,9 +369,59 @@ func (controller *PlanController) HandleListPlans(c echo.Context) error {
 	return c.JSON(http.StatusOK, res)
 }
 
-// swagger:route POST /plans plans addPlan
+// swagger:parameters PostPlan
+type PlanRequest struct {
+	// Optional plan template ID.
+	// in: body
+	PlanTemplateID string `json:"planTemplateID"`
+	// Required this is our api key ID (string uuid) assigned to the user's exchange key and secret.
+	// in: body
+	KeyID string `json:"keyID"`
+	// Required e.g. ADA-BTC. Base pair should be the suffix.
+	// in: body
+	MarketName string `json:"marketName"`
+	// Required When first order is buy. Base should be in suffix of market name.
+	// in: body
+	BaseBalance float64 `json:"baseBalance"`
+	// Required When first order is buy. Base should be in suffix of market name.
+	// in: body
+	CurrencyBalance float64 `json:"currencyBalance"`
+	// Optional defaults to 'active' status. Valid input status is 'active', 'inactive', or 'historic'
+	// in: body
+	Status string `json:"status"`
+
+	// Required array of orders. The sequence of orders is assumed to be the sequence of execution.
+	// in: body
+	Orders []*OrderReq `json:"orders"`
+}
+
+type OrderReq struct {
+	// Required "buy" or "sell"
+	// in: body
+	Side string `json:"side"`
+	// Optional order template ID.
+	// in: body
+	OrderTemplateID string `json:"orderTemplateID"`
+	// Required order types are "market", "limit", "paper". Orders not within these types will be rejected.
+	// in: body
+	OrderType string `json:"orderType"`
+	// Required for buy side. Specifies the percent of the plans base balance to use for buy.
+	// in: body
+	BasePercent float64 `json:"basePercent"`
+	// Required for sell side. Percent of currency balance for sell orders.
+	// in: body
+	CurrencyPercent float64 `json:"currencyPercent"`
+	// Required these are the conditions that trigger the order to execute: ???
+	// in: body
+	Conditions string `json:"conditions"`
+	// Required for 'limit' orders. Defines limit price.
+	// in: body
+	LimitPrice float64 `json:"limitPrice"`
+}
+
+// swagger:route POST /plans plans PostPlan
 //
-// create a new planned strategy (protected)
+// create a new plan (protected)
 //
 // This will create a new chain of orders for the user. All orders are encapsulated within a plan.
 // Example:
@@ -476,7 +490,7 @@ func (controller *PlanController) HandlePostPlan(c echo.Context) error {
 		log.Printf("order %d: %+v\n", i, order)
 
 		if !orderValidator.ValidateOrderType(order.OrderType) {
-			return fail(c, "market, limit, or virtual orders only!")
+			return fail(c, "market, limit, or paper orders only!")
 		}
 
 		if !sideValidator.ValidateSide(order.Side) {
@@ -552,134 +566,149 @@ func (controller *PlanController) HandlePostPlan(c echo.Context) error {
 	return c.JSON(http.StatusOK, res)
 }
 
-// swagger:route PUT /orders/:orderID orders updateOrder
+// swagger:parameters UpdatePlanParams
+type UpdatePlanRequest struct {
+	// Optional change base balance of unexecuted plan
+	// in: body
+	BaseBalance float64 `json:"baseBalance"`
+	// Optional change currency balance of unexecuted plan
+	// in: body
+	CurrencyBalance float64 `json:"currencyBalance"`
+	// Optional send 'inactive' to pause and 'active' to unpause
+	// in: body
+	Status string `json:"status"`
+}
+
+// swagger:route PUT /plans/:planID plans UpdatePlanParams
 //
-// update and order (protected)
+// update a plan (protected)
 //
-// You can only update pending orders.
-//
-// responses:
-//  200: responseOrderSuccess "data" will contain order info with "status": "success"
-//  400: responseError missing params with "status": "fail"
-//  500: responseError the message will state what the internal server error was with "status": "error"
-// func (controller *TradeController) HandleUpdateOrder(c echo.Context) error {
-// 	token := c.Get("user").(*jwt.Token)
-// 	claims := token.Claims.(jwt.MapClaims)
-// 	userID := claims["jti"].(string)
-// 	orderID := c.Param("orderID")
-
-// 	orderRequest := UpdateOrderRequest{}
-
-// 	err := json.NewDecoder(c.Request().Body).Decode(&orderRequest)
-// 	if err != nil {
-// 		res := &ResponseError{
-// 			Status:  response.Fail,
-// 			Message: err.Error(),
-// 		}
-
-// 		return c.JSON(http.StatusBadRequest, res)
-// 	}
-
-// 	// client can only update description
-// 	updateRequest := orders.OrderRequest{
-// 		OrderID:      orderID,
-// 		UserID:       userID,
-// 		Conditions:   orderRequest.Conditions,
-// 		BaseQuantity: orderRequest.BaseQuantity,
-// 	}
-
-// 	r, _ := controller.Orders.UpdateOrder(context.Background(), &updateRequest)
-// 	if r.Status != response.Success {
-// 		res := &ResponseError{
-// 			Status:  r.Status,
-// 			Message: r.Message,
-// 		}
-
-// 		if r.Status == response.Fail {
-// 			return c.JSON(http.StatusBadRequest, res)
-// 		}
-// 		if r.Status == response.Error {
-// 			return c.JSON(http.StatusInternalServerError, res)
-// 		}
-// 	}
-
-// 	names := strings.Split(r.Data.Order.MarketName, "-")
-// 	baseCurrencySymbol := names[1]
-// 	baseCurrencyName := controller.currencies[baseCurrencySymbol]
-// 	currencySymbol := names[0]
-// 	currencyName := controller.currencies[currencySymbol]
-
-// 	res := &ResponseOrderSuccess{
-// 		Status: response.Success,
-// 		Data: &UserOrderData{
-// 			Order: &Order{
-// 				OrderID:            r.Data.Order.OrderID,
-// 				KeyID:              r.Data.Order.KeyID,
-// 				Exchange:           r.Data.Order.Exchange,
-// 				ExchangeOrderID:    r.Data.Order.ExchangeOrderID,
-// 				ExchangeMarketName: r.Data.Order.ExchangeMarketName,
-// 				MarketName:         r.Data.Order.MarketName,
-// 				Side:               r.Data.Order.Side,
-// 				Price:              r.Data.Order.Price,
-// 				OrderType:          r.Data.Order.OrderType,
-// 				BaseCurrencySymbol: baseCurrencySymbol,
-// 				BaseCurrencyName:   baseCurrencyName,
-// 				BaseQuantity:       r.Data.Order.BaseQuantity,
-// 				BasePercent:        r.Data.Order.BasePercent,
-// 				CurrencySymbol:     currencySymbol,
-// 				CurrencyName:       currencyName,
-// 				CurrencyQuantity:   r.Data.Order.CurrencyQuantity,
-// 				CurrencyPercent:    r.Data.Order.CurrencyPercent,
-// 				Status:             r.Data.Order.Status,
-// 				ChainStatus:        r.Data.Order.ChainStatus,
-// 				Conditions:         r.Data.Order.Conditions,
-// 				Condition:          r.Data.Order.Condition,
-// 				ParentOrderID:      r.Data.Order.ParentOrderID,
-// 			},
-// 		},
-// 	}
-
-// 	return c.JSON(http.StatusOK, res)
-// }
-
-// swagger:route DELETE /orders/:orderID orders deleteOrder
-//
-// Remove and order (protected)
-//
-// Cannot remove orders that have already executed.
+// You may update the base balance and currency balance before the plan has executed its first order. Once a
+// plan order has been executed you cannot change the balances for the plan. Update will only allow you to
+// Other use case for this endpoint is to pause the plan by sending status='inactive'. Use DELETE to abort the plan.
 //
 // responses:
-//  200: responseOrderSuccess data will be null with "status": "success"
-//  500: responseError the message will state what the internal server error was with "status": "error"
-// func (controller *TradeController) HandleDeleteOrder(c echo.Context) error {
-// 	token := c.Get("user").(*jwt.Token)
-// 	claims := token.Claims.(jwt.MapClaims)
-// 	userID := claims["jti"].(string)
-// 	orderID := c.Param("orderID")
+//  200: responsePlanSuccess "data" will contain plan summary with "status": "success"
+//  500: responseError the message will state what the internal server error was with "status": "error" "data" will contain order info with "status": "success"
+func (controller *PlanController) HandleUpdatePlan(c echo.Context) error {
+	// 	token := c.Get("user").(*jwt.Token)
+	// 	claims := token.Claims.(jwt.MapClaims)
+	// 	userID := claims["jti"].(string)
+	// 	planID := c.Param("planID")
 
-// 	removeRequest := orders.RemoveOrderRequest{
-// 		OrderID: orderID,
-// 		UserID:  userID,
-// 	}
+	request := UpdatePlanRequest{}
 
-// 	r, _ := controller.Orders.RemoveOrder(context.Background(), &removeRequest)
-// 	if r.Status != response.Success {
-// 		res := &ResponseError{
-// 			Status:  r.Status,
-// 			Message: r.Message,
-// 		}
+	err := json.NewDecoder(c.Request().Body).Decode(&request)
+	if err != nil {
+		res := &ResponseError{
+			Status:  response.Fail,
+			Message: err.Error(),
+		}
 
-// 		if r.Status == response.Fail {
-// 			return c.JSON(http.StatusBadRequest, res)
-// 		}
-// 		if r.Status == response.Error {
-// 			return c.JSON(http.StatusInternalServerError, res)
-// 		}
-// 	}
+		return c.JSON(http.StatusBadRequest, res)
+	}
+	return c.JSON(http.StatusNoContent, "")
 
-// 	res := &ResponseOrderSuccess{
-// 		Status: response.Success,
-// 	}
+	// 	// client can only update description
+	// 	updateRequest := orders.OrderRequest{
+	// 		OrderID:      orderID,
+	// 		UserID:       userID,
+	// 		Conditions:   orderRequest.Conditions,
+	// 		BaseQuantity: orderRequest.BaseQuantity,
+	// 	}
 
-// 	return c.JSON(http.StatusOK, res)
-// }
+	// 	r, _ := controller.Orders.UpdateOrder(context.Background(), &updateRequest)
+	// 	if r.Status != response.Success {
+	// 		res := &ResponseError{
+	// 			Status:  r.Status,
+	// 			Message: r.Message,
+	// 		}
+
+	// 		if r.Status == response.Fail {
+	// 			return c.JSON(http.StatusBadRequest, res)
+	// 		}
+	// 		if r.Status == response.Error {
+	// 			return c.JSON(http.StatusInternalServerError, res)
+	// 		}
+	// 	}
+
+	// 	names := strings.Split(r.Data.Order.MarketName, "-")
+	// 	baseCurrencySymbol := names[1]
+	// 	baseCurrencyName := controller.currencies[baseCurrencySymbol]
+	// 	currencySymbol := names[0]
+	// 	currencyName := controller.currencies[currencySymbol]
+
+	// 	res := &ResponseOrderSuccess{
+	// 		Status: response.Success,
+	// 		Data: &UserOrderData{
+	// 			Order: &Order{
+	// 				OrderID:            r.Data.Order.OrderID,
+	// 				KeyID:              r.Data.Order.KeyID,
+	// 				Exchange:           r.Data.Order.Exchange,
+	// 				ExchangeOrderID:    r.Data.Order.ExchangeOrderID,
+	// 				ExchangeMarketName: r.Data.Order.ExchangeMarketName,
+	// 				MarketName:         r.Data.Order.MarketName,
+	// 				Side:               r.Data.Order.Side,
+	// 				Price:              r.Data.Order.Price,
+	// 				OrderType:          r.Data.Order.OrderType,
+	// 				BaseCurrencySymbol: baseCurrencySymbol,
+	// 				BaseCurrencyName:   baseCurrencyName,
+	// 				BaseQuantity:       r.Data.Order.BaseQuantity,
+	// 				BasePercent:        r.Data.Order.BasePercent,
+	// 				CurrencySymbol:     currencySymbol,
+	// 				CurrencyName:       currencyName,
+	// 				CurrencyQuantity:   r.Data.Order.CurrencyQuantity,
+	// 				CurrencyPercent:    r.Data.Order.CurrencyPercent,
+	// 				Status:             r.Data.Order.Status,
+	// 				ChainStatus:        r.Data.Order.ChainStatus,
+	// 				Conditions:         r.Data.Order.Conditions,
+	// 				Condition:          r.Data.Order.Condition,
+	// 				ParentOrderID:      r.Data.Order.ParentOrderID,
+	// 			},
+	// 		},
+	// 	}
+
+	// 	return c.JSON(http.StatusOK, res)
+	// }
+
+	// swagger:route DELETE /orders/:orderID orders deleteOrder
+	//
+	// Remove and order (protected)
+	//
+	// Cannot remove orders that have already executed.
+	//
+	// responses:
+	//  200: responseOrderSuccess data will be null with "status": "success"
+	//  500: responseError the message will state what the internal server error was with "status": "error"
+	// func (controller *TradeController) HandleDeleteOrder(c echo.Context) error {
+	// 	token := c.Get("user").(*jwt.Token)
+	// 	claims := token.Claims.(jwt.MapClaims)
+	// 	userID := claims["jti"].(string)
+	// 	orderID := c.Param("orderID")
+
+	// 	removeRequest := orders.RemoveOrderRequest{
+	// 		OrderID: orderID,
+	// 		UserID:  userID,
+	// 	}
+
+	// 	r, _ := controller.Orders.RemoveOrder(context.Background(), &removeRequest)
+	// 	if r.Status != response.Success {
+	// 		res := &ResponseError{
+	// 			Status:  r.Status,
+	// 			Message: r.Message,
+	// 		}
+
+	// 		if r.Status == response.Fail {
+	// 			return c.JSON(http.StatusBadRequest, res)
+	// 		}
+	// 		if r.Status == response.Error {
+	// 			return c.JSON(http.StatusInternalServerError, res)
+	// 		}
+	// 	}
+
+	// 	res := &ResponseOrderSuccess{
+	// 		Status: response.Success,
+	// 	}
+
+	// 	return c.JSON(http.StatusOK, res)
+}
