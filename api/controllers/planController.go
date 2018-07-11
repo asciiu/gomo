@@ -139,7 +139,7 @@ type PlanRequest struct {
 	// Required When first order is buy. Base should be in suffix of market name.
 	// in: body
 	CurrencyBalance float64 `json:"currencyBalance"`
-	// Optional make this strategy live immeadiately with status=active. Valid input status is active, inactive, or past
+	// Optional make this strategy live immeadiately with status=active. Valid input status is active, inactive, or historic
 	// in: body
 	Status string `json:"status"`
 
@@ -501,7 +501,7 @@ func (controller *PlanController) HandlePostPlan(c echo.Context) error {
 		MarketName:      newPlan.MarketName,
 		BaseBalance:     newPlan.BaseBalance,
 		CurrencyBalance: newPlan.CurrencyBalance,
-		Active:          newPlan.Status,
+		Status:          newPlan.Status,
 		Orders:          orders,
 	}
 

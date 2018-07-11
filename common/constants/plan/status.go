@@ -11,7 +11,7 @@ const (
 	// the chain failed
 	Failed string = "failed"
 	// past plan that user did outside of the platform
-	Past string = "past"
+	Historic string = "historic"
 	// wtf is this, a learning center for ants!
 	UnknownChainStatus string = "???"
 )
@@ -21,7 +21,7 @@ func ValidatePlanInputStatus(pstatus string) bool {
 	pistats := [...]string{
 		Active,
 		Inactive,
-		Past,
+		Historic,
 	}
 
 	for _, stat := range pistats {

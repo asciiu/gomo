@@ -547,7 +547,7 @@ func InsertPlan(db *sql.DB, req *protoPlan.PlanRequest) (*protoPlan.Plan, error)
 	for i, or := range req.Orders {
 		orderStatus := status.Inactive
 		// first order of active plan is active
-		if i == 0 && planStatus == plan.Active {
+		if i == 0 && req.Status == plan.Active {
 			orderStatus = status.Active
 		}
 		jsonCond, err := json.Marshal(or.Conditions)
@@ -618,7 +618,7 @@ func InsertPlan(db *sql.DB, req *protoPlan.PlanRequest) (*protoPlan.Plan, error)
 		BaseBalance:     req.BaseBalance,
 		CurrencyBalance: req.CurrencyBalance,
 		Orders:          orders,
-		Status:          planStatus,
+		Status:          req.Status,
 	}
 	return &plan, nil
 }
