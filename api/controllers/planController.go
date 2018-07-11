@@ -467,7 +467,7 @@ func (controller *PlanController) HandlePostPlan(c echo.Context) error {
 		return fail(c, "at least one order required for a trade plan")
 	}
 	if !plan.ValidatePlanInputStatus(newPlan.Status) {
-		return fail(c, "valid status is active, inactive, or past")
+		return fail(c, "valid status is active, inactive, or historic")
 	}
 
 	// error check all orders
