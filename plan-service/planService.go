@@ -273,15 +273,16 @@ func (service *PlanService) DeletePlan(ctx context.Context, req *protoPlan.Delet
 	pln, error := planRepo.FindPlanSummary(service.DB, req.PlanID)
 	if error != nil {
 		res.Status = response.Error
-		res.Message = error.Error()
+		res.Message = fmt.Sprintf("FindPlanSummary error: %s", error.Error())
 		return nil
 	}
 
 	// abort plan if order has been filled
 	if pln.ActiveOrderNumber == 0 {
+		pln.Status = plan.Deleted
 		error = planRepo.DeletePlan(service.DB, req.PlanID)
 	} else {
-		_, error = planRepo.UpdatePlanStatus(service.DB, req.PlanID, plan.Aborted)
+		pln, error = planRepo.UpdatePlanStatus(service.DB, req.PlanID, plan.Aborted)
 	}
 
 	// TODO purge the active order that is in memory
@@ -290,7 +291,6 @@ func (service *PlanService) DeletePlan(ctx context.Context, req *protoPlan.Delet
 
 	switch {
 	case error == nil:
-		pln.Status = plan.Aborted
 		res.Status = response.Success
 		res.Data = &protoPlan.PlanData{
 			Plan: pln,
@@ -315,19 +315,18 @@ func (service *PlanService) UpdatePlan(ctx context.Context, req *protoPlan.Updat
 
 	// update balances and status if no order has been filled
 	if pln.ActiveOrderNumber == 0 {
-		_, error = planRepo.UpdatePlanBalancesAndStatus(service.DB, req)
+		pln, error = planRepo.UpdatePlanBalancesAndStatus(service.DB, req)
 	} else {
 		// can only update the plan status when order has been filled
-		_, error = planRepo.UpdatePlanStatus(service.DB, req.PlanID, req.Status)
+		pln, error = planRepo.UpdatePlanStatus(service.DB, req.PlanID, req.Status)
 	}
 
 	// TODO update active order
-	// TODO receive a succesful order abort event so you can handle it by updating the order status like this
+	// TODO receive a succesful order update event so you can handle it by updating the order status like this
 	//planRepo.UpdatePlanOrder(receiver.DB, nextPlanOrder.Orders[0].OrderID, status.Active
 
 	switch {
 	case error == nil:
-		pln.Status = plan.Aborted
 		res.Status = response.Success
 		res.Data = &protoPlan.PlanData{
 			Plan: pln,

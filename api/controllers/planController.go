@@ -161,11 +161,58 @@ func NewPlanController(db *sql.DB) *PlanController {
 //  200: ResponsePlanSuccess "data" will contain plan summary with null orders.
 //  500: responseError the message will state what the internal server error was with "status": "error"
 func (controller *PlanController) HandleDeletePlan(c echo.Context) error {
-	//token := c.Get("user").(*jwt.Token)
-	//claims := token.Claims.(jwt.MapClaims)
-	//userID := claims["jti"].(string)
-	//planID := c.Param("planID")
-	return c.JSON(http.StatusNoContent, "")
+	token := c.Get("user").(*jwt.Token)
+	claims := token.Claims.(jwt.MapClaims)
+	userID := claims["jti"].(string)
+	planID := c.Param("planID")
+
+	delRequest := plans.DeletePlanRequest{
+		PlanID: planID,
+		UserID: userID,
+	}
+
+	r, _ := controller.Plans.DeletePlan(context.Background(), &delRequest)
+	if r.Status != response.Success {
+		res := &ResponseError{
+			Status:  r.Status,
+			Message: r.Message,
+		}
+
+		switch {
+		case r.Status == response.Nonentity:
+			return c.JSON(http.StatusNotFound, res)
+		case r.Status == response.Fail:
+			return c.JSON(http.StatusBadRequest, res)
+		default:
+			return c.JSON(http.StatusInternalServerError, res)
+		}
+	}
+
+	names := strings.Split(r.Data.Plan.MarketName, "-")
+	baseCurrencySymbol := names[1]
+	baseCurrencyName := controller.currencies[baseCurrencySymbol]
+	currencySymbol := names[0]
+	currencyName := controller.currencies[currencySymbol]
+
+	res := &ResponsePlanWithOrderPageSuccess{
+		Status: response.Success,
+		Data: &PlanWithOrderPage{
+			PlanID:             r.Data.Plan.PlanID,
+			PlanTemplateID:     r.Data.Plan.PlanTemplateID,
+			KeyID:              r.Data.Plan.KeyID,
+			Exchange:           r.Data.Plan.Exchange,
+			MarketName:         r.Data.Plan.MarketName,
+			BaseCurrencySymbol: baseCurrencySymbol,
+			BaseCurrencyName:   baseCurrencyName,
+			BaseBalance:        r.Data.Plan.BaseBalance,
+			CurrencySymbol:     currencySymbol,
+			CurrencyName:       currencyName,
+			CurrencyBalance:    r.Data.Plan.CurrencyBalance,
+			Status:             r.Data.Plan.Status,
+		},
+	}
+
+	return c.JSON(http.StatusOK, res)
 }
 
 // required for swaggered, otherwise never used
@@ -591,14 +638,14 @@ type UpdatePlanRequest struct {
 //  200: responsePlanSuccess "data" will contain plan summary with "status": "success"
 //  500: responseError the message will state what the internal server error was with "status": "error" "data" will contain order info with "status": "success"
 func (controller *PlanController) HandleUpdatePlan(c echo.Context) error {
-	// 	token := c.Get("user").(*jwt.Token)
-	// 	claims := token.Claims.(jwt.MapClaims)
-	// 	userID := claims["jti"].(string)
-	// 	planID := c.Param("planID")
+	token := c.Get("user").(*jwt.Token)
+	claims := token.Claims.(jwt.MapClaims)
+	userID := claims["jti"].(string)
+	planID := c.Param("planID")
 
-	request := UpdatePlanRequest{}
+	var updateParams UpdatePlanRequest
 
-	err := json.NewDecoder(c.Request().Body).Decode(&request)
+	err := json.NewDecoder(c.Request().Body).Decode(&updateParams)
 	if err != nil {
 		res := &ResponseError{
 			Status:  response.Fail,
@@ -607,108 +654,55 @@ func (controller *PlanController) HandleUpdatePlan(c echo.Context) error {
 
 		return c.JSON(http.StatusBadRequest, res)
 	}
-	return c.JSON(http.StatusNoContent, "")
 
-	// 	// client can only update description
-	// 	updateRequest := orders.OrderRequest{
-	// 		OrderID:      orderID,
-	// 		UserID:       userID,
-	// 		Conditions:   orderRequest.Conditions,
-	// 		BaseQuantity: orderRequest.BaseQuantity,
-	// 	}
+	updateRequest := plans.UpdatePlanRequest{
+		PlanID:          planID,
+		UserID:          userID,
+		Status:          updateParams.Status,
+		BaseBalance:     updateParams.BaseBalance,
+		CurrencyBalance: updateParams.CurrencyBalance,
+	}
 
-	// 	r, _ := controller.Orders.UpdateOrder(context.Background(), &updateRequest)
-	// 	if r.Status != response.Success {
-	// 		res := &ResponseError{
-	// 			Status:  r.Status,
-	// 			Message: r.Message,
-	// 		}
+	r, _ := controller.Plans.UpdatePlan(context.Background(), &updateRequest)
+	if r.Status != response.Success {
+		res := &ResponseError{
+			Status:  r.Status,
+			Message: r.Message,
+		}
 
-	// 		if r.Status == response.Fail {
-	// 			return c.JSON(http.StatusBadRequest, res)
-	// 		}
-	// 		if r.Status == response.Error {
-	// 			return c.JSON(http.StatusInternalServerError, res)
-	// 		}
-	// 	}
+		switch {
+		case r.Status == response.Nonentity:
+			return c.JSON(http.StatusNotFound, res)
+		case r.Status == response.Fail:
+			return c.JSON(http.StatusBadRequest, res)
+		default:
+			return c.JSON(http.StatusInternalServerError, res)
+		}
+	}
 
-	// 	names := strings.Split(r.Data.Order.MarketName, "-")
-	// 	baseCurrencySymbol := names[1]
-	// 	baseCurrencyName := controller.currencies[baseCurrencySymbol]
-	// 	currencySymbol := names[0]
-	// 	currencyName := controller.currencies[currencySymbol]
+	names := strings.Split(r.Data.Plan.MarketName, "-")
+	baseCurrencySymbol := names[1]
+	baseCurrencyName := controller.currencies[baseCurrencySymbol]
+	currencySymbol := names[0]
+	currencyName := controller.currencies[currencySymbol]
 
-	// 	res := &ResponseOrderSuccess{
-	// 		Status: response.Success,
-	// 		Data: &UserOrderData{
-	// 			Order: &Order{
-	// 				OrderID:            r.Data.Order.OrderID,
-	// 				KeyID:              r.Data.Order.KeyID,
-	// 				Exchange:           r.Data.Order.Exchange,
-	// 				ExchangeOrderID:    r.Data.Order.ExchangeOrderID,
-	// 				ExchangeMarketName: r.Data.Order.ExchangeMarketName,
-	// 				MarketName:         r.Data.Order.MarketName,
-	// 				Side:               r.Data.Order.Side,
-	// 				Price:              r.Data.Order.Price,
-	// 				OrderType:          r.Data.Order.OrderType,
-	// 				BaseCurrencySymbol: baseCurrencySymbol,
-	// 				BaseCurrencyName:   baseCurrencyName,
-	// 				BaseQuantity:       r.Data.Order.BaseQuantity,
-	// 				BasePercent:        r.Data.Order.BasePercent,
-	// 				CurrencySymbol:     currencySymbol,
-	// 				CurrencyName:       currencyName,
-	// 				CurrencyQuantity:   r.Data.Order.CurrencyQuantity,
-	// 				CurrencyPercent:    r.Data.Order.CurrencyPercent,
-	// 				Status:             r.Data.Order.Status,
-	// 				ChainStatus:        r.Data.Order.ChainStatus,
-	// 				Conditions:         r.Data.Order.Conditions,
-	// 				Condition:          r.Data.Order.Condition,
-	// 				ParentOrderID:      r.Data.Order.ParentOrderID,
-	// 			},
-	// 		},
-	// 	}
+	res := &ResponsePlanWithOrderPageSuccess{
+		Status: response.Success,
+		Data: &PlanWithOrderPage{
+			PlanID:             r.Data.Plan.PlanID,
+			PlanTemplateID:     r.Data.Plan.PlanTemplateID,
+			KeyID:              r.Data.Plan.KeyID,
+			Exchange:           r.Data.Plan.Exchange,
+			MarketName:         r.Data.Plan.MarketName,
+			BaseCurrencySymbol: baseCurrencySymbol,
+			BaseCurrencyName:   baseCurrencyName,
+			BaseBalance:        r.Data.Plan.BaseBalance,
+			CurrencySymbol:     currencySymbol,
+			CurrencyName:       currencyName,
+			CurrencyBalance:    r.Data.Plan.CurrencyBalance,
+			Status:             r.Data.Plan.Status,
+		},
+	}
 
-	// 	return c.JSON(http.StatusOK, res)
-	// }
-
-	// swagger:route DELETE /orders/:orderID orders deleteOrder
-	//
-	// Remove and order (protected)
-	//
-	// Cannot remove orders that have already executed.
-	//
-	// responses:
-	//  200: responseOrderSuccess data will be null with "status": "success"
-	//  500: responseError the message will state what the internal server error was with "status": "error"
-	// func (controller *TradeController) HandleDeleteOrder(c echo.Context) error {
-	// 	token := c.Get("user").(*jwt.Token)
-	// 	claims := token.Claims.(jwt.MapClaims)
-	// 	userID := claims["jti"].(string)
-	// 	orderID := c.Param("orderID")
-
-	// 	removeRequest := orders.RemoveOrderRequest{
-	// 		OrderID: orderID,
-	// 		UserID:  userID,
-	// 	}
-
-	// 	r, _ := controller.Orders.RemoveOrder(context.Background(), &removeRequest)
-	// 	if r.Status != response.Success {
-	// 		res := &ResponseError{
-	// 			Status:  r.Status,
-	// 			Message: r.Message,
-	// 		}
-
-	// 		if r.Status == response.Fail {
-	// 			return c.JSON(http.StatusBadRequest, res)
-	// 		}
-	// 		if r.Status == response.Error {
-	// 			return c.JSON(http.StatusInternalServerError, res)
-	// 		}
-	// 	}
-
-	// 	res := &ResponseOrderSuccess{
-	// 		Status: response.Success,
-	// 	}
-
-	// 	return c.JSON(http.StatusOK, res)
+	return c.JSON(http.StatusOK, res)
 }

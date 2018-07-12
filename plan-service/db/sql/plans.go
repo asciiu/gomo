@@ -563,7 +563,7 @@ func InsertPlan(db *sql.DB, req *protoPlan.PlanRequest) (*protoPlan.Plan, error)
 		base_balance, 
 		currency_balance, 
 		status) 
-		values ($1, $2, $3, $4, $5, $6, $7, $8, $9)`
+		values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)`
 
 	_, err := db.Exec(sqlStatement,
 		planID,
@@ -730,11 +730,20 @@ func UpdatePlanBalances(db *sql.DB, planID string, base, currency float64) error
 
 func UpdatePlanStatus(db *sql.DB, planID, status string) (*protoPlan.Plan, error) {
 	sqlStatement := `UPDATE plans SET status = $1 WHERE id = $2 
-	RETURNING id`
+	RETURNING id, plan_template_id, user_id, user_key_id, exchange_name, market_name, base_balance, currency_balance, status`
 
 	var p protoPlan.Plan
 	err := db.QueryRow(sqlStatement, status, planID).
-		Scan(&p.PlanID)
+		Scan(&p.PlanID,
+			&p.PlanTemplateID,
+			&p.UserID,
+			&p.KeyID,
+			&p.Exchange,
+			&p.MarketName,
+			&p.BaseBalance,
+			&p.CurrencyBalance,
+			&p.Status,
+		)
 
 	if err != nil {
 		return nil, err
@@ -745,11 +754,20 @@ func UpdatePlanStatus(db *sql.DB, planID, status string) (*protoPlan.Plan, error
 
 func UpdatePlanBalancesAndStatus(db *sql.DB, req *protoPlan.UpdatePlanRequest) (*protoPlan.Plan, error) {
 	sqlStatement := `UPDATE plans SET base_balance = $1, currency_balance = $2, status = $3 WHERE id = $4 
-	RETURNING id`
+	RETURNING id, plan_template_id, user_id, user_key_id, exchange_name, market_name, base_balance, currency_balance, status`
 
 	var p protoPlan.Plan
 	err := db.QueryRow(sqlStatement, req.BaseBalance, req.CurrencyBalance, req.Status, req.PlanID).
-		Scan(&p.PlanID)
+		Scan(&p.PlanID,
+			&p.PlanTemplateID,
+			&p.UserID,
+			&p.KeyID,
+			&p.Exchange,
+			&p.MarketName,
+			&p.BaseBalance,
+			&p.CurrencyBalance,
+			&p.Status,
+		)
 
 	if err != nil {
 		return nil, err
