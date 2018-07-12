@@ -224,6 +224,9 @@ func (service *PlanService) GetUserPlan(ctx context.Context, req *protoPlan.GetU
 	case pagedPlan.OrdersPage.Total < (req.PageSize * req.Page):
 		res.Status = response.Nonentity
 		res.Message = "page index out of bounds"
+	case error == sql.ErrNoRows:
+		res.Status = response.Nonentity
+		res.Message = fmt.Sprintf("planID not found %s", req.PlanID)
 	case error == nil:
 		res.Status = response.Success
 		res.Data = pagedPlan
