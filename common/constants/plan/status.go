@@ -35,3 +35,18 @@ func ValidatePlanInputStatus(pstatus string) bool {
 	}
 	return false
 }
+
+// defines valid input for plan status when updating an executed plan (a.k.a. plan with a filled order)
+func ValidateUpdatePlanStatus(pstatus string) bool {
+	pistats := [...]string{
+		Active,
+		Inactive,
+	}
+
+	for _, stat := range pistats {
+		if stat == pstatus {
+			return true
+		}
+	}
+	return false
+}
