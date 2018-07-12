@@ -72,6 +72,10 @@ func FindPlanWithPagedOrders(db *sql.DB, req *protoPlan.GetUserPlanRequest) (*pr
 	queryCount := `SELECT count(*) FROM plan_orders WHERE plan_id = $1`
 	err := db.QueryRow(queryCount, req.PlanID).Scan(&count)
 
+	if count == 0 {
+		return nil, sql.ErrNoRows
+	}
+
 	rows, err := db.Query(`SELECT 
 		p.id,
 		p.plan_template_id,
