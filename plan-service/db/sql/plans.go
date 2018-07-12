@@ -33,7 +33,7 @@ func FindPlanSummary(db *sql.DB, planID string) (*protoPlan.Plan, error) {
 		p.market_name,
 		p.base_balance,
 		p.currency_balance,
-		p.status,
+		p.status
 		FROM plans p
 		JOIN user_keys k on p.user_key_id = k.id
 		WHERE p.id = $1`, planID).Scan(
