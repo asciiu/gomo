@@ -711,7 +711,7 @@ func UpdatePlanOrder(db *sql.DB, orderID, stat string) (*protoPlan.Order, error)
 
 	if stat == status.Active {
 		updatePlanSql := `UPDATE plans SET active_order_number = $1 WHERE id = $2`
-		_, err = db.Exec(updatePlanSql, planID)
+		_, err = db.Exec(updatePlanSql, o.OrderNumber, planID)
 
 		if err != nil {
 			return nil, err
