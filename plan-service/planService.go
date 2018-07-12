@@ -329,12 +329,54 @@ func (service *PlanService) UpdatePlan(ctx context.Context, req *protoPlan.Updat
 		res.Message = error.Error()
 		return nil
 	default:
-		// update balances and status if no order has been filled
+		// this means no order has been filled yet for this plan
 		if pln.ActiveOrderNumber == 0 {
-			pln, error = planRepo.UpdatePlanBalancesAndStatus(service.DB, req)
+
+			switch {
+			// can't set base balance to 0 if first is buy
+			case pln.Orders[0].Side == side.Buy && req.BaseBalance == 0:
+				res.Status = response.Fail
+				res.Message = fmt.Sprintf("base balance for buy plan cannot be 0")
+				return nil
+
+			// can't set currency balance to 0 if first is sell
+			case pln.Orders[0].Side == side.Sell && req.CurrencyBalance == 0:
+				res.Status = response.Fail
+				res.Message = fmt.Sprintf("currency balance for sell plan cannot be 0")
+				return nil
+
+			default:
+				if req.Status != "" && !plan.ValidateUpdatePlanStatus(req.Status) {
+					res.Status = response.Fail
+					res.Message = fmt.Sprintf("invalid status for update plan")
+					return nil
+				}
+				if req.CurrencyBalance >= 0 {
+					pln, error = planRepo.UpdatePlanCurrencyBalance(service.DB, req.PlanID, req.CurrencyBalance)
+				}
+				if req.BaseBalance >= 0 {
+					pln, error = planRepo.UpdatePlanBaseBalance(service.DB, req.PlanID, req.BaseBalance)
+				}
+				if req.Status != "" && plan.ValidateUpdatePlanStatus(req.Status) {
+					pln, error = planRepo.UpdatePlanStatus(service.DB, req.PlanID, req.Status)
+				}
+			}
 		} else {
-			// can only update the plan status when order has been filled
-			pln, error = planRepo.UpdatePlanStatus(service.DB, req.PlanID, req.Status)
+
+			switch {
+			// validate status here
+			case req.Status == "":
+				res.Status = response.Fail
+				res.Message = fmt.Sprintf("missing status for update plan")
+				return nil
+			case !plan.ValidateUpdatePlanStatus(req.Status):
+				res.Status = response.Fail
+				res.Message = fmt.Sprintf("invalid status for plan status update")
+				return nil
+			default:
+				// can only update the plan status when order has been filled
+				pln, error = planRepo.UpdatePlanStatus(service.DB, req.PlanID, req.Status)
+			}
 		}
 
 		// TODO update active order

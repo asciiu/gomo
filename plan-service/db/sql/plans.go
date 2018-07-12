@@ -21,7 +21,16 @@ func DeletePlan(db *sql.DB, planID string) error {
 
 func FindPlanSummary(db *sql.DB, planID string) (*protoPlan.Plan, error) {
 	var plan protoPlan.Plan
+	var order protoPlan.Order
+	var planTemp sql.NullString
+	var orderTemp sql.NullString
+	var price sql.NullFloat64
+	var basePercent sql.NullFloat64
+	var currencyPercent sql.NullFloat64
+	var nextOrderID sql.NullString
 
+	// note: always assume that a plan has at least one order.
+	// a plan with no order should be removed from the system
 	err := db.QueryRow(`SELECT 
 		p.id,
 		p.plan_template_id,
@@ -33,12 +42,24 @@ func FindPlanSummary(db *sql.DB, planID string) (*protoPlan.Plan, error) {
 		p.market_name,
 		p.base_balance,
 		p.currency_balance,
-		p.status
+		p.status,
+		po.id,
+		po.base_percent,
+		po.currency_percent,
+		po.side,
+		po.order_number,
+		po.order_type,
+		po.order_template_id,
+		po.conditions,
+		po.price,
+		po.next_plan_order_id,
+		po.status
 		FROM plans p
+		JOIN plan_orders po on p.id = po.plan_id and p.active_order_number = po.order_number
 		JOIN user_keys k on p.user_key_id = k.id
 		WHERE p.id = $1`, planID).Scan(
 		&plan.PlanID,
-		&plan.PlanTemplateID,
+		&planTemp,
 		&plan.UserID,
 		&plan.KeyID,
 		&plan.KeyDescription,
@@ -47,11 +68,45 @@ func FindPlanSummary(db *sql.DB, planID string) (*protoPlan.Plan, error) {
 		&plan.MarketName,
 		&plan.BaseBalance,
 		&plan.CurrencyBalance,
-		&plan.Status)
+		&plan.Status,
+		&order.OrderID,
+		&basePercent,
+		&currencyPercent,
+		&order.Side,
+		&order.OrderNumber,
+		&order.OrderType,
+		&orderTemp,
+		&order.Conditions,
+		&price,
+		&nextOrderID,
+		&order.Status)
 
 	if err != nil {
 		return nil, err
 	}
+	if basePercent.Valid {
+		order.BasePercent = basePercent.Float64
+	}
+	if currencyPercent.Valid {
+		order.CurrencyPercent = currencyPercent.Float64
+	}
+	if price.Valid {
+		order.LimitPrice = price.Float64
+	}
+	if nextOrderID.Valid {
+		order.NextOrderID = nextOrderID.String
+	}
+	if orderTemp.Valid {
+		order.OrderTemplateID = orderTemp.String
+	}
+	if planTemp.Valid {
+		plan.PlanTemplateID = planTemp.String
+	}
+	if err := json.Unmarshal([]byte(order.Conditions), &order.Conditions); err != nil {
+		return nil, err
+	}
+	plan.Orders = append(plan.Orders, &order)
+
 	return &plan, nil
 }
 
@@ -756,12 +811,54 @@ func UpdatePlanStatus(db *sql.DB, planID, status string) (*protoPlan.Plan, error
 	return &p, nil
 }
 
-func UpdatePlanBalancesAndStatus(db *sql.DB, req *protoPlan.UpdatePlanRequest) (*protoPlan.Plan, error) {
-	sqlStatement := `UPDATE plans SET base_balance = $1, currency_balance = $2, status = $3 WHERE id = $4 
-	RETURNING id, plan_template_id, user_id, user_key_id, exchange_name, market_name, base_balance, currency_balance, status`
+func UpdatePlanBaseBalance(db *sql.DB, planID string, baseBalance float64) (*protoPlan.Plan, error) {
+	sqlStatement := `UPDATE plans SET base_balance = $1 WHERE id = $2 
+	RETURNING 
+	id, 
+	plan_template_id, 
+	user_id, 
+	user_key_id, 
+	exchange_name, 
+	market_name, 
+	base_balance, 
+	currency_balance, 
+	status`
 
 	var p protoPlan.Plan
-	err := db.QueryRow(sqlStatement, req.BaseBalance, req.CurrencyBalance, req.Status, req.PlanID).
+	err := db.QueryRow(sqlStatement, baseBalance, planID).
+		Scan(&p.PlanID,
+			&p.PlanTemplateID,
+			&p.UserID,
+			&p.KeyID,
+			&p.Exchange,
+			&p.MarketName,
+			&p.BaseBalance,
+			&p.CurrencyBalance,
+			&p.Status,
+		)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return &p, nil
+}
+
+func UpdatePlanCurrencyBalance(db *sql.DB, planID string, currencyBalance float64) (*protoPlan.Plan, error) {
+	sqlStatement := `UPDATE plans SET currency_balance = $1 WHERE id = $2 
+	RETURNING 
+	id, 
+	plan_template_id, 
+	user_id, 
+	user_key_id, 
+	exchange_name, 
+	market_name, 
+	base_balance, 
+	currency_balance, 
+	status`
+
+	var p protoPlan.Plan
+	err := db.QueryRow(sqlStatement, currencyBalance, planID).
 		Scan(&p.PlanID,
 			&p.PlanTemplateID,
 			&p.UserID,
