@@ -6,8 +6,8 @@ service PlanService {
   rpc AddPlan(PlanRequest) returns (PlanResponse) {}
   rpc GetUserPlan(GetUserPlanRequest) returns (PlanWithPagedOrdersResponse) {}
   rpc GetUserPlans(GetUserPlansRequest) returns (PlansPageResponse) {}
-  //rpc DeletePlan(DeletePlanRequest) returns (PlanResponse) {}
-  //rpc UpdatePlan(PlanRequest) returns (PlanResponse) {}
+  rpc DeletePlan(DeletePlanRequest) returns (PlanResponse) {}
+  rpc UpdatePlan(UpdatePlanRequest) returns (PlanResponse) {}
 }
 
 // Requests
@@ -55,6 +55,14 @@ message DeletePlanRequest {
   string userID = 2;
 }
 
+message UpdatePlanRequest {
+  string planID = 1;
+  string userID = 2;
+  string status = 3;
+  double baseBalance = 4;
+  double currencyBalance = 5;
+}
+
 // Responses
 message Plan {
   string planID = 1;
@@ -64,13 +72,14 @@ message Plan {
   string key = 5;
   string keySecret = 6;
   string keyDescription = 7;
-  string exchange = 8;
-  string exchangeMarketName = 9;
-  string marketName = 10;
-  double baseBalance = 11;
-  double currencyBalance = 12;
-  string status = 13;
-  repeated Order orders = 14; 
+  uint32 activeOrderNumber = 8;
+  string exchange = 9;
+  string exchangeMarketName = 10;
+  string marketName = 11;
+  double baseBalance = 12;
+  double currencyBalance = 13;
+  string status = 14;
+  repeated Order orders = 15; 
 }
 
 message PlanWithPagedOrders {
@@ -94,7 +103,7 @@ message Order {
   string orderID = 1;
   string side = 2;
   string orderTemplateID = 3;
-  int32 orderNumber = 4;
+  uint32 orderNumber = 4;
   string orderType = 5;
   double limitPrice = 6;
   double basePercent = 7;

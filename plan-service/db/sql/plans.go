@@ -19,6 +19,42 @@ func DeletePlan(db *sql.DB, planID string) error {
 	return err
 }
 
+func FindPlanSummary(db *sql.DB, planID string) (*protoPlan.Plan, error) {
+	var plan protoPlan.Plan
+
+	err := db.QueryRow(`SELECT 
+		p.id,
+		p.plan_template_id,
+		p.user_id,
+		p.user_key_id,
+		k.api_key,
+		k.description,
+		p.exchange_name,
+		p.market_name,
+		p.base_balance,
+		p.currency_balance,
+		p.status,
+		FROM plans p
+		JOIN user_keys k on p.user_key_id = k.id
+		WHERE p.id = $1`, planID).Scan(
+		&plan.PlanID,
+		&plan.PlanTemplateID,
+		&plan.UserID,
+		&plan.KeyID,
+		&plan.KeyDescription,
+		&plan.ActiveOrderNumber,
+		&plan.Exchange,
+		&plan.MarketName,
+		&plan.BaseBalance,
+		&plan.CurrencyBalance,
+		&plan.Status)
+
+	if err != nil {
+		return nil, err
+	}
+	return &plan, nil
+}
+
 // FindPlanWithPagedOrders ...
 func FindPlanWithPagedOrders(db *sql.DB, req *protoPlan.GetUserPlanRequest) (*protoPlan.PlanWithPagedOrders, error) {
 
@@ -521,6 +557,7 @@ func InsertPlan(db *sql.DB, req *protoPlan.PlanRequest) (*protoPlan.Plan, error)
 		user_id, 
 		user_key_id, 
 		plan_template_id,
+		active_order_number,
 		exchange_name, 
 		market_name, 
 		base_balance, 
@@ -533,6 +570,7 @@ func InsertPlan(db *sql.DB, req *protoPlan.PlanRequest) (*protoPlan.Plan, error)
 		req.UserID,
 		req.KeyID,
 		req.PlanTemplateID,
+		0, // active order number always starts out 0
 		req.Exchange,
 		req.MarketName,
 		req.BaseBalance,
@@ -594,7 +632,7 @@ func InsertPlan(db *sql.DB, req *protoPlan.PlanRequest) (*protoPlan.Plan, error)
 		}
 		order := protoPlan.Order{
 			OrderID:         orderID.String(),
-			OrderNumber:     int32(i),
+			OrderNumber:     uint32(i),
 			OrderType:       or.OrderType,
 			OrderTemplateID: or.OrderTemplateID,
 			Side:            or.Side,
@@ -609,16 +647,17 @@ func InsertPlan(db *sql.DB, req *protoPlan.PlanRequest) (*protoPlan.Plan, error)
 	}
 
 	plan := protoPlan.Plan{
-		PlanID:          planID.String(),
-		PlanTemplateID:  req.PlanTemplateID,
-		UserID:          req.UserID,
-		KeyID:           req.KeyID,
-		Exchange:        req.Exchange,
-		MarketName:      req.MarketName,
-		BaseBalance:     req.BaseBalance,
-		CurrencyBalance: req.CurrencyBalance,
-		Orders:          orders,
-		Status:          req.Status,
+		PlanID:            planID.String(),
+		PlanTemplateID:    req.PlanTemplateID,
+		UserID:            req.UserID,
+		KeyID:             req.KeyID,
+		ActiveOrderNumber: 0,
+		Exchange:          req.Exchange,
+		MarketName:        req.MarketName,
+		BaseBalance:       req.BaseBalance,
+		CurrencyBalance:   req.CurrencyBalance,
+		Orders:            orders,
+		Status:            req.Status,
 	}
 	return &plan, nil
 }
@@ -657,16 +696,26 @@ func InsertPlan(db *sql.DB, req *protoPlan.PlanRequest) (*protoPlan.Plan, error)
 
 // Maybe this should return more of the updated order but all I need from this
 // as of now is the next_plan_order_id so I can load the next order.
-func UpdateOrderStatus(db *sql.DB, orderID, status string) (*protoPlan.Order, error) {
-	sqlStatement := `UPDATE plan_orders SET status = $1 WHERE id = $2 
-	RETURNING next_plan_order_id`
+func UpdatePlanOrder(db *sql.DB, orderID, stat string) (*protoPlan.Order, error) {
+	updatePlanOrderSql := `UPDATE plan_orders SET status = $1 WHERE id = $2 
+	RETURNING next_plan_order_id, order_number, plan_id`
 
 	var o protoPlan.Order
-	err := db.QueryRow(sqlStatement, status, orderID).
-		Scan(&o.NextOrderID)
+	var planID string
+	err := db.QueryRow(updatePlanOrderSql, stat, orderID).
+		Scan(&o.NextOrderID, &o.OrderNumber, &planID)
 
 	if err != nil {
 		return nil, err
+	}
+
+	if stat == status.Active {
+		updatePlanSql := `UPDATE plans SET active_order_number = $1 WHERE id = $2`
+		_, err = db.Exec(updatePlanSql, planID)
+
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	return &o, nil

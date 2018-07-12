@@ -36,7 +36,7 @@ func (receiver *CompletedOrderReceiver) ProcessEvent(ctx context.Context, comple
 		log.Println("could not publish notification: ", err)
 	}
 
-	order, error := planRepo.UpdateOrderStatus(receiver.DB, completedOrderEvent.OrderID, completedOrderEvent.Status)
+	order, error := planRepo.UpdatePlanOrder(receiver.DB, completedOrderEvent.OrderID, completedOrderEvent.Status)
 	if _, err := planRepo.UpdatePlanStatus(receiver.DB, completedOrderEvent.PlanID, plan.Failed); err != nil {
 		log.Println("completed order error trying to update the order status to filled -- ", err.Error())
 		return nil
@@ -72,7 +72,7 @@ func (receiver *CompletedOrderReceiver) ProcessEvent(ctx context.Context, comple
 			if err := receiver.Service.LoadPlanOrder(ctx, nextPlanOrder); err != nil {
 				log.Println("completed order error load plan-- ", err.Error())
 			}
-			if _, err := planRepo.UpdateOrderStatus(receiver.DB, nextPlanOrder.Orders[0].OrderID, status.Active); err != nil {
+			if _, err := planRepo.UpdatePlanOrder(receiver.DB, nextPlanOrder.Orders[0].OrderID, status.Active); err != nil {
 				log.Println("completed order error trying to update order to active -- ", err.Error())
 			}
 		}

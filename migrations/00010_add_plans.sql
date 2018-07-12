@@ -5,6 +5,7 @@ CREATE TABLE plans (
   plan_template_id text,             -- optional frontend plan template used with this plan - (Leo wanted this) 
   user_id UUID NOT NULL REFERENCES users (id) ON DELETE CASCADE,
   user_key_id UUID NOT NULL REFERENCES user_keys (id) ON DELETE CASCADE,
+  active_order_number integer NOT NULL,
   exchange_name text NOT NULL,
   market_name text NOT NULL,
   base_balance decimal NOT NULL,
