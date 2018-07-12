@@ -1,6 +1,8 @@
 package plan
 
 const (
+	// the plan was aborted
+	Aborted string = "aborted"
 	// chain status
 	// the chain of orders is running
 	Active string = "active"
