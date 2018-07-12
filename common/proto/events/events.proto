@@ -23,44 +23,46 @@ message Auth {
   string secret = 2;
 }
 
-message OrderEvent {
-  string exchange = 1;
-  string orderID = 2;
-  string userID = 3;
-  string keyID = 4;
-  string key = 5;
-  string secret = 6;
-  string marketName = 7;
-  string side = 8;
-  string orderType = 9;
-  string currency = 10;
-  double quantity = 11;
-  double price = 12;
-  string condition = 13;
-  string conditions = 14;
-  string exchangeOrderID = 15;
-  string exchangeMarketName = 16;
-  string status = 17;
-}
+// this can be removed safely?
+// message OrderEvent {
+//   string exchange = 1;
+//   string orderID = 2;
+//   string userID = 3;
+//   string keyID = 4;
+//   string key = 5;
+//   string secret = 6;
+//   string marketName = 7;
+//   string side = 8;
+//   string orderType = 9;
+//   string currency = 10;
+//   double quantity = 11;
+//   double price = 12;
+//   string condition = 13;
+//   string conditions = 14;
+//   string exchangeOrderID = 15;
+//   string exchangeMarketName = 16;
+//   string status = 17;
+// }
 
 message ActiveOrderEvent {
   string exchange = 1;
   string orderID = 2;
   string planID = 3;
   string userID = 4;
-  double baseBalance = 5;
-  double basePercent = 6;
-  double currencyBalance = 7;
-  double currencyPercent = 8;
-  string keyID = 9;
-  string key = 10;
-  string secret = 11;
-  string marketName = 12;
-  string side = 13;
-  string orderType = 14;
-  double price = 15;
-  string conditions = 16;
-  string nextOrderID = 17;
+  string nextOrderID = 5;
+  double baseBalance = 6;
+  double basePercent = 7;
+  double currencyBalance = 8;
+  double currencyPercent = 9;
+  string keyID = 10;
+  string key = 11;
+  string secret = 12;
+  string marketName = 13;
+  string side = 14;
+  string orderType = 15;
+  double price = 16;
+  string conditions = 17;
+  bool revision = 18;      // this means that this order event should replace an active order in the system
 }
 
 message TriggeredOrderEvent {
@@ -68,38 +70,38 @@ message TriggeredOrderEvent {
   string orderID = 2;
   string planID = 3;
   string userID = 4;
-  double baseBalance = 5;
-  double basePercent = 6;
-  double currencyBalance = 7;
-  double currencyPercent = 8;
-  string keyID = 9;
-  string key = 10;
-  string secret = 11;
-  string marketName = 12;
-  string side = 13;
-  string orderType = 14;
-  double price = 15;
-  double triggeredPrice = 16;
-  string triggeredCondition = 17;
-  string nextOrderID = 18;
+  string nextOrderID = 5;
+  double baseBalance = 6;
+  double basePercent = 7;
+  double currencyBalance = 8;
+  double currencyPercent = 9;
+  string keyID = 10;
+  string key = 11;
+  string secret = 12;
+  string marketName = 13;
+  string side = 14;
+  string orderType = 15;
+  double price = 16;
+  double triggeredPrice = 17;
+  string triggeredCondition = 18;
 }
 
 message CompletedOrderEvent {
   string orderID = 1;
   string planID = 2;
   string userID = 3;
-  double baseBalance = 4;
-  double currencyBalance = 5;
-  string currency = 6; 
-  string side = 7;
-  double quantity = 8; 
-  double triggeredPrice = 9;
-  string triggeredCondition = 10;
-  string exchangeOrderID = 11;
-  string exchangeMarketName = 12;
-  string status = 13;
-  string details = 14;
-  string nextOrderID = 15;
+  string nextOrderID = 4;
+  double baseBalance = 5;
+  double currencyBalance = 6;
+  string currency = 7; 
+  string side = 8;
+  double quantity = 9; 
+  double triggeredPrice = 10; 
+  string triggeredCondition = 11;
+  string exchangeOrderID = 12;
+  string exchangeMarketName = 13;
+  string status = 14;
+  string details = 15;
 }
 
 message EngineStartEvent {
