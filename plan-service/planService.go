@@ -271,33 +271,40 @@ func (service *PlanService) GetUserPlans(ctx context.Context, req *protoPlan.Get
 // Therefore, return error in response object.
 func (service *PlanService) DeletePlan(ctx context.Context, req *protoPlan.DeletePlanRequest, res *protoPlan.PlanResponse) error {
 	pln, error := planRepo.FindPlanSummary(service.DB, req.PlanID)
-	if error != nil {
+	switch {
+	case error == sql.ErrNoRows:
+		res.Status = response.Nonentity
+		res.Message = fmt.Sprintf("planID not found %s", req.PlanID)
+		return nil
+
+	case error != nil:
 		res.Status = response.Error
 		res.Message = fmt.Sprintf("FindPlanSummary error: %s", error.Error())
 		return nil
-	}
 
-	// abort plan if order has been filled
-	if pln.ActiveOrderNumber == 0 {
-		pln.Status = plan.Deleted
-		error = planRepo.DeletePlan(service.DB, req.PlanID)
-	} else {
-		pln, error = planRepo.UpdatePlanStatus(service.DB, req.PlanID, plan.Aborted)
-	}
-
-	// TODO purge the active order that is in memory
-	// TODO receive a succesful order abort event so you can handle it by updating the order status like this
-	//planRepo.UpdatePlanOrder(receiver.DB, nextPlanOrder.Orders[0].OrderID, status.Active
-
-	switch {
-	case error == nil:
-		res.Status = response.Success
-		res.Data = &protoPlan.PlanData{
-			Plan: pln,
-		}
 	default:
-		res.Status = response.Error
-		res.Message = error.Error()
+		// abort plan if order has been filled
+		if pln.ActiveOrderNumber == 0 {
+			pln.Status = plan.Deleted
+			error = planRepo.DeletePlan(service.DB, req.PlanID)
+		} else {
+			pln, error = planRepo.UpdatePlanStatus(service.DB, req.PlanID, plan.Aborted)
+		}
+
+		// TODO purge the active order that is in memory
+		// TODO receive a succesful order abort event so you can handle it by updating the order status like this
+		//planRepo.UpdatePlanOrder(receiver.DB, nextPlanOrder.Orders[0].OrderID, status.Active
+
+		switch {
+		case error == nil:
+			res.Status = response.Success
+			res.Data = &protoPlan.PlanData{
+				Plan: pln,
+			}
+		default:
+			res.Status = response.Error
+			res.Message = error.Error()
+		}
 	}
 	return nil
 }
@@ -307,33 +314,39 @@ func (service *PlanService) DeletePlan(ctx context.Context, req *protoPlan.Delet
 // Therefore, return error in response object.
 func (service *PlanService) UpdatePlan(ctx context.Context, req *protoPlan.UpdatePlanRequest, res *protoPlan.PlanResponse) error {
 	pln, error := planRepo.FindPlanSummary(service.DB, req.PlanID)
-	if error != nil {
+	switch {
+	case error == sql.ErrNoRows:
+		res.Status = response.Nonentity
+		res.Message = fmt.Sprintf("planID not found %s", req.PlanID)
+		return nil
+
+	case error != nil:
 		res.Status = response.Error
 		res.Message = error.Error()
 		return nil
-	}
-
-	// update balances and status if no order has been filled
-	if pln.ActiveOrderNumber == 0 {
-		pln, error = planRepo.UpdatePlanBalancesAndStatus(service.DB, req)
-	} else {
-		// can only update the plan status when order has been filled
-		pln, error = planRepo.UpdatePlanStatus(service.DB, req.PlanID, req.Status)
-	}
-
-	// TODO update active order
-	// TODO receive a succesful order update event so you can handle it by updating the order status like this
-	//planRepo.UpdatePlanOrder(receiver.DB, nextPlanOrder.Orders[0].OrderID, status.Active
-
-	switch {
-	case error == nil:
-		res.Status = response.Success
-		res.Data = &protoPlan.PlanData{
-			Plan: pln,
-		}
 	default:
-		res.Status = response.Error
-		res.Message = error.Error()
+		// update balances and status if no order has been filled
+		if pln.ActiveOrderNumber == 0 {
+			pln, error = planRepo.UpdatePlanBalancesAndStatus(service.DB, req)
+		} else {
+			// can only update the plan status when order has been filled
+			pln, error = planRepo.UpdatePlanStatus(service.DB, req.PlanID, req.Status)
+		}
+
+		// TODO update active order
+		// TODO receive a succesful order update event so you can handle it by updating the order status like this
+		//planRepo.UpdatePlanOrder(receiver.DB, nextPlanOrder.Orders[0].OrderID, status.Active
+
+		switch {
+		case error == nil:
+			res.Status = response.Success
+			res.Data = &protoPlan.PlanData{
+				Plan: pln,
+			}
+		default:
+			res.Status = response.Error
+			res.Message = error.Error()
+		}
 	}
 	return nil
 }
