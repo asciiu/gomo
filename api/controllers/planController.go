@@ -3,6 +3,7 @@ package controllers
 import (
 	"database/sql"
 	"encoding/json"
+	"io/ioutil"
 	"log"
 	"net/http"
 	"strconv"
@@ -631,8 +632,15 @@ type UpdatePlanRequest struct {
 // update a plan (protected)
 //
 // You may update the base balance and currency balance before the plan has executed its first order. Once a
-// plan order has been executed you cannot change the balances for the plan. Update will only allow you to
+// plan order has been executed you cannot change the balances for the plan.
 // Other use case for this endpoint is to pause the plan by sending status='inactive'. Use DELETE to abort the plan.
+//
+// example:
+// {
+//    "baseBalance": -1,       -- does not update baseBalance
+//    "currencyBalance": -1,   -- does not update currencyBalance
+//    "status": "inactive"     -- set plan to inactive
+//}
 //
 // responses:
 //  200: responsePlanSuccess "data" will contain plan summary with "status": "success"
@@ -643,9 +651,21 @@ func (controller *PlanController) HandleUpdatePlan(c echo.Context) error {
 	userID := claims["jti"].(string)
 	planID := c.Param("planID")
 
+	requestBody, _ := ioutil.ReadAll(c.Request().Body)
+
+	if !strings.Contains(string(requestBody), "baseBalance") ||
+		!strings.Contains(string(requestBody), "currencyBalance") ||
+		!strings.Contains(string(requestBody), "status") {
+		res := &ResponseError{
+			Status:  response.Fail,
+			Message: "baseBalance, currencyBalance, and status are required",
+		}
+		return c.JSON(http.StatusBadRequest, res)
+	}
+
 	var updateParams UpdatePlanRequest
 
-	err := json.NewDecoder(c.Request().Body).Decode(&updateParams)
+	err := json.Unmarshal([]byte(requestBody), &updateParams)
 	if err != nil {
 		res := &ResponseError{
 			Status:  response.Fail,

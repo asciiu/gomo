@@ -117,7 +117,7 @@ func NewRouter(db *sql.DB) *echo.Echo {
 	protectedApi.GET("/plans", planController.HandleListPlans)
 	protectedApi.POST("/plans", planController.HandlePostPlan)
 	protectedApi.GET("/plans/:planID", planController.HandleGetPlan)
-	protectedApi.PATCH("/plans/:planID", planController.HandleUpdatePlan)
+	protectedApi.PUT("/plans/:planID", planController.HandleUpdatePlan)
 	protectedApi.DELETE("/plans/:planID", planController.HandleDeletePlan)
 
 	// search endpoint

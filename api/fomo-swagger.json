@@ -1004,7 +1004,7 @@
         }
       },
       "put": {
-        "description": "You may update the base balance and currency balance before the plan has executed its first order. Once a\nplan order has been executed you cannot change the balances for the plan. Update will only allow you to\nOther use case for this endpoint is to pause the plan by sending status='inactive'. Use DELETE to abort the plan.",
+        "description": "You may update the base balance and currency balance before the plan has executed its first order. Once a\nplan order has been executed you cannot change the balances for the plan.\nOther use case for this endpoint is to pause the plan by sending status='inactive'. Use DELETE to abort the plan.\n\nexample:\n{\n\"baseBalance\": -1,       -- does not update baseBalance\n\"currencyBalance\": -1,   -- does not update currencyBalance\n\"status\": \"inactive\"     -- set plan to inactive\n}",
         "tags": [
           "plans"
         ],
