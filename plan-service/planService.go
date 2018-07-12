@@ -270,10 +270,31 @@ func (service *PlanService) GetUserPlans(ctx context.Context, req *protoPlan.Get
 // Can't return an error with a response object - response object is returned as nil when error is non nil.
 // Therefore, return error in response object.
 func (service *PlanService) DeletePlan(ctx context.Context, req *protoPlan.DeletePlanRequest, res *protoPlan.PlanResponse) error {
-	error := planRepo.DeletePlan(service.DB, req.PlanID)
+	pln, error := planRepo.FindPlanSummary(service.DB, req.PlanID)
+	if error != nil {
+		res.Status = response.Error
+		res.Message = error.Error()
+		return nil
+	}
+
+	// abort plan if order has been filled
+	if pln.ActiveOrderNumber == 0 {
+		error = planRepo.DeletePlan(service.DB, req.PlanID)
+	} else {
+		_, error = planRepo.UpdatePlanStatus(service.DB, req.PlanID, plan.Aborted)
+	}
+
+	// TODO purge the active order that is in memory
+	// TODO receive a succesful order abort event so you can handle it by updating the order status like this
+	//planRepo.UpdatePlanOrder(receiver.DB, nextPlanOrder.Orders[0].OrderID, status.Active
+
 	switch {
 	case error == nil:
+		pln.Status = plan.Aborted
 		res.Status = response.Success
+		res.Data = &protoPlan.PlanData{
+			Plan: pln,
+		}
 	default:
 		res.Status = response.Error
 		res.Message = error.Error()
@@ -285,17 +306,35 @@ func (service *PlanService) DeletePlan(ctx context.Context, req *protoPlan.Delet
 // Can't return an error with a response object - response object is returned as nil when error is non nil.
 // Therefore, return error in response object.
 func (service *PlanService) UpdatePlan(ctx context.Context, req *protoPlan.UpdatePlanRequest, res *protoPlan.PlanResponse) error {
-	//order, error := orderRepo.UpdatePlan(service.DB, req)
-	//switch {
-	//case error == nil:
-	//	res.Status = response.Success
-	//	res.Data = &plans.UserPlanData{
-	//		Plan: order,
-	//	}
-	//default:
-	//	res.Status = response.Error
-	//	res.Message = error.Error()
-	//}
+	pln, error := planRepo.FindPlanSummary(service.DB, req.PlanID)
+	if error != nil {
+		res.Status = response.Error
+		res.Message = error.Error()
+		return nil
+	}
 
+	// update balances and status if no order has been filled
+	if pln.ActiveOrderNumber == 0 {
+		_, error = planRepo.UpdatePlanBalancesAndStatus(service.DB, req)
+	} else {
+		// can only update the plan status when order has been filled
+		_, error = planRepo.UpdatePlanStatus(service.DB, req.PlanID, req.Status)
+	}
+
+	// TODO update active order
+	// TODO receive a succesful order abort event so you can handle it by updating the order status like this
+	//planRepo.UpdatePlanOrder(receiver.DB, nextPlanOrder.Orders[0].OrderID, status.Active
+
+	switch {
+	case error == nil:
+		pln.Status = plan.Aborted
+		res.Status = response.Success
+		res.Data = &protoPlan.PlanData{
+			Plan: pln,
+		}
+	default:
+		res.Status = response.Error
+		res.Message = error.Error()
+	}
 	return nil
 }

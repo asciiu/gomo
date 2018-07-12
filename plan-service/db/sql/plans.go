@@ -742,3 +742,18 @@ func UpdatePlanStatus(db *sql.DB, planID, status string) (*protoPlan.Plan, error
 
 	return &p, nil
 }
+
+func UpdatePlanBalancesAndStatus(db *sql.DB, req *protoPlan.UpdatePlanRequest) (*protoPlan.Plan, error) {
+	sqlStatement := `UPDATE plans SET base_balance = $1, currency_balance = $2, status = $3 WHERE id = $4 
+	RETURNING id`
+
+	var p protoPlan.Plan
+	err := db.QueryRow(sqlStatement, req.BaseBalance, req.CurrencyBalance, req.Status, req.PlanID).
+		Scan(&p.PlanID)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return &p, nil
+}
