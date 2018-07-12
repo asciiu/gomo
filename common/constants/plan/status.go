@@ -8,6 +8,8 @@ const (
 	Active string = "active"
 	// the chain of orders has completed
 	Completed string = "completed"
+	// this means the record was successfully delete from our DB
+	Deleted string = "deleted"
 	// the chain of orders is not running
 	Inactive string = "inactive"
 	// the chain failed
