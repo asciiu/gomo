@@ -30,7 +30,9 @@ func (receiver *EngineStartReceiver) ProcessEvent(ctx context.Context, engine *e
 
 	// TODO we need to explore a different approach here that is more efficient.
 	for _, plan := range plans {
-		if error = receiver.Service.LoadPlanOrder(ctx, plan); error != nil {
+		// load the active orders - these are not revisions of active orders since it is assumed
+		// the the engine is asking to reload them from the DB
+		if error = receiver.Service.LoadPlanOrder(ctx, plan, false); error != nil {
 			log.Println("load plan error -- ", error)
 		}
 	}

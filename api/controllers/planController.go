@@ -653,6 +653,7 @@ func (controller *PlanController) HandleUpdatePlan(c echo.Context) error {
 
 	requestBody, _ := ioutil.ReadAll(c.Request().Body)
 
+	// there's got to be a better way to do this validation
 	if !strings.Contains(string(requestBody), "baseBalance") ||
 		!strings.Contains(string(requestBody), "currencyBalance") ||
 		!strings.Contains(string(requestBody), "status") {

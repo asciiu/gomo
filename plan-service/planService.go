@@ -12,6 +12,7 @@ import (
 	"github.com/asciiu/gomo/common/constants/plan"
 	"github.com/asciiu/gomo/common/constants/response"
 	"github.com/asciiu/gomo/common/constants/side"
+	"github.com/asciiu/gomo/common/constants/status"
 	evt "github.com/asciiu/gomo/common/proto/events"
 	keys "github.com/asciiu/gomo/key-service/proto/key"
 	planRepo "github.com/asciiu/gomo/plan-service/db/sql"
@@ -28,23 +29,26 @@ type PlanService struct {
 	Client    balances.BalanceServiceClient
 	KeyClient keys.KeyServiceClient
 	OrderPub  micro.Publisher
-	//NewBuy    micro.Publisher
-	//NewSell   micro.Publisher
 }
 
 // private: This is where the order events are published to the rest of the system
 // this function should only be callable from within the PlanService. When a plan is
 // published the first order of the plan will be emmitted as an ActiveOrderEvent to the
 // system.
-func (service *PlanService) publishPlan(ctx context.Context, plan *protoPlan.Plan) error {
-	// TODO compute quantity as
-	// Buy-limit: plan.baseBalance / planOrder.Price
-	// Buy-market: plan.baseBalance / trigger.Price (can only determine this at trigger time)
-	// Sell-limit: currencyBalance
-	// Sell-market: currencyBalance
-
+//
+// VERY IMPORTANT: Only send Plans where the first order plan's orders is the next order to active.
+// That is to say. DO NOT load a plan where the first order in the orders array has been filled. Fuck
+// it, I'm going to implement a check here to ensure this never happens.
+func (service *PlanService) publishPlan(ctx context.Context, plan *protoPlan.Plan, isRevision bool) error {
 	// the first plan order will always be the active one
 	planOrder := plan.Orders[0]
+
+	// only pub plan if the next plan order is active or inactive
+	// we do not pub plan orders that have been filled, failed, or aborted
+	// reexecuting those plan orders would be very bad!
+	if planOrder.Status != status.Active && planOrder.Status != status.Inactive {
+		return nil
+	}
 
 	// convert order to order event
 	activeOrder := evt.ActiveOrderEvent{
@@ -65,9 +69,9 @@ func (service *PlanService) publishPlan(ctx context.Context, plan *protoPlan.Pla
 		Price:           planOrder.LimitPrice,
 		Conditions:      planOrder.Conditions,
 		NextOrderID:     planOrder.NextOrderID,
+		Revision:        isRevision,
 	}
 
-	// //if err := publisher.Publish(context.Background(), &orderEvent); err != nil {
 	if err := service.OrderPub.Publish(context.Background(), &activeOrder); err != nil {
 		return fmt.Errorf("publish error: %s -- ActiveOrderEvent %+v", err, &activeOrder)
 	}
@@ -94,9 +98,8 @@ func (service *PlanService) validateBalance(ctx context.Context, currency string
 	return nil
 }
 
-// LoadBuyPlan should not be invoked by the client. This function was designed to load an
-// order after an order was filled.
-func (service *PlanService) LoadPlanOrder(ctx context.Context, plan *protoPlan.Plan) error {
+// LoadPlanOrder will activate an order (i.e. send a plan order) to the execution engine to process.
+func (service *PlanService) LoadPlanOrder(ctx context.Context, plan *protoPlan.Plan, isRevision bool) error {
 
 	planOrder := plan.Orders[0]
 	currencies := strings.Split(plan.MarketName, "-")
@@ -113,7 +116,7 @@ func (service *PlanService) LoadPlanOrder(ctx context.Context, plan *protoPlan.P
 		return err
 	}
 
-	if err := service.publishPlan(ctx, plan); err != nil {
+	if err := service.publishPlan(ctx, plan, isRevision); err != nil {
 		return err
 	}
 
@@ -198,7 +201,8 @@ func (service *PlanService) AddPlan(ctx context.Context, req *protoPlan.PlanRequ
 		pln.Key = ky.Key
 		pln.KeySecret = ky.Secret
 
-		if err := service.publishPlan(ctx, pln); err != nil {
+		// this is a new plan
+		if err := service.publishPlan(ctx, pln, false); err != nil {
 			// TODO return a warning here
 			res.Status = response.Error
 			res.Message = "could not publish first order: " + err.Error()
@@ -379,12 +383,12 @@ func (service *PlanService) UpdatePlan(ctx context.Context, req *protoPlan.Updat
 			}
 		}
 
-		// TODO update active order
-		// TODO receive a succesful order update event so you can handle it by updating the order status like this
-		//planRepo.UpdatePlanOrder(receiver.DB, nextPlanOrder.Orders[0].OrderID, status.Active
-
 		switch {
 		case error == nil:
+			// TODO update active order
+			// TODO receive a succesful order update event so you can handle it by updating the order status like this
+			//planRepo.UpdatePlanOrder(receiver.DB, nextPlanOrder.Orders[0].OrderID, status.Active
+
 			res.Status = response.Success
 			res.Data = &protoPlan.PlanData{
 				Plan: pln,

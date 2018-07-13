@@ -69,7 +69,8 @@ func (receiver *CompletedOrderReceiver) ProcessEvent(ctx context.Context, comple
 			log.Println("completed order error on find plan -- ", error.Error())
 
 		default:
-			if err := receiver.Service.LoadPlanOrder(ctx, nextPlanOrder); err != nil {
+			// load new plan order with false - it is not a revision of an active order
+			if err := receiver.Service.LoadPlanOrder(ctx, nextPlanOrder, false); err != nil {
 				log.Println("completed order error load plan-- ", err.Error())
 			}
 			if _, err := planRepo.UpdatePlanOrder(receiver.DB, nextPlanOrder.Orders[0].OrderID, status.Active); err != nil {
