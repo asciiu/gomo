@@ -33,9 +33,10 @@ func main() {
 	core.Import(env)
 
 	orderReceiver := OrderReceiver{
-		DB:     gomoDB,
-		Orders: make([]*Order, 0),
-		Env:    env,
+		DB:      gomoDB,
+		Orders:  make([]*Order, 0),
+		Env:     env,
+		Aborted: micro.NewPublisher(msg.TopicAbortedOrder, srv.Client()),
 	}
 	processor := Processor{
 		DB:        gomoDB,

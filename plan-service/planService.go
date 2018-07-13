@@ -70,6 +70,7 @@ func (service *PlanService) publishPlan(ctx context.Context, plan *protoPlan.Pla
 		Conditions:      planOrder.Conditions,
 		NextOrderID:     planOrder.NextOrderID,
 		Revision:        isRevision,
+		OrderStatus:     planOrder.Status,
 	}
 
 	if err := service.OrderPub.Publish(context.Background(), &activeOrder); err != nil {
@@ -274,44 +275,65 @@ func (service *PlanService) GetUserPlans(ctx context.Context, req *protoPlan.Get
 	return nil
 }
 
-// RemovePlan returns error to conform to protobuf def, but the error will always be returned as nil.
-// Can't return an error with a response object - response object is returned as nil when error is non nil.
-// Therefore, return error in response object.
+// We can delete plans that have no filled orders and that are inactive. This becomes an abort plan
+// if the plan status is active.
 func (service *PlanService) DeletePlan(ctx context.Context, req *protoPlan.DeletePlanRequest, res *protoPlan.PlanResponse) error {
-	pln, error := planRepo.FindPlanSummary(service.DB, req.PlanID)
+	pln, err := planRepo.FindPlanSummary(service.DB, req.PlanID)
 	switch {
-	case error == sql.ErrNoRows:
+	case err == sql.ErrNoRows:
 		res.Status = response.Nonentity
 		res.Message = fmt.Sprintf("planID not found %s", req.PlanID)
 		return nil
 
-	case error != nil:
+	case err != nil:
 		res.Status = response.Error
-		res.Message = fmt.Sprintf("FindPlanSummary error: %s", error.Error())
+		res.Message = fmt.Sprintf("unexpected error in DeletePlan: %s", err.Error())
 		return nil
 
 	default:
-		// abort plan if order has been filled
-		if pln.ActiveOrderNumber == 0 {
-			pln.Status = plan.Deleted
-			error = planRepo.DeletePlan(service.DB, req.PlanID)
-		} else {
-			pln, error = planRepo.UpdatePlanStatus(service.DB, req.PlanID, plan.Aborted)
-		}
-
-		// TODO purge the active order that is in memory
-		// TODO receive a succesful order abort event so you can handle it by updating the order status like this
-		//planRepo.UpdatePlanOrder(receiver.DB, nextPlanOrder.Orders[0].OrderID, status.Active
 
 		switch {
-		case error == nil:
+		case pln.ActiveOrderNumber == 0 && pln.Status != plan.Active:
+			// we can safely delete this plan from the system because the plan is not in memory
+			// (i.e. not active) and the first order of the plan has not been executed
+			err = planRepo.DeletePlan(service.DB, req.PlanID)
+			if err != nil {
+				res.Status = response.Error
+				res.Message = err.Error()
+			} else {
+				pln.Status = plan.Deleted
+				res.Status = response.Success
+				res.Data = &protoPlan.PlanData{
+					Plan: pln,
+				}
+			}
+
+		case pln.Status == plan.Active:
+			pln.Status = plan.PendingAbort
+			_, err = planRepo.UpdatePlanStatus(service.DB, req.PlanID, pln.Status)
+			if err != nil {
+				res.Status = response.Error
+				res.Message = err.Error()
+				return nil
+			}
+
+			// set the plan order status to aborted we are going to use
+			// this status in the execution engine to remove order from memory
+			pln.Orders[0].Status = status.Aborted
+			// publish this revision to the system so the plan order can be removed from execution
+			if err := service.publishPlan(ctx, pln, true); err != nil {
+				res.Status = response.Error
+				res.Message = fmt.Sprintf("failed to remove active plan order from execution: %s", err.Error())
+				return nil
+			}
+
 			res.Status = response.Success
 			res.Data = &protoPlan.PlanData{
 				Plan: pln,
 			}
+
 		default:
-			res.Status = response.Error
-			res.Message = error.Error()
+			// what's this?
 		}
 	}
 	return nil
@@ -385,6 +407,10 @@ func (service *PlanService) UpdatePlan(ctx context.Context, req *protoPlan.Updat
 
 		switch {
 		case error == nil:
+			// publish the new plan to the system
+			if err := service.publishPlan(ctx, pln, true); err != nil {
+				return err
+			}
 			// TODO update active order
 			// TODO receive a succesful order update event so you can handle it by updating the order status like this
 			//planRepo.UpdatePlanOrder(receiver.DB, nextPlanOrder.Orders[0].OrderID, status.Active

@@ -19,6 +19,8 @@ func DeletePlan(db *sql.DB, planID string) error {
 	return err
 }
 
+// FindPlanSummary will load the order with the active order number as its only order
+// this is so we can examine the current state of the plan
 func FindPlanSummary(db *sql.DB, planID string) (*protoPlan.Plan, error) {
 	var plan protoPlan.Plan
 	var order protoPlan.Order
@@ -720,38 +722,6 @@ func InsertPlan(db *sql.DB, req *protoPlan.PlanRequest) (*protoPlan.Plan, error)
 	}
 	return &plan, nil
 }
-
-// UpdateOrder should be an update head chain buy order
-// todo add sql for update other types of orders - UpdateHeadBuyOrder, UpdateHeadSellOrder, UpdateChainBuyOrder, UpdateChainSellOrder
-// TODO needs work!!
-// func UpdateOrder(db *sql.DB, req *orderProto.OrderRequest) (*orderProto.Order, error) {
-// 	// sqlStatement := `UPDATE orders SET
-// 	// conditions = $1,
-// 	// base_quantity = $2,
-// 	// WHERE id = $4 and user_id = $5
-// 	// RETURNING id, user_id, exchange_name, market_name, user_key, side,
-// 	// base_quantity, base_quantity_remainder, status, conditions, parent_order_id`
-
-// 	// jsonCond, err := json.Marshal(req.Conditions)
-// 	// if err != nil {
-// 	// 	return nil, err
-// 	// }
-
-// 	var o orderProto.Order
-// 	// err = db.QueryRow(sqlStatement, jsonCond, req.BaseQuantity, req.BaseQuantity, req.OrderID, req.UserID).
-// 	// 	Scan(&o.OrderID, &o.UserID, &o.Exchange, &o.MarketName, &o.KeyID,
-// 	// 		&o.Side, &o.BaseQuantity, &o.Status, &o.Conditions, &o.ParentOrderID)
-
-// 	// if err != nil {
-// 	// 	return nil, err
-// 	// }
-
-// 	// if err := json.Unmarshal([]byte(o.Conditions), &o.Conditions); err != nil {
-// 	// 	return nil, err
-// 	// }
-
-// 	return &o, nil
-// }
 
 // Maybe this should return more of the updated order but all I need from this
 // as of now is the next_plan_order_id so I can load the next order.

@@ -40,6 +40,11 @@ func main() {
 		OrderPub:  micro.NewPublisher(msg.TopicNewOrder, srv.Client()),
 	}
 
+	abortedReceiver := AbortedOrderReceiver{
+		DB:      gomoDB,
+		Service: &planService,
+	}
+
 	completedReceiver := CompletedOrderReceiver{
 		DB:        gomoDB,
 		Service:   &planService,
@@ -51,6 +56,7 @@ func main() {
 	}
 
 	micro.RegisterSubscriber(msg.TopicCompletedOrder, srv.Server(), &completedReceiver)
+	micro.RegisterSubscriber(msg.TopicAbortedOrder, srv.Server(), &abortedReceiver)
 	micro.RegisterSubscriber(msg.TopicEngineStart, srv.Server(), &engineReceiver)
 
 	// Register our service with the gRPC server, this will tie our
