@@ -343,85 +343,92 @@ func (service *PlanService) DeletePlan(ctx context.Context, req *protoPlan.Delet
 // Can't return an error with a response object - response object is returned as nil when error is non nil.
 // Therefore, return error in response object.
 func (service *PlanService) UpdatePlan(ctx context.Context, req *protoPlan.UpdatePlanRequest, res *protoPlan.PlanResponse) error {
-	pln, error := planRepo.FindPlanSummary(service.DB, req.PlanID)
+	pln, err := planRepo.FindPlanSummary(service.DB, req.PlanID)
 	switch {
-	case error == sql.ErrNoRows:
+	case err == sql.ErrNoRows:
 		res.Status = response.Nonentity
 		res.Message = fmt.Sprintf("planID not found %s", req.PlanID)
 		return nil
 
-	case error != nil:
+	case err != nil:
 		res.Status = response.Error
-		res.Message = error.Error()
+		res.Message = err.Error()
 		return nil
 	default:
-		// this means no order has been filled yet for this plan
-		if pln.ActiveOrderNumber == 0 {
-
-			switch {
-			// can't set base balance to 0 if first is buy
-			case pln.Orders[0].Side == side.Buy && req.BaseBalance == 0:
-				res.Status = response.Fail
-				res.Message = fmt.Sprintf("base balance for buy plan cannot be 0")
-				return nil
-
-			// can't set currency balance to 0 if first is sell
-			case pln.Orders[0].Side == side.Sell && req.CurrencyBalance == 0:
-				res.Status = response.Fail
-				res.Message = fmt.Sprintf("currency balance for sell plan cannot be 0")
-				return nil
-
-			default:
-				if req.Status != "" && !plan.ValidateUpdatePlanStatus(req.Status) {
-					res.Status = response.Fail
-					res.Message = fmt.Sprintf("invalid status for update plan")
-					return nil
-				}
-				if req.CurrencyBalance >= 0 {
-					pln, error = planRepo.UpdatePlanCurrencyBalance(service.DB, req.PlanID, req.CurrencyBalance)
-				}
-				if req.BaseBalance >= 0 {
-					pln, error = planRepo.UpdatePlanBaseBalance(service.DB, req.PlanID, req.BaseBalance)
-				}
-				if req.Status != "" && plan.ValidateUpdatePlanStatus(req.Status) {
-					pln, error = planRepo.UpdatePlanStatus(service.DB, req.PlanID, req.Status)
-				}
-			}
-		} else {
-
-			switch {
-			// validate status here
-			case req.Status == "":
-				res.Status = response.Fail
-				res.Message = fmt.Sprintf("missing status for update plan")
-				return nil
-			case !plan.ValidateUpdatePlanStatus(req.Status):
-				res.Status = response.Fail
-				res.Message = fmt.Sprintf("invalid status for plan status update")
-				return nil
-			default:
-				// can only update the plan status when order has been filled
-				pln, error = planRepo.UpdatePlanStatus(service.DB, req.PlanID, req.Status)
-			}
-		}
 
 		switch {
-		case error == nil:
-			// publish the new plan to the system
-			if err := service.publishPlan(ctx, pln, true); err != nil {
-				return err
+		// can't set base balance to 0 if first is buy
+		case pln.ActiveOrderNumber == 0 && pln.Orders[0].Side == side.Buy && req.BaseBalance == 0:
+			res.Status = response.Fail
+			res.Message = fmt.Sprintf("base balance for buy plan cannot be 0")
+			return nil
+
+		// can't set currency balance to 0 if first is sell
+		case pln.ActiveOrderNumber == 0 && pln.Orders[0].Side == side.Sell && req.CurrencyBalance == 0:
+			res.Status = response.Fail
+			res.Message = fmt.Sprintf("currency balance for sell plan cannot be 0")
+			return nil
+
+		// must specify a valid status if a status was specified
+		case req.Status != "" && !plan.ValidateUpdatePlanStatus(req.Status):
+			res.Status = response.Fail
+			res.Message = fmt.Sprintf("invalid status for update plan")
+			return nil
+
+		// when active order is not first order there must be a status param
+		case pln.ActiveOrderNumber != 0 && req.Status == "":
+			res.Status = response.Fail
+			res.Message = fmt.Sprintf("must specify non empty status for update plan")
+			return nil
+
+		case pln.ActiveOrderNumber == 0:
+			if req.CurrencyBalance >= 0 {
+				pln, err = planRepo.UpdatePlanCurrencyBalance(service.DB, req.PlanID, req.CurrencyBalance)
 			}
-			// TODO update active order
-			// TODO receive a succesful order update event so you can handle it by updating the order status like this
-			//planRepo.UpdatePlanOrder(receiver.DB, nextPlanOrder.Orders[0].OrderID, status.Active
+			if req.BaseBalance >= 0 {
+				pln, err = planRepo.UpdatePlanBaseBalance(service.DB, req.PlanID, req.BaseBalance)
+			}
+			isActive := pln.Status
+			if req.Status != "" {
+				pln, err = planRepo.UpdatePlanStatus(service.DB, req.PlanID, req.Status)
+			}
+
+			if isActive == plan.Active {
+				// publish the revised plan to the system
+				if err := service.publishPlan(ctx, pln, true); err != nil {
+					res.Status = response.Error
+					res.Message = err.Error()
+					return nil
+				}
+			}
 
 			res.Status = response.Success
 			res.Data = &protoPlan.PlanData{
 				Plan: pln,
 			}
+
 		default:
-			res.Status = response.Error
-			res.Message = error.Error()
+			isActive := pln.Status
+			// can only update the plan status when order has been filled
+			pln, err = planRepo.UpdatePlanStatus(service.DB, req.PlanID, req.Status)
+			if err != nil {
+				res.Status = response.Error
+				res.Message = err.Error()
+				return nil
+			}
+			if isActive == plan.Active {
+				// publish the revised plan to the system
+				if err := service.publishPlan(ctx, pln, true); err != nil {
+					res.Status = response.Error
+					res.Message = err.Error()
+					return nil
+				}
+			}
+
+			res.Status = response.Success
+			res.Data = &protoPlan.PlanData{
+				Plan: pln,
+			}
 		}
 	}
 	return nil
