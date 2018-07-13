@@ -421,6 +421,14 @@ func (service *PlanService) UpdatePlan(ctx context.Context, req *protoPlan.Updat
 			}
 		}
 
+		if isActive == plan.Inactive && pln.Status == plan.Active {
+			if err := service.publishPlan(ctx, pln, false); err != nil {
+				res.Status = response.Error
+				res.Message = err.Error()
+				return nil
+			}
+		}
+
 		res.Status = response.Success
 		res.Data = &protoPlan.PlanData{
 			Plan: pln,
