@@ -12,6 +12,9 @@ const TopicBalanceUpdate = "BalanceUpdated"
 // TopicAggTrade emitted after trade event
 const TopicAggTrade = "ExchangeAggTrade"
 
+// this is used to tell the plan service that an order was aborted successfully
+const TopicAbortedOrder = "AbortedOrderSuccess"
+
 // new order event
 const TopicNewOrder = "NewOrder"
 

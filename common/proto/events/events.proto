@@ -63,7 +63,7 @@ message ActiveOrderEvent {
   double price = 16;
   string conditions = 17;
   bool revision = 18;      // this means that this order event should replace an active order in the system
-  string status = 19; 
+  string orderStatus = 19; 
 }
 
 message TriggeredOrderEvent {
@@ -103,6 +103,11 @@ message CompletedOrderEvent {
   string exchangeMarketName = 13;
   string status = 14;
   string details = 15;
+}
+
+message AbortedOrderEvent {
+  string orderID = 1;
+  string planID = 2;
 }
 
 message EngineStartEvent {

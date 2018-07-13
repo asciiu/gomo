@@ -16,6 +16,8 @@ const (
 	Failed string = "failed"
 	// past plan that user did outside of the platform
 	Historic string = "historic"
+	// the plan is pending delete
+	PendingAbort string = "pending_abort"
 	// wtf is this, a learning center for ants!
 	UnknownChainStatus string = "???"
 )
