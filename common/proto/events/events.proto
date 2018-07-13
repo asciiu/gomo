@@ -63,6 +63,7 @@ message ActiveOrderEvent {
   double price = 16;
   string conditions = 17;
   bool revision = 18;      // this means that this order event should replace an active order in the system
+  string status = 19; 
 }
 
 message TriggeredOrderEvent {
