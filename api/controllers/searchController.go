@@ -32,7 +32,7 @@ type Market struct {
 	MarketCurrency     string `json:"marketCurrency"`
 	MarketCurrencyLong string `json:"marketCurrencyLong"`
 	MarketName         string `json:"marketName"`
-	MarketPrice        string `json:"marketPrice"`
+	Price              string `json:"price"`
 	MinTradeSize       string `json:"minTradeSize"`
 }
 
@@ -123,7 +123,7 @@ func (controller *SearchController) CacheEvents(tradeEvents *evt.TradeEvents) {
 			MarketCurrency:     marketCurrency,
 			MarketCurrencyLong: marketCurrencyName,
 			MarketName:         event.MarketName,
-			MarketPrice:        fmt.Sprintf("%.8f", event.Price),
+			Price:              fmt.Sprintf("%.8f", event.Price),
 			MinTradeSize:       "0.0001",
 		}
 
