@@ -384,51 +384,46 @@ func (service *PlanService) UpdatePlan(ctx context.Context, req *protoPlan.Updat
 		case pln.ActiveOrderNumber == 0:
 			if req.CurrencyBalance >= 0 {
 				pln, err = planRepo.UpdatePlanCurrencyBalance(service.DB, req.PlanID, req.CurrencyBalance)
+				if err != nil {
+					res.Status = response.Error
+					res.Message = err.Error()
+					return nil
+				}
 			}
 			if req.BaseBalance >= 0 {
 				pln, err = planRepo.UpdatePlanBaseBalance(service.DB, req.PlanID, req.BaseBalance)
-			}
-			isActive := pln.Status
-			if req.Status != "" {
-				pln, err = planRepo.UpdatePlanStatus(service.DB, req.PlanID, req.Status)
-			}
-
-			if isActive == plan.Active {
-				// publish the revised plan to the system
-				if err := service.publishPlan(ctx, pln, true); err != nil {
+				if err != nil {
 					res.Status = response.Error
 					res.Message = err.Error()
 					return nil
 				}
 			}
 
-			res.Status = response.Success
-			res.Data = &protoPlan.PlanData{
-				Plan: pln,
-			}
-
 		default:
-			isActive := pln.Status
-			// can only update the plan status when order has been filled
+		}
+
+		isActive := pln.Status
+		if req.Status != "" {
 			pln, err = planRepo.UpdatePlanStatus(service.DB, req.PlanID, req.Status)
 			if err != nil {
 				res.Status = response.Error
 				res.Message = err.Error()
 				return nil
 			}
-			if isActive == plan.Active {
-				// publish the revised plan to the system
-				if err := service.publishPlan(ctx, pln, true); err != nil {
-					res.Status = response.Error
-					res.Message = err.Error()
-					return nil
-				}
-			}
+		}
 
-			res.Status = response.Success
-			res.Data = &protoPlan.PlanData{
-				Plan: pln,
+		if isActive == plan.Active {
+			// publish the revised plan to the system
+			if err := service.publishPlan(ctx, pln, true); err != nil {
+				res.Status = response.Error
+				res.Message = err.Error()
+				return nil
 			}
+		}
+
+		res.Status = response.Success
+		res.Data = &protoPlan.PlanData{
+			Plan: pln,
 		}
 	}
 	return nil
