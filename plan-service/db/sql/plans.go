@@ -52,12 +52,11 @@ func FindPlanSummary(db *sql.DB, planID string) (*protoPlan.Plan, error) {
 		po.order_number,
 		po.order_type,
 		po.order_template_id,
-		po.conditions,
 		po.price,
 		po.next_plan_order_id,
 		po.status
 		FROM plans p
-		JOIN plan_orders po on p.id = po.plan_id and p.active_order_number = po.order_number
+		JOIN orders o on p.id = o.plan_id and p.active_order_number = o.order_number
 		JOIN user_keys k on p.user_key_id = k.id
 		WHERE p.id = $1`, planID).Scan(
 		&plan.PlanID,
@@ -78,7 +77,6 @@ func FindPlanSummary(db *sql.DB, planID string) (*protoPlan.Plan, error) {
 		&order.OrderNumber,
 		&order.OrderType,
 		&orderTemp,
-		&order.Conditions,
 		&price,
 		&nextOrderID,
 		&order.Status)
@@ -104,9 +102,6 @@ func FindPlanSummary(db *sql.DB, planID string) (*protoPlan.Plan, error) {
 	if planTemp.Valid {
 		plan.PlanTemplateID = planTemp.String
 	}
-	if err := json.Unmarshal([]byte(order.Conditions), &order.Conditions); err != nil {
-		return nil, err
-	}
 	plan.Orders = append(plan.Orders, &order)
 
 	return &plan, nil
@@ -126,7 +121,7 @@ func FindPlanWithPagedOrders(db *sql.DB, req *protoPlan.GetUserPlanRequest) (*pr
 	var nextOrderID sql.NullString
 
 	var count uint32
-	queryCount := `SELECT count(*) FROM plan_orders WHERE plan_id = $1`
+	queryCount := `SELECT count(*) FROM orders WHERE plan_id = $1`
 	err := db.QueryRow(queryCount, req.PlanID).Scan(&count)
 
 	if count == 0 {
@@ -152,12 +147,11 @@ func FindPlanWithPagedOrders(db *sql.DB, req *protoPlan.GetUserPlanRequest) (*pr
 		po.order_number,
 		po.order_type,
 		po.order_template_id,
-		po.conditions,
 		po.price,
 		po.next_plan_order_id,
 		po.status
 		FROM plans p
-		JOIN plan_orders po on p.id = po.plan_id
+		JOIN orders po on p.id = po.plan_id
 		JOIN user_keys k on p.user_key_id = k.id
 		WHERE p.id = $1 ORDER BY po.order_number OFFSET $2 LIMIT $3`, req.PlanID, req.Page, req.PageSize)
 
@@ -189,7 +183,6 @@ func FindPlanWithPagedOrders(db *sql.DB, req *protoPlan.GetUserPlanRequest) (*pr
 			&order.OrderNumber,
 			&order.OrderType,
 			&orderTemp,
-			&order.Conditions,
 			&price,
 			&nextOrderID,
 			&order.Status)
@@ -215,9 +208,36 @@ func FindPlanWithPagedOrders(db *sql.DB, req *protoPlan.GetUserPlanRequest) (*pr
 		if planTemp.Valid {
 			planPaged.PlanTemplateID = planTemp.String
 		}
-		if err := json.Unmarshal([]byte(order.Conditions), &order.Conditions); err != nil {
-			return nil, err
+
+		conds, err := db.Query(`SELECT 
+			id,
+			name,
+			code,
+			actions,
+			triggered
+			FROM conditions c 
+			WHERE c.order_id = $1 ORDER BY condition_number`, order.OrderID)
+
+		for conds.Next() {
+			var condition protoPlan.Condition
+
+			err := conds.Scan(
+				&condition.ConditionID,
+				&condition.Name,
+				&condition.Code,
+				&condition.Actions,
+				&condition.Triggered,
+			)
+
+			if err != nil {
+				return nil, err
+			}
+			if err := json.Unmarshal([]byte(condition.Code), &condition.Code); err != nil {
+				return nil, err
+			}
+			order.Conditions = append(order.Conditions, &condition)
 		}
+
 		page.Orders = append(page.Orders, &order)
 	}
 
@@ -235,6 +255,7 @@ func FindPlanWithPagedOrders(db *sql.DB, req *protoPlan.GetUserPlanRequest) (*pr
 
 // Find all active orders in the DB. This wil load the keys for each order.
 // Returns active plans that have a verified key only.
+// TODO this needs to be optimized
 func FindActivePlans(db *sql.DB) ([]*protoPlan.Plan, error) {
 	results := make([]*protoPlan.Plan, 0)
 
@@ -254,12 +275,11 @@ func FindActivePlans(db *sql.DB) ([]*protoPlan.Plan, error) {
 		po.currency_percent,
 		po.side,
 		po.order_type,
-		po.conditions,
 		po.price, 
 		po.next_plan_order_id,
 		po.status
 		FROM plans p 
-		JOIN plan_orders po on p.id = po.plan_id
+		JOIN orders po on p.id = po.plan_id
 		JOIN user_keys k on p.user_key_id = k.id
 		WHERE p.status = $1 AND po.status = $2 AND k.status = $3`, plan.Active, status.Active, key.Verified)
 
@@ -296,7 +316,6 @@ func FindActivePlans(db *sql.DB) ([]*protoPlan.Plan, error) {
 			&currencyPercent,
 			&order.Side,
 			&order.OrderType,
-			&order.Conditions,
 			&price,
 			&nextOrderID,
 			&order.Status)
@@ -317,8 +336,33 @@ func FindActivePlans(db *sql.DB) ([]*protoPlan.Plan, error) {
 		if nextOrderID.Valid {
 			order.NextOrderID = nextOrderID.String
 		}
-		if err := json.Unmarshal([]byte(order.Conditions), &order.Conditions); err != nil {
-			return nil, err
+		conds, err := db.Query(`SELECT 
+			id,
+			name,
+			code,
+			actions,
+			triggered
+			FROM conditions c 
+			WHERE c.order_id = $1 ORDER BY condition_number`, order.OrderID)
+
+		for conds.Next() {
+			var condition protoPlan.Condition
+
+			err := conds.Scan(
+				&condition.ConditionID,
+				&condition.Name,
+				&condition.Code,
+				&condition.Actions,
+				&condition.Triggered,
+			)
+
+			if err != nil {
+				return nil, err
+			}
+			if err := json.Unmarshal([]byte(condition.Code), &condition.Code); err != nil {
+				return nil, err
+			}
+			order.Conditions = append(order.Conditions, &condition)
 		}
 		plan.Orders = append(plan.Orders, &order)
 		results = append(results, &plan)
@@ -359,12 +403,11 @@ func FindPlanWithOrderID(db *sql.DB, orderID string) (*protoPlan.Plan, error) {
 		po.currency_percent,
 		po.side,
 		po.order_type,
-		po.conditions,
 		po.price, 
 		po.next_plan_order_id,
 		po.status
 		FROM plans p 
-		JOIN plan_orders po on p.id = po.plan_id
+		JOIN orders po on p.id = po.plan_id
 		JOIN user_keys k on p.user_key_id = k.id
 		WHERE po.id = $1 AND k.status = $2`, orderID, key.Verified).Scan(
 		&plan.PlanID,
@@ -382,7 +425,6 @@ func FindPlanWithOrderID(db *sql.DB, orderID string) (*protoPlan.Plan, error) {
 		&currencyPercent,
 		&order.Side,
 		&order.OrderType,
-		&order.Conditions,
 		&price,
 		&nextOrderID,
 		&order.Status)
@@ -403,9 +445,35 @@ func FindPlanWithOrderID(db *sql.DB, orderID string) (*protoPlan.Plan, error) {
 	if nextOrderID.Valid {
 		order.NextOrderID = nextOrderID.String
 	}
-	if err := json.Unmarshal([]byte(order.Conditions), &order.Conditions); err != nil {
-		return nil, err
+	conds, err := db.Query(`SELECT 
+		id,
+		name,
+		code,
+		actions,
+		triggered
+		FROM conditions c 
+		WHERE c.order_id = $1 ORDER BY condition_number`, order.OrderID)
+
+	for conds.Next() {
+		var condition protoPlan.Condition
+
+		err := conds.Scan(
+			&condition.ConditionID,
+			&condition.Name,
+			&condition.Code,
+			&condition.Actions,
+			&condition.Triggered,
+		)
+
+		if err != nil {
+			return nil, err
+		}
+		if err := json.Unmarshal([]byte(condition.Code), &condition.Code); err != nil {
+			return nil, err
+		}
+		order.Conditions = append(order.Conditions, &condition)
 	}
+
 	plan.Orders = append(plan.Orders, &order)
 
 	return &plan, nil
@@ -649,7 +717,7 @@ func InsertPlan(db *sql.DB, req *protoPlan.PlanRequest) (*protoPlan.Plan, error)
 		if i == 0 && req.Status == plan.Active {
 			orderStatus = status.Active
 		}
-		jsonCond, err := json.Marshal(or.Conditions)
+		//jsonCond, err := json.Marshal(or.Conditions)
 		if err != nil {
 			return nil, err
 		}
@@ -660,7 +728,7 @@ func InsertPlan(db *sql.DB, req *protoPlan.PlanRequest) (*protoPlan.Plan, error)
 		if nextIndex < len(orderIDs) {
 			nextOrderID = orderIDs[nextIndex]
 		}
-		sqlInsertOrder := `insert into plan_orders (
+		sqlInsertOrder := `insert into orders (
 			id, 
 			plan_id, 
 			base_percent, 
@@ -669,11 +737,10 @@ func InsertPlan(db *sql.DB, req *protoPlan.PlanRequest) (*protoPlan.Plan, error)
 			order_template_id,
 			order_number,
 			order_type,
-			conditions,
-			price,
-			next_plan_order_id,
+			limit_price,
+			next_order_id,
 			status) 
-			values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)`
+			values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)`
 		_, err = db.Exec(sqlInsertOrder,
 			orderID,
 			planID,
@@ -683,7 +750,6 @@ func InsertPlan(db *sql.DB, req *protoPlan.PlanRequest) (*protoPlan.Plan, error)
 			or.OrderTemplateID,
 			i,
 			or.OrderType,
-			jsonCond,
 			or.LimitPrice,
 			nextOrderID,
 			orderStatus)
@@ -691,6 +757,47 @@ func InsertPlan(db *sql.DB, req *protoPlan.PlanRequest) (*protoPlan.Plan, error)
 		if err != nil {
 			return nil, err
 		}
+
+		conditions := make([]*protoPlan.Condition, 0)
+		// next insert all the conditions for this order
+		for j, cond := range or.Conditions {
+			jsonCode, err := json.Marshal(cond.Code)
+			if err != nil {
+				return nil, err
+			}
+
+			conditionID := uuid.New()
+			sqlInsertOrder := `insert into conditions (
+				id, 
+				order_id, 
+				condition_number,
+				name,
+				code,
+				actions) 
+				values ($1, $2, $3, $4, $5, $6)`
+			_, err = db.Exec(sqlInsertOrder,
+				conditionID,
+				orderID,
+				j,
+				cond.Name,
+				jsonCode,
+				cond.Actions)
+
+			if err != nil {
+				return nil, err
+			}
+
+			condition := protoPlan.Condition{
+				ConditionID: conditionID.String(),
+				OrderID:     orderID.String(),
+				Name:        cond.Name,
+				Code:        cond.Code,
+				Actions:     cond.Actions,
+				Triggered:   false,
+			}
+			conditions = append(conditions, &condition)
+		}
+
 		order := protoPlan.Order{
 			OrderID:         orderID.String(),
 			OrderNumber:     uint32(i),
@@ -701,8 +808,9 @@ func InsertPlan(db *sql.DB, req *protoPlan.PlanRequest) (*protoPlan.Plan, error)
 			BasePercent:     or.BasePercent,
 			CurrencyPercent: or.CurrencyPercent,
 			Status:          orderStatus,
-			Conditions:      or.Conditions,
-			NextOrderID:     nextOrderID.String(),
+			Conditions:      conditions,
+
+			NextOrderID: nextOrderID.String(),
 		}
 		orders = append(orders, &order)
 	}

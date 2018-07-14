@@ -30,8 +30,14 @@ message OrderRequest {
   string orderTemplateID = 3;
   double basePercent = 4;
   double currencyPercent = 5;
-  string conditions = 6;
-  double limitPrice = 7;
+  double limitPrice = 6;
+  repeated ConditionRequest conditions = 7;
+}
+
+message ConditionRequest {
+  string name = 1;
+  string code = 2;
+  repeated string actions = 3;
 }
 
 message GetUserPlanRequest {
@@ -109,9 +115,18 @@ message Order {
   double basePercent = 7;
   double currencyPercent = 8;
   string status = 9;
-  string conditions = 10;
-  string condition = 11; 
-  string nextOrderID = 12;
+  string nextOrderID = 10;
+  repeated Condition conditions = 11;
+}
+
+message Condition {
+  string conditionID = 1;
+  string orderID = 2;
+  string conditionNumber = 3;
+  string name = 4;
+  string code = 5;
+  bool triggered = 6;
+  repeated string actions = 7;
 }
 
 message PlanData {

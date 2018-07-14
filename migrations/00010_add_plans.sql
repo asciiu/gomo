@@ -27,7 +27,7 @@ CREATE TABLE orders (
   side text NOT NULL,
   order_number integer NOT NULL,      -- defines the order sequence
   order_type text NOT NULL,           -- limit, market, paper
-  price decimal DEFAULT 0,
+  limit_price decimal DEFAULT 0,
   next_order_id UUID,                 -- this would be the following order after this one
   status text NOT NULL,               -- pending, active, failed, etc
   created_on TIMESTAMP DEFAULT now(),
@@ -37,10 +37,11 @@ CREATE TABLE orders (
 CREATE TABLE conditions (
   id UUID PRIMARY KEY NOT NULL,
   order_id UUID NOT NULL REFERENCES orders (id) ON DELETE CASCADE,
+  condition_number integer NOT NULL,      -- defines the order sequence
   name text NOT NULL,
   code jsonb NOT NULL,
   actions text[] NOT NULL,
-  triggered BOOLEAN NOT NULL,
+  triggered BOOLEAN NOT NULL DEFAULT false,
   created_on TIMESTAMP DEFAULT now(),
   updated_on TIMESTAMP DEFAULT current_timestamp
 );
