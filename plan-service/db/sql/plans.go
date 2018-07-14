@@ -159,7 +159,7 @@ func FindPlanWithPagedOrders(db *sql.DB, req *protoPlan.GetUserPlanRequest) (*pr
 		JOIN orders o on p.id = o.plan_id
 		JOIN conditions c on o.id = c.order_id
 		JOIN user_keys k on p.user_key_id = k.id
-		WHERE p.id = $1 ORDER BY o.order_number, p.condition_number 
+		WHERE p.id = $1 ORDER BY o.order_number, c.condition_number 
 		OFFSET $2 LIMIT $3`, req.PlanID, req.Page, req.PageSize)
 
 	if err != nil {
@@ -229,6 +229,8 @@ func FindPlanWithPagedOrders(db *sql.DB, req *protoPlan.GetUserPlanRequest) (*pr
 			return nil, err
 		}
 
+		condition.OrderID = order.OrderID
+
 		var found = false
 		for _, or := range page.Orders {
 			if or.OrderID == order.OrderID {
@@ -239,6 +241,7 @@ func FindPlanWithPagedOrders(db *sql.DB, req *protoPlan.GetUserPlanRequest) (*pr
 		}
 
 		if !found {
+			order.Conditions = append(order.Conditions, &condition)
 			page.Orders = append(page.Orders, &order)
 		}
 	}
@@ -386,7 +389,7 @@ func FindPlanWithOrderID(db *sql.DB, orderID string) (*protoPlan.Plan, error) {
 	var currencyPercent sql.NullFloat64
 	var nextOrderID sql.NullString
 
-	err := db.QueryRow(`SELECT 
+	rows, err := db.Query(`SELECT 
 		p.id,
 		p.user_id,
 		p.user_key_id,
@@ -397,76 +400,73 @@ func FindPlanWithOrderID(db *sql.DB, orderID string) (*protoPlan.Plan, error) {
 		p.base_balance,
 		p.currency_balance,
 		p.status,
-		po.id,
-		po.base_percent,
-		po.currency_percent,
-		po.side,
-		po.order_type,
-		po.limit_price, 
-		po.next_order_id,
-		po.status
+		o.id,
+		o.base_percent,
+		o.currency_percent,
+		o.side,
+		o.order_type,
+		o.limit_price, 
+		o.next_order_id,
+		o.status,
+		c.id as condition_id,
+		c.name,
+		c.code,
+		array_to_json(c.actions),
+		c.triggered
 		FROM plans p 
-		JOIN orders po on p.id = po.plan_id
+		JOIN orders o on p.id = o.plan_id
+		JOIN conditions c on o.id = c.order_id
 		JOIN user_keys k on p.user_key_id = k.id
-		WHERE po.id = $1 AND k.status = $2`, orderID, key.Verified).Scan(
-		&plan.PlanID,
-		&plan.UserID,
-		&plan.KeyID,
-		&plan.Key,
-		&plan.KeySecret,
-		&plan.Exchange,
-		&plan.MarketName,
-		&plan.BaseBalance,
-		&plan.CurrencyBalance,
-		&plan.Status,
-		&order.OrderID,
-		&basePercent,
-		&currencyPercent,
-		&order.Side,
-		&order.OrderType,
-		&price,
-		&nextOrderID,
-		&order.Status)
+		WHERE o.id = $1 AND k.status = $2 ORDER BY c.condition_number`, orderID, key.Verified)
 
 	if err != nil {
 		return nil, err
 	}
 
-	if basePercent.Valid {
-		order.BasePercent = basePercent.Float64
-	}
-	if currencyPercent.Valid {
-		order.CurrencyPercent = currencyPercent.Float64
-	}
-	if price.Valid {
-		order.LimitPrice = price.Float64
-	}
-	if nextOrderID.Valid {
-		order.NextOrderID = nextOrderID.String
-	}
-	conds, err := db.Query(`SELECT 
-		id,
-		name,
-		code,
-		array_to_json(actions),
-		triggered
-		FROM conditions c 
-		WHERE c.order_id = $1 ORDER BY condition_number`, order.OrderID)
+	defer rows.Close()
 
-	for conds.Next() {
+	for rows.Next() {
 		var condition protoPlan.Condition
 		var actionsStr string
-
-		err := conds.Scan(
+		err := rows.Scan(
+			&plan.PlanID,
+			&plan.UserID,
+			&plan.KeyID,
+			&plan.Key,
+			&plan.KeySecret,
+			&plan.Exchange,
+			&plan.MarketName,
+			&plan.BaseBalance,
+			&plan.CurrencyBalance,
+			&plan.Status,
+			&order.OrderID,
+			&basePercent,
+			&currencyPercent,
+			&order.Side,
+			&order.OrderType,
+			&price,
+			&nextOrderID,
+			&order.Status,
 			&condition.ConditionID,
 			&condition.Name,
 			&condition.Code,
 			&actionsStr,
-			&condition.Triggered,
-		)
+			&condition.Triggered)
 
 		if err != nil {
 			return nil, err
+		}
+		if basePercent.Valid {
+			order.BasePercent = basePercent.Float64
+		}
+		if currencyPercent.Valid {
+			order.CurrencyPercent = currencyPercent.Float64
+		}
+		if price.Valid {
+			order.LimitPrice = price.Float64
+		}
+		if nextOrderID.Valid {
+			order.NextOrderID = nextOrderID.String
 		}
 		if err := json.Unmarshal([]byte(actionsStr), &condition.Actions); err != nil {
 			return nil, err
@@ -474,6 +474,7 @@ func FindPlanWithOrderID(db *sql.DB, orderID string) (*protoPlan.Plan, error) {
 		if err := json.Unmarshal([]byte(condition.Code), &condition.Code); err != nil {
 			return nil, err
 		}
+		condition.OrderID = order.OrderID
 		order.Conditions = append(order.Conditions, &condition)
 	}
 
