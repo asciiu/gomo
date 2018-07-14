@@ -53,7 +53,7 @@ func FindPlanSummary(db *sql.DB, planID string) (*protoPlan.Plan, error) {
 		po.order_type,
 		po.order_template_id,
 		po.limit_price,
-		po.next_plan_order_id,
+		po.next_order_id,
 		po.status
 		FROM plans p
 		JOIN orders o on p.id = o.plan_id and p.active_order_number = o.order_number
@@ -148,7 +148,7 @@ func FindPlanWithPagedOrders(db *sql.DB, req *protoPlan.GetUserPlanRequest) (*pr
 		po.order_type,
 		po.order_template_id,
 		po.limit_price,
-		po.next_plan_order_id,
+		po.next_order_id,
 		po.status
 		FROM plans p
 		JOIN orders po on p.id = po.plan_id
@@ -276,7 +276,7 @@ func FindActivePlans(db *sql.DB) ([]*protoPlan.Plan, error) {
 		po.side,
 		po.order_type,
 		po.limit_price, 
-		po.next_plan_order_id,
+		po.next_order_id,
 		po.status
 		FROM plans p 
 		JOIN orders po on p.id = po.plan_id
@@ -404,7 +404,7 @@ func FindPlanWithOrderID(db *sql.DB, orderID string) (*protoPlan.Plan, error) {
 		po.side,
 		po.order_type,
 		po.limit_price, 
-		po.next_plan_order_id,
+		po.next_order_id,
 		po.status
 		FROM plans p 
 		JOIN orders po on p.id = po.plan_id
@@ -832,10 +832,10 @@ func InsertPlan(db *sql.DB, req *protoPlan.PlanRequest) (*protoPlan.Plan, error)
 }
 
 // Maybe this should return more of the updated order but all I need from this
-// as of now is the next_plan_order_id so I can load the next order.
+// as of now is the next_order_id so I can load the next order.
 func UpdatePlanOrder(db *sql.DB, orderID, stat string) (*protoPlan.Order, error) {
 	updatePlanOrderSql := `UPDATE plan_orders SET status = $1 WHERE id = $2 
-	RETURNING next_plan_order_id, order_number, plan_id`
+	RETURNING next_order_id, order_number, plan_id`
 
 	var o protoPlan.Order
 	var planID string
