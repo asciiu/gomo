@@ -459,12 +459,18 @@ type OrderReq struct {
 	// Required for sell side. Percent of currency balance for sell orders.
 	// in: body
 	CurrencyPercent float64 `json:"currencyPercent"`
-	// Required these are the conditions that trigger the order to execute: ???
-	// in: body
-	Conditions string `json:"conditions"`
 	// Required for 'limit' orders. Defines limit price.
 	// in: body
 	LimitPrice float64 `json:"limitPrice"`
+	// Required these are the conditions that trigger the order to execute: ???
+	// in: body
+	Conditions []*ConditionReq `json:"conditions"`
+}
+
+type ConditionReq struct {
+	Name    string `json:"name"`
+	Code    string `json:"name"`
+	Actions []string
 }
 
 // swagger:route POST /plans plans PostPlan
@@ -513,7 +519,8 @@ func (controller *PlanController) HandlePostPlan(c echo.Context) error {
 
 	// read strategy from post body
 	newPlan := new(PlanRequest)
-	err := json.NewDecoder(c.Request().Body).Decode(&newPlan)
+	err := c.Bind(&newPlan)
+	//err := json.NewDecoder(c.Request().Body).Decode(&newPlan)
 	if err != nil {
 		return fail(c, err.Error())
 	}
@@ -544,15 +551,25 @@ func (controller *PlanController) HandlePostPlan(c echo.Context) error {
 		if !sideValidator.ValidateSide(order.Side) {
 			return fail(c, "buy or sell required for side!")
 		}
+
 		or := plans.OrderRequest{
 			Side:            order.Side,
 			OrderTemplateID: order.OrderTemplateID,
 			OrderType:       order.OrderType,
 			BasePercent:     order.BasePercent,
 			CurrencyPercent: order.CurrencyPercent,
-			Conditions:      order.Conditions,
 			LimitPrice:      order.LimitPrice,
 		}
+
+		for _, cond := range order.Conditions {
+			condition := plans.ConditionRequest{
+				Name:    cond.Name,
+				Code:    cond.Code,
+				Actions: cond.Actions,
+			}
+			or.Conditions = append(or.Conditions, &condition)
+		}
+
 		orders = append(orders, &or)
 	}
 

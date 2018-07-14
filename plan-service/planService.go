@@ -67,15 +67,15 @@ func (service *PlanService) publishPlan(ctx context.Context, plan *protoPlan.Pla
 		Side:            planOrder.Side,
 		OrderType:       planOrder.OrderType,
 		Price:           planOrder.LimitPrice,
-		Conditions:      planOrder.Conditions,
-		NextOrderID:     planOrder.NextOrderID,
-		Revision:        isRevision,
-		OrderStatus:     planOrder.Status,
+		//Conditions:      planOrder.Conditions,
+		NextOrderID: planOrder.NextOrderID,
+		Revision:    isRevision,
+		OrderStatus: planOrder.Status,
 	}
 
-	if err := service.OrderPub.Publish(context.Background(), &activeOrder); err != nil {
-		return fmt.Errorf("publish error: %s -- ActiveOrderEvent %+v", err, &activeOrder)
-	}
+	//if err := service.OrderPub.Publish(context.Background(), &activeOrder); err != nil {
+	//	return fmt.Errorf("publish error: %s -- ActiveOrderEvent %+v", err, &activeOrder)
+	//}
 	log.Printf("publish active order -- %+v\n", &activeOrder)
 	return nil
 }
