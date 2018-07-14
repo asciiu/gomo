@@ -781,7 +781,7 @@ func InsertPlan(db *sql.DB, req *protoPlan.PlanRequest) (*protoPlan.Plan, error)
 				j,
 				cond.Name,
 				jsonCode,
-				cond.Actions)
+				pq.Array(cond.Actions))
 
 			if err != nil {
 				return nil, err

@@ -468,8 +468,8 @@ type OrderReq struct {
 }
 
 type ConditionReq struct {
-	Name    string `json:"name"`
-	Code    string `json:"name"`
+	Name    string
+	Code    string
 	Actions []string
 }
 
