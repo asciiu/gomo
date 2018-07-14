@@ -52,7 +52,7 @@ func FindPlanSummary(db *sql.DB, planID string) (*protoPlan.Plan, error) {
 		po.order_number,
 		po.order_type,
 		po.order_template_id,
-		po.price,
+		po.limit_price,
 		po.next_plan_order_id,
 		po.status
 		FROM plans p
@@ -147,7 +147,7 @@ func FindPlanWithPagedOrders(db *sql.DB, req *protoPlan.GetUserPlanRequest) (*pr
 		po.order_number,
 		po.order_type,
 		po.order_template_id,
-		po.price,
+		po.limit_price,
 		po.next_plan_order_id,
 		po.status
 		FROM plans p
@@ -275,7 +275,7 @@ func FindActivePlans(db *sql.DB) ([]*protoPlan.Plan, error) {
 		po.currency_percent,
 		po.side,
 		po.order_type,
-		po.price, 
+		po.limit_price, 
 		po.next_plan_order_id,
 		po.status
 		FROM plans p 
@@ -403,7 +403,7 @@ func FindPlanWithOrderID(db *sql.DB, orderID string) (*protoPlan.Plan, error) {
 		po.currency_percent,
 		po.side,
 		po.order_type,
-		po.price, 
+		po.limit_price, 
 		po.next_plan_order_id,
 		po.status
 		FROM plans p 
