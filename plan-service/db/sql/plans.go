@@ -213,23 +213,27 @@ func FindPlanWithPagedOrders(db *sql.DB, req *protoPlan.GetUserPlanRequest) (*pr
 			id,
 			name,
 			code,
-			actions,
+			array_to_json(actions),
 			triggered
 			FROM conditions c 
 			WHERE c.order_id = $1 ORDER BY condition_number`, order.OrderID)
 
 		for conds.Next() {
 			var condition protoPlan.Condition
+			var actionsStr string
 
 			err := conds.Scan(
 				&condition.ConditionID,
 				&condition.Name,
 				&condition.Code,
-				&condition.Actions,
+				&actionsStr,
 				&condition.Triggered,
 			)
 
 			if err != nil {
+				return nil, err
+			}
+			if err := json.Unmarshal([]byte(actionsStr), &condition.Actions); err != nil {
 				return nil, err
 			}
 			if err := json.Unmarshal([]byte(condition.Code), &condition.Code); err != nil {
@@ -340,23 +344,27 @@ func FindActivePlans(db *sql.DB) ([]*protoPlan.Plan, error) {
 			id,
 			name,
 			code,
-			actions,
+			array_to_json(actions),
 			triggered
 			FROM conditions c 
 			WHERE c.order_id = $1 ORDER BY condition_number`, order.OrderID)
 
 		for conds.Next() {
 			var condition protoPlan.Condition
+			var actionsStr string
 
 			err := conds.Scan(
 				&condition.ConditionID,
 				&condition.Name,
 				&condition.Code,
-				&condition.Actions,
+				&actionsStr,
 				&condition.Triggered,
 			)
 
 			if err != nil {
+				return nil, err
+			}
+			if err := json.Unmarshal([]byte(actionsStr), &condition.Actions); err != nil {
 				return nil, err
 			}
 			if err := json.Unmarshal([]byte(condition.Code), &condition.Code); err != nil {
@@ -364,6 +372,7 @@ func FindActivePlans(db *sql.DB) ([]*protoPlan.Plan, error) {
 			}
 			order.Conditions = append(order.Conditions, &condition)
 		}
+
 		plan.Orders = append(plan.Orders, &order)
 		results = append(results, &plan)
 	}
@@ -449,23 +458,27 @@ func FindPlanWithOrderID(db *sql.DB, orderID string) (*protoPlan.Plan, error) {
 		id,
 		name,
 		code,
-		actions,
+		array_to_json(actions),
 		triggered
 		FROM conditions c 
 		WHERE c.order_id = $1 ORDER BY condition_number`, order.OrderID)
 
 	for conds.Next() {
 		var condition protoPlan.Condition
+		var actionsStr string
 
 		err := conds.Scan(
 			&condition.ConditionID,
 			&condition.Name,
 			&condition.Code,
-			&condition.Actions,
+			&actionsStr,
 			&condition.Triggered,
 		)
 
 		if err != nil {
+			return nil, err
+		}
+		if err := json.Unmarshal([]byte(actionsStr), &condition.Actions); err != nil {
 			return nil, err
 		}
 		if err := json.Unmarshal([]byte(condition.Code), &condition.Code); err != nil {
