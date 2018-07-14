@@ -1,5 +1,8 @@
 -- +goose Up
 -- SQL in this section is executed when the migration is applied.
+-- drop the previous orders table
+DROP TABLE IF EXISTS orders;
+
 CREATE TABLE plans (
   id UUID PRIMARY KEY NOT NULL,
   plan_template_id text,             -- optional frontend plan template used with this plan - (Leo wanted this) 
@@ -15,7 +18,7 @@ CREATE TABLE plans (
   updated_on TIMESTAMP DEFAULT current_timestamp
 );
 
-CREATE TABLE plan_orders (
+CREATE TABLE orders (
   id UUID PRIMARY KEY NOT NULL,
   plan_id UUID NOT NULL REFERENCES plans (id) ON DELETE CASCADE,
   order_template_id text,             -- optional frontend template used for this order 
@@ -24,16 +27,26 @@ CREATE TABLE plan_orders (
   side text NOT NULL,
   order_number integer NOT NULL,      -- defines the order sequence
   order_type text NOT NULL,           -- limit, market, paper
-  conditions jsonb NOT NULL,
   price decimal DEFAULT 0,
-  next_plan_order_id UUID,            -- this would be the following order after this one
+  next_order_id UUID,                 -- this would be the following order after this one
   status text NOT NULL,               -- pending, active, failed, etc
   created_on TIMESTAMP DEFAULT now(),
   updated_on TIMESTAMP DEFAULT current_timestamp
 );
 
+CREATE TABLE conditions (
+  id UUID PRIMARY KEY NOT NULL,
+  order_id UUID NOT NULL REFERENCES orders (id) ON DELETE CASCADE,
+  name text NOT NULL,
+  code jsonb NOT NULL,
+  actions text[] NOT NULL,
+  triggered BOOLEAN NOT NULL,
+  created_on TIMESTAMP DEFAULT now(),
+  updated_on TIMESTAMP DEFAULT current_timestamp
+);
+
 -- Leo wanted these to represent the frontend templating system
-create TABLE plan_templates (
+CREATE TABLE plan_templates (
   id text PRIMARY KEY NOT NULL,       -- can be UUID or human readable text
   user_id UUID NOT NULL REFERENCES users (id) ON DELETE CASCADE,
   title text,
@@ -44,7 +57,7 @@ create TABLE plan_templates (
   updated_on TIMESTAMP DEFAULT current_timestamp
 );
 
-create Table order_templates (
+CREATE TABLE order_templates (
   id text PRIMARY KEY NOT NULL,       -- can be UUID or human readable
   user_id UUID NOT NULL REFERENCES users (id) ON DELETE CASCADE,
   title text,
@@ -57,7 +70,8 @@ create Table order_templates (
 
 -- +goose Down
 -- SQL in this section is executed when the migration is rolled back.
-DROP TABLE plan_orders;
+DROP TABLE conditions;
+DROP TABLE orders;
 DROP TABLE plans;
 DROP TABLE plan_templates;
 DROP TABLE order_templates;
