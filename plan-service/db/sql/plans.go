@@ -259,36 +259,40 @@ func FindPlanWithPagedOrders(db *sql.DB, req *protoPlan.GetUserPlanRequest) (*pr
 
 // Find all active orders in the DB. This wil load the keys for each order.
 // Returns active plans that have a verified key only.
-// TODO this needs to be optimized
 func FindActivePlans(db *sql.DB) ([]*protoPlan.Plan, error) {
-	results := make([]*protoPlan.Plan, 0)
+	activePlans := make([]*protoPlan.Plan, 0)
 
-	rows, err := db.Query(`SELECT p.id,
+	rows, err := db.Query(`SELECT p.id as plan_id,
 		p.user_id,
 		p.user_key_id,
 		k.api_key,
 		k.secret,
 		p.exchange_name,
 		p.market_name,
-		p.plan_order_ids,
 		p.base_balance,
 		p.currency_balance,
 		p.status,
-		po.id,
-		po.base_percent,
-		po.currency_percent,
-		po.side,
-		po.order_type,
-		po.limit_price, 
-		po.next_order_id,
-		po.status
+		o.id as order_id,
+		o.base_percent,
+		o.currency_percent,
+		o.side,
+		o.order_type,
+		o.limit_price, 
+		o.next_order_id,
+		o.status,
+		c.id as condition_id,
+		c.name,
+		c.code,
+		array_to_json(c.actions),
+		c.triggered
 		FROM plans p 
-		JOIN orders po on p.id = po.plan_id
+		JOIN orders o on p.id = o.plan_id
+		JOIN conditions c on o.id = c.order_id
 		JOIN user_keys k on p.user_key_id = k.id
-		WHERE p.status = $1 AND po.status = $2 AND k.status = $3`, plan.Active, status.Active, key.Verified)
+		WHERE p.status = $1 AND p.active_order_number = o.order_number 
+		AND k.status = $3 ORDER BY o.id`, plan.Active, key.Verified)
 
 	if err != nil {
-		log.Fatal(err)
 		return nil, err
 	}
 
@@ -297,8 +301,8 @@ func FindActivePlans(db *sql.DB) ([]*protoPlan.Plan, error) {
 	for rows.Next() {
 		var plan protoPlan.Plan
 		var order protoPlan.Order
-		var planOrderIds pq.StringArray
-
+		var condition protoPlan.Condition
+		var actionsStr string
 		var price sql.NullFloat64
 		var basePercent sql.NullFloat64
 		var currencyPercent sql.NullFloat64
@@ -311,7 +315,6 @@ func FindActivePlans(db *sql.DB) ([]*protoPlan.Plan, error) {
 			&plan.KeySecret,
 			&plan.Exchange,
 			&plan.MarketName,
-			&planOrderIds,
 			&plan.BaseBalance,
 			&plan.CurrencyBalance,
 			&plan.Status,
@@ -322,7 +325,13 @@ func FindActivePlans(db *sql.DB) ([]*protoPlan.Plan, error) {
 			&order.OrderType,
 			&price,
 			&nextOrderID,
-			&order.Status)
+			&order.Status,
+			&condition.ConditionID,
+			&condition.Name,
+			&condition.Code,
+			&actionsStr,
+			&condition.Triggered,
+		)
 
 		if err != nil {
 			log.Fatal(err)
@@ -340,50 +349,34 @@ func FindActivePlans(db *sql.DB) ([]*protoPlan.Plan, error) {
 		if nextOrderID.Valid {
 			order.NextOrderID = nextOrderID.String
 		}
-		conds, err := db.Query(`SELECT 
-			id,
-			name,
-			code,
-			array_to_json(actions),
-			triggered
-			FROM conditions c 
-			WHERE c.order_id = $1 ORDER BY condition_number`, order.OrderID)
-
-		for conds.Next() {
-			var condition protoPlan.Condition
-			var actionsStr string
-
-			err := conds.Scan(
-				&condition.ConditionID,
-				&condition.Name,
-				&condition.Code,
-				&actionsStr,
-				&condition.Triggered,
-			)
-
-			if err != nil {
-				return nil, err
-			}
-			if err := json.Unmarshal([]byte(actionsStr), &condition.Actions); err != nil {
-				return nil, err
-			}
-			if err := json.Unmarshal([]byte(condition.Code), &condition.Code); err != nil {
-				return nil, err
-			}
-			order.Conditions = append(order.Conditions, &condition)
+		if err := json.Unmarshal([]byte(actionsStr), &condition.Actions); err != nil {
+			return nil, err
+		}
+		if err := json.Unmarshal([]byte(condition.Code), &condition.Code); err != nil {
+			return nil, err
 		}
 
-		plan.Orders = append(plan.Orders, &order)
-		results = append(results, &plan)
+		var found = false
+		for _, plan := range activePlans {
+			if plan.Orders[0].OrderID == order.OrderID {
+				plan.Orders[0].Conditions = append(plan.Orders[0].Conditions, &condition)
+				found = true
+				break
+			}
+		}
+
+		if !found {
+			plan.Orders = append(plan.Orders, &order)
+			activePlans = append(activePlans, &plan)
+		}
 	}
 
 	err = rows.Err()
 	if err != nil {
-		log.Fatal(err)
 		return nil, err
 	}
 
-	return results, nil
+	return activePlans, nil
 }
 
 // Returns plan with specific order that has a verified key.
