@@ -866,7 +866,7 @@
         }
       },
       "post": {
-        "description": "This will create a new chain of orders for the user. All orders are encapsulated within a plan.\nExample:\n{\n\"keyID\": \"680d6bbf-1feb-4122-bd10-0e7ce080676a\",\n\"marketName\": \"ADA-BTC\",\n\"baseBalance\": 1.0,\n\"currencyBalance\": 0.0,\n\"live\": true,\n\"orders\": [\n{\n\"side\": \"buy\",\n\"basePercent\": 0.5,\n\"orderType\": \"market\",\n\"conditions\": \"price \u003c= 0.00002800\"\n},\n{\n\"side\": \"sell\",\n\"currencyPercent\": 1.0,\n\"orderType\": \"market\",\n\"conditions\": \"price \u003c= 0.00002200\"\n}\n]\n}\n\nThe order chain starts out with a reserve base balance of 1.0 BTC. This order chain will buy 0.5 BTC at\nmarket price when the trigger price is less than or equal to 2800 satoshi. The following sell order will sell 100% of the order\nstrategy's (i.e. chain of orders) cardano balance. Cardano balance should in theory be dictated by the Cardano that this\nchain bought - 100% does not mean 100% of user's cardano balance. The conditions will likely be a json string of conditionLabel: condition.\nexample: \"stopLoss: price \u003c= 0.00002200, takeProfit: ....\"",
+        "description": "This will create a new chain of orders for the user. All orders are encapsulated within a plan.\nExample:\n{\n\"keyID\": \"72199e02-db24-492d-9772-5f395dc224ed\",\n\"marketName\": \"ADA-BTC\",\n\"baseBalance\": 1.0,\n\"currencyBalance\": 0.0,\n\"status\": \"active\",\n\"orders\": [\n{\n\"side\": \"buy\",\n\"basePercent\": 1.0,\n\"orderType\": \"paper\",\n\"limitPrice\": 0.00001000,\n\"conditions\": [\n{\"name\": \"Price Trigger\", \"code\": \"price \u003c= 0.00002400\", \"actions\": [\"alert\", \"placeOrder\"]}\n]\n},\n{\n\"side\": \"sell\",\n\"currencyPercent\": 1.0,\n\"orderType\": \"paper\",\n\"limitPrice\": 0.00003000,\n\"conditions\": [\n{\"name\": \"Price Trigger\", \"code\": \"price \u003e= 0.00002800\", \"actions\": [\"alert\", \"placeOrder\"]}\n]\n}\n]\n}\n\nThe order chain starts out with a reserve base balance of 1.0 BTC. This order chain will buy 1.0 BTC at\nwith a limit price when the trigger price is less than or equal to 2400 satoshi. The following sell order will sell 100% of the order\nstrategy's (i.e. chain of orders) cardano balance. Cardano balance should in theory be dictated by the Cardano that this\nchain bought - 100% does not mean 100% of user's cardano balance. The conditions array for each order will be executed as an 'or'.",
         "tags": [
           "plans"
         ],
@@ -1454,6 +1454,24 @@
       "type": "object",
       "x-go-package": "github.com/asciiu/gomo/balance-service/proto/balance"
     },
+    "ConditionReq": {
+      "type": "object",
+      "properties": {
+        "Actions": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "Code": {
+          "type": "string"
+        },
+        "Name": {
+          "type": "string"
+        }
+      },
+      "x-go-package": "github.com/asciiu/gomo/api/controllers"
+    },
     "DB": {
       "description": "The sql package creates and frees connections automatically; it\nalso maintains a free pool of idle connections. If the database has\na concept of per-connection state, such state can only be reliably\nobserved within a transaction. Once DB.Begin is called, the\nreturned Tx is bound to a single connection. Once Commit or\nRollback is called on the transaction, that transaction's\nconnection is returned to DB's idle connection pool. The pool size\ncan be controlled with SetMaxIdleConns.",
       "type": "object",
@@ -1726,13 +1744,13 @@
           "type": "string",
           "x-go-name": "MarketName"
         },
-        "marketPrice": {
-          "type": "string",
-          "x-go-name": "MarketPrice"
-        },
         "minTradeSize": {
           "type": "string",
           "x-go-name": "MinTradeSize"
+        },
+        "price": {
+          "type": "string",
+          "x-go-name": "Price"
         }
       },
       "x-go-package": "github.com/asciiu/gomo/api/controllers"
@@ -1915,7 +1933,10 @@
         },
         "conditions": {
           "description": "Required these are the conditions that trigger the order to execute: ???\nin: body",
-          "type": "string",
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/ConditionReq"
+          },
           "x-go-name": "Conditions"
         },
         "currencyPercent": {

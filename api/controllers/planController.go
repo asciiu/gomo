@@ -480,32 +480,37 @@ type ConditionReq struct {
 // This will create a new chain of orders for the user. All orders are encapsulated within a plan.
 // Example:
 //{
-//    "keyID": "680d6bbf-1feb-4122-bd10-0e7ce080676a",
-//    "marketName": "ADA-BTC",
-//    "baseBalance": 1.0,
-//    "currencyBalance": 0.0,
-//    "live": true,
-//    "orders": [
-//        {
-//            "side": "buy",
-//            "basePercent": 0.5,
-//            "orderType": "market",
-//            "conditions": "price <= 0.00002800"
-//        },
-//        {
-//            "side": "sell",
-//            "currencyPercent": 1.0,
-//            "orderType": "market",
-//            "conditions": "price <= 0.00002200"
-//        }
-//    ]
+//	"keyID": "72199e02-db24-492d-9772-5f395dc224ed",
+//	"marketName": "ADA-BTC",
+//	"baseBalance": 1.0,
+//	"currencyBalance": 0.0,
+//	"status": "active",
+//	"orders": [
+//		{
+//			"side": "buy",
+//			"basePercent": 1.0,
+//			"orderType": "paper",
+//			"limitPrice": 0.00001000,
+//			"conditions": [
+//				{"name": "Price Trigger", "code": "price <= 0.00002400", "actions": ["alert", "placeOrder"]}
+//			]
+//		},
+//		{
+//			"side": "sell",
+//			"currencyPercent": 1.0,
+//			"orderType": "paper",
+//			"limitPrice": 0.00003000,
+//			"conditions": [
+//				{"name": "Price Trigger", "code": "price >= 0.00002800", "actions": ["alert", "placeOrder"]}
+//			]
+//		}
+//	]
 //}
 //
-// The order chain starts out with a reserve base balance of 1.0 BTC. This order chain will buy 0.5 BTC at
-// market price when the trigger price is less than or equal to 2800 satoshi. The following sell order will sell 100% of the order
+// The order chain starts out with a reserve base balance of 1.0 BTC. This order chain will buy 1.0 BTC at
+// with a limit price when the trigger price is less than or equal to 2400 satoshi. The following sell order will sell 100% of the order
 // strategy's (i.e. chain of orders) cardano balance. Cardano balance should in theory be dictated by the Cardano that this
-// chain bought - 100% does not mean 100% of user's cardano balance. The conditions will likely be a json string of conditionLabel: condition.
-// example: "stopLoss: price <= 0.00002200, takeProfit: ...."
+// chain bought - 100% does not mean 100% of user's cardano balance. The conditions array for each order will be executed as an 'or'.
 //
 // responses:
 //  200: ResponsePlanSuccess "data" will contain list of orders with "status": "success"
