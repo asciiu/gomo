@@ -464,10 +464,10 @@ type OrderReq struct {
 	LimitPrice float64 `json:"limitPrice"`
 	// Required these are the conditions that trigger the order to execute: ???
 	// in: body
-	Conditions []*ConditionReq `json:"conditions"`
+	Triggers []*TriggerReq `json:"triggers"`
 }
 
-type ConditionReq struct {
+type TriggerReq struct {
 	Name    string
 	Code    string
 	Actions []string
@@ -491,7 +491,7 @@ type ConditionReq struct {
 //			"basePercent": 1.0,
 //			"orderType": "paper",
 //			"limitPrice": 0.00001000,
-//			"conditions": [
+//			"triggers": [
 //				{"name": "Price Trigger", "code": "price <= 0.00002400", "actions": ["alert", "placeOrder"]}
 //			]
 //		},
@@ -500,7 +500,7 @@ type ConditionReq struct {
 //			"currencyPercent": 1.0,
 //			"orderType": "paper",
 //			"limitPrice": 0.00003000,
-//			"conditions": [
+//			"triggers": [
 //				{"name": "Price Trigger", "code": "price >= 0.00002800", "actions": ["alert", "placeOrder"]}
 //			]
 //		}
@@ -510,7 +510,7 @@ type ConditionReq struct {
 // The order chain starts out with a reserve base balance of 1.0 BTC. This order chain will buy 1.0 BTC at
 // with a limit price when the trigger price is less than or equal to 2400 satoshi. The following sell order will sell 100% of the order
 // strategy's (i.e. chain of orders) cardano balance. Cardano balance should in theory be dictated by the Cardano that this
-// chain bought - 100% does not mean 100% of user's cardano balance. The conditions array for each order will be executed as an 'or'.
+// chain bought - 100% does not mean 100% of user's cardano balance. The triggers array for each order will be executed as an 'or'.
 //
 // responses:
 //  200: ResponsePlanSuccess "data" will contain list of orders with "status": "success"
@@ -566,13 +566,13 @@ func (controller *PlanController) HandlePostPlan(c echo.Context) error {
 			LimitPrice:      order.LimitPrice,
 		}
 
-		for _, cond := range order.Conditions {
-			condition := plans.ConditionRequest{
+		for _, cond := range order.Triggers {
+			trigger := plans.TriggerRequest{
 				Name:    cond.Name,
 				Code:    cond.Code,
 				Actions: cond.Actions,
 			}
-			or.Conditions = append(or.Conditions, &condition)
+			or.Triggers = append(or.Triggers, &trigger)
 		}
 
 		orders = append(orders, &or)

@@ -34,10 +34,10 @@ CREATE TABLE orders (
   updated_on TIMESTAMP DEFAULT current_timestamp
 );
 
-CREATE TABLE conditions (
+CREATE TABLE triggers (
   id UUID PRIMARY KEY NOT NULL,
   order_id UUID NOT NULL REFERENCES orders (id) ON DELETE CASCADE,
-  condition_number integer NOT NULL,      -- defines the order sequence
+  trigger_number integer NOT NULL,      -- defines the order sequence
   name text NOT NULL,
   code jsonb NOT NULL,
   actions text[] NOT NULL,
@@ -71,7 +71,7 @@ CREATE TABLE order_templates (
 
 -- +goose Down
 -- SQL in this section is executed when the migration is rolled back.
-DROP TABLE conditions;
+DROP TABLE triggers;
 DROP TABLE orders;
 DROP TABLE plans;
 DROP TABLE plan_templates;

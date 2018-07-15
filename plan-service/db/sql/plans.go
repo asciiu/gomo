@@ -150,16 +150,16 @@ func FindPlanWithPagedOrders(db *sql.DB, req *protoPlan.GetUserPlanRequest) (*pr
 		o.limit_price,
 		o.next_order_id,
 		o.status,
-		c.id as condition_id,
-		c.name,
-		c.code,
-		array_to_json(c.actions),
-		c.triggered
+		t.id as trigger_id,
+		t.name,
+		t.code,
+		array_to_json(t.actions),
+		t.triggered
 		FROM plans p
 		JOIN orders o on p.id = o.plan_id
-		JOIN conditions c on o.id = c.order_id
+		JOIN triggers t on o.id = t.order_id
 		JOIN user_keys k on p.user_key_id = k.id
-		WHERE p.id = $1 ORDER BY o.order_number, c.condition_number 
+		WHERE p.id = $1 ORDER BY o.order_number, t.trigger_number 
 		OFFSET $2 LIMIT $3`, req.PlanID, req.Page, req.PageSize)
 
 	if err != nil {
@@ -170,7 +170,7 @@ func FindPlanWithPagedOrders(db *sql.DB, req *protoPlan.GetUserPlanRequest) (*pr
 
 	for rows.Next() {
 		var order protoPlan.Order
-		var condition protoPlan.Condition
+		var trigger protoPlan.Trigger
 		var actionsStr string
 
 		err := rows.Scan(
@@ -195,11 +195,11 @@ func FindPlanWithPagedOrders(db *sql.DB, req *protoPlan.GetUserPlanRequest) (*pr
 			&price,
 			&nextOrderID,
 			&order.Status,
-			&condition.ConditionID,
-			&condition.Name,
-			&condition.Code,
+			&trigger.TriggerID,
+			&trigger.Name,
+			&trigger.Code,
 			&actionsStr,
-			&condition.Triggered)
+			&trigger.Triggered)
 
 		if err != nil {
 			return nil, err
@@ -222,26 +222,26 @@ func FindPlanWithPagedOrders(db *sql.DB, req *protoPlan.GetUserPlanRequest) (*pr
 		if planTemp.Valid {
 			planPaged.PlanTemplateID = planTemp.String
 		}
-		if err := json.Unmarshal([]byte(actionsStr), &condition.Actions); err != nil {
+		if err := json.Unmarshal([]byte(actionsStr), &trigger.Actions); err != nil {
 			return nil, err
 		}
-		if err := json.Unmarshal([]byte(condition.Code), &condition.Code); err != nil {
+		if err := json.Unmarshal([]byte(trigger.Code), &trigger.Code); err != nil {
 			return nil, err
 		}
 
-		condition.OrderID = order.OrderID
+		trigger.OrderID = order.OrderID
 
 		var found = false
 		for _, or := range page.Orders {
 			if or.OrderID == order.OrderID {
-				or.Conditions = append(or.Conditions, &condition)
+				or.Triggers = append(or.Triggers, &trigger)
 				found = true
 				break
 			}
 		}
 
 		if !found {
-			order.Conditions = append(order.Conditions, &condition)
+			order.Triggers = append(order.Triggers, &trigger)
 			page.Orders = append(page.Orders, &order)
 		}
 	}
@@ -281,14 +281,14 @@ func FindActivePlans(db *sql.DB) ([]*protoPlan.Plan, error) {
 		o.limit_price, 
 		o.next_order_id,
 		o.status,
-		c.id as condition_id,
-		c.name,
-		c.code,
-		array_to_json(c.actions),
-		c.triggered
+		t.id as trigger_id,
+		t.name,
+		t.code,
+		array_to_json(t.actions),
+		t.triggered
 		FROM plans p 
 		JOIN orders o on p.id = o.plan_id
-		JOIN conditions c on o.id = c.order_id
+		JOIN triggers t on o.id = t.order_id
 		JOIN user_keys k on p.user_key_id = k.id
 		WHERE p.status = $1 AND p.active_order_number = o.order_number 
 		AND k.status = $3 ORDER BY o.id`, plan.Active, key.Verified)
@@ -302,7 +302,7 @@ func FindActivePlans(db *sql.DB) ([]*protoPlan.Plan, error) {
 	for rows.Next() {
 		var plan protoPlan.Plan
 		var order protoPlan.Order
-		var condition protoPlan.Condition
+		var trigger protoPlan.Trigger
 		var actionsStr string
 		var price sql.NullFloat64
 		var basePercent sql.NullFloat64
@@ -327,11 +327,11 @@ func FindActivePlans(db *sql.DB) ([]*protoPlan.Plan, error) {
 			&price,
 			&nextOrderID,
 			&order.Status,
-			&condition.ConditionID,
-			&condition.Name,
-			&condition.Code,
+			&trigger.TriggerID,
+			&trigger.Name,
+			&trigger.Code,
 			&actionsStr,
-			&condition.Triggered)
+			&trigger.Triggered)
 
 		if err != nil {
 			log.Fatal(err)
@@ -349,17 +349,17 @@ func FindActivePlans(db *sql.DB) ([]*protoPlan.Plan, error) {
 		if nextOrderID.Valid {
 			order.NextOrderID = nextOrderID.String
 		}
-		if err := json.Unmarshal([]byte(actionsStr), &condition.Actions); err != nil {
+		if err := json.Unmarshal([]byte(actionsStr), &trigger.Actions); err != nil {
 			return nil, err
 		}
-		if err := json.Unmarshal([]byte(condition.Code), &condition.Code); err != nil {
+		if err := json.Unmarshal([]byte(trigger.Code), &trigger.Code); err != nil {
 			return nil, err
 		}
 
 		var found = false
 		for _, plan := range activePlans {
 			if plan.Orders[0].OrderID == order.OrderID {
-				plan.Orders[0].Conditions = append(plan.Orders[0].Conditions, &condition)
+				plan.Orders[0].Triggers = append(plan.Orders[0].Triggers, &trigger)
 				found = true
 				break
 			}
@@ -408,16 +408,16 @@ func FindPlanWithOrderID(db *sql.DB, orderID string) (*protoPlan.Plan, error) {
 		o.limit_price, 
 		o.next_order_id,
 		o.status,
-		c.id as condition_id,
-		c.name,
-		c.code,
-		array_to_json(c.actions),
-		c.triggered
+		t.id as trigger_id,
+		t.name,
+		t.code,
+		array_to_json(t.actions),
+		t.triggered
 		FROM plans p 
 		JOIN orders o on p.id = o.plan_id
-		JOIN conditions c on o.id = c.order_id
+		JOIN triggers t on o.id = t.order_id
 		JOIN user_keys k on p.user_key_id = k.id
-		WHERE o.id = $1 AND k.status = $2 ORDER BY c.condition_number`, orderID, key.Verified)
+		WHERE o.id = $1 AND k.status = $2 ORDER BY t.trigger_number`, orderID, key.Verified)
 
 	if err != nil {
 		return nil, err
@@ -426,7 +426,7 @@ func FindPlanWithOrderID(db *sql.DB, orderID string) (*protoPlan.Plan, error) {
 	defer rows.Close()
 
 	for rows.Next() {
-		var condition protoPlan.Condition
+		var trigger protoPlan.Trigger
 		var actionsStr string
 		err := rows.Scan(
 			&plan.PlanID,
@@ -447,11 +447,11 @@ func FindPlanWithOrderID(db *sql.DB, orderID string) (*protoPlan.Plan, error) {
 			&price,
 			&nextOrderID,
 			&order.Status,
-			&condition.ConditionID,
-			&condition.Name,
-			&condition.Code,
+			&trigger.TriggerID,
+			&trigger.Name,
+			&trigger.Code,
 			&actionsStr,
-			&condition.Triggered)
+			&trigger.Triggered)
 
 		if err != nil {
 			return nil, err
@@ -468,14 +468,14 @@ func FindPlanWithOrderID(db *sql.DB, orderID string) (*protoPlan.Plan, error) {
 		if nextOrderID.Valid {
 			order.NextOrderID = nextOrderID.String
 		}
-		if err := json.Unmarshal([]byte(actionsStr), &condition.Actions); err != nil {
+		if err := json.Unmarshal([]byte(actionsStr), &trigger.Actions); err != nil {
 			return nil, err
 		}
-		if err := json.Unmarshal([]byte(condition.Code), &condition.Code); err != nil {
+		if err := json.Unmarshal([]byte(trigger.Code), &trigger.Code); err != nil {
 			return nil, err
 		}
-		condition.OrderID = order.OrderID
-		order.Conditions = append(order.Conditions, &condition)
+		trigger.OrderID = order.OrderID
+		order.Triggers = append(order.Triggers, &trigger)
 	}
 
 	plan.Orders = append(plan.Orders, &order)
@@ -721,7 +721,6 @@ func InsertPlan(db *sql.DB, req *protoPlan.PlanRequest) (*protoPlan.Plan, error)
 		if i == 0 && req.Status == plan.Active {
 			orderStatus = status.Active
 		}
-		//jsonCond, err := json.Marshal(or.Conditions)
 		if err != nil {
 			return nil, err
 		}
@@ -762,25 +761,25 @@ func InsertPlan(db *sql.DB, req *protoPlan.PlanRequest) (*protoPlan.Plan, error)
 			return nil, err
 		}
 
-		conditions := make([]*protoPlan.Condition, 0)
-		// next insert all the conditions for this order
-		for j, cond := range or.Conditions {
+		triggers := make([]*protoPlan.Trigger, 0)
+		// next insert all the triggers for this order
+		for j, cond := range or.Triggers {
 			jsonCode, err := json.Marshal(cond.Code)
 			if err != nil {
 				return nil, err
 			}
 
-			conditionID := uuid.New()
-			sqlInsertOrder := `insert into conditions (
+			triggerID := uuid.New()
+			sqlInsertOrder := `insert into triggers (
 				id, 
 				order_id, 
-				condition_number,
+				trigger_number,
 				name,
 				code,
 				actions) 
 				values ($1, $2, $3, $4, $5, $6)`
 			_, err = db.Exec(sqlInsertOrder,
-				conditionID,
+				triggerID,
 				orderID,
 				j,
 				cond.Name,
@@ -791,15 +790,15 @@ func InsertPlan(db *sql.DB, req *protoPlan.PlanRequest) (*protoPlan.Plan, error)
 				return nil, err
 			}
 
-			condition := protoPlan.Condition{
-				ConditionID: conditionID.String(),
-				OrderID:     orderID.String(),
-				Name:        cond.Name,
-				Code:        cond.Code,
-				Actions:     cond.Actions,
-				Triggered:   false,
+			trigger := protoPlan.Trigger{
+				TriggerID: triggerID.String(),
+				OrderID:   orderID.String(),
+				Name:      cond.Name,
+				Code:      cond.Code,
+				Actions:   cond.Actions,
+				Triggered: false,
 			}
-			conditions = append(conditions, &condition)
+			triggers = append(triggers, &trigger)
 		}
 
 		order := protoPlan.Order{
@@ -812,7 +811,7 @@ func InsertPlan(db *sql.DB, req *protoPlan.PlanRequest) (*protoPlan.Plan, error)
 			BasePercent:     or.BasePercent,
 			CurrencyPercent: or.CurrencyPercent,
 			Status:          orderStatus,
-			Conditions:      conditions,
+			Triggers:        triggers,
 
 			NextOrderID: nextOrderID.String(),
 		}
