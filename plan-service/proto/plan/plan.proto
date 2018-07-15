@@ -122,7 +122,7 @@ message Order {
 message Trigger {
   string triggerID = 1;
   string orderID = 2;
-  string triggerNumber = 3;
+  uint32 triggerNumber = 3;
   string name = 4;
   string code = 5;
   bool triggered = 6;

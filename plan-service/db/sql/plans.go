@@ -154,6 +154,7 @@ func FindPlanWithPagedOrders(db *sql.DB, req *protoPlan.GetUserPlanRequest) (*pr
 		t.name,
 		t.code,
 		array_to_json(t.actions),
+		t.trigger_number,
 		t.triggered
 		FROM plans p
 		JOIN orders o on p.id = o.plan_id
@@ -199,6 +200,7 @@ func FindPlanWithPagedOrders(db *sql.DB, req *protoPlan.GetUserPlanRequest) (*pr
 			&trigger.Name,
 			&trigger.Code,
 			&actionsStr,
+			&trigger.TriggerNumber,
 			&trigger.Triggered)
 
 		if err != nil {
@@ -412,6 +414,7 @@ func FindPlanWithOrderID(db *sql.DB, orderID string) (*protoPlan.Plan, error) {
 		t.name,
 		t.code,
 		array_to_json(t.actions),
+		t.trigger_number,
 		t.triggered
 		FROM plans p 
 		JOIN orders o on p.id = o.plan_id
@@ -451,6 +454,7 @@ func FindPlanWithOrderID(db *sql.DB, orderID string) (*protoPlan.Plan, error) {
 			&trigger.Name,
 			&trigger.Code,
 			&actionsStr,
+			&trigger.TriggerNumber,
 			&trigger.Triggered)
 
 		if err != nil {
@@ -791,12 +795,13 @@ func InsertPlan(db *sql.DB, req *protoPlan.PlanRequest) (*protoPlan.Plan, error)
 			}
 
 			trigger := protoPlan.Trigger{
-				TriggerID: triggerID.String(),
-				OrderID:   orderID.String(),
-				Name:      cond.Name,
-				Code:      cond.Code,
-				Actions:   cond.Actions,
-				Triggered: false,
+				TriggerID:     triggerID.String(),
+				TriggerNumber: uint32(j),
+				OrderID:       orderID.String(),
+				Name:          cond.Name,
+				Code:          cond.Code,
+				Actions:       cond.Actions,
+				Triggered:     false,
 			}
 			triggers = append(triggers, &trigger)
 		}
