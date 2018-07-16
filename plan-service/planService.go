@@ -49,6 +49,18 @@ func (service *PlanService) publishPlan(ctx context.Context, plan *protoPlan.Pla
 	if planOrder.Status != status.Active && planOrder.Status != status.Inactive {
 		return nil
 	}
+	triggers := make([]*evt.Trigger, 0)
+	for _, t := range planOrder.Triggers {
+		trig := evt.Trigger{
+			TriggerID: t.TriggerID,
+			OrderID:   t.OrderID,
+			Name:      t.Name,
+			Code:      t.Code,
+			Triggered: t.Triggered,
+			Actions:   t.Actions,
+		}
+		triggers = append(triggers, &trig)
+	}
 
 	// convert order to order event
 	activeOrder := evt.ActiveOrderEvent{
@@ -67,10 +79,10 @@ func (service *PlanService) publishPlan(ctx context.Context, plan *protoPlan.Pla
 		Side:            planOrder.Side,
 		OrderType:       planOrder.OrderType,
 		Price:           planOrder.LimitPrice,
-		//Conditions:      planOrder.Conditions,
-		NextOrderID: planOrder.NextOrderID,
-		Revision:    isRevision,
-		OrderStatus: planOrder.Status,
+		NextOrderID:     planOrder.NextOrderID,
+		Revision:        isRevision,
+		OrderStatus:     planOrder.Status,
+		Triggers:        triggers,
 	}
 
 	//if err := service.OrderPub.Publish(context.Background(), &activeOrder); err != nil {
