@@ -63,30 +63,55 @@ message RemoveOrderRequest {
   string userID = 2;
 }
 
-// Responses
 message Order {
   string orderID = 1;
-  string userID = 2;
-  string keyID = 3;
-  string key = 4;
-  string secret = 5;
-  string exchange = 6;
-  string exchangeOrderID = 7;
-  string exchangeMarketName = 8;
-  string marketName = 9;
-  string side = 10;
-  string orderType = 11;
-  double price = 13;
-  double baseQuantity = 14;
-  double basePercent = 15;
-  double currencyQuantity = 16;
-  double currencyPercent = 17;
-  string status = 18;
-  string chainStatus = 19;
-  string conditions = 20;
-  string condition = 21;
-  string parentOrderID = 22;
+  string side = 2;
+  string orderTemplateID = 3;
+  uint32 orderNumber = 4;
+  string orderType = 5;
+  double limitPrice = 6;
+  double basePercent = 7;
+  double currencyPercent = 8;
+  string status = 9;
+  string nextOrderID = 10;
+  repeated Trigger triggers = 11;
 }
+
+message Trigger {
+  string triggerID = 1;
+  string orderID = 2;
+  uint32 triggerNumber = 3;
+  string triggerTemplateID = 4;
+  string name = 5;
+  string code = 6;
+  bool triggered = 7;
+  repeated string actions = 8;
+}
+
+// Responses
+//message Order {
+//  string orderID = 1;
+//  string userID = 2;
+//  string keyID = 3;
+//  string key = 4;
+//  string secret = 5;
+//  string exchange = 6;
+//  string exchangeOrderID = 7;
+//  string exchangeMarketName = 8;
+//  string marketName = 9;
+//  string side = 10;
+//  string orderType = 11;
+//  double price = 13;
+//  double baseQuantity = 14;
+//  double basePercent = 15;
+//  double currencyQuantity = 16;
+//  double currencyPercent = 17;
+//  string status = 18;
+//  string chainStatus = 19;
+//  string conditions = 20;
+//  string condition = 21;
+//  string parentOrderID = 22;
+//}
 
 message UserOrderData {
   Order order = 1;
