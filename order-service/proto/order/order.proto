@@ -122,3 +122,10 @@ message OrderListResponse {
   string message = 2;
   UserOrdersData data = 3;
 }
+
+message OrdersPage {
+  uint32 page = 1;
+  uint32 pageSize = 2; 
+  uint32 total = 3;
+  repeated Order orders = 4; 
+}
