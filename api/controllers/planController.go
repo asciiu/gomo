@@ -468,6 +468,10 @@ type OrderReq struct {
 }
 
 type TriggerReq struct {
+	// Optional trigger template ID.
+	// in: body
+	TriggerTemplateID string `json:"triggerTemplateID"`
+
 	Name    string
 	Code    string
 	Actions []string
@@ -568,9 +572,10 @@ func (controller *PlanController) HandlePostPlan(c echo.Context) error {
 
 		for _, cond := range order.Triggers {
 			trigger := plans.TriggerRequest{
-				Name:    cond.Name,
-				Code:    cond.Code,
-				Actions: cond.Actions,
+				TriggerTemplateID: cond.TriggerTemplateID,
+				Name:              cond.Name,
+				Code:              cond.Code,
+				Actions:           cond.Actions,
 			}
 			or.Triggers = append(or.Triggers, &trigger)
 		}

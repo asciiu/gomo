@@ -38,6 +38,7 @@ CREATE TABLE triggers (
   id UUID PRIMARY KEY NOT NULL,
   order_id UUID NOT NULL REFERENCES orders (id) ON DELETE CASCADE,
   trigger_number integer NOT NULL,      -- defines the order sequence
+  trigger_template_id text,             -- optional frontend template used for this trigger 
   name text NOT NULL,
   code jsonb NOT NULL,
   actions text[] NOT NULL,
