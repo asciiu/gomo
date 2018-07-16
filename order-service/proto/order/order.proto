@@ -30,21 +30,13 @@ message UpdateOrderRequest {
 }
 
 message OrderRequest {
-  string orderID = 1;
-  string userID = 2;
-  string keyID = 3;
-  string exchange = 4;
-  string marketName = 5;
-  string side = 6;
-  string orderType = 7;
-  double baseQuantity = 8;
-  double basePercent = 9;
-  double currencyQuantity = 10;
-  double currencyPercent = 11;
-  string conditions = 12;
-  double price = 13;
-  string parentOrderID = 14;
-  bool active = 15;
+  string side = 1;
+  string orderType = 2;
+  string orderTemplateID = 3;
+  double basePercent = 4;
+  double currencyPercent = 5;
+  double limitPrice = 6;
+  repeated TriggerRequest triggers = 7;
 }
 
 message GetUserOrderRequest {
