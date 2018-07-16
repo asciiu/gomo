@@ -112,7 +112,7 @@ func FindPlanSummary(db *sql.DB, planID string) (*protoPlan.Plan, error) {
 func FindPlanWithPagedOrders(db *sql.DB, req *protoPlan.GetUserPlanRequest) (*protoPlan.PlanWithPagedOrders, error) {
 
 	var planPaged protoPlan.PlanWithPagedOrders
-	var page protoPlan.OrdersPage
+	var page protoOrder.OrdersPage
 
 	var planTemp sql.NullString
 	var orderTemp sql.NullString
