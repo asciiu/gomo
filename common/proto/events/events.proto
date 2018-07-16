@@ -61,9 +61,18 @@ message ActiveOrderEvent {
   string side = 14;
   string orderType = 15;
   double price = 16;
-  string conditions = 17;
-  bool revision = 18;      // this means that this order event should replace an active order in the system
-  string orderStatus = 19; 
+  bool revision = 17;      // this means that this order event should replace an active order in the system
+  string orderStatus = 18; 
+  repeated Trigger triggers = 19;
+}
+
+message Trigger {
+  string triggerID = 1;
+  string orderID = 2;
+  string name = 5;
+  string code = 6;
+  bool triggered = 7;
+  repeated string actions = 8;
 }
 
 message TriggeredOrderEvent {
