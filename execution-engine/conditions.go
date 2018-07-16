@@ -8,7 +8,7 @@ import (
 )
 
 // ConditionFunc is a func pointer to a condition eval func
-type ConditionFunc func(price float64) (bool, string)
+type TriggerFunc func(price float64) (bool, string)
 
 // PriceCondition used for simple price compares
 type PriceCondition struct {

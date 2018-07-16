@@ -6,7 +6,6 @@ import (
 	"log"
 	"regexp"
 	"strconv"
-	"strings"
 
 	"github.com/asciiu/gomo/common/constants/status"
 	evt "github.com/asciiu/gomo/common/proto/events"
@@ -16,8 +15,14 @@ import (
 
 // Order has conditions
 type Order struct {
-	EventOrigin *evt.ActiveOrderEvent
-	Conditions  []ConditionFunc
+	EventOrigin       *evt.ActiveOrderEvent
+	ExecutionTriggers []*ExecutionTrigger
+	//Triggers    []TriggerFunc
+}
+
+type ExecutionTrigger struct {
+	Trigger         *evt.Trigger
+	TriggerFunction TriggerFunc
 }
 
 // OrderReceiver will receive and prep an order conditions
@@ -31,13 +36,15 @@ type OrderReceiver struct {
 // ProcessEvent handles ActiveOrderEvents. These events are published by the plan service.
 func (receiver *OrderReceiver) ProcessEvent(ctx context.Context, activeOrder *evt.ActiveOrderEvent) error {
 	// convert OrderEvent to Order with conditions here
-	strConditions := strings.Split(activeOrder.Conditions, " or ")
-	conditions := make([]ConditionFunc, 0)
+	//strConditions := strings.Split(activeOrder.Conditions, " or ")
+	extrigs := make([]*ExecutionTrigger, 0)
 
 	trailingPoint := regexp.MustCompile(`^.*?TrailingStopPoint\((0\.\d{2,}),\s(\d+\.\d+).*?`)
 	trailingPercent := regexp.MustCompile(`^.*?TrailingStopPercent\((0\.\d{2,}),\s(\d+\.\d+).*?`)
 
-	for _, str := range strConditions {
+	for _, trigger := range activeOrder.Triggers {
+		str := trigger.Code
+		var triggerFunction TriggerFunc
 		switch {
 		case trailingPoint.MatchString(str):
 			rs := trailingPoint.FindStringSubmatch(str)
@@ -48,8 +55,9 @@ func (receiver *OrderReceiver) ProcessEvent(ctx context.Context, activeOrder *ev
 				Top:    top,
 				Points: points,
 			}
-			conditions = append(conditions, (&ts).evaluate)
+			triggerFunction = (&ts).evaluate
 
+			//triggerFuncs = append(triggerFuncs, (&ts).evaluate)
 		case trailingPercent.MatchString(str):
 			rs := trailingPercent.FindStringSubmatch(str)
 			top, _ := strconv.ParseFloat(rs[1], 64)
@@ -59,21 +67,31 @@ func (receiver *OrderReceiver) ProcessEvent(ctx context.Context, activeOrder *ev
 				Top:     top,
 				Percent: percent,
 			}
-			conditions = append(conditions, (&ts).evaluate)
+			triggerFunction = (&ts).evaluate
 
+			//triggerFuncs = append(triggerFuncs, (&ts).evaluate)
 		default:
 
 			priceCond := PriceCondition{
 				Env:       receiver.Env,
 				Statement: str,
 			}
-			conditions = append(conditions, (&priceCond).evaluate)
+			triggerFunction = (&priceCond).evaluate
+			//triggerFuncs = append(triggerFuncs, (&priceCond).evaluate)
 		}
+
+		et := ExecutionTrigger{
+			Trigger:         trigger,
+			TriggerFunction: triggerFunction,
+		}
+		extrigs = append(extrigs, &et)
 	}
 
 	order := Order{
-		EventOrigin: activeOrder,
-		Conditions:  conditions,
+		EventOrigin:       activeOrder,
+		ExecutionTriggers: extrigs,
+		//Triggers:    triggerFuncs,
+
 	}
 
 	// if we have an order revision we must remove the original active order from memory

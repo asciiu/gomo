@@ -38,12 +38,12 @@ func (processor *Processor) ProcessEvent(ctx context.Context, payload *evt.Trade
 				continue
 			}
 
-			conditions := order.Conditions
+			executionTriggers := order.ExecutionTriggers
 			// eval all conditions for this order
-			for _, evaluateFunc := range conditions {
+			for _, executionTrig := range executionTriggers {
 
 				// does condition of order eval to true?
-				if isValid, desc := evaluateFunc(event.Price); isValid {
+				if isValid, desc := executionTrig.TriggerFunction(event.Price); isValid {
 					// remove this order from the processor
 					processor.Receiver.Orders = append(orders[:i], orders[i+1:]...)
 
