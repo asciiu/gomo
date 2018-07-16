@@ -1,7 +1,5 @@
 syntax = "proto3";
 
-package fomo.orders; 
-
 service OrderService {
   rpc AddOrders(OrdersRequest) returns (OrderListResponse) {}
   rpc GetUserOrder(GetUserOrderRequest) returns (OrderResponse) {}
