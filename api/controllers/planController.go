@@ -482,39 +482,6 @@ type TriggerReq struct {
 // create a new plan (protected)
 //
 // This will create a new chain of orders for the user. All orders are encapsulated within a plan.
-// Example:
-//{
-//	"keyID": "72199e02-db24-492d-9772-5f395dc224ed",
-//	"marketName": "ADA-BTC",
-//	"baseBalance": 1.0,
-//	"currencyBalance": 0.0,
-//	"status": "active",
-//	"orders": [
-//		{
-//			"side": "buy",
-//			"basePercent": 1.0,
-//			"orderType": "paper",
-//			"limitPrice": 0.00001000,
-//			"triggers": [
-//				{"name": "Price Trigger", "code": "price <= 0.00002400", "actions": ["alert", "placeOrder"]}
-//			]
-//		},
-//		{
-//			"side": "sell",
-//			"currencyPercent": 1.0,
-//			"orderType": "paper",
-//			"limitPrice": 0.00003000,
-//			"triggers": [
-//				{"name": "Price Trigger", "code": "price >= 0.00002800", "actions": ["alert", "placeOrder"]}
-//			]
-//		}
-//	]
-//}
-//
-// The order chain starts out with a reserve base balance of 1.0 BTC. This order chain will buy 1.0 BTC at
-// with a limit price when the trigger price is less than or equal to 2400 satoshi. The following sell order will sell 100% of the order
-// strategy's (i.e. chain of orders) cardano balance. Cardano balance should in theory be dictated by the Cardano that this
-// chain bought - 100% does not mean 100% of user's cardano balance. The triggers array for each order will be executed as an 'or'.
 //
 // responses:
 //  200: ResponsePlanSuccess "data" will contain list of orders with "status": "success"
@@ -661,13 +628,6 @@ type UpdatePlanRequest struct {
 // You may update the base balance and currency balance before the plan has executed its first order. Once a
 // plan order has been executed you cannot change the balances for the plan.
 // Other use case for this endpoint is to pause the plan by sending status='inactive'. Use DELETE to abort the plan.
-//
-// example:
-// {
-//    "baseBalance": -1,       -- does not update baseBalance
-//    "currencyBalance": -1,   -- does not update currencyBalance
-//    "status": "inactive"     -- set plan to inactive
-//}
 //
 // responses:
 //  200: responsePlanSuccess "data" will contain plan summary with "status": "success"

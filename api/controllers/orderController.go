@@ -31,15 +31,15 @@ type OrderController struct {
 }
 
 type UserOrderData struct {
-	Order *Order `json:"order"`
+	Order *OrderResponse `json:"order"`
 }
 
 type UserOrdersData struct {
-	Orders []*Order `json:"orders"`
+	Orders []*OrderResponse `json:"orders"`
 }
 
 // This is the response struct for order
-type Order struct {
+type OrderResponse struct {
 	ParentOrderID      string  `json:"parentOrderID"`
 	OrderID            string  `json:"orderID"`
 	KeyID              string  `json:"keyID"`
@@ -205,7 +205,7 @@ func (controller *OrderController) HandleGetOrder(c echo.Context) error {
 	res := &ResponseOrderSuccess{
 		Status: response.Success,
 		Data: &UserOrderData{
-			Order: &Order{
+			Order: &OrderResponse{
 				OrderID:            r.Data.Order.OrderID,
 				KeyID:              r.Data.Order.KeyID,
 				Exchange:           r.Data.Order.Exchange,
@@ -268,7 +268,7 @@ func (controller *OrderController) HandleListOrders(c echo.Context) error {
 		}
 	}
 
-	data := make([]*Order, len(r.Data.Orders))
+	data := make([]*OrderResponse, len(r.Data.Orders))
 	for i, o := range r.Data.Orders {
 
 		names := strings.Split(o.MarketName, "-")
@@ -277,7 +277,7 @@ func (controller *OrderController) HandleListOrders(c echo.Context) error {
 		currencySymbol := names[0]
 		currencyName := controller.currencies[currencySymbol]
 
-		data[i] = &Order{
+		data[i] = &OrderResponse{
 			OrderID:            o.OrderID,
 			KeyID:              o.KeyID,
 			Exchange:           o.Exchange,
@@ -504,7 +504,7 @@ func (controller *OrderController) HandlePostOrder(c echo.Context) error {
 		}
 	}
 
-	data := make([]*Order, len(r.Data.Orders))
+	data := make([]*OrderResponse, len(r.Data.Orders))
 	for i, o := range r.Data.Orders {
 		names := strings.Split(o.MarketName, "-")
 		baseCurrencySymbol := names[1]
@@ -512,7 +512,7 @@ func (controller *OrderController) HandlePostOrder(c echo.Context) error {
 		currencySymbol := names[0]
 		currencyName := controller.currencies[currencySymbol]
 
-		data[i] = &Order{
+		data[i] = &OrderResponse{
 			OrderID:            o.OrderID,
 			KeyID:              o.KeyID,
 			Exchange:           o.Exchange,
@@ -608,7 +608,7 @@ func (controller *OrderController) HandleUpdateOrder(c echo.Context) error {
 	res := &ResponseOrderSuccess{
 		Status: response.Success,
 		Data: &UserOrderData{
-			Order: &Order{
+			Order: &OrderResponse{
 				OrderID:            r.Data.Order.OrderID,
 				KeyID:              r.Data.Order.KeyID,
 				Exchange:           r.Data.Order.Exchange,

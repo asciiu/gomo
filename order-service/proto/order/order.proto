@@ -7,12 +7,28 @@ service OrderService {
   rpc GetUserOrder(GetUserOrderRequest) returns (OrderResponse) {}
   rpc GetUserOrders(GetUserOrdersRequest) returns (OrderListResponse) {}
   rpc RemoveOrder(RemoveOrderRequest) returns (OrderResponse) {}
-  rpc UpdateOrder(OrderRequest) returns (OrderResponse) {}
+  rpc UpdateOrder(UpdateOrderRequest) returns (OrderResponse) {}
 }
 
 // Requests
 message OrdersRequest {
   repeated OrderRequest orders = 1; 
+}
+
+message TriggerRequest {
+  string name = 1;
+  string code = 2;
+  string triggerTemplateID = 3;
+  repeated string actions = 4;
+}
+
+message UpdateOrderRequest {
+  string orderID = 1;
+  string userID = 2;
+  double basePercent = 3;
+  double currencyPercent = 4;
+  double limitPrice = 5;
+  repeated TriggerRequest triggers = 6;
 }
 
 message OrderRequest {
