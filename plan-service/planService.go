@@ -85,9 +85,9 @@ func (service *PlanService) publishPlan(ctx context.Context, plan *protoPlan.Pla
 		Triggers:        triggers,
 	}
 
-	//if err := service.OrderPub.Publish(context.Background(), &activeOrder); err != nil {
-	//	return fmt.Errorf("publish error: %s -- ActiveOrderEvent %+v", err, &activeOrder)
-	//}
+	if err := service.OrderPub.Publish(context.Background(), &activeOrder); err != nil {
+		return fmt.Errorf("publish error: %s -- ActiveOrderEvent %+v", err, &activeOrder)
+	}
 	log.Printf("publish active order -- %+v\n", &activeOrder)
 	return nil
 }
