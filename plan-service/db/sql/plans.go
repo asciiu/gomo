@@ -8,6 +8,7 @@ import (
 	"github.com/asciiu/gomo/common/constants/key"
 	"github.com/asciiu/gomo/common/constants/plan"
 	"github.com/asciiu/gomo/common/constants/status"
+	protoOrder "github.com/asciiu/gomo/order-service/proto/order"
 	protoPlan "github.com/asciiu/gomo/plan-service/proto/plan"
 	"github.com/google/uuid"
 	"github.com/lib/pq"
@@ -23,7 +24,7 @@ func DeletePlan(db *sql.DB, planID string) error {
 // this is so we can examine the current state of the plan
 func FindPlanSummary(db *sql.DB, planID string) (*protoPlan.Plan, error) {
 	var plan protoPlan.Plan
-	var order protoPlan.Order
+	var order protoOrder.Order
 	var planTemp sql.NullString
 	var orderTemp sql.NullString
 	var price sql.NullFloat64
@@ -171,8 +172,8 @@ func FindPlanWithPagedOrders(db *sql.DB, req *protoPlan.GetUserPlanRequest) (*pr
 	defer rows.Close()
 
 	for rows.Next() {
-		var order protoPlan.Order
-		var trigger protoPlan.Trigger
+		var order protoOrder.Order
+		var trigger protoOrder.Trigger
 		var triggerTempID sql.NullString
 		var actionsStr string
 
@@ -310,8 +311,8 @@ func FindActivePlans(db *sql.DB) ([]*protoPlan.Plan, error) {
 
 	for rows.Next() {
 		var plan protoPlan.Plan
-		var order protoPlan.Order
-		var trigger protoPlan.Trigger
+		var order protoOrder.Order
+		var trigger protoOrder.Trigger
 		var actionsStr string
 		var price sql.NullFloat64
 		var basePercent sql.NullFloat64
@@ -392,7 +393,7 @@ func FindActivePlans(db *sql.DB) ([]*protoPlan.Plan, error) {
 // Returns plan with specific order that has a verified key.
 func FindPlanWithOrderID(db *sql.DB, orderID string) (*protoPlan.Plan, error) {
 	var plan protoPlan.Plan
-	var order protoPlan.Order
+	var order protoOrder.Order
 
 	var price sql.NullFloat64
 	var basePercent sql.NullFloat64
@@ -438,7 +439,7 @@ func FindPlanWithOrderID(db *sql.DB, orderID string) (*protoPlan.Plan, error) {
 	defer rows.Close()
 
 	for rows.Next() {
-		var trigger protoPlan.Trigger
+		var trigger protoOrder.Trigger
 		var triggerTemplateID sql.NullString
 		var actionsStr string
 		err := rows.Scan(
@@ -697,7 +698,7 @@ func FindUserMarketPlansWithStatus(db *sql.DB, userID, status, exchange, marketN
 func InsertPlan(db *sql.DB, req *protoPlan.PlanRequest) (*protoPlan.Plan, error) {
 	planID := uuid.New()
 	orderIDs := make([]uuid.UUID, 0)
-	orders := make([]*protoPlan.Order, 0)
+	orders := make([]*protoOrder.Order, 0)
 
 	// generate order ids
 	for range req.Orders {
@@ -780,7 +781,7 @@ func InsertPlan(db *sql.DB, req *protoPlan.PlanRequest) (*protoPlan.Plan, error)
 			return nil, err
 		}
 
-		triggers := make([]*protoPlan.Trigger, 0)
+		triggers := make([]*protoOrder.Trigger, 0)
 		// next insert all the triggers for this order
 		for j, cond := range or.Triggers {
 			jsonCode, err := json.Marshal(cond.Code)
@@ -811,7 +812,7 @@ func InsertPlan(db *sql.DB, req *protoPlan.PlanRequest) (*protoPlan.Plan, error)
 				return nil, err
 			}
 
-			trigger := protoPlan.Trigger{
+			trigger := protoOrder.Trigger{
 				TriggerID:         triggerID.String(),
 				TriggerNumber:     uint32(j),
 				TriggerTemplateID: cond.TriggerTemplateID,
@@ -824,7 +825,7 @@ func InsertPlan(db *sql.DB, req *protoPlan.PlanRequest) (*protoPlan.Plan, error)
 			triggers = append(triggers, &trigger)
 		}
 
-		order := protoPlan.Order{
+		order := protoOrder.Order{
 			OrderID:         orderID.String(),
 			OrderNumber:     uint32(i),
 			OrderType:       or.OrderType,
@@ -859,11 +860,11 @@ func InsertPlan(db *sql.DB, req *protoPlan.PlanRequest) (*protoPlan.Plan, error)
 
 // Maybe this should return more of the updated order but all I need from this
 // as of now is the next_order_id so I can load the next order.
-func UpdatePlanOrder(db *sql.DB, orderID, stat string) (*protoPlan.Order, error) {
+func UpdatePlanOrder(db *sql.DB, orderID, stat string) (*protoOrder.Order, error) {
 	updatePlanOrderSql := `UPDATE plan_orders SET status = $1 WHERE id = $2 
 	RETURNING next_order_id, order_number, plan_id`
 
-	var o protoPlan.Order
+	var o protoOrder.Order
 	var planID string
 	err := db.QueryRow(updatePlanOrderSql, stat, orderID).
 		Scan(&o.NextOrderID, &o.OrderNumber, &planID)

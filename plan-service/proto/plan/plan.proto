@@ -1,6 +1,7 @@
 syntax = "proto3";
 
-package fomo.plans; 
+//import "order-service/proto/order/order.proto";
+import "github.com/asciiu/gomo/order-service/proto/order/order.proto";
 
 service PlanService {
   rpc AddPlan(PlanRequest) returns (PlanResponse) {}
@@ -24,22 +25,6 @@ message PlanRequest {
   repeated OrderRequest orders = 10; 
 }
 
-message OrderRequest {
-  string side = 1;
-  string orderType = 2;
-  string orderTemplateID = 3;
-  double basePercent = 4;
-  double currencyPercent = 5;
-  double limitPrice = 6;
-  repeated TriggerRequest triggers = 7;
-}
-
-message TriggerRequest {
-  string name = 1;
-  string code = 2;
-  string triggerTemplateID = 3;
-  repeated string actions = 4;
-}
 
 message GetUserPlanRequest {
   string planID = 1;
@@ -104,31 +89,6 @@ message PlanWithPagedOrders {
   double currencyBalance = 12;
   string status = 13;
   OrdersPage ordersPage = 14;
-}
-
-message Order {
-  string orderID = 1;
-  string side = 2;
-  string orderTemplateID = 3;
-  uint32 orderNumber = 4;
-  string orderType = 5;
-  double limitPrice = 6;
-  double basePercent = 7;
-  double currencyPercent = 8;
-  string status = 9;
-  string nextOrderID = 10;
-  repeated Trigger triggers = 11;
-}
-
-message Trigger {
-  string triggerID = 1;
-  string orderID = 2;
-  uint32 triggerNumber = 3;
-  string triggerTemplateID = 4;
-  string name = 5;
-  string code = 6;
-  bool triggered = 7;
-  repeated string actions = 8;
 }
 
 message PlanData {
