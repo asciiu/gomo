@@ -35,8 +35,6 @@ type OrderReceiver struct {
 
 // ProcessEvent handles ActiveOrderEvents. These events are published by the plan service.
 func (receiver *OrderReceiver) ProcessEvent(ctx context.Context, activeOrder *evt.ActiveOrderEvent) error {
-	// convert OrderEvent to Order with conditions here
-	//strConditions := strings.Split(activeOrder.Conditions, " or ")
 	extrigs := make([]*ExecutionTrigger, 0)
 
 	trailingPoint := regexp.MustCompile(`^.*?TrailingStopPoint\((0\.\d{2,}),\s(\d+\.\d+).*?`)
@@ -90,8 +88,6 @@ func (receiver *OrderReceiver) ProcessEvent(ctx context.Context, activeOrder *ev
 	order := Order{
 		EventOrigin:       activeOrder,
 		ExecutionTriggers: extrigs,
-		//Triggers:    triggerFuncs,
-
 	}
 
 	// if we have an order revision we must remove the original active order from memory

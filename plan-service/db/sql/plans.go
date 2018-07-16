@@ -375,6 +375,7 @@ func FindActivePlans(db *sql.DB) ([]*protoPlan.Plan, error) {
 		}
 
 		if !found {
+			order.Triggers = append(order.Triggers, &trigger)
 			plan.Orders = append(plan.Orders, &order)
 			activePlans = append(activePlans, &plan)
 		}

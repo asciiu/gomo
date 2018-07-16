@@ -26,7 +26,7 @@ func (receiver *EngineStartReceiver) ProcessEvent(ctx context.Context, engine *e
 
 	// must sleep before sending off to execution engine
 	// because engine might not have fully started yet
-	time.Sleep(2 * time.Second)
+	time.Sleep(5 * time.Second)
 
 	// TODO we need to explore a different approach here that is more efficient.
 	for _, plan := range plans {

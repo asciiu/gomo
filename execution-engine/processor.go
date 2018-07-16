@@ -25,7 +25,6 @@ type Processor struct {
 
 // ProcessEvent will process ExchangeEvents. These events are published from the exchange sockets.
 func (processor *Processor) ProcessEvent(ctx context.Context, payload *evt.TradeEvents) error {
-	//log.Println("buy recv: ", event)
 	orders := processor.Receiver.Orders
 
 	// every order check trade event price with order conditions
