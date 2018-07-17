@@ -4,7 +4,7 @@ const (
 	// order types here
 	LimitOrder       string = "limit"
 	MarketOrder      string = "market"
-	VirtualOrder     string = "paper"
+	PaperOrder       string = "paper"
 	UnknownOrderType string = "???"
 )
 
@@ -12,7 +12,7 @@ func ValidateOrderType(ot string) bool {
 	ots := [...]string{
 		LimitOrder,
 		MarketOrder,
-		VirtualOrder,
+		PaperOrder,
 	}
 
 	for _, ty := range ots {
