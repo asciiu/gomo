@@ -22,8 +22,7 @@ CREATE TABLE orders (
   id UUID PRIMARY KEY NOT NULL,
   plan_id UUID NOT NULL REFERENCES plans (id) ON DELETE CASCADE,
   order_template_id text,             -- optional frontend template used for this order 
-  base_percent decimal DEFAULT 0,
-  currency_percent decimal DEFAULT 0,
+  balance_percent decimal DEFAULT 0,  -- percent of balance to use base_balance(buy) currency_balance(sell)
   side text NOT NULL,
   order_number integer NOT NULL,      -- defines the order sequence
   order_type text NOT NULL,           -- limit, market, paper

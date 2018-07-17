@@ -15,6 +15,7 @@ import (
 	"github.com/asciiu/gomo/common/constants/response"
 	sideValidator "github.com/asciiu/gomo/common/constants/side"
 	keys "github.com/asciiu/gomo/key-service/proto/key"
+	orders "github.com/asciiu/gomo/plan-service/proto/order"
 	plans "github.com/asciiu/gomo/plan-service/proto/plan"
 	jwt "github.com/dgrijalva/jwt-go"
 	"github.com/labstack/echo"
@@ -60,27 +61,27 @@ type PlansPage struct {
 }
 
 type PlanWithOrderPage struct {
-	PlanID             string            `json:"planID"`
-	PlanTemplateID     string            `json:"planTemplateID"`
-	KeyID              string            `json:"keyID"`
-	Exchange           string            `json:"exchange"`
-	ExchangeMarketName string            `json:"exchangeMarketName"`
-	MarketName         string            `json:"marketName"`
-	BaseCurrencySymbol string            `json:"baseCurrencySymbol"`
-	BaseCurrencyName   string            `json:"baseCurrencyName"`
-	BaseBalance        float64           `json:"baseBalance"`
-	CurrencySymbol     string            `json:"currencySymbol"`
-	CurrencyName       string            `json:"currencyName"`
-	CurrencyBalance    float64           `json:"currencyBalance"`
-	Status             string            `json:"status"`
-	OrdersPage         *plans.OrdersPage `json:"ordersPage"`
+	PlanID             string             `json:"planID"`
+	PlanTemplateID     string             `json:"planTemplateID"`
+	KeyID              string             `json:"keyID"`
+	Exchange           string             `json:"exchange"`
+	ExchangeMarketName string             `json:"exchangeMarketName"`
+	MarketName         string             `json:"marketName"`
+	BaseCurrencySymbol string             `json:"baseCurrencySymbol"`
+	BaseCurrencyName   string             `json:"baseCurrencyName"`
+	BaseBalance        float64            `json:"baseBalance"`
+	CurrencySymbol     string             `json:"currencySymbol"`
+	CurrencyName       string             `json:"currencyName"`
+	CurrencyBalance    float64            `json:"currencyBalance"`
+	Status             string             `json:"status"`
+	OrdersPage         *orders.OrdersPage `json:"ordersPage"`
 }
 
 type OrdersPage struct {
-	Page     uint32         `json:"page"`
-	PageSize uint32         `json:"pageSize"`
-	Total    uint32         `json:"total"`
-	Orders   []*plans.Order `json:"orders"`
+	Page     uint32          `json:"page"`
+	PageSize uint32          `json:"pageSize"`
+	Total    uint32          `json:"total"`
+	Orders   []*orders.Order `json:"orders"`
 }
 
 type UserPlansData struct {
@@ -89,38 +90,38 @@ type UserPlansData struct {
 
 // This response should never return the key secret
 type Plan struct {
-	PlanID             string         `json:"planID"`
-	PlanTemplateID     string         `json:"planTemplateID"`
-	KeyID              string         `json:"keyID"`
-	Exchange           string         `json:"exchange"`
-	ExchangeMarketName string         `json:"exchangeMarketName"`
-	MarketName         string         `json:"marketName"`
-	BaseCurrencySymbol string         `json:"baseCurrencySymbol"`
-	BaseCurrencyName   string         `json:"baseCurrencyName"`
-	BaseBalance        float64        `json:"baseBalance"`
-	CurrencySymbol     string         `json:"currencySymbol"`
-	CurrencyName       string         `json:"currencyName"`
-	CurrencyBalance    float64        `json:"currencyBalance"`
-	Status             string         `json:"status"`
-	Orders             []*plans.Order `json:"orders"`
+	PlanID             string          `json:"planID"`
+	PlanTemplateID     string          `json:"planTemplateID"`
+	KeyID              string          `json:"keyID"`
+	Exchange           string          `json:"exchange"`
+	ExchangeMarketName string          `json:"exchangeMarketName"`
+	MarketName         string          `json:"marketName"`
+	BaseCurrencySymbol string          `json:"baseCurrencySymbol"`
+	BaseCurrencyName   string          `json:"baseCurrencyName"`
+	BaseBalance        float64         `json:"baseBalance"`
+	CurrencySymbol     string          `json:"currencySymbol"`
+	CurrencyName       string          `json:"currencyName"`
+	CurrencyBalance    float64         `json:"currencyBalance"`
+	Status             string          `json:"status"`
+	Orders             []*orders.Order `json:"orders"`
 }
 
 type PagedPlan struct {
-	PlanID             string         `json:"planID"`
-	PlanTemplateID     string         `json:"planTemplateID"`
-	KeyID              string         `json:"keyID"`
-	KeyDescription     string         `json:"description"`
-	Exchange           string         `json:"exchange"`
-	ExchangeMarketName string         `json:"exchangeMarketName"`
-	MarketName         string         `json:"marketName"`
-	BaseCurrencySymbol string         `json:"baseCurrencySymbol"`
-	BaseCurrencyName   string         `json:"baseCurrencyName"`
-	BaseBalance        float64        `json:"baseBalance"`
-	CurrencySymbol     string         `json:"currencySymbol"`
-	CurrencyName       string         `json:"currencyName"`
-	CurrencyBalance    float64        `json:"currencyBalance"`
-	Status             string         `json:"status"`
-	Orders             []*plans.Order `json:"orders"`
+	PlanID             string          `json:"planID"`
+	PlanTemplateID     string          `json:"planTemplateID"`
+	KeyID              string          `json:"keyID"`
+	KeyDescription     string          `json:"description"`
+	Exchange           string          `json:"exchange"`
+	ExchangeMarketName string          `json:"exchangeMarketName"`
+	MarketName         string          `json:"marketName"`
+	BaseCurrencySymbol string          `json:"baseCurrencySymbol"`
+	BaseCurrencyName   string          `json:"baseCurrencyName"`
+	BaseBalance        float64         `json:"baseBalance"`
+	CurrencySymbol     string          `json:"currencySymbol"`
+	CurrencyName       string          `json:"currencyName"`
+	CurrencyBalance    float64         `json:"currencyBalance"`
+	Status             string          `json:"status"`
+	Orders             []*orders.Order `json:"orders"`
 }
 
 func NewPlanController(db *sql.DB) *PlanController {

@@ -28,8 +28,6 @@ func FindPlanSummary(db *sql.DB, planID string) (*protoPlan.Plan, error) {
 	var planTemp sql.NullString
 	var orderTemp sql.NullString
 	var price sql.NullFloat64
-	var basePercent sql.NullFloat64
-	var currencyPercent sql.NullFloat64
 	var nextOrderID sql.NullString
 
 	// note: always assume that a plan has at least one order.
@@ -47,8 +45,7 @@ func FindPlanSummary(db *sql.DB, planID string) (*protoPlan.Plan, error) {
 		p.currency_balance,
 		p.status,
 		po.id,
-		po.base_percent,
-		po.currency_percent,
+		po.balance_percent,
 		po.side,
 		po.order_number,
 		po.order_type,
@@ -72,8 +69,7 @@ func FindPlanSummary(db *sql.DB, planID string) (*protoPlan.Plan, error) {
 		&plan.CurrencyBalance,
 		&plan.Status,
 		&order.OrderID,
-		&basePercent,
-		&currencyPercent,
+		&order.BalancePercent,
 		&order.Side,
 		&order.OrderNumber,
 		&order.OrderType,
@@ -84,12 +80,6 @@ func FindPlanSummary(db *sql.DB, planID string) (*protoPlan.Plan, error) {
 
 	if err != nil {
 		return nil, err
-	}
-	if basePercent.Valid {
-		order.BasePercent = basePercent.Float64
-	}
-	if currencyPercent.Valid {
-		order.CurrencyPercent = currencyPercent.Float64
 	}
 	if price.Valid {
 		order.LimitPrice = price.Float64
@@ -117,8 +107,6 @@ func FindPlanWithPagedOrders(db *sql.DB, req *protoPlan.GetUserPlanRequest) (*pr
 	var planTemp sql.NullString
 	var orderTemp sql.NullString
 	var price sql.NullFloat64
-	var basePercent sql.NullFloat64
-	var currencyPercent sql.NullFloat64
 	var nextOrderID sql.NullString
 
 	var count uint32
@@ -142,8 +130,7 @@ func FindPlanWithPagedOrders(db *sql.DB, req *protoPlan.GetUserPlanRequest) (*pr
 		p.currency_balance,
 		p.status,
 		o.id,
-		o.base_percent,
-		o.currency_percent,
+		o.balance_percent,
 		o.side,
 		o.order_number,
 		o.order_type,
@@ -190,8 +177,7 @@ func FindPlanWithPagedOrders(db *sql.DB, req *protoPlan.GetUserPlanRequest) (*pr
 			&planPaged.CurrencyBalance,
 			&planPaged.Status,
 			&order.OrderID,
-			&basePercent,
-			&currencyPercent,
+			&order.BalancePercent,
 			&order.Side,
 			&order.OrderNumber,
 			&order.OrderType,
@@ -210,12 +196,6 @@ func FindPlanWithPagedOrders(db *sql.DB, req *protoPlan.GetUserPlanRequest) (*pr
 
 		if err != nil {
 			return nil, err
-		}
-		if basePercent.Valid {
-			order.BasePercent = basePercent.Float64
-		}
-		if currencyPercent.Valid {
-			order.CurrencyPercent = currencyPercent.Float64
 		}
 		if price.Valid {
 			order.LimitPrice = price.Float64
@@ -284,8 +264,7 @@ func FindActivePlans(db *sql.DB) ([]*protoPlan.Plan, error) {
 		p.currency_balance,
 		p.status,
 		o.id as order_id,
-		o.base_percent,
-		o.currency_percent,
+		o.balance_percent,
 		o.side,
 		o.order_type,
 		o.limit_price, 
@@ -315,8 +294,6 @@ func FindActivePlans(db *sql.DB) ([]*protoPlan.Plan, error) {
 		var trigger protoOrder.Trigger
 		var actionsStr string
 		var price sql.NullFloat64
-		var basePercent sql.NullFloat64
-		var currencyPercent sql.NullFloat64
 		var nextOrderID sql.NullString
 		err := rows.Scan(
 			&plan.PlanID,
@@ -330,8 +307,7 @@ func FindActivePlans(db *sql.DB) ([]*protoPlan.Plan, error) {
 			&plan.CurrencyBalance,
 			&plan.Status,
 			&order.OrderID,
-			&basePercent,
-			&currencyPercent,
+			&order.BalancePercent,
 			&order.Side,
 			&order.OrderType,
 			&price,
@@ -346,12 +322,6 @@ func FindActivePlans(db *sql.DB) ([]*protoPlan.Plan, error) {
 		if err != nil {
 			log.Fatal(err)
 			return nil, err
-		}
-		if basePercent.Valid {
-			order.BasePercent = basePercent.Float64
-		}
-		if currencyPercent.Valid {
-			order.CurrencyPercent = currencyPercent.Float64
 		}
 		if price.Valid {
 			order.LimitPrice = price.Float64
@@ -396,8 +366,6 @@ func FindPlanWithOrderID(db *sql.DB, orderID string) (*protoPlan.Plan, error) {
 	var order protoOrder.Order
 
 	var price sql.NullFloat64
-	var basePercent sql.NullFloat64
-	var currencyPercent sql.NullFloat64
 	var nextOrderID sql.NullString
 
 	rows, err := db.Query(`SELECT 
@@ -412,8 +380,7 @@ func FindPlanWithOrderID(db *sql.DB, orderID string) (*protoPlan.Plan, error) {
 		p.currency_balance,
 		p.status,
 		o.id,
-		o.base_percent,
-		o.currency_percent,
+		o.balance_percent,
 		o.side,
 		o.order_type,
 		o.limit_price, 
@@ -454,8 +421,7 @@ func FindPlanWithOrderID(db *sql.DB, orderID string) (*protoPlan.Plan, error) {
 			&plan.CurrencyBalance,
 			&plan.Status,
 			&order.OrderID,
-			&basePercent,
-			&currencyPercent,
+			&order.BalancePercent,
 			&order.Side,
 			&order.OrderType,
 			&price,
@@ -472,12 +438,6 @@ func FindPlanWithOrderID(db *sql.DB, orderID string) (*protoPlan.Plan, error) {
 
 		if err != nil {
 			return nil, err
-		}
-		if basePercent.Valid {
-			order.BasePercent = basePercent.Float64
-		}
-		if currencyPercent.Valid {
-			order.CurrencyPercent = currencyPercent.Float64
 		}
 		if price.Valid {
 			order.LimitPrice = price.Float64
@@ -754,8 +714,7 @@ func InsertPlan(db *sql.DB, req *protoPlan.PlanRequest) (*protoPlan.Plan, error)
 		sqlInsertOrder := `insert into orders (
 			id, 
 			plan_id, 
-			base_percent, 
-			currency_percent, 
+			balance_percent, 
 			side,
 			order_template_id,
 			order_number,
@@ -763,12 +722,11 @@ func InsertPlan(db *sql.DB, req *protoPlan.PlanRequest) (*protoPlan.Plan, error)
 			limit_price,
 			next_order_id,
 			status) 
-			values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)`
+			values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)`
 		_, err = db.Exec(sqlInsertOrder,
 			orderID,
 			planID,
-			or.BasePercent,
-			or.CurrencyPercent,
+			or.BalancePercent,
 			or.Side,
 			or.OrderTemplateID,
 			i,
@@ -832,8 +790,7 @@ func InsertPlan(db *sql.DB, req *protoPlan.PlanRequest) (*protoPlan.Plan, error)
 			OrderTemplateID: or.OrderTemplateID,
 			Side:            or.Side,
 			LimitPrice:      or.LimitPrice,
-			BasePercent:     or.BasePercent,
-			CurrencyPercent: or.CurrencyPercent,
+			BalancePercent:  or.BalancePercent,
 			Status:          orderStatus,
 			Triggers:        triggers,
 
