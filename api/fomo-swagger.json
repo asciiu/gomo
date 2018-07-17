@@ -1792,15 +1792,10 @@
     "Order": {
       "type": "object",
       "properties": {
-        "basePercent": {
+        "balancePercent": {
           "type": "number",
           "format": "double",
-          "x-go-name": "BasePercent"
-        },
-        "currencyPercent": {
-          "type": "number",
-          "format": "double",
-          "x-go-name": "CurrencyPercent"
+          "x-go-name": "BalancePercent"
         },
         "limitPrice": {
           "type": "number",
@@ -1844,7 +1839,7 @@
           "x-go-name": "Triggers"
         }
       },
-      "x-go-package": "github.com/asciiu/gomo/plan-service/proto/plan"
+      "x-go-package": "github.com/asciiu/gomo/order-service/proto/order"
     },
     "OrderController": {
       "type": "object",
@@ -1864,17 +1859,11 @@
     "OrderReq": {
       "type": "object",
       "properties": {
-        "basePercent": {
-          "description": "Required for buy side. Specifies the percent of the plans base balance to use for buy.\nin: body",
+        "balancePercent": {
+          "description": "Required for the precent of your plan's balance to use for the order - buy (percent of base balance) - sell (percent of currency balance)\nin: body",
           "type": "number",
           "format": "double",
-          "x-go-name": "BasePercent"
-        },
-        "currencyPercent": {
-          "description": "Required for sell side. Percent of currency balance for sell orders.\nin: body",
-          "type": "number",
-          "format": "double",
-          "x-go-name": "CurrencyPercent"
+          "x-go-name": "BalancePercent"
         },
         "limitPrice": {
           "description": "Required for 'limit' orders. Defines limit price.\nin: body",
@@ -2575,7 +2564,7 @@
           "x-go-name": "Triggered"
         }
       },
-      "x-go-package": "github.com/asciiu/gomo/plan-service/proto/plan"
+      "x-go-package": "github.com/asciiu/gomo/order-service/proto/order"
     },
     "TriggerReq": {
       "type": "object",
