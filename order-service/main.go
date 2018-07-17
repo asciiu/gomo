@@ -6,7 +6,6 @@ import (
 	"os"
 
 	bp "github.com/asciiu/gomo/balance-service/proto/balance"
-	msg "github.com/asciiu/gomo/common/constants/messages"
 	"github.com/asciiu/gomo/common/db"
 	keys "github.com/asciiu/gomo/key-service/proto/key"
 	op "github.com/asciiu/gomo/order-service/proto/order"
@@ -37,21 +36,7 @@ func main() {
 		DB:        gomoDB,
 		Client:    bp.NewBalanceServiceClient("balances", srv.Client()),
 		KeyClient: keys.NewKeyServiceClient("keys", srv.Client()),
-		NewOrder:  micro.NewPublisher(msg.TopicNewOrder, srv.Client()),
 	}
-
-	filledReceiver := OrderFilledReceiver{
-		DB:        gomoDB,
-		Service:   &orderService,
-		NotifyPub: micro.NewPublisher(msg.TopicNotification, srv.Client()),
-	}
-
-	engineReceiver := EngineStartReceiver{
-		Service: &orderService,
-	}
-
-	micro.RegisterSubscriber(msg.TopicOrderFilled, srv.Server(), &filledReceiver)
-	micro.RegisterSubscriber(msg.TopicEngineStart, srv.Server(), &engineReceiver)
 
 	// Register our service with the gRPC server, this will tie our
 	// implementation into the auto-generated interface code for our
