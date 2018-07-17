@@ -27,13 +27,20 @@ type ResponseMarkets struct {
 type Market struct {
 	BaseCurrency       string `json:"baseCurrency"`
 	BaseCurrencyLong   string `json:"baseCurrencyLong"`
+	BasePrecision      string `json:"basePrecision"`
 	Exchange           string `json:"exchange"`
 	ExchangeMarketName string `json:"exchangeMarketName"`
 	MarketCurrency     string `json:"marketCurrency"`
 	MarketCurrencyLong string `json:"marketCurrencyLong"`
+	MarketPrecision    string `json:"marketPrecision"`
 	MarketName         string `json:"marketName"`
-	Price              string `json:"price"`
 	MinTradeSize       string `json:"minTradeSize"`
+	MaxTradeSize       string `json:"maxTradeSize"`
+	TradeSizeStep      string `json:"tradeSizeStep"`
+	MinMarketPrice     string `json:"minMarketPrice"`
+	MaxMarketPrice     string `json:"maxMarketPrice"`
+	MarketPriceStep    string `json:"marketPriceStep"`
+	Price              string `json:"price"`
 }
 
 // This struct is used in the generated swagger docs,
