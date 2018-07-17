@@ -15,7 +15,7 @@ import (
 	"github.com/asciiu/gomo/common/constants/response"
 	sideValidator "github.com/asciiu/gomo/common/constants/side"
 	keys "github.com/asciiu/gomo/key-service/proto/key"
-	orders "github.com/asciiu/gomo/plan-service/proto/order"
+	orders "github.com/asciiu/gomo/order-service/proto/order"
 	plans "github.com/asciiu/gomo/plan-service/proto/plan"
 	jwt "github.com/dgrijalva/jwt-go"
 	"github.com/labstack/echo"
@@ -454,12 +454,9 @@ type OrderReq struct {
 	// Required order types are "market", "limit", "paper". Orders not within these types will be rejected.
 	// in: body
 	OrderType string `json:"orderType"`
-	// Required for buy side. Specifies the percent of the plans base balance to use for buy.
+	// Required for the precent of your plan's balance to use for the order - buy (percent of base balance) - sell (percent of currency balance)
 	// in: body
-	BasePercent float64 `json:"basePercent"`
-	// Required for sell side. Percent of currency balance for sell orders.
-	// in: body
-	CurrencyPercent float64 `json:"currencyPercent"`
+	BalancePercent float64 `json:"balancePercent"`
 	// Required for 'limit' orders. Defines limit price.
 	// in: body
 	LimitPrice float64 `json:"limitPrice"`
@@ -517,7 +514,7 @@ func (controller *PlanController) HandlePostPlan(c echo.Context) error {
 	}
 
 	// error check all orders
-	orders := make([]*plans.OrderRequest, 0)
+	ors := make([]*orders.OrderRequest, 0)
 	for i, order := range newPlan.Orders {
 		log.Printf("order %d: %+v\n", i, order)
 
@@ -529,17 +526,16 @@ func (controller *PlanController) HandlePostPlan(c echo.Context) error {
 			return fail(c, "buy or sell required for side!")
 		}
 
-		or := plans.OrderRequest{
+		or := orders.OrderRequest{
 			Side:            order.Side,
 			OrderTemplateID: order.OrderTemplateID,
 			OrderType:       order.OrderType,
-			BasePercent:     order.BasePercent,
-			CurrencyPercent: order.CurrencyPercent,
+			BalancePercent:  order.BalancePercent,
 			LimitPrice:      order.LimitPrice,
 		}
 
 		for _, cond := range order.Triggers {
-			trigger := plans.TriggerRequest{
+			trigger := orders.TriggerRequest{
 				TriggerTemplateID: cond.TriggerTemplateID,
 				Name:              cond.Name,
 				Code:              cond.Code,
@@ -548,7 +544,7 @@ func (controller *PlanController) HandlePostPlan(c echo.Context) error {
 			or.Triggers = append(or.Triggers, &trigger)
 		}
 
-		orders = append(orders, &or)
+		ors = append(ors, &or)
 	}
 
 	newPlanRequest := plans.PlanRequest{
@@ -559,7 +555,7 @@ func (controller *PlanController) HandlePostPlan(c echo.Context) error {
 		BaseBalance:     newPlan.BaseBalance,
 		CurrencyBalance: newPlan.CurrencyBalance,
 		Status:          newPlan.Status,
-		Orders:          orders,
+		Orders:          ors,
 	}
 
 	// add plan returns nil for error
