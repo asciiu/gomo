@@ -191,12 +191,8 @@ func (service *OrderService) RemoveOrder(ctx context.Context, req *orders.Remove
 // Therefore, return error in response object.
 func (service *OrderService) UpdateOrder(ctx context.Context, updateRequest *orders.UpdateOrderRequest, res *orders.OrderResponse) error {
 
-	if updateRequest.BasePercent != -1 {
-		orderRepo.UpdateBasePercent(service.DB, updateRequest.OrderID, updateRequest.BasePercent)
-	}
-
-	if updateRequest.CurrencyPercent != -1 {
-		orderRepo.UpdateCurrencyPercent(service.DB, updateRequest.OrderID, updateRequest.CurrencyPercent)
+	if updateRequest.BalancePercent != -1 {
+		orderRepo.UpdateBalancePercent(service.DB, updateRequest.OrderID, updateRequest.BalancePercent)
 	}
 
 	if updateRequest.LimitPrice != -1 {
@@ -207,7 +203,6 @@ func (service *OrderService) UpdateOrder(ctx context.Context, updateRequest *ord
 		for _, trigger := range updateRequest.Triggers {
 
 			if trigger.TriggerID == "" {
-
 				// insert new trigger
 			} else {
 				// update trigger

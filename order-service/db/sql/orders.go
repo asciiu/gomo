@@ -19,8 +19,6 @@ func FindOrder(db *sql.DB, orderID string) (*protoOrder.Order, error) {
 	var planID string
 	var orderTemp sql.NullString
 	var limitPrice sql.NullFloat64
-	var basePercent sql.NullFloat64
-	var currencyPercent sql.NullFloat64
 	var nextOrderID sql.NullString
 
 	// note: always assume that a plan has at least one order.
@@ -29,8 +27,7 @@ func FindOrder(db *sql.DB, orderID string) (*protoOrder.Order, error) {
 		id,
 		plan_id,
 		order_template_id,
-		base_percent,
-		currency_percent,
+		balance_percent,
 		side,
 		order_number,
 		order_type,
@@ -42,8 +39,7 @@ func FindOrder(db *sql.DB, orderID string) (*protoOrder.Order, error) {
 		&order.OrderID,
 		&planID,
 		&orderTemp,
-		&order.BasePercent,
-		&order.CurrencyPercent,
+		&order.BalancePercent,
 		&order.Side,
 		&order.OrderNumber,
 		&order.OrderType,
@@ -53,12 +49,6 @@ func FindOrder(db *sql.DB, orderID string) (*protoOrder.Order, error) {
 
 	if err != nil {
 		return nil, err
-	}
-	if basePercent.Valid {
-		order.BasePercent = basePercent.Float64
-	}
-	if currencyPercent.Valid {
-		order.CurrencyPercent = currencyPercent.Float64
 	}
 	if limitPrice.Valid {
 		order.LimitPrice = limitPrice.Float64
@@ -73,13 +63,12 @@ func FindOrder(db *sql.DB, orderID string) (*protoOrder.Order, error) {
 	return &order, nil
 }
 
-func UpdateBasePercent(db *sql.DB, orderID string, percent float64) (*protoOrder.Order, error) {
+func UpdateBalancePercent(db *sql.DB, orderID string, percent float64) (*protoOrder.Order, error) {
 
-	updatePlanOrderSql := `UPDATE orders SET base_percent = $1 WHERE id = $2
+	updatePlanOrderSql := `UPDATE orders SET balance_percent = $1 WHERE id = $2
 	RETURNING 
 	order_template_id,
-	base_percent,
-	currency_percent, 
+	balance_percent,
 	side,
 	order_number, 
 	order_type,
@@ -92,46 +81,7 @@ func UpdateBasePercent(db *sql.DB, orderID string, percent float64) (*protoOrder
 	err := db.QueryRow(updatePlanOrderSql, percent, orderID).
 		Scan(
 			&orderTemplateID,
-			&o.BasePercent,
-			&o.CurrencyPercent,
-			&o.Side,
-			&o.OrderNumber,
-			&o.OrderType,
-			&o.LimitPrice,
-			&o.NextOrderID,
-			&o.Status)
-
-	if err != nil {
-		return nil, err
-	}
-	if orderTemplateID.Valid {
-		o.OrderTemplateID = orderTemplateID.String
-	}
-
-	return &o, nil
-}
-
-func UpdateCurrencyPercent(db *sql.DB, orderID string, percent float64) (*protoOrder.Order, error) {
-
-	updatePlanOrderSql := `UPDATE orders SET currency_percent = $1 WHERE id = $2
-	RETURNING 
-	order_template_id,
-	base_percent,
-	currency_percent, 
-	side,
-	order_number, 
-	order_type,
-	limit_price,
-	next_order_id,
-	status`
-
-	var o protoOrder.Order
-	var orderTemplateID sql.NullString
-	err := db.QueryRow(updatePlanOrderSql, percent, orderID).
-		Scan(
-			&orderTemplateID,
-			&o.BasePercent,
-			&o.CurrencyPercent,
+			&o.BalancePercent,
 			&o.Side,
 			&o.OrderNumber,
 			&o.OrderType,
@@ -154,8 +104,7 @@ func UpdateLimitPrice(db *sql.DB, orderID string, price float64) (*protoOrder.Or
 	updatePlanOrderSql := `UPDATE orders SET limit_price = $1 WHERE id = $2
 	RETURNING 
 	order_template_id,
-	base_percent,
-	currency_percent, 
+	balance_percent,
 	side,
 	order_number, 
 	order_type,
@@ -168,8 +117,7 @@ func UpdateLimitPrice(db *sql.DB, orderID string, price float64) (*protoOrder.Or
 	err := db.QueryRow(updatePlanOrderSql, price, orderID).
 		Scan(
 			&orderTemplateID,
-			&o.BasePercent,
-			&o.CurrencyPercent,
+			&o.BalancePercent,
 			&o.Side,
 			&o.OrderNumber,
 			&o.OrderType,

@@ -24,10 +24,9 @@ message TriggerRequest {
 message UpdateOrderRequest {
   string orderID = 1;
   string userID = 2;
-  double basePercent = 3;
-  double currencyPercent = 4;
-  double limitPrice = 5;
-  repeated TriggerRequest triggers = 6;
+  double balancePercent = 3;
+  double limitPrice = 4;
+  repeated TriggerRequest triggers = 5;
 }
 
 message OrderRequest {
@@ -35,10 +34,9 @@ message OrderRequest {
   string side = 2;
   string orderType = 3;
   string orderTemplateID = 4;
-  double basePercent = 5;
-  double currencyPercent = 6;
-  double limitPrice = 7;
-  repeated TriggerRequest triggers = 8;
+  double balancePercent = 5;
+  double limitPrice = 6;
+  repeated TriggerRequest triggers = 7;
 }
 
 message GetUserOrderRequest {
@@ -62,11 +60,10 @@ message Order {
   uint32 orderNumber = 4;
   string orderType = 5;
   double limitPrice = 6;
-  double basePercent = 7;
-  double currencyPercent = 8;
-  string status = 9;
-  string nextOrderID = 10;
-  repeated Trigger triggers = 11;
+  double balancePercent = 7;
+  string status = 8;
+  string nextOrderID = 9;
+  repeated Trigger triggers = 10;
 }
 
 message Trigger {
