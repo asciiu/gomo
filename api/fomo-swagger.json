@@ -944,9 +944,9 @@
         ],
         "responses": {
           "200": {
-            "description": "\"data\" will contain list of orders with \"status\": \"success\"",
+            "description": "\"data\" will contain paged orders",
             "schema": {
-              "$ref": "#/definitions/ResponsePlanSuccess"
+              "$ref": "#/definitions/ResponsePlanWithOrderPageSuccess"
             }
           },
           "400": {
@@ -1706,6 +1706,10 @@
           "type": "string",
           "x-go-name": "BaseCurrencyLong"
         },
+        "basePrecision": {
+          "type": "string",
+          "x-go-name": "BasePrecision"
+        },
         "exchange": {
           "type": "string",
           "x-go-name": "Exchange"
@@ -1726,6 +1730,26 @@
           "type": "string",
           "x-go-name": "MarketName"
         },
+        "marketPrecision": {
+          "type": "string",
+          "x-go-name": "MarketPrecision"
+        },
+        "marketPriceStep": {
+          "type": "string",
+          "x-go-name": "MarketPriceStep"
+        },
+        "maxMarketPrice": {
+          "type": "string",
+          "x-go-name": "MaxMarketPrice"
+        },
+        "maxTradeSize": {
+          "type": "string",
+          "x-go-name": "MaxTradeSize"
+        },
+        "minMarketPrice": {
+          "type": "string",
+          "x-go-name": "MinMarketPrice"
+        },
         "minTradeSize": {
           "type": "string",
           "x-go-name": "MinTradeSize"
@@ -1733,6 +1757,10 @@
         "price": {
           "type": "string",
           "x-go-name": "Price"
+        },
+        "tradeSizeStep": {
+          "type": "string",
+          "x-go-name": "TradeSizeStep"
         }
       },
       "x-go-package": "github.com/asciiu/gomo/api/controllers"

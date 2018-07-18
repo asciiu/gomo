@@ -482,7 +482,7 @@ type TriggerReq struct {
 // This will create a new chain of orders for the user. All orders are encapsulated within a plan.
 //
 // responses:
-//  200: esponsePlanWithOrderPageSuccess "data" will contain paged orders
+//  200: ResponsePlanWithOrderPageSuccess "data" will contain paged orders
 //  400: responseError missing or incorrect params with "status": "fail"
 //  500: responseError the message will state what the internal server error was with "status": "error"
 func (controller *PlanController) HandlePostPlan(c echo.Context) error {
