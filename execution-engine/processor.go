@@ -47,7 +47,7 @@ func (processor *Processor) ProcessEvent(ctx context.Context, payload *evt.Trade
 					processor.Receiver.Orders = append(orders[:i], orders[i+1:]...)
 
 					switch {
-					case order.EventOrigin.OrderType == types.VirtualOrder:
+					case order.EventOrigin.OrderType == types.PaperOrder:
 						details := fmt.Sprintf("%s %s -- %s", order.EventOrigin.Side, order.EventOrigin.MarketName, status.Filled)
 						completedEvent := evt.CompletedOrderEvent{
 							UserID:             order.EventOrigin.UserID,
@@ -56,15 +56,15 @@ func (processor *Processor) ProcessEvent(ctx context.Context, payload *evt.Trade
 							Side:               order.EventOrigin.Side,
 							TriggeredPrice:     event.Price,
 							TriggeredCondition: desc,
-							ExchangeOrderID:    types.VirtualOrder,
-							ExchangeMarketName: types.VirtualOrder,
+							ExchangeOrderID:    types.PaperOrder,
+							ExchangeMarketName: types.PaperOrder,
 							Status:             status.Filled,
 							Details:            details,
 						}
 
 						// adjust balances for buy
 						if order.EventOrigin.Side == side.Buy {
-							currencyQuantity := order.EventOrigin.BaseBalance * order.EventOrigin.BasePercent / event.Price
+							currencyQuantity := order.EventOrigin.BaseBalance * order.EventOrigin.BalancePercent / event.Price
 							spent := currencyQuantity * event.Price
 							completedEvent.BaseBalance = order.EventOrigin.BaseBalance - spent
 							completedEvent.CurrencyBalance = order.EventOrigin.CurrencyBalance + currencyQuantity
@@ -72,7 +72,7 @@ func (processor *Processor) ProcessEvent(ctx context.Context, payload *evt.Trade
 
 						// adjust balances for sell
 						if order.EventOrigin.Side == side.Sell {
-							currencyQuantity := order.EventOrigin.CurrencyBalance * order.EventOrigin.CurrencyPercent
+							currencyQuantity := order.EventOrigin.CurrencyBalance * order.EventOrigin.BalancePercent
 							completedEvent.BaseBalance = currencyQuantity*event.Price + order.EventOrigin.BaseBalance
 							completedEvent.CurrencyBalance = order.EventOrigin.CurrencyBalance - currencyQuantity
 						}
@@ -84,6 +84,19 @@ func (processor *Processor) ProcessEvent(ctx context.Context, payload *evt.Trade
 							log.Println("publish warning: ", err, completedEvent)
 						}
 					default:
+
+						quantity := 0.0
+						switch {
+						case order.EventOrigin.Side == side.Buy && order.EventOrigin.OrderType == types.LimitOrder:
+							quantity = order.EventOrigin.BaseBalance * order.EventOrigin.BalancePercent / order.EventOrigin.Price
+
+						case order.EventOrigin.Side == side.Buy && order.EventOrigin.OrderType == types.MarketOrder:
+							quantity = order.EventOrigin.BaseBalance * order.EventOrigin.BalancePercent / event.Price
+
+						default:
+							quantity = order.EventOrigin.CurrencyBalance * order.EventOrigin.BalancePercent
+						}
+
 						// convert this active order event to a triggered order event
 						triggeredEvent := evt.TriggeredOrderEvent{
 							Exchange:           order.EventOrigin.Exchange,
@@ -91,9 +104,7 @@ func (processor *Processor) ProcessEvent(ctx context.Context, payload *evt.Trade
 							PlanID:             order.EventOrigin.PlanID,
 							UserID:             order.EventOrigin.UserID,
 							BaseBalance:        order.EventOrigin.BaseBalance,
-							BasePercent:        order.EventOrigin.BasePercent,
 							CurrencyBalance:    order.EventOrigin.CurrencyBalance,
-							CurrencyPercent:    order.EventOrigin.CurrencyPercent,
 							KeyID:              order.EventOrigin.KeyID,
 							Key:                order.EventOrigin.Key,
 							Secret:             order.EventOrigin.Secret,
@@ -101,6 +112,7 @@ func (processor *Processor) ProcessEvent(ctx context.Context, payload *evt.Trade
 							Side:               order.EventOrigin.Side,
 							OrderType:          order.EventOrigin.OrderType,
 							Price:              order.EventOrigin.Price,
+							Quantity:           quantity,
 							TriggeredPrice:     event.Price,
 							TriggeredCondition: desc,
 							NextOrderID:        order.EventOrigin.NextOrderID,

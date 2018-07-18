@@ -48,17 +48,6 @@ func (filler *OrderFulfiller) FillOrder(ctx context.Context, triggerEvent *evt.T
 		)
 		b := binance.NewBinance(binanceService)
 
-		quantity := 0.0
-		switch {
-		case triggerEvent.Side == side.Buy && triggerEvent.OrderType == order.LimitOrder:
-			quantity = triggerEvent.BaseBalance * triggerEvent.BasePercent / triggerEvent.Price
-
-		case triggerEvent.Side == side.Buy && triggerEvent.OrderType == order.MarketOrder:
-			quantity = triggerEvent.BaseBalance * triggerEvent.BasePercent / triggerEvent.TriggeredPrice
-
-		default:
-			quantity = triggerEvent.CurrencyBalance * triggerEvent.CurrencyPercent
-		}
 		// Buy-limit: plan.baseBalance / planOrder.Price
 		// Buy-market: plan.baseBalance / trigger.Price (can only determine this at trigger time)
 		// Sell-limit: currencyBalance
@@ -80,7 +69,7 @@ func (filler *OrderFulfiller) FillOrder(ctx context.Context, triggerEvent *evt.T
 		// Limit type orders require a price
 		newOrder, err := b.NewOrder(binance.NewOrderRequest{
 			Symbol:      symbol,
-			Quantity:    quantity,
+			Quantity:    triggerEvent.Quantity,
 			Side:        ellado,
 			Price:       triggerEvent.Price,
 			TimeInForce: binance.GTC,
