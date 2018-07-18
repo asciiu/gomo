@@ -4,7 +4,7 @@ import (
 	"database/sql"
 	"net/http"
 
-	models "github.com/asciiu/gomo/user-service/models"
+	keys "github.com/asciiu/gomo/key-service/proto/key"
 	users "github.com/asciiu/gomo/user-service/proto/user"
 	jwt "github.com/dgrijalva/jwt-go"
 	"github.com/labstack/echo"
@@ -16,6 +16,33 @@ import (
 type SessionController struct {
 	DB    *sql.DB
 	Users users.UserServiceClient
+	Keys  keys.KeyServiceClient
+}
+
+type UserMetaData struct {
+	UserMeta *UserMeta `json:"userMeta"`
+}
+
+type UserMeta struct {
+	UserID string     `json:"userID"`
+	First  string     `json:"first"`
+	Last   string     `json:"last"`
+	Email  string     `json:"email"`
+	Keys   []*KeyMeta `json:"keys"`
+}
+
+type KeyMeta struct {
+	KeyID       string `json:"keyID"`
+	Exchange    string `json:"exchange"`
+	Description string `json:"description"`
+	Status      string `json:"status"`
+}
+
+// A ResponseSessionSuccess will always contain a status of "successful".
+// swagger:model ResponseSessionSuccess
+type ResponseSessionSuccess struct {
+	Status string        `json:"status"`
+	Data   *UserMetaData `json:"data"`
 }
 
 func NewSessionController(db *sql.DB) *SessionController {
@@ -25,6 +52,7 @@ func NewSessionController(db *sql.DB) *SessionController {
 	controller := SessionController{
 		DB:    db,
 		Users: users.NewUserServiceClient("users", service.Client()),
+		Keys:  keys.NewKeyServiceClient("keys", service.Client()),
 	}
 	return &controller
 }
@@ -39,7 +67,7 @@ func NewSessionController(db *sql.DB) *SessionController {
 // is unreachable, a 410 with a status of "error" will be returned.
 //
 // responses:
-//  200: responseSuccess data will be non null with status "success"
+//  200: ResponseSessionSuccess data will be non null with status "success"
 //  410: responseError the user-service is unreachable with status "error"
 func (controller *SessionController) HandleSession(c echo.Context) error {
 	token := c.Get("user").(*jwt.Token)
@@ -64,17 +92,30 @@ func (controller *SessionController) HandleSession(c echo.Context) error {
 		}
 	}
 
-	response := &ResponseSuccess{
+	getKeysRequest := keys.GetUserKeysRequest{
+		UserID: userID,
+	}
+	r2, _ := controller.Keys.GetUserKeys(context.Background(), &getKeysRequest)
+	lekeys := make([]*KeyMeta, 0)
+
+	for _, k := range r2.Data.Keys {
+		lekeys = append(lekeys,
+			&KeyMeta{
+				Exchange:    k.Exchange,
+				Status:      k.Status,
+				Description: k.Description,
+				KeyID:       k.KeyID})
+	}
+
+	response := &ResponseSessionSuccess{
 		Status: "success",
-		Data: &UserData{
-			User: &models.UserInfo{
+		Data: &UserMetaData{
+			UserMeta: &UserMeta{
 				UserID: r.Data.User.UserID,
 				First:  r.Data.User.First,
 				Last:   r.Data.User.Last,
 				Email:  r.Data.User.Email,
-			},
-		},
-	}
+				Keys:   lekeys}}}
 
 	return c.JSON(http.StatusOK, response)
 }
