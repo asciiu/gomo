@@ -20,7 +20,7 @@ type SessionController struct {
 }
 
 type UserMetaData struct {
-	UserMeta *UserMeta `json:"userMeta"`
+	UserMeta *UserMeta `json:"user"`
 }
 
 type UserMeta struct {
