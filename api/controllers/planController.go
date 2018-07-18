@@ -482,7 +482,7 @@ type TriggerReq struct {
 // This will create a new chain of orders for the user. All orders are encapsulated within a plan.
 //
 // responses:
-//  200: ResponsePlanSuccess "data" will contain list of orders with "status": "success"
+//  200: esponsePlanWithOrderPageSuccess "data" will contain paged orders
 //  400: responseError missing or incorrect params with "status": "fail"
 //  500: responseError the message will state what the internal server error was with "status": "error"
 func (controller *PlanController) HandlePostPlan(c echo.Context) error {
@@ -574,32 +574,29 @@ func (controller *PlanController) HandlePostPlan(c echo.Context) error {
 		}
 	}
 
-	names := strings.Split(r.Data.Plan.MarketName, "-")
+	names := strings.Split(r.Data.MarketName, "-")
 	baseCurrencySymbol := names[1]
 	baseCurrencyName := controller.currencies[baseCurrencySymbol]
 	currencySymbol := names[0]
 	currencyName := controller.currencies[currencySymbol]
 
-	data := Plan{
-		PlanID:             r.Data.Plan.PlanID,
-		PlanTemplateID:     r.Data.Plan.PlanTemplateID,
-		KeyID:              r.Data.Plan.KeyID,
-		Exchange:           r.Data.Plan.Exchange,
-		ExchangeMarketName: r.Data.Plan.ExchangeMarketName,
-		MarketName:         r.Data.Plan.MarketName,
-		BaseCurrencySymbol: baseCurrencySymbol,
-		BaseCurrencyName:   baseCurrencyName,
-		BaseBalance:        r.Data.Plan.BaseBalance,
-		CurrencySymbol:     currencySymbol,
-		CurrencyName:       currencyName,
-		CurrencyBalance:    r.Data.Plan.CurrencyBalance,
-		Status:             r.Data.Plan.Status,
-		Orders:             r.Data.Plan.Orders,
-	}
-
-	res := &ResponsePlanSuccess{
+	res := &ResponsePlanWithOrderPageSuccess{
 		Status: response.Success,
-		Data:   &data,
+		Data: &PlanWithOrderPage{
+			PlanID:             r.Data.PlanID,
+			PlanTemplateID:     r.Data.PlanTemplateID,
+			KeyID:              r.Data.KeyID,
+			Exchange:           r.Data.Exchange,
+			MarketName:         r.Data.MarketName,
+			BaseCurrencySymbol: baseCurrencySymbol,
+			BaseCurrencyName:   baseCurrencyName,
+			BaseBalance:        r.Data.BaseBalance,
+			CurrencySymbol:     currencySymbol,
+			CurrencyName:       currencyName,
+			CurrencyBalance:    r.Data.CurrencyBalance,
+			Status:             r.Data.Status,
+			OrdersPage:         r.Data.OrdersPage,
+		},
 	}
 
 	return c.JSON(http.StatusOK, res)

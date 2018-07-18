@@ -15,6 +15,7 @@ import (
 	"github.com/asciiu/gomo/common/constants/status"
 	evt "github.com/asciiu/gomo/common/proto/events"
 	keys "github.com/asciiu/gomo/key-service/proto/key"
+	protoOrder "github.com/asciiu/gomo/order-service/proto/order"
 	planRepo "github.com/asciiu/gomo/plan-service/db/sql"
 	protoPlan "github.com/asciiu/gomo/plan-service/proto/plan"
 	micro "github.com/micro/go-micro"
@@ -164,7 +165,7 @@ func (service *PlanService) fetchKey(keyID, userID string) (*keys.Key, error) {
 // AddPlans returns error to conform to protobuf def, but the error will always be returned as nil.
 // Can't return an error with a response object - response object is returned as nil when error is non nil.
 // Therefore, return error in response object.
-func (service *PlanService) AddPlan(ctx context.Context, req *protoPlan.PlanRequest, res *protoPlan.PlanResponse) error {
+func (service *PlanService) AddPlan(ctx context.Context, req *protoPlan.PlanRequest, res *protoPlan.PlanWithPagedOrdersResponse) error {
 	currencies := strings.Split(req.MarketName, "-")
 	var currency string
 	var balance float64
@@ -222,10 +223,26 @@ func (service *PlanService) AddPlan(ctx context.Context, req *protoPlan.PlanRequ
 		}
 	}
 
-	res.Status = response.Success
-	res.Data = &protoPlan.PlanData{
-		Plan: pln,
+	pagedPlan := protoPlan.PlanWithPagedOrders{
+		PlanID:          pln.PlanID,
+		PlanTemplateID:  req.PlanTemplateID,
+		UserID:          req.UserID,
+		KeyID:           req.KeyID,
+		Exchange:        req.Exchange,
+		MarketName:      req.MarketName,
+		BaseBalance:     req.BaseBalance,
+		CurrencyBalance: req.CurrencyBalance,
+		Status:          req.Status,
+		OrdersPage: &protoOrder.OrdersPage{
+			Total:    uint32(len(pln.Orders)),
+			Page:     0,
+			PageSize: 10,
+			Orders:   pln.Orders,
+		},
 	}
+
+	res.Status = response.Success
+	res.Data = &pagedPlan
 	return nil
 
 }

@@ -4,7 +4,7 @@ syntax = "proto3";
 import "github.com/asciiu/gomo/order-service/proto/order/order.proto";
 
 service PlanService {
-  rpc AddPlan(PlanRequest) returns (PlanResponse) {}
+  rpc AddPlan(PlanRequest) returns (PlanWithPagedOrdersResponse) {}
   rpc GetUserPlan(GetUserPlanRequest) returns (PlanWithPagedOrdersResponse) {}
   rpc GetUserPlans(GetUserPlansRequest) returns (PlansPageResponse) {}
   rpc DeletePlan(DeletePlanRequest) returns (PlanResponse) {}
