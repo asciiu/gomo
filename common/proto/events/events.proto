@@ -44,6 +44,12 @@ message Auth {
 //   string status = 17;
 // }
 
+message CandleDataRequest {
+  string exchange = 1;
+  string marketName = 2;
+  string interval = 3; 
+}
+
 message ActiveOrderEvent {
   string exchange = 1;
   string orderID = 2;
