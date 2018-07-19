@@ -103,7 +103,7 @@ type Plan struct {
 	CurrencyName       string          `json:"currencyName"`
 	CurrencyBalance    float64         `json:"currencyBalance"`
 	Status             string          `json:"status"`
-	Orders             []*orders.Order `json:"orders"`
+	Orders             []*orders.Order `json:"orders,omitempty"`
 }
 
 type PagedPlan struct {

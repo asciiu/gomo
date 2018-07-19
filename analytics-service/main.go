@@ -1,12 +1,14 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"log"
 	"os"
 
 	msg "github.com/asciiu/gomo/common/constants/messages"
 	"github.com/asciiu/gomo/common/db"
+	evt "github.com/asciiu/gomo/common/proto/events"
 	micro "github.com/micro/go-micro"
 	k8s "github.com/micro/kubernetes/go/micro"
 )
@@ -31,10 +33,14 @@ func main() {
 	}
 
 	// subscribe to new key topic with a key validator
-	micro.RegisterSubscriber(msg.TopicAggTrade, srv.Server(), &processor)
+	micro.RegisterSubscriber(msg.TopicAggTrade, srv.Server(), func(ctx context.Context, tradeEvents *evt.TradeEvents) error {
+		processor.ProcessEvents(tradeEvents)
+		return nil
+	})
+
+	go processor.Ticker()
 
 	if err := srv.Run(); err != nil {
 		log.Fatal(err)
 	}
-
 }
