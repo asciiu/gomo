@@ -25,11 +25,14 @@ func main() {
 	// subscribe to new key topic with a key validator
 	micro.RegisterSubscriber(msg.TopicNewKey, srv.Server(), &keyValidator)
 
+	candleRetriever := CandleRetriever{}
 	fulfiller := OrderFulfiller{
 		CompletedPub: completedPub,
 	}
 	// subscribe to new key topic with a key validator
 	micro.RegisterSubscriber(msg.TopicTriggeredOrder, srv.Server(), &fulfiller)
+	micro.RegisterSubscriber(msg.TopicTriggeredOrder, srv.Server(), &fulfiller)
+	micro.RegisterSubscriber(msg.TopicCandleDataRequest, srv.Server(), &candleRetriever)
 
 	if err := srv.Run(); err != nil {
 		log.Fatal(err)
