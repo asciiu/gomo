@@ -15,13 +15,10 @@ type Processor struct {
 	sync.RWMutex
 	DB               *sql.DB
 	MarketClosePrice map[Market]float64
-	CandlePub        micro.Publisher
-}
 
-type Market struct {
-	Exchange string // market has a exchange
-	Name     string // a name in the form of EOS-BTC
-	Valid    bool   // true if market data is valid
+	MarketCandles map[Market]string
+	ProcessQueue  map[Market]float64
+	CandlePub     micro.Publisher
 }
 
 func remove(s []string, i int) []string {
@@ -32,10 +29,22 @@ func remove(s []string, i int) []string {
 func (processor *Processor) Ticker() error {
 	fmt.Println("ticker started")
 	for {
-		time.Sleep(1 * time.Second)
+		time.Sleep(2 * time.Second)
 
 		processor.RLock()
-		length := len(processor.MarketClosePrice)
+		length := len(processor.ProcessQueue)
+
+		for k := range processor.ProcessQueue {
+			processor.MarketCandles[k] = "ding"
+			delete(processor.ProcessQueue, k)
+			fmt.Println(k)
+			break
+		}
+
+		// get market from collection
+		// send out candle request if no candles
+		// otherwise ignore
+
 		processor.RUnlock()
 
 		fmt.Println(length)
@@ -54,11 +63,16 @@ func (processor *Processor) ProcessEvents(payload *evt.TradeEvents) error {
 		market := Market{
 			Exchange: event.Exchange,
 			Name:     event.MarketName,
-			Valid:    true,
 		}
 
 		processor.Lock()
-		processor.MarketClosePrice[market] = event.Price
+		_, ok1 := processor.MarketCandles[market]
+		_, ok2 := processor.ProcessQueue[market]
+
+		if !ok1 && !ok2 {
+			processor.ProcessQueue[market] = event.Price
+		}
+
 		processor.Unlock()
 
 		//found := false
