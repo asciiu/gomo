@@ -28,8 +28,9 @@ func main() {
 	}
 
 	processor := Processor{
-		DB:          gomoDB,
-		MarketQueue: make([]string, 0),
+		DB:               gomoDB,
+		MarketClosePrice: make(map[Market]float64),
+		CandlePub:        micro.NewPublisher(msg.TopicCandleDataRequest, srv.Client()),
 	}
 
 	// subscribe to new key topic with a key validator

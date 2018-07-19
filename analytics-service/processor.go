@@ -3,15 +3,25 @@ package main
 import (
 	"database/sql"
 	"fmt"
+	"sync"
 	"time"
 
 	evt "github.com/asciiu/gomo/common/proto/events"
+	micro "github.com/micro/go-micro"
 )
 
 // Processor will process orders
 type Processor struct {
-	DB          *sql.DB
-	MarketQueue []string
+	sync.RWMutex
+	DB               *sql.DB
+	MarketClosePrice map[Market]float64
+	CandlePub        micro.Publisher
+}
+
+type Market struct {
+	Exchange string // market has a exchange
+	Name     string // a name in the form of EOS-BTC
+	Valid    bool   // true if market data is valid
 }
 
 func remove(s []string, i int) []string {
@@ -23,25 +33,35 @@ func (processor *Processor) Ticker() error {
 	fmt.Println("ticker started")
 	for {
 		time.Sleep(1 * time.Second)
-		length := len(processor.MarketQueue)
 
-		if length > 0 {
-			market := processor.MarketQueue[0]
-			fmt.Println(market)
-			remove(processor.MarketQueue, 0)
-		}
+		processor.RLock()
+		length := len(processor.MarketClosePrice)
+		processor.RUnlock()
+
+		fmt.Println(length)
+		//if length > 0 {
+		//	market := processor.MarketClosePrice[0]
+		//	fmt.Println(market)
+		//}
 	}
 	return nil
 }
 
 // ProcessEvent will process ExchangeEvents. These events are published from the exchange sockets.
 func (processor *Processor) ProcessEvents(payload *evt.TradeEvents) error {
-	// every order check trade event price with order conditions
+	// record close price for the market
 	for _, event := range payload.Events {
-		marketName := event.MarketName
-		fmt.Println(marketName)
+		market := Market{
+			Exchange: event.Exchange,
+			Name:     event.MarketName,
+			Valid:    true,
+		}
 
-		// found := false
+		processor.Lock()
+		processor.MarketClosePrice[market] = event.Price
+		processor.Unlock()
+
+		//found := false
 		// for _, m := range processor.MarketQueue {
 		// 	if m == marketName {
 		// 		found = true
