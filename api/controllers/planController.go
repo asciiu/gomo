@@ -74,6 +74,8 @@ type PlanWithOrderPage struct {
 	CurrencyName       string             `json:"currencyName"`
 	CurrencyBalance    float64            `json:"currencyBalance"`
 	Status             string             `json:"status"`
+	CreatedOn          string             `json:"createdOn"`
+	UpdatedOn          string             `json:"updatedOn"`
 	OrdersPage         *orders.OrdersPage `json:"ordersPage"`
 }
 
@@ -103,25 +105,9 @@ type Plan struct {
 	CurrencyName       string          `json:"currencyName"`
 	CurrencyBalance    float64         `json:"currencyBalance"`
 	Status             string          `json:"status"`
+	CreatedOn          string          `json:"createdOn"`
+	UpdatedOn          string          `json:"updatedOn"`
 	Orders             []*orders.Order `json:"orders,omitempty"`
-}
-
-type PagedPlan struct {
-	PlanID             string          `json:"planID"`
-	PlanTemplateID     string          `json:"planTemplateID"`
-	KeyID              string          `json:"keyID"`
-	KeyDescription     string          `json:"description"`
-	Exchange           string          `json:"exchange"`
-	ExchangeMarketName string          `json:"exchangeMarketName"`
-	MarketName         string          `json:"marketName"`
-	BaseCurrencySymbol string          `json:"baseCurrencySymbol"`
-	BaseCurrencyName   string          `json:"baseCurrencyName"`
-	BaseBalance        float64         `json:"baseBalance"`
-	CurrencySymbol     string          `json:"currencySymbol"`
-	CurrencyName       string          `json:"currencyName"`
-	CurrencyBalance    float64         `json:"currencyBalance"`
-	Status             string          `json:"status"`
-	Orders             []*orders.Order `json:"orders"`
 }
 
 func NewPlanController(db *sql.DB) *PlanController {
@@ -211,6 +197,8 @@ func (controller *PlanController) HandleDeletePlan(c echo.Context) error {
 			CurrencyName:       currencyName,
 			CurrencyBalance:    r.Data.Plan.CurrencyBalance,
 			Status:             r.Data.Plan.Status,
+			CreatedOn:          r.Data.Plan.CreatedOn,
+			UpdatedOn:          r.Data.Plan.UpdatedOn,
 		},
 	}
 
@@ -298,6 +286,8 @@ func (controller *PlanController) HandleGetPlan(c echo.Context) error {
 			CurrencyBalance:    r.Data.CurrencyBalance,
 			Status:             r.Data.Status,
 			OrdersPage:         r.Data.OrdersPage,
+			CreatedOn:          r.Data.CreatedOn,
+			UpdatedOn:          r.Data.UpdatedOn,
 		},
 	}
 
@@ -401,6 +391,8 @@ func (controller *PlanController) HandleListPlans(c echo.Context) error {
 			CurrencyName:       currencyName,
 			CurrencyBalance:    plan.CurrencyBalance,
 			Status:             plan.Status,
+			CreatedOn:          plan.CreatedOn,
+			UpdatedOn:          plan.UpdatedOn,
 		}
 		plans = append(plans, &pln)
 	}
@@ -596,6 +588,8 @@ func (controller *PlanController) HandlePostPlan(c echo.Context) error {
 			CurrencyBalance:    r.Data.CurrencyBalance,
 			Status:             r.Data.Status,
 			OrdersPage:         r.Data.OrdersPage,
+			CreatedOn:          r.Data.CreatedOn,
+			UpdatedOn:          r.Data.UpdatedOn,
 		},
 	}
 
@@ -703,6 +697,8 @@ func (controller *PlanController) HandleUpdatePlan(c echo.Context) error {
 			CurrencyName:       currencyName,
 			CurrencyBalance:    r.Data.Plan.CurrencyBalance,
 			Status:             r.Data.Plan.Status,
+			CreatedOn:          r.Data.Plan.CreatedOn,
+			UpdatedOn:          r.Data.Plan.UpdatedOn,
 		},
 	}
 
