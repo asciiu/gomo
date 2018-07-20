@@ -131,12 +131,11 @@ func (controller *SearchController) CacheEvents(tradeEvents *evt.TradeEvents) {
 			MarketCurrencyLong: marketCurrencyName,
 			MarketName:         event.MarketName,
 			Price:              fmt.Sprintf("%.8f", event.Price),
-			MinTradeSize:       "0.0001",
 			BasePrecision:      8,
 			MarketPrecision:    8,
 			MarketPriceStep:    "0.00000001",
 			MaxTradeSize:       "1000000000.0",
-			Mintradesize:       "0.00000001",
+			MinTradeSize:       "0.00000001",
 			TradeSizeStep:      "0.00000001"}
 
 		key := fmt.Sprintf("%s-%s", event.Exchange, event.MarketName)
