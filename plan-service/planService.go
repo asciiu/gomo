@@ -15,8 +15,8 @@ import (
 	"github.com/asciiu/gomo/common/constants/status"
 	evt "github.com/asciiu/gomo/common/proto/events"
 	keys "github.com/asciiu/gomo/key-service/proto/key"
-	protoOrder "github.com/asciiu/gomo/order-service/proto/order"
 	planRepo "github.com/asciiu/gomo/plan-service/db/sql"
+	protoOrder "github.com/asciiu/gomo/plan-service/proto/order"
 	protoPlan "github.com/asciiu/gomo/plan-service/proto/plan"
 	micro "github.com/micro/go-micro"
 )
@@ -233,6 +233,8 @@ func (service *PlanService) AddPlan(ctx context.Context, req *protoPlan.PlanRequ
 		BaseBalance:     req.BaseBalance,
 		CurrencyBalance: req.CurrencyBalance,
 		Status:          req.Status,
+		CreatedOn:       pln.CreatedOn,
+		UpdatedOn:       pln.UpdatedOn,
 		OrdersPage: &protoOrder.OrdersPage{
 			Total:    uint32(len(pln.Orders)),
 			Page:     0,

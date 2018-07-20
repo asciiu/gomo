@@ -1,7 +1,8 @@
 syntax = "proto3";
 
+package plan;
 //import "order-service/proto/order/order.proto";
-import "github.com/asciiu/gomo/order-service/proto/order/order.proto";
+import "github.com/asciiu/gomo/plan-service/proto/order/order.proto";
 
 service PlanService {
   rpc AddPlan(PlanRequest) returns (PlanWithPagedOrdersResponse) {}
@@ -22,7 +23,7 @@ message PlanRequest {
   double baseBalance = 7;
   double currencyBalance = 8;
   string status = 9;
-  repeated OrderRequest orders = 10; 
+  repeated order.OrderRequest orders = 10; 
 }
 
 
@@ -73,7 +74,7 @@ message Plan {
   string status = 14;
   string createdOn = 15;
   string updatedOn = 16;
-  repeated Order orders = 17; 
+  repeated order.Order orders = 17; 
 }
 
 message PlanWithPagedOrders {
@@ -92,7 +93,7 @@ message PlanWithPagedOrders {
   string status = 13;
   string createdOn = 14;
   string updatedOn = 15;
-  OrdersPage ordersPage = 16;
+  order.OrdersPage ordersPage = 16;
 }
 
 message PlanData {

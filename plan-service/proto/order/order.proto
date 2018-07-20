@@ -1,0 +1,136 @@
+syntax = "proto3";
+
+package order;
+
+// service OrderService {
+//   rpc AddOrders(OrdersRequest) returns (OrderListResponse) {}
+//   rpc GetUserOrder(GetUserOrderRequest) returns (OrderResponse) {}
+//   rpc GetUserOrders(GetUserOrdersRequest) returns (OrderListResponse) {}
+//   rpc RemoveOrder(RemoveOrderRequest) returns (OrderResponse) {}
+//   rpc UpdateOrder(UpdateOrderRequest) returns (OrderResponse) {}
+// }
+
+// Requests
+message OrdersRequest {
+  repeated OrderRequest orders = 1; 
+}
+
+message TriggerRequest {
+  string triggerID = 1;
+  string name = 2;
+  string code = 3;
+  string triggerTemplateID = 4;
+  repeated string actions = 5;
+}
+
+message UpdateOrderRequest {
+  string orderID = 1;
+  string userID = 2;
+  double balancePercent = 3;
+  double limitPrice = 4;
+  repeated TriggerRequest triggers = 5;
+}
+
+message OrderRequest {
+  string planID = 1;
+  string side = 2;
+  string orderType = 3;
+  string orderTemplateID = 4;
+  double balancePercent = 5;
+  double limitPrice = 6;
+  repeated TriggerRequest triggers = 7;
+}
+
+message GetUserOrderRequest {
+  string orderID = 1;
+  string userID = 2;
+}
+
+message GetUserOrdersRequest {
+    string userID = 1;
+}
+
+message RemoveOrderRequest {
+  string orderID = 1;
+  string userID = 2;
+}
+
+message Order {
+  string orderID = 1;
+  string side = 2;
+  string orderTemplateID = 3;
+  uint32 orderNumber = 4;
+  string orderType = 5;
+  double limitPrice = 6;
+  double balancePercent = 7;
+  string status = 8;
+  string nextOrderID = 9;
+  string createdOn = 10;
+  string updatedOn = 11;
+  repeated Trigger triggers = 12;
+}
+
+message Trigger {
+  string triggerID = 1;
+  string orderID = 2;
+  uint32 triggerNumber = 3;
+  string triggerTemplateID = 4;
+  string name = 5;
+  string code = 6;
+  bool triggered = 7;
+  string createdOn = 8;
+  string updatedOn = 9;
+  repeated string actions = 10;
+}
+
+// Responses
+//message Order {
+//  string orderID = 1;
+//  string userID = 2;
+//  string keyID = 3;
+//  string key = 4;
+//  string secret = 5;
+//  string exchange = 6;
+//  string exchangeOrderID = 7;
+//  string exchangeMarketName = 8;
+//  string marketName = 9;
+//  string side = 10;
+//  string orderType = 11;
+//  double price = 13;
+//  double baseQuantity = 14;
+//  double basePercent = 15;
+//  double currencyQuantity = 16;
+//  double currencyPercent = 17;
+//  string status = 18;
+//  string chainStatus = 19;
+//  string conditions = 20;
+//  string condition = 21;
+//  string parentOrderID = 22;
+//}
+
+message UserOrderData {
+  Order order = 1;
+}
+
+message UserOrdersData {
+  repeated Order orders = 1;
+}
+
+message OrderResponse {
+  string status = 1;
+  string message = 2;
+  UserOrderData data = 3;
+}
+
+message OrderListResponse {
+  string status = 1;
+  string message = 2;
+  UserOrdersData data = 3;
+}
+
+message OrdersPage {
+  uint32 page = 1;
+  uint32 pageSize = 2; 
+  uint32 total = 3;
+  repeated Order orders = 4; 
+}

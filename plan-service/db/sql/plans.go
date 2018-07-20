@@ -9,7 +9,8 @@ import (
 	"github.com/asciiu/gomo/common/constants/key"
 	"github.com/asciiu/gomo/common/constants/plan"
 	"github.com/asciiu/gomo/common/constants/status"
-	protoOrder "github.com/asciiu/gomo/order-service/proto/order"
+	protoOrder "github.com/asciiu/gomo/plan-service/proto/order"
+
 	protoPlan "github.com/asciiu/gomo/plan-service/proto/plan"
 	"github.com/google/uuid"
 	"github.com/lib/pq"
@@ -141,13 +142,17 @@ func FindPlanWithPagedOrders(db *sql.DB, req *protoPlan.GetUserPlanRequest) (*pr
 		o.limit_price,
 		o.next_order_id,
 		o.status,
+		o.created_on,
+		o.updated_on,
 		t.id as trigger_id,
 		t.name,
 		t.code,
 		array_to_json(t.actions),
 		t.trigger_number,
 		t.triggered,
-		t.trigger_template_id
+		t.trigger_template_id,
+		t.created_on,
+		t.updated_on
 		FROM plans p
 		JOIN orders o on p.id = o.plan_id
 		JOIN triggers t on o.id = t.order_id
@@ -190,6 +195,8 @@ func FindPlanWithPagedOrders(db *sql.DB, req *protoPlan.GetUserPlanRequest) (*pr
 			&price,
 			&nextOrderID,
 			&order.Status,
+			&order.CreatedOn,
+			&order.UpdatedOn,
 			&trigger.TriggerID,
 			&trigger.Name,
 			&trigger.Code,
@@ -197,6 +204,8 @@ func FindPlanWithPagedOrders(db *sql.DB, req *protoPlan.GetUserPlanRequest) (*pr
 			&trigger.TriggerNumber,
 			&trigger.Triggered,
 			&triggerTempID,
+			&trigger.CreatedOn,
+			&trigger.UpdatedOn,
 		)
 
 		if err != nil {
@@ -391,13 +400,17 @@ func FindPlanWithOrderID(db *sql.DB, orderID string) (*protoPlan.Plan, error) {
 		o.limit_price, 
 		o.next_order_id,
 		o.status,
+		o.created_on,
+		o.updated_on,
 		t.id as trigger_id,
 		t.name,
 		t.code,
 		array_to_json(t.actions),
 		t.trigger_number,
 		t.triggered,
-		t.trigger_template_id
+		t.trigger_template_id,
+		t.created_on,
+		t.updated_on
 		FROM plans p 
 		JOIN orders o on p.id = o.plan_id
 		JOIN triggers t on o.id = t.order_id
@@ -432,6 +445,8 @@ func FindPlanWithOrderID(db *sql.DB, orderID string) (*protoPlan.Plan, error) {
 			&price,
 			&nextOrderID,
 			&order.Status,
+			&order.CreatedOn,
+			&order.UpdatedOn,
 			&trigger.TriggerID,
 			&trigger.Name,
 			&trigger.Code,
@@ -439,6 +454,8 @@ func FindPlanWithOrderID(db *sql.DB, orderID string) (*protoPlan.Plan, error) {
 			&trigger.TriggerNumber,
 			&trigger.Triggered,
 			&triggerTemplateID,
+			&trigger.CreatedOn,
+			&trigger.UpdatedOn,
 		)
 
 		if err != nil {
@@ -746,8 +763,10 @@ func InsertPlan(db *sql.DB, req *protoPlan.PlanRequest) (*protoPlan.Plan, error)
 			order_type,
 			limit_price,
 			next_order_id,
-			status) 
-			values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)`
+			status,
+			created_on,
+			updated_on) 
+			values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)`
 		_, err = db.Exec(sqlInsertOrder,
 			orderID,
 			planID,
@@ -758,7 +777,9 @@ func InsertPlan(db *sql.DB, req *protoPlan.PlanRequest) (*protoPlan.Plan, error)
 			or.OrderType,
 			or.LimitPrice,
 			nextOrderID,
-			orderStatus)
+			orderStatus,
+			now,
+			now)
 
 		if err != nil {
 			return nil, err
@@ -780,8 +801,10 @@ func InsertPlan(db *sql.DB, req *protoPlan.PlanRequest) (*protoPlan.Plan, error)
 				trigger_template_id,
 				name,
 				code,
-				actions) 
-				values ($1, $2, $3, $4, $5, $6, $7)`
+				actions,
+				created_on,
+				updated_on) 
+				values ($1, $2, $3, $4, $5, $6, $7, $8, $9)`
 			_, err = db.Exec(sqlInsertOrder,
 				triggerID,
 				orderID,
@@ -789,7 +812,9 @@ func InsertPlan(db *sql.DB, req *protoPlan.PlanRequest) (*protoPlan.Plan, error)
 				cond.TriggerTemplateID,
 				cond.Name,
 				jsonCode,
-				pq.Array(cond.Actions))
+				pq.Array(cond.Actions),
+				now,
+				now)
 
 			if err != nil {
 				return nil, err
@@ -804,6 +829,8 @@ func InsertPlan(db *sql.DB, req *protoPlan.PlanRequest) (*protoPlan.Plan, error)
 				Code:              cond.Code,
 				Actions:           cond.Actions,
 				Triggered:         false,
+				CreatedOn:         now.String(),
+				UpdatedOn:         now.String(),
 			}
 			triggers = append(triggers, &trigger)
 		}
@@ -818,6 +845,8 @@ func InsertPlan(db *sql.DB, req *protoPlan.PlanRequest) (*protoPlan.Plan, error)
 			BalancePercent:  or.BalancePercent,
 			Status:          orderStatus,
 			Triggers:        triggers,
+			CreatedOn:       now.String(),
+			UpdatedOn:       now.String(),
 
 			NextOrderID: nextOrderID.String(),
 		}
