@@ -71,7 +71,9 @@ message Plan {
   double baseBalance = 12;
   double currencyBalance = 13;
   string status = 14;
-  repeated Order orders = 15; 
+  string createdOn = 15;
+  string updatedOn = 16;
+  repeated Order orders = 17; 
 }
 
 message PlanWithPagedOrders {
@@ -88,7 +90,9 @@ message PlanWithPagedOrders {
   double baseBalance = 11;
   double currencyBalance = 12;
   string status = 13;
-  OrdersPage ordersPage = 14;
+  string createdOn = 14;
+  string updatedOn = 15;
+  OrdersPage ordersPage = 16;
 }
 
 message PlanData {

@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"encoding/json"
 	"log"
+	"time"
 
 	"github.com/asciiu/gomo/common/constants/key"
 	"github.com/asciiu/gomo/common/constants/plan"
@@ -129,6 +130,8 @@ func FindPlanWithPagedOrders(db *sql.DB, req *protoPlan.GetUserPlanRequest) (*pr
 		p.base_balance,
 		p.currency_balance,
 		p.status,
+		p.created_on,
+		p.updated_on,
 		o.id,
 		o.balance_percent,
 		o.side,
@@ -176,6 +179,8 @@ func FindPlanWithPagedOrders(db *sql.DB, req *protoPlan.GetUserPlanRequest) (*pr
 			&planPaged.BaseBalance,
 			&planPaged.CurrencyBalance,
 			&planPaged.Status,
+			&planPaged.CreatedOn,
+			&planPaged.UpdatedOn,
 			&order.OrderID,
 			&order.BalancePercent,
 			&order.Side,
@@ -478,7 +483,9 @@ func FindUserPlansWithStatus(db *sql.DB, userID, status string, page, pageSize u
 		market_name,
 		base_balance,
 		currency_balance,
-		status
+		status,
+		created_on,
+		updated_on
 		FROM plans 
 		WHERE user_id = $1 AND status = $2 OFFSET $3 LIMIT $4`
 
@@ -499,7 +506,10 @@ func FindUserPlansWithStatus(db *sql.DB, userID, status string, page, pageSize u
 			&plan.MarketName,
 			&plan.BaseBalance,
 			&plan.CurrencyBalance,
-			&plan.Status)
+			&plan.Status,
+			&plan.CreatedOn,
+			&plan.UpdatedOn,
+		)
 
 		if err != nil {
 			return nil, err
@@ -542,7 +552,9 @@ func FindUserExchangePlansWithStatus(db *sql.DB, userID, status, exchange string
 		market_name,
 		base_balance,
 		currency_balance,
-		status
+		status,
+		created_on,
+		updated_on
 		FROM plans 
 		WHERE user_id = $1 AND status = $2 AND exchange_name = $3 OFFSET $4 LIMIT $5`
 
@@ -563,7 +575,9 @@ func FindUserExchangePlansWithStatus(db *sql.DB, userID, status, exchange string
 			&plan.MarketName,
 			&plan.BaseBalance,
 			&plan.CurrencyBalance,
-			&plan.Status)
+			&plan.Status,
+			&plan.CreatedOn,
+			&plan.UpdatedOn)
 
 		if err != nil {
 			return nil, err
@@ -606,7 +620,9 @@ func FindUserMarketPlansWithStatus(db *sql.DB, userID, status, exchange, marketN
 		market_name,
 		base_balance,
 		currency_balance,
-		status
+		status,
+		created_on,
+		updated_on
 		FROM plans 
 		WHERE user_id = $1 AND status = $2 AND exchange_name = $3 AND market_name = $4 OFFSET $5 LIMIT $6`
 
@@ -627,7 +643,10 @@ func FindUserMarketPlansWithStatus(db *sql.DB, userID, status, exchange, marketN
 			&plan.MarketName,
 			&plan.BaseBalance,
 			&plan.CurrencyBalance,
-			&plan.Status)
+			&plan.Status,
+			&plan.CreatedOn,
+			&plan.UpdatedOn,
+		)
 
 		if err != nil {
 			return nil, err
@@ -665,6 +684,8 @@ func InsertPlan(db *sql.DB, req *protoPlan.PlanRequest) (*protoPlan.Plan, error)
 		orderIDs = append(orderIDs, uuid.New())
 	}
 
+	now := time.Now()
+
 	sqlStatement := `insert into plans (
 		id, 
 		user_id, 
@@ -675,8 +696,10 @@ func InsertPlan(db *sql.DB, req *protoPlan.PlanRequest) (*protoPlan.Plan, error)
 		market_name, 
 		base_balance, 
 		currency_balance, 
-		status) 
-		values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)`
+		status, 
+		created_on,
+		updated_on) 
+		values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)`
 
 	_, err := db.Exec(sqlStatement,
 		planID,
@@ -688,7 +711,9 @@ func InsertPlan(db *sql.DB, req *protoPlan.PlanRequest) (*protoPlan.Plan, error)
 		req.MarketName,
 		req.BaseBalance,
 		req.CurrencyBalance,
-		req.Status)
+		req.Status,
+		now,
+		now)
 
 	if err != nil {
 		return nil, err
@@ -811,6 +836,8 @@ func InsertPlan(db *sql.DB, req *protoPlan.PlanRequest) (*protoPlan.Plan, error)
 		CurrencyBalance:   req.CurrencyBalance,
 		Orders:            orders,
 		Status:            req.Status,
+		CreatedOn:         now.String(),
+		UpdatedOn:         now.String(),
 	}
 	return &plan, nil
 }
