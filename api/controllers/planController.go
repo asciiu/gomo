@@ -15,7 +15,7 @@ import (
 	"github.com/asciiu/gomo/common/constants/response"
 	sideValidator "github.com/asciiu/gomo/common/constants/side"
 	keys "github.com/asciiu/gomo/key-service/proto/key"
-	orders "github.com/asciiu/gomo/order-service/proto/order"
+	orders "github.com/asciiu/gomo/plan-service/proto/order"
 	plans "github.com/asciiu/gomo/plan-service/proto/plan"
 	jwt "github.com/dgrijalva/jwt-go"
 	"github.com/labstack/echo"
