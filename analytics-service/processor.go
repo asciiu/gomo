@@ -27,16 +27,17 @@ func remove(s []string, i int) []string {
 }
 
 func (processor *Processor) Ticker() error {
-	fmt.Println("ticker started")
+	fmt.Println("ticker started: ", time.Now())
 	for {
 		time.Sleep(2 * time.Second)
 
-		processor.RLock()
-		length := len(processor.ProcessQueue)
-
 		for k := range processor.ProcessQueue {
+			processor.Lock()
+
 			processor.MarketCandles[k] = "ding"
 			delete(processor.ProcessQueue, k)
+
+			processor.Unlock()
 			fmt.Println(k)
 			break
 		}
@@ -44,10 +45,6 @@ func (processor *Processor) Ticker() error {
 		// get market from collection
 		// send out candle request if no candles
 		// otherwise ignore
-
-		processor.RUnlock()
-
-		fmt.Println(length)
 		//if length > 0 {
 		//	market := processor.MarketClosePrice[0]
 		//	fmt.Println(market)
@@ -65,15 +62,16 @@ func (processor *Processor) ProcessEvents(payload *evt.TradeEvents) error {
 			Name:     event.MarketName,
 		}
 
-		processor.Lock()
+		processor.RLock()
 		_, ok1 := processor.MarketCandles[market]
 		_, ok2 := processor.ProcessQueue[market]
+		processor.RUnlock()
 
 		if !ok1 && !ok2 {
+			processor.Lock()
 			processor.ProcessQueue[market] = event.Price
+			processor.Unlock()
 		}
-
-		processor.Unlock()
 
 		//found := false
 		// for _, m := range processor.MarketQueue {
