@@ -16,7 +16,6 @@ import (
 	evt "github.com/asciiu/gomo/common/proto/events"
 	keys "github.com/asciiu/gomo/key-service/proto/key"
 	planRepo "github.com/asciiu/gomo/plan-service/db/sql"
-	protoOrder "github.com/asciiu/gomo/plan-service/proto/order"
 	protoPlan "github.com/asciiu/gomo/plan-service/proto/plan"
 	micro "github.com/micro/go-micro"
 )
@@ -79,10 +78,10 @@ func (service *PlanService) publishPlan(ctx context.Context, plan *protoPlan.Pla
 		Side:            planOrder.Side,
 		OrderType:       planOrder.OrderType,
 		Price:           planOrder.LimitPrice,
-		NextOrderID:     planOrder.NextOrderID,
-		Revision:        isRevision,
-		OrderStatus:     planOrder.Status,
-		Triggers:        triggers,
+		//NextOrderID:     planOrder.NextOrderID,
+		Revision:    isRevision,
+		OrderStatus: planOrder.Status,
+		Triggers:    triggers,
 	}
 
 	if err := service.OrderPub.Publish(context.Background(), &activeOrder); err != nil {
@@ -165,7 +164,7 @@ func (service *PlanService) fetchKey(keyID, userID string) (*keys.Key, error) {
 // AddPlans returns error to conform to protobuf def, but the error will always be returned as nil.
 // Can't return an error with a response object - response object is returned as nil when error is non nil.
 // Therefore, return error in response object.
-func (service *PlanService) AddPlan(ctx context.Context, req *protoPlan.PlanRequest, res *protoPlan.PlanWithPagedOrdersResponse) error {
+func (service *PlanService) AddPlan(ctx context.Context, req *protoPlan.PlanRequest, res *protoPlan.PlanResponse) error {
 	currencies := strings.Split(req.MarketName, "-")
 	var currency string
 	var balance float64
@@ -223,28 +222,9 @@ func (service *PlanService) AddPlan(ctx context.Context, req *protoPlan.PlanRequ
 		}
 	}
 
-	pagedPlan := protoPlan.PlanWithPagedOrders{
-		PlanID:          pln.PlanID,
-		PlanTemplateID:  req.PlanTemplateID,
-		UserID:          req.UserID,
-		KeyID:           req.KeyID,
-		Exchange:        req.Exchange,
-		MarketName:      req.MarketName,
-		BaseBalance:     req.BaseBalance,
-		CurrencyBalance: req.CurrencyBalance,
-		Status:          req.Status,
-		CreatedOn:       pln.CreatedOn,
-		UpdatedOn:       pln.UpdatedOn,
-		OrdersPage: &protoOrder.OrdersPage{
-			Total:    uint32(len(pln.Orders)),
-			Page:     0,
-			PageSize: 10,
-			Orders:   pln.Orders,
-		},
-	}
-
 	res.Status = response.Success
-	res.Data = &pagedPlan
+	res.Data = &protoPlan.PlanData{Plan: pln}
+
 	return nil
 
 }
@@ -311,64 +291,64 @@ func (service *PlanService) GetUserPlans(ctx context.Context, req *protoPlan.Get
 // We can delete plans that have no filled orders and that are inactive. This becomes an abort plan
 // if the plan status is active.
 func (service *PlanService) DeletePlan(ctx context.Context, req *protoPlan.DeletePlanRequest, res *protoPlan.PlanResponse) error {
-	pln, err := planRepo.FindPlanSummary(service.DB, req.PlanID)
-	switch {
-	case err == sql.ErrNoRows:
-		res.Status = response.Nonentity
-		res.Message = fmt.Sprintf("planID not found %s", req.PlanID)
-		return nil
+	// pln, err := planRepo.FindPlanSummary(service.DB, req.PlanID)
+	// switch {
+	// case err == sql.ErrNoRows:
+	// 	res.Status = response.Nonentity
+	// 	res.Message = fmt.Sprintf("planID not found %s", req.PlanID)
+	// 	return nil
 
-	case err != nil:
-		res.Status = response.Error
-		res.Message = fmt.Sprintf("unexpected error in DeletePlan: %s", err.Error())
-		return nil
+	// case err != nil:
+	// 	res.Status = response.Error
+	// 	res.Message = fmt.Sprintf("unexpected error in DeletePlan: %s", err.Error())
+	// 	return nil
 
-	default:
+	// default:
 
-		switch {
-		case pln.ActiveOrderNumber == 0 && pln.Status != plan.Active:
-			// we can safely delete this plan from the system because the plan is not in memory
-			// (i.e. not active) and the first order of the plan has not been executed
-			err = planRepo.DeletePlan(service.DB, req.PlanID)
-			if err != nil {
-				res.Status = response.Error
-				res.Message = err.Error()
-			} else {
-				pln.Status = plan.Deleted
-				res.Status = response.Success
-				res.Data = &protoPlan.PlanData{
-					Plan: pln,
-				}
-			}
+	// 	switch {
+	// 	case pln.ActiveOrderNumber == 0 && pln.Status != plan.Active:
+	// 		// we can safely delete this plan from the system because the plan is not in memory
+	// 		// (i.e. not active) and the first order of the plan has not been executed
+	// 		err = planRepo.DeletePlan(service.DB, req.PlanID)
+	// 		if err != nil {
+	// 			res.Status = response.Error
+	// 			res.Message = err.Error()
+	// 		} else {
+	// 			pln.Status = plan.Deleted
+	// 			res.Status = response.Success
+	// 			res.Data = &protoPlan.PlanData{
+	// 				Plan: pln,
+	// 			}
+	// 		}
 
-		case pln.Status == plan.Active:
-			pln.Status = plan.PendingAbort
-			_, err = planRepo.UpdatePlanStatus(service.DB, req.PlanID, pln.Status)
-			if err != nil {
-				res.Status = response.Error
-				res.Message = err.Error()
-				return nil
-			}
+	// 	case pln.Status == plan.Active:
+	// 		pln.Status = plan.PendingAbort
+	// 		_, err = planRepo.UpdatePlanStatus(service.DB, req.PlanID, pln.Status)
+	// 		if err != nil {
+	// 			res.Status = response.Error
+	// 			res.Message = err.Error()
+	// 			return nil
+	// 		}
 
-			// set the plan order status to aborted we are going to use
-			// this status in the execution engine to remove order from memory
-			pln.Orders[0].Status = status.Aborted
-			// publish this revision to the system so the plan order can be removed from execution
-			if err := service.publishPlan(ctx, pln, true); err != nil {
-				res.Status = response.Error
-				res.Message = fmt.Sprintf("failed to remove active plan order from execution: %s", err.Error())
-				return nil
-			}
+	// 		// set the plan order status to aborted we are going to use
+	// 		// this status in the execution engine to remove order from memory
+	// 		pln.Orders[0].Status = status.Aborted
+	// 		// publish this revision to the system so the plan order can be removed from execution
+	// 		if err := service.publishPlan(ctx, pln, true); err != nil {
+	// 			res.Status = response.Error
+	// 			res.Message = fmt.Sprintf("failed to remove active plan order from execution: %s", err.Error())
+	// 			return nil
+	// 		}
 
-			res.Status = response.Success
-			res.Data = &protoPlan.PlanData{
-				Plan: pln,
-			}
+	// 		res.Status = response.Success
+	// 		res.Data = &protoPlan.PlanData{
+	// 			Plan: pln,
+	// 		}
 
-		default:
-			// what's this?
-		}
-	}
+	// 	default:
+	// 		// what's this?
+	// 	}
+	// }
 	return nil
 }
 
@@ -376,96 +356,96 @@ func (service *PlanService) DeletePlan(ctx context.Context, req *protoPlan.Delet
 // Can't return an error with a response object - response object is returned as nil when error is non nil.
 // Therefore, return error in response object.
 func (service *PlanService) UpdatePlan(ctx context.Context, req *protoPlan.UpdatePlanRequest, res *protoPlan.PlanResponse) error {
-	pln, err := planRepo.FindPlanSummary(service.DB, req.PlanID)
-	switch {
-	case err == sql.ErrNoRows:
-		res.Status = response.Nonentity
-		res.Message = fmt.Sprintf("planID not found %s", req.PlanID)
-		return nil
+	// pln, err := planRepo.FindPlanSummary(service.DB, req.PlanID)
+	// switch {
+	// case err == sql.ErrNoRows:
+	// 	res.Status = response.Nonentity
+	// 	res.Message = fmt.Sprintf("planID not found %s", req.PlanID)
+	// 	return nil
 
-	case err != nil:
-		res.Status = response.Error
-		res.Message = err.Error()
-		return nil
-	default:
+	// case err != nil:
+	// 	res.Status = response.Error
+	// 	res.Message = err.Error()
+	// 	return nil
+	// default:
 
-		switch {
-		// can't set base balance to 0 if first is buy
-		case pln.ActiveOrderNumber == 0 && pln.Orders[0].Side == side.Buy && req.BaseBalance == 0:
-			res.Status = response.Fail
-			res.Message = fmt.Sprintf("base balance for buy plan cannot be 0")
-			return nil
+	// 	switch {
+	// 	// can't set base balance to 0 if first is buy
+	// 	case pln.ActiveOrderNumber == 0 && pln.Orders[0].Side == side.Buy && req.BaseBalance == 0:
+	// 		res.Status = response.Fail
+	// 		res.Message = fmt.Sprintf("base balance for buy plan cannot be 0")
+	// 		return nil
 
-		// can't set currency balance to 0 if first is sell
-		case pln.ActiveOrderNumber == 0 && pln.Orders[0].Side == side.Sell && req.CurrencyBalance == 0:
-			res.Status = response.Fail
-			res.Message = fmt.Sprintf("currency balance for sell plan cannot be 0")
-			return nil
+	// 	// can't set currency balance to 0 if first is sell
+	// 	case pln.ActiveOrderNumber == 0 && pln.Orders[0].Side == side.Sell && req.CurrencyBalance == 0:
+	// 		res.Status = response.Fail
+	// 		res.Message = fmt.Sprintf("currency balance for sell plan cannot be 0")
+	// 		return nil
 
-		// must specify a valid status if a status was specified
-		case req.Status != "" && !plan.ValidateUpdatePlanStatus(req.Status):
-			res.Status = response.Fail
-			res.Message = fmt.Sprintf("invalid status for update plan")
-			return nil
+	// 	// must specify a valid status if a status was specified
+	// 	case req.Status != "" && !plan.ValidateUpdatePlanStatus(req.Status):
+	// 		res.Status = response.Fail
+	// 		res.Message = fmt.Sprintf("invalid status for update plan")
+	// 		return nil
 
-		// when active order is not first order there must be a status param
-		case pln.ActiveOrderNumber != 0 && req.Status == "":
-			res.Status = response.Fail
-			res.Message = fmt.Sprintf("must specify non empty status for update plan")
-			return nil
+	// 	// when active order is not first order there must be a status param
+	// 	case pln.ActiveOrderNumber != 0 && req.Status == "":
+	// 		res.Status = response.Fail
+	// 		res.Message = fmt.Sprintf("must specify non empty status for update plan")
+	// 		return nil
 
-		case pln.ActiveOrderNumber == 0:
-			if req.CurrencyBalance >= 0 {
-				pln, err = planRepo.UpdatePlanCurrencyBalance(service.DB, req.PlanID, req.CurrencyBalance)
-				if err != nil {
-					res.Status = response.Error
-					res.Message = err.Error()
-					return nil
-				}
-			}
-			if req.BaseBalance >= 0 {
-				pln, err = planRepo.UpdatePlanBaseBalance(service.DB, req.PlanID, req.BaseBalance)
-				if err != nil {
-					res.Status = response.Error
-					res.Message = err.Error()
-					return nil
-				}
-			}
+	// 	case pln.ActiveOrderNumber == 0:
+	// 		if req.CurrencyBalance >= 0 {
+	// 			pln, err = planRepo.UpdatePlanCurrencyBalance(service.DB, req.PlanID, req.CurrencyBalance)
+	// 			if err != nil {
+	// 				res.Status = response.Error
+	// 				res.Message = err.Error()
+	// 				return nil
+	// 			}
+	// 		}
+	// 		if req.BaseBalance >= 0 {
+	// 			pln, err = planRepo.UpdatePlanBaseBalance(service.DB, req.PlanID, req.BaseBalance)
+	// 			if err != nil {
+	// 				res.Status = response.Error
+	// 				res.Message = err.Error()
+	// 				return nil
+	// 			}
+	// 		}
 
-		default:
-		}
+	// 	default:
+	// 	}
 
-		isActive := pln.Status
-		if req.Status != "" {
-			pln, err = planRepo.UpdatePlanStatus(service.DB, req.PlanID, req.Status)
-			if err != nil {
-				res.Status = response.Error
-				res.Message = err.Error()
-				return nil
-			}
-		}
+	// 	isActive := pln.Status
+	// 	if req.Status != "" {
+	// 		pln, err = planRepo.UpdatePlanStatus(service.DB, req.PlanID, req.Status)
+	// 		if err != nil {
+	// 			res.Status = response.Error
+	// 			res.Message = err.Error()
+	// 			return nil
+	// 		}
+	// 	}
 
-		if isActive == plan.Active {
-			// publish the revised plan to the system
-			if err := service.publishPlan(ctx, pln, true); err != nil {
-				res.Status = response.Error
-				res.Message = err.Error()
-				return nil
-			}
-		}
+	// 	if isActive == plan.Active {
+	// 		// publish the revised plan to the system
+	// 		if err := service.publishPlan(ctx, pln, true); err != nil {
+	// 			res.Status = response.Error
+	// 			res.Message = err.Error()
+	// 			return nil
+	// 		}
+	// 	}
 
-		if isActive == plan.Inactive && pln.Status == plan.Active {
-			if err := service.publishPlan(ctx, pln, false); err != nil {
-				res.Status = response.Error
-				res.Message = err.Error()
-				return nil
-			}
-		}
+	// 	if isActive == plan.Inactive && pln.Status == plan.Active {
+	// 		if err := service.publishPlan(ctx, pln, false); err != nil {
+	// 			res.Status = response.Error
+	// 			res.Message = err.Error()
+	// 			return nil
+	// 		}
+	// 	}
 
-		res.Status = response.Success
-		res.Data = &protoPlan.PlanData{
-			Plan: pln,
-		}
-	}
+	// 	res.Status = response.Success
+	// 	res.Data = &protoPlan.PlanData{
+	// 		Plan: pln,
+	// 	}
+	// }
 	return nil
 }

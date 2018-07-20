@@ -5,7 +5,7 @@ package plan;
 import "github.com/asciiu/gomo/plan-service/proto/order/order.proto";
 
 service PlanService {
-  rpc AddPlan(PlanRequest) returns (PlanWithPagedOrdersResponse) {}
+  rpc AddPlan(PlanRequest) returns (PlanResponse) {}
   rpc GetUserPlan(GetUserPlanRequest) returns (PlanWithPagedOrdersResponse) {}
   rpc GetUserPlans(GetUserPlansRequest) returns (PlansPageResponse) {}
   rpc DeletePlan(DeletePlanRequest) returns (PlanResponse) {}
@@ -65,7 +65,7 @@ message Plan {
   string key = 5;
   string keySecret = 6;
   string keyDescription = 7;
-  uint32 activeOrderNumber = 8;
+  uint32 executedOrderNumber = 8;
   string exchange = 9;
   string exchangeMarketName = 10;
   string marketName = 11;

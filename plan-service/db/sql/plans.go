@@ -13,7 +13,6 @@ import (
 
 	protoPlan "github.com/asciiu/gomo/plan-service/proto/plan"
 	"github.com/google/uuid"
-	"github.com/lib/pq"
 )
 
 // DeletePlan is a hard delete
@@ -26,77 +25,83 @@ func DeletePlan(db *sql.DB, planID string) error {
 // this is so we can examine the current state of the plan
 func FindPlanSummary(db *sql.DB, planID string) (*protoPlan.Plan, error) {
 	var plan protoPlan.Plan
-	var order protoOrder.Order
 	var planTemp sql.NullString
 	var orderTemp sql.NullString
 	var price sql.NullFloat64
-	var nextOrderID sql.NullString
 
 	// note: always assume that a plan has at least one order.
 	// a plan with no order should be removed from the system
-	err := db.QueryRow(`SELECT 
+	rows, err := db.Query(`SELECT 
 		p.id,
 		p.plan_template_id,
 		p.user_id,
 		p.user_key_id,
 		k.description,
-		p.active_order_number,
+		p.executed_order_number,
 		p.exchange_name,
 		p.market_name,
 		p.base_balance,
 		p.currency_balance,
 		p.status,
-		po.id,
-		po.balance_percent,
-		po.side,
-		po.order_number,
-		po.order_type,
-		po.order_template_id,
-		po.limit_price,
-		po.next_order_id,
-		po.status
+		o.id,
+		o.balance_percent,
+		o.side,
+		o.parent_order_number,
+		o.order_number,
+		o.order_type,
+		o.order_template_id,
+		o.limit_price,
+		o.status
 		FROM plans p
-		JOIN orders o on p.id = o.plan_id and p.active_order_number = o.order_number
+		JOIN orders o on p.id = o.plan_id and p.executed_order_number = o.parent_order_number
 		JOIN user_keys k on p.user_key_id = k.id
-		WHERE p.id = $1`, planID).Scan(
-		&plan.PlanID,
-		&planTemp,
-		&plan.UserID,
-		&plan.KeyID,
-		&plan.KeyDescription,
-		&plan.ActiveOrderNumber,
-		&plan.Exchange,
-		&plan.MarketName,
-		&plan.BaseBalance,
-		&plan.CurrencyBalance,
-		&plan.Status,
-		&order.OrderID,
-		&order.BalancePercent,
-		&order.Side,
-		&order.OrderNumber,
-		&order.OrderType,
-		&orderTemp,
-		&price,
-		&nextOrderID,
-		&order.Status)
+		WHERE p.id = $1`, planID)
 
 	if err != nil {
 		return nil, err
 	}
-	if price.Valid {
-		order.LimitPrice = price.Float64
-	}
-	if nextOrderID.Valid {
-		order.NextOrderID = nextOrderID.String
-	}
-	if orderTemp.Valid {
-		order.OrderTemplateID = orderTemp.String
-	}
-	if planTemp.Valid {
-		plan.PlanTemplateID = planTemp.String
-	}
-	plan.Orders = append(plan.Orders, &order)
 
+	defer rows.Close()
+
+	for rows.Next() {
+		var order protoOrder.Order
+		err := rows.Scan(
+			&plan.PlanID,
+			&planTemp,
+			&plan.UserID,
+			&plan.KeyID,
+			&plan.KeyDescription,
+			&plan.ExecutedOrderNumber,
+			&plan.Exchange,
+			&plan.MarketName,
+			&plan.BaseBalance,
+			&plan.CurrencyBalance,
+			&plan.Status,
+			&order.OrderID,
+			&order.BalancePercent,
+			&order.Side,
+			&order.ParentOrderNumber,
+			&order.OrderNumber,
+			&order.OrderType,
+			&orderTemp,
+			&price,
+			&order.Status)
+
+		if err != nil {
+			return nil, err
+		}
+		if price.Valid {
+			order.LimitPrice = price.Float64
+		}
+		if orderTemp.Valid {
+			order.OrderTemplateID = orderTemp.String
+		}
+		if planTemp.Valid {
+			plan.PlanTemplateID = planTemp.String
+		}
+		plan.Orders = append(plan.Orders, &order)
+
+	}
 	return &plan, nil
 }
 
@@ -109,7 +114,6 @@ func FindPlanWithPagedOrders(db *sql.DB, req *protoPlan.GetUserPlanRequest) (*pr
 	var planTemp sql.NullString
 	var orderTemp sql.NullString
 	var price sql.NullFloat64
-	var nextOrderID sql.NullString
 
 	var count uint32
 	queryCount := `SELECT count(*) FROM orders WHERE plan_id = $1`
@@ -140,7 +144,6 @@ func FindPlanWithPagedOrders(db *sql.DB, req *protoPlan.GetUserPlanRequest) (*pr
 		o.order_type,
 		o.order_template_id,
 		o.limit_price,
-		o.next_order_id,
 		o.status,
 		o.created_on,
 		o.updated_on,
@@ -193,7 +196,6 @@ func FindPlanWithPagedOrders(db *sql.DB, req *protoPlan.GetUserPlanRequest) (*pr
 			&order.OrderType,
 			&orderTemp,
 			&price,
-			&nextOrderID,
 			&order.Status,
 			&order.CreatedOn,
 			&order.UpdatedOn,
@@ -213,9 +215,6 @@ func FindPlanWithPagedOrders(db *sql.DB, req *protoPlan.GetUserPlanRequest) (*pr
 		}
 		if price.Valid {
 			order.LimitPrice = price.Float64
-		}
-		if nextOrderID.Valid {
-			order.NextOrderID = nextOrderID.String
 		}
 		if orderTemp.Valid {
 			order.OrderTemplateID = orderTemp.String
@@ -282,7 +281,6 @@ func FindActivePlans(db *sql.DB) ([]*protoPlan.Plan, error) {
 		o.side,
 		o.order_type,
 		o.limit_price, 
-		o.next_order_id,
 		o.status,
 		t.id as trigger_id,
 		t.name,
@@ -308,7 +306,6 @@ func FindActivePlans(db *sql.DB) ([]*protoPlan.Plan, error) {
 		var trigger protoOrder.Trigger
 		var actionsStr string
 		var price sql.NullFloat64
-		var nextOrderID sql.NullString
 		err := rows.Scan(
 			&plan.PlanID,
 			&plan.UserID,
@@ -325,7 +322,6 @@ func FindActivePlans(db *sql.DB) ([]*protoPlan.Plan, error) {
 			&order.Side,
 			&order.OrderType,
 			&price,
-			&nextOrderID,
 			&order.Status,
 			&trigger.TriggerID,
 			&trigger.Name,
@@ -339,9 +335,6 @@ func FindActivePlans(db *sql.DB) ([]*protoPlan.Plan, error) {
 		}
 		if price.Valid {
 			order.LimitPrice = price.Float64
-		}
-		if nextOrderID.Valid {
-			order.NextOrderID = nextOrderID.String
 		}
 		if err := json.Unmarshal([]byte(actionsStr), &trigger.Actions); err != nil {
 			return nil, err
@@ -375,12 +368,11 @@ func FindActivePlans(db *sql.DB) ([]*protoPlan.Plan, error) {
 }
 
 // Returns plan with specific order that has a verified key.
-func FindPlanWithOrderID(db *sql.DB, orderID string) (*protoPlan.Plan, error) {
+func FindChildOrders(db *sql.DB, planID, parentOrderNumber string) (*protoPlan.Plan, error) {
 	var plan protoPlan.Plan
 	var order protoOrder.Order
 
 	var price sql.NullFloat64
-	var nextOrderID sql.NullString
 
 	rows, err := db.Query(`SELECT 
 		p.id,
@@ -396,9 +388,10 @@ func FindPlanWithOrderID(db *sql.DB, orderID string) (*protoPlan.Plan, error) {
 		o.id,
 		o.balance_percent,
 		o.side,
+		o.order_number,
 		o.order_type,
 		o.limit_price, 
-		o.next_order_id,
+		o.parent_order_number,
 		o.status,
 		o.created_on,
 		o.updated_on,
@@ -415,7 +408,7 @@ func FindPlanWithOrderID(db *sql.DB, orderID string) (*protoPlan.Plan, error) {
 		JOIN orders o on p.id = o.plan_id
 		JOIN triggers t on o.id = t.order_id
 		JOIN user_keys k on p.user_key_id = k.id
-		WHERE o.id = $1 AND k.status = $2 ORDER BY t.trigger_number`, orderID, key.Verified)
+		WHERE p.id = $1 AND o.parent_order_number = $2 AND k.status = $3 ORDER BY t.trigger_number`, planID, parentOrderNumber, key.Verified)
 
 	if err != nil {
 		return nil, err
@@ -441,9 +434,10 @@ func FindPlanWithOrderID(db *sql.DB, orderID string) (*protoPlan.Plan, error) {
 			&order.OrderID,
 			&order.BalancePercent,
 			&order.Side,
+			&order.OrderNumber,
 			&order.OrderType,
 			&price,
-			&nextOrderID,
+			&order.ParentOrderNumber,
 			&order.Status,
 			&order.CreatedOn,
 			&order.UpdatedOn,
@@ -463,9 +457,6 @@ func FindPlanWithOrderID(db *sql.DB, orderID string) (*protoPlan.Plan, error) {
 		}
 		if price.Valid {
 			order.LimitPrice = price.Float64
-		}
-		if nextOrderID.Valid {
-			order.NextOrderID = nextOrderID.String
 		}
 		if triggerTemplateID.Valid {
 			trigger.TriggerTemplateID = triggerTemplateID.String
@@ -692,23 +683,13 @@ func FindUserMarketPlansWithStatus(db *sql.DB, userID, status, exchange, marketN
 
 // TODO this should be inserted as a transaction
 func InsertPlan(db *sql.DB, req *protoPlan.PlanRequest) (*protoPlan.Plan, error) {
-	planID := uuid.New()
-	orderIDs := make([]uuid.UUID, 0)
-	orders := make([]*protoOrder.Order, 0)
-
-	// generate order ids
-	for range req.Orders {
-		orderIDs = append(orderIDs, uuid.New())
-	}
-
-	now := time.Now()
 
 	sqlStatement := `insert into plans (
 		id, 
 		user_id, 
 		user_key_id, 
 		plan_template_id,
-		active_order_number,
+		active_order_depth,
 		exchange_name, 
 		market_name, 
 		base_balance, 
@@ -718,12 +699,15 @@ func InsertPlan(db *sql.DB, req *protoPlan.PlanRequest) (*protoPlan.Plan, error)
 		updated_on) 
 		values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)`
 
+	planID := uuid.New()
+	now := time.Now()
+
 	_, err := db.Exec(sqlStatement,
 		planID,
 		req.UserID,
 		req.KeyID,
 		req.PlanTemplateID,
-		0, // active order number always starts out 0
+		0, // active order depth always starts out 0
 		req.Exchange,
 		req.MarketName,
 		req.BaseBalance,
@@ -736,90 +720,26 @@ func InsertPlan(db *sql.DB, req *protoPlan.PlanRequest) (*protoPlan.Plan, error)
 		return nil, err
 	}
 
-	// loop through and insert orders
-	for i, or := range req.Orders {
+	newTriggers := make([]*protoOrder.Trigger, 0, len(req.Orders))
+	newOrders := make([]*protoOrder.Order, 0, len(req.Orders))
+
+	// assign ids to orders
+	for _, or := range req.Orders {
+		orderID := uuid.New()
 		orderStatus := status.Inactive
-		// first order of active plan is active
-		if i == 0 && req.Status == plan.Active {
+		// first order shall always be assigned an order number of 1
+		// the parent_order_number of the root order should also be 0
+		if or.OrderNumber == 1 && req.Status == plan.Active {
 			orderStatus = status.Active
 		}
 		if err != nil {
 			return nil, err
 		}
 
-		orderID := orderIDs[i]
-		var nextOrderID uuid.UUID
-		var nextIndex = i + 1
-		if nextIndex < len(orderIDs) {
-			nextOrderID = orderIDs[nextIndex]
-		}
-		sqlInsertOrder := `insert into orders (
-			id, 
-			plan_id, 
-			balance_percent, 
-			side,
-			order_template_id,
-			order_number,
-			order_type,
-			limit_price,
-			next_order_id,
-			status,
-			created_on,
-			updated_on) 
-			values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)`
-		_, err = db.Exec(sqlInsertOrder,
-			orderID,
-			planID,
-			or.BalancePercent,
-			or.Side,
-			or.OrderTemplateID,
-			i,
-			or.OrderType,
-			or.LimitPrice,
-			nextOrderID,
-			orderStatus,
-			now,
-			now)
-
-		if err != nil {
-			return nil, err
-		}
-
-		triggers := make([]*protoOrder.Trigger, 0)
-		// next insert all the triggers for this order
+		// collect triggers for this order
+		triggers := make([]*protoOrder.Trigger, 0, len(or.Triggers))
 		for j, cond := range or.Triggers {
-			jsonCode, err := json.Marshal(cond.Code)
-			if err != nil {
-				return nil, err
-			}
-
 			triggerID := uuid.New()
-			sqlInsertOrder := `insert into triggers (
-				id, 
-				order_id, 
-				trigger_number,
-				trigger_template_id,
-				name,
-				code,
-				actions,
-				created_on,
-				updated_on) 
-				values ($1, $2, $3, $4, $5, $6, $7, $8, $9)`
-			_, err = db.Exec(sqlInsertOrder,
-				triggerID,
-				orderID,
-				j,
-				cond.TriggerTemplateID,
-				cond.Name,
-				jsonCode,
-				pq.Array(cond.Actions),
-				now,
-				now)
-
-			if err != nil {
-				return nil, err
-			}
-
 			trigger := protoOrder.Trigger{
 				TriggerID:         triggerID.String(),
 				TriggerNumber:     uint32(j),
@@ -833,54 +753,62 @@ func InsertPlan(db *sql.DB, req *protoPlan.PlanRequest) (*protoPlan.Plan, error)
 				UpdatedOn:         now.String(),
 			}
 			triggers = append(triggers, &trigger)
+			// append to all new triggers so we can bulk insert
+			newTriggers = append(newTriggers, &trigger)
 		}
 
 		order := protoOrder.Order{
-			OrderID:         orderID.String(),
-			OrderNumber:     uint32(i),
-			OrderType:       or.OrderType,
-			OrderTemplateID: or.OrderTemplateID,
-			Side:            or.Side,
-			LimitPrice:      or.LimitPrice,
-			BalancePercent:  or.BalancePercent,
-			Status:          orderStatus,
-			Triggers:        triggers,
-			CreatedOn:       now.String(),
-			UpdatedOn:       now.String(),
-
-			NextOrderID: nextOrderID.String(),
+			OrderID:           orderID.String(),
+			OrderNumber:       or.OrderNumber,
+			OrderType:         or.OrderType,
+			OrderTemplateID:   or.OrderTemplateID,
+			ParentOrderNumber: or.ParentOrderNumber,
+			Side:              or.Side,
+			LimitPrice:        or.LimitPrice,
+			BalancePercent:    or.BalancePercent,
+			Status:            orderStatus,
+			Triggers:          triggers,
+			CreatedOn:         now.String(),
+			UpdatedOn:         now.String(),
 		}
-		orders = append(orders, &order)
+		newOrders = append(newOrders, &order)
+	}
+
+	if err := InsertOrders(db, planID.String(), newOrders); err != nil {
+		return nil, err
+	}
+	if err := InsertTriggers(db, newTriggers); err != nil {
+		return nil, err
 	}
 
 	plan := protoPlan.Plan{
-		PlanID:            planID.String(),
-		PlanTemplateID:    req.PlanTemplateID,
-		UserID:            req.UserID,
-		KeyID:             req.KeyID,
-		ActiveOrderNumber: 0,
-		Exchange:          req.Exchange,
-		MarketName:        req.MarketName,
-		BaseBalance:       req.BaseBalance,
-		CurrencyBalance:   req.CurrencyBalance,
-		Orders:            orders,
-		Status:            req.Status,
-		CreatedOn:         now.String(),
-		UpdatedOn:         now.String(),
+		PlanID:              planID.String(),
+		PlanTemplateID:      req.PlanTemplateID,
+		UserID:              req.UserID,
+		KeyID:               req.KeyID,
+		ExecutedOrderNumber: 0,
+		Exchange:            req.Exchange,
+		MarketName:          req.MarketName,
+		BaseBalance:         req.BaseBalance,
+		CurrencyBalance:     req.CurrencyBalance,
+		Orders:              newOrders,
+		Status:              req.Status,
+		CreatedOn:           now.String(),
+		UpdatedOn:           now.String(),
 	}
 	return &plan, nil
 }
 
 // Maybe this should return more of the updated order but all I need from this
-// as of now is the next_order_id so I can load the next order.
+// as of now is the order number so I can load the next order orders with parent_order_number.
 func UpdatePlanOrder(db *sql.DB, orderID, stat string) (*protoOrder.Order, error) {
 	updatePlanOrderSql := `UPDATE plan_orders SET status = $1 WHERE id = $2 
-	RETURNING next_order_id, order_number, plan_id`
+	RETURNING order_number, plan_id`
 
 	var o protoOrder.Order
 	var planID string
 	err := db.QueryRow(updatePlanOrderSql, stat, orderID).
-		Scan(&o.NextOrderID, &o.OrderNumber, &planID)
+		Scan(&o.OrderNumber, &o.PlanID)
 
 	if err != nil {
 		return nil, err

@@ -32,13 +32,15 @@ message UpdateOrderRequest {
 }
 
 message OrderRequest {
-  string planID = 1;
-  string side = 2;
-  string orderType = 3;
-  string orderTemplateID = 4;
-  double balancePercent = 5;
-  double limitPrice = 6;
-  repeated TriggerRequest triggers = 7;
+  uint32 parentOrderNumber = 1;
+  string planID = 2;
+  string side = 3;
+  uint32 orderNumber = 4;
+  string orderType = 5;
+  string orderTemplateID = 6;
+  double balancePercent = 7;
+  double limitPrice = 8;
+  repeated TriggerRequest triggers = 9;
 }
 
 message GetUserOrderRequest {
@@ -56,18 +58,19 @@ message RemoveOrderRequest {
 }
 
 message Order {
-  string orderID = 1;
-  string side = 2;
-  string orderTemplateID = 3;
-  uint32 orderNumber = 4;
-  string orderType = 5;
-  double limitPrice = 6;
-  double balancePercent = 7;
-  string status = 8;
-  string nextOrderID = 9;
-  string createdOn = 10;
-  string updatedOn = 11;
-  repeated Trigger triggers = 12;
+  string planID = 1;
+  string orderID = 2;
+  string side = 3;
+  string orderTemplateID = 4;
+  uint32 orderNumber = 5;
+  string orderType = 6;
+  double limitPrice = 7;
+  double balancePercent = 8;
+  string status = 9;
+  uint32 parentOrderNumber = 10;
+  string createdOn = 11;
+  string updatedOn = 12;
+  repeated Trigger triggers = 13;
 }
 
 message Trigger {
