@@ -27,12 +27,12 @@ type ResponseMarkets struct {
 type Market struct {
 	BaseCurrency       string `json:"baseCurrency"`
 	BaseCurrencyLong   string `json:"baseCurrencyLong"`
-	BasePrecision      string `json:"basePrecision"`
+	BasePrecision      int32  `json:"basePrecision"`
 	Exchange           string `json:"exchange"`
 	ExchangeMarketName string `json:"exchangeMarketName"`
 	MarketCurrency     string `json:"marketCurrency"`
 	MarketCurrencyLong string `json:"marketCurrencyLong"`
-	MarketPrecision    string `json:"marketPrecision"`
+	MarketPrecision    int32  `json:"marketPrecision"`
 	MarketName         string `json:"marketName"`
 	MinTradeSize       string `json:"minTradeSize"`
 	MaxTradeSize       string `json:"maxTradeSize"`
@@ -132,7 +132,12 @@ func (controller *SearchController) CacheEvents(tradeEvents *evt.TradeEvents) {
 			MarketName:         event.MarketName,
 			Price:              fmt.Sprintf("%.8f", event.Price),
 			MinTradeSize:       "0.0001",
-		}
+			BasePrecision:      8,
+			MarketPrecision:    8,
+			MarketPriceStep:    "0.00000001",
+			MaxTradeSize:       "1000000000.0",
+			Mintradesize:       "0.00000001",
+			TradeSizeStep:      "0.00000001"}
 
 		key := fmt.Sprintf("%s-%s", event.Exchange, event.MarketName)
 		//key = key
