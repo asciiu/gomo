@@ -53,7 +53,6 @@ func NewRouter(db *sql.DB) *echo.Echo {
 	balanceController := controllers.NewBalanceController(db)
 	deviceController := controllers.NewDeviceController(db)
 	notificationController := controllers.NewNotificationController()
-	orderController := controllers.NewOrderController(db)
 	sessionController := controllers.NewSessionController(db)
 	userController := controllers.NewUserController(db)
 	socketController := controllers.NewWebsocketController()
@@ -105,13 +104,6 @@ func NewRouter(db *sql.DB) *echo.Echo {
 
 	// notifications
 	protectedApi.GET("/notifications", notificationController.HandleListNotifications)
-
-	// order management endpoints
-	protectedApi.GET("/orders", orderController.HandleListOrders)
-	protectedApi.POST("/orders", orderController.HandlePostOrder)
-	protectedApi.GET("/orders/:orderID", orderController.HandleGetOrder)
-	protectedApi.PUT("/orders/:orderID", orderController.HandleUpdateOrder)
-	protectedApi.DELETE("/orders/:orderID", orderController.HandleDeleteOrder)
 
 	// plan management endpoints
 	protectedApi.GET("/plans", planController.HandleListPlans)
