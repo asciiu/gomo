@@ -174,7 +174,7 @@ func (service *PlanService) NewPlan(ctx context.Context, req *protoPlan.NewPlanR
 		return nil
 	case !ValidateConnectedRoutes(req.Orders):
 		res.Status = response.Fail
-		res.Message = "an order does not have a valid parent_order_number in your request"
+		res.Message = "an order does not have a valid parent_order_id in your request"
 		return nil
 	case !ValidateNodeCount(req.Orders):
 		res.Status = response.Fail

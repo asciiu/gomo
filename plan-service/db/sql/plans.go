@@ -691,6 +691,7 @@ func InsertPlan(db *sql.DB, req *protoPlan.NewPlanRequest) (*protoPlan.Plan, err
 		user_id, 
 		user_key_id, 
 		plan_template_id,
+		last_executed_plan_depth,
 		last_executed_order_id,
 		exchange_name, 
 		market_name, 
@@ -699,7 +700,7 @@ func InsertPlan(db *sql.DB, req *protoPlan.NewPlanRequest) (*protoPlan.Plan, err
 		status, 
 		created_on,
 		updated_on) 
-		values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)`)
+		values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)`)
 
 	if err != nil {
 		txn.Rollback()
@@ -714,6 +715,7 @@ func InsertPlan(db *sql.DB, req *protoPlan.NewPlanRequest) (*protoPlan.Plan, err
 		req.UserID,
 		req.KeyID,
 		req.PlanTemplateID,
+		0,
 		none,
 		req.Exchange,
 		req.MarketName,
@@ -802,19 +804,20 @@ func InsertPlan(db *sql.DB, req *protoPlan.NewPlanRequest) (*protoPlan.Plan, err
 	}
 
 	plan := protoPlan.Plan{
-		PlanID:              planID.String(),
-		PlanTemplateID:      req.PlanTemplateID,
-		UserID:              req.UserID,
-		KeyID:               req.KeyID,
-		LastExecutedOrderID: none,
-		Exchange:            req.Exchange,
-		MarketName:          req.MarketName,
-		BaseBalance:         req.BaseBalance,
-		CurrencyBalance:     req.CurrencyBalance,
-		Orders:              newOrders,
-		Status:              req.Status,
-		CreatedOn:           now,
-		UpdatedOn:           now,
+		PlanID:         planID.String(),
+		PlanTemplateID: req.PlanTemplateID,
+		UserID:         req.UserID,
+		KeyID:          req.KeyID,
+		LastExecutedPlanDepth: 0,
+		LastExecutedOrderID:   none,
+		Exchange:              req.Exchange,
+		MarketName:            req.MarketName,
+		BaseBalance:           req.BaseBalance,
+		CurrencyBalance:       req.CurrencyBalance,
+		Orders:                newOrders,
+		Status:                req.Status,
+		CreatedOn:             now,
+		UpdatedOn:             now,
 	}
 
 	return &plan, nil

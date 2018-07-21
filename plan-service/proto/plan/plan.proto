@@ -66,16 +66,17 @@ message Plan {
   string key = 5;
   string keySecret = 6;
   string keyDescription = 7;
-  string lastExecutedOrderID = 8;
-  string exchange = 9;
-  string exchangeMarketName = 10;
-  string marketName = 11;
-  double baseBalance = 12;
-  double currencyBalance = 13;
-  string status = 14;
-  string createdOn = 15;
-  string updatedOn = 16;
-  repeated order.Order orders = 17; 
+  uint32 lastExecutedPlanDepth = 8;
+  string lastExecutedOrderID = 9;
+  string exchange = 10;
+  string exchangeMarketName = 11;
+  string marketName = 12;
+  double baseBalance = 13;
+  double currencyBalance = 14;
+  string status = 15;
+  string createdOn = 16;
+  string updatedOn = 17;
+  repeated order.Order orders = 18; 
 }
 
 message PlanWithPagedOrders {

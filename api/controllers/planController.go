@@ -92,23 +92,24 @@ type UserPlansData struct {
 
 // This response should never return the key secret
 type Plan struct {
-	PlanID              string          `json:"planID"`
-	PlanTemplateID      string          `json:"planTemplateID"`
-	KeyID               string          `json:"keyID"`
-	Exchange            string          `json:"exchange"`
-	ExchangeMarketName  string          `json:"exchangeMarketName"`
-	MarketName          string          `json:"marketName"`
-	BaseCurrencySymbol  string          `json:"baseCurrencySymbol"`
-	BaseCurrencyName    string          `json:"baseCurrencyName"`
-	BaseBalance         float64         `json:"baseBalance"`
-	CurrencySymbol      string          `json:"currencySymbol"`
-	CurrencyName        string          `json:"currencyName"`
-	CurrencyBalance     float64         `json:"currencyBalance"`
-	ExecutedOrderNumber uint32          `json:"executedOrderNumber"`
-	Status              string          `json:"status"`
-	CreatedOn           string          `json:"createdOn"`
-	UpdatedOn           string          `json:"updatedOn"`
-	Orders              []*orders.Order `json:"orders,omitempty"`
+	PlanID                string          `json:"planID"`
+	PlanTemplateID        string          `json:"planTemplateID"`
+	KeyID                 string          `json:"keyID"`
+	Exchange              string          `json:"exchange"`
+	ExchangeMarketName    string          `json:"exchangeMarketName"`
+	MarketName            string          `json:"marketName"`
+	BaseCurrencySymbol    string          `json:"baseCurrencySymbol"`
+	BaseCurrencyName      string          `json:"baseCurrencyName"`
+	BaseBalance           float64         `json:"baseBalance"`
+	CurrencySymbol        string          `json:"currencySymbol"`
+	CurrencyName          string          `json:"currencyName"`
+	CurrencyBalance       float64         `json:"currencyBalance"`
+	LastExecutedOrderID   string          `json:"lastExecutedOrderID"`
+	LastExecutedPlanDepth string          `json:"lastExecutedPlanDepth"`
+	Status                string          `json:"status"`
+	CreatedOn             string          `json:"createdOn"`
+	UpdatedOn             string          `json:"updatedOn"`
+	Orders                []*orders.Order `json:"orders,omitempty"`
 }
 
 func NewPlanController(db *sql.DB) *PlanController {
@@ -379,21 +380,23 @@ func (controller *PlanController) HandleListPlans(c echo.Context) error {
 		currencyName := controller.currencies[currencySymbol]
 
 		pln := Plan{
-			PlanTemplateID:     plan.PlanTemplateID,
-			PlanID:             plan.PlanID,
-			KeyID:              plan.KeyID,
-			Exchange:           plan.Exchange,
-			ExchangeMarketName: plan.ExchangeMarketName,
-			MarketName:         plan.MarketName,
-			BaseCurrencySymbol: baseCurrencySymbol,
-			BaseCurrencyName:   baseCurrencyName,
-			BaseBalance:        plan.BaseBalance,
-			CurrencySymbol:     currencySymbol,
-			CurrencyName:       currencyName,
-			CurrencyBalance:    plan.CurrencyBalance,
-			Status:             plan.Status,
-			CreatedOn:          plan.CreatedOn,
-			UpdatedOn:          plan.UpdatedOn,
+			PlanTemplateID:        plan.PlanTemplateID,
+			PlanID:                plan.PlanID,
+			KeyID:                 plan.KeyID,
+			Exchange:              plan.Exchange,
+			ExchangeMarketName:    plan.ExchangeMarketName,
+			MarketName:            plan.MarketName,
+			BaseCurrencySymbol:    baseCurrencySymbol,
+			BaseCurrencyName:      baseCurrencyName,
+			BaseBalance:           plan.BaseBalance,
+			CurrencySymbol:        currencySymbol,
+			CurrencyName:          currencyName,
+			CurrencyBalance:       plan.CurrencyBalance,
+			Status:                plan.Status,
+			LastExecutedOrderID:   plan.LastExecutedOrderID,
+			LastExecutedPlanDepth: plan.LastExecutedPlanDepth,
+			CreatedOn:             plan.CreatedOn,
+			UpdatedOn:             plan.UpdatedOn,
 		}
 		plans = append(plans, &pln)
 	}
@@ -584,22 +587,23 @@ func (controller *PlanController) HandlePostPlan(c echo.Context) error {
 	res := &ResponsePlanSuccess{
 		Status: response.Success,
 		Data: &Plan{
-			PlanID:              r.Data.Plan.PlanID,
-			PlanTemplateID:      r.Data.Plan.PlanTemplateID,
-			KeyID:               r.Data.Plan.KeyID,
-			Exchange:            r.Data.Plan.Exchange,
-			MarketName:          r.Data.Plan.MarketName,
-			BaseCurrencySymbol:  baseCurrencySymbol,
-			BaseCurrencyName:    baseCurrencyName,
-			BaseBalance:         r.Data.Plan.BaseBalance,
-			CurrencySymbol:      currencySymbol,
-			CurrencyName:        currencyName,
-			CurrencyBalance:     r.Data.Plan.CurrencyBalance,
-			Status:              r.Data.Plan.Status,
-			ExecutedOrderNumber: r.Data.Plan.ExecutedOrderNumber,
-			Orders:              r.Data.Plan.Orders,
-			CreatedOn:           r.Data.Plan.CreatedOn,
-			UpdatedOn:           r.Data.Plan.UpdatedOn,
+			PlanID:                r.Data.Plan.PlanID,
+			PlanTemplateID:        r.Data.Plan.PlanTemplateID,
+			KeyID:                 r.Data.Plan.KeyID,
+			Exchange:              r.Data.Plan.Exchange,
+			MarketName:            r.Data.Plan.MarketName,
+			BaseCurrencySymbol:    baseCurrencySymbol,
+			BaseCurrencyName:      baseCurrencyName,
+			BaseBalance:           r.Data.Plan.BaseBalance,
+			CurrencySymbol:        currencySymbol,
+			CurrencyName:          currencyName,
+			CurrencyBalance:       r.Data.Plan.CurrencyBalance,
+			Status:                r.Data.Plan.Status,
+			LastExecutedOrderID:   r.Data.Plan.LastExecutedOrderID,
+			LastExecutedPlanDepth: r.Data.Plan.LastExecutedPlanDepth,
+			Orders:                r.Data.Plan.Orders,
+			CreatedOn:             r.Data.Plan.CreatedOn,
+			UpdatedOn:             r.Data.Plan.UpdatedOn,
 		},
 	}
 
