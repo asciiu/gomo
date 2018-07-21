@@ -63,3 +63,8 @@ func ValidateConnectedRoutes(orderRequests []*protoOrder.NewOrderRequest) bool {
 	}
 	return true
 }
+
+// limit node count for new requests to 10
+func ValidateNodeCount(orderRequests []*protoOrder.NewOrderRequest) bool {
+	return len(orderRequests) <= 10
+}

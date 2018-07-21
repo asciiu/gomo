@@ -434,13 +434,13 @@ type PlanRequest struct {
 
 	// Required array of orders. The structure of the order tree will be dictated by the orderNumber and parentOrderNumber properties of each order.
 	// in: body
-	Orders []*OrderReq `json:"orders"`
+	Orders []*NewOrderReq `json:"orders"`
 }
 
-type OrderReq struct {
-	// Required number for order. Order number should begin at 1.
+type NewOrderReq struct {
+	// Required the client assigns the uuid.
 	// in: body
-	OrderNumber uint32 `json:"orderNumber"`
+	OrderID string `json:"orderID"`
 	// Required "buy" or "sell"
 	// in: body
 	Side string `json:"side"`
@@ -459,9 +459,9 @@ type OrderReq struct {
 	// Required these are the conditions that trigger the order to execute: ???
 	// in: body
 	Triggers []*TriggerReq `json:"triggers"`
-	// Optional the root node of the decision tree will have a parent order number of 0. 0 delineates no parent.
+	// Required the root node of the decision tree should be assigned a parentOrderID of "00000000-0000-0000-0000-000000000000" .
 	// in: body
-	ParentOrderNumber uint32 `json:"parentOrderNumber"`
+	ParentOrderID string `json:"parentOrderID"`
 }
 
 type TriggerReq struct {
@@ -513,7 +513,7 @@ func (controller *PlanController) HandlePostPlan(c echo.Context) error {
 	}
 
 	// error check all orders
-	ors := make([]*orders.OrderRequest, 0)
+	ors := make([]*orders.NewOrderRequest, 0)
 	for i, order := range newPlan.Orders {
 		log.Printf("order %d: %+v\n", i, order)
 
@@ -525,14 +525,14 @@ func (controller *PlanController) HandlePostPlan(c echo.Context) error {
 			return fail(c, "buy or sell required for side!")
 		}
 
-		or := orders.OrderRequest{
-			Side:              order.Side,
-			OrderNumber:       order.OrderNumber,
-			OrderTemplateID:   order.OrderTemplateID,
-			OrderType:         order.OrderType,
-			ParentOrderNumber: order.ParentOrderNumber,
-			BalancePercent:    order.BalancePercent,
-			LimitPrice:        order.LimitPrice,
+		or := orders.NewOrderRequest{
+			OrderID:         order.OrderID,
+			Side:            order.Side,
+			OrderTemplateID: order.OrderTemplateID,
+			OrderType:       order.OrderType,
+			ParentOrderID:   order.ParentOrderID,
+			BalancePercent:  order.BalancePercent,
+			LimitPrice:      order.LimitPrice,
 		}
 
 		for _, cond := range order.Triggers {
@@ -548,7 +548,7 @@ func (controller *PlanController) HandlePostPlan(c echo.Context) error {
 		ors = append(ors, &or)
 	}
 
-	newPlanRequest := plans.PlanRequest{
+	newPlanRequest := plans.NewPlanRequest{
 		PlanTemplateID:  newPlan.PlanTemplateID,
 		UserID:          userID,
 		KeyID:           newPlan.KeyID,
@@ -560,7 +560,7 @@ func (controller *PlanController) HandlePostPlan(c echo.Context) error {
 	}
 
 	// add plan returns nil for error
-	r, _ := controller.Plans.AddPlan(context.Background(), &newPlanRequest)
+	r, _ := controller.Plans.NewPlan(context.Background(), &newPlanRequest)
 	if r.Status != response.Success {
 		res := &ResponseError{
 			Status:  r.Status,

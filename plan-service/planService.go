@@ -182,7 +182,10 @@ func (service *PlanService) NewPlan(ctx context.Context, req *protoPlan.NewPlanR
 		res.Status = response.Fail
 		res.Message = "an order does not have a valid parent_order_number in your request"
 		return nil
-
+	case !ValidateNodeCount(req.Orders):
+		res.Status = response.Fail
+		res.Message = "you can only post 10 inactive nodes at a time!"
+		return nil
 	default:
 		res.Status = response.Fail
 		res.Message = "baseBalance and currencyBalance are 0"
