@@ -33,7 +33,7 @@ func ValidateOrderAction(ot string) bool {
 func ValidateSingleRootNode(orderRequests []*protoOrder.NewOrderRequest) bool {
 	count := 0
 	for _, o := range orderRequests {
-		if o.ParentOrderID == "00000000-0000-0000-0000-000000000000" {
+		if o.ParentOrderID == "00000000-0000-0000-0000-000000000000" || o.ParentOrderID == "" {
 			count += 1
 		}
 	}
@@ -49,8 +49,9 @@ func ValidateConnectedRoutes(orderRequests []*protoOrder.NewOrderRequest) bool {
 		orderIDs = append(orderIDs, o.OrderID)
 	}
 
-	found := false
 	for _, o := range orderRequests {
+		found := false
+		// check connected graph
 		for _, n := range orderIDs {
 			if o.ParentOrderID == n {
 				found = true
@@ -61,6 +62,7 @@ func ValidateConnectedRoutes(orderRequests []*protoOrder.NewOrderRequest) bool {
 			return false
 		}
 	}
+
 	return true
 }
 

@@ -3,6 +3,7 @@ package sql
 import (
 	"database/sql"
 	"encoding/json"
+	"errors"
 	"log"
 	"time"
 
@@ -10,6 +11,7 @@ import (
 	"github.com/asciiu/gomo/common/constants/plan"
 	"github.com/asciiu/gomo/common/constants/status"
 	protoOrder "github.com/asciiu/gomo/plan-service/proto/order"
+	"github.com/lib/pq"
 
 	protoPlan "github.com/asciiu/gomo/plan-service/proto/plan"
 	"github.com/google/uuid"
@@ -679,7 +681,12 @@ func FindUserMarketPlansWithStatus(db *sql.DB, userID, status, exchange, marketN
 func InsertPlan(db *sql.DB, req *protoPlan.NewPlanRequest) (*protoPlan.Plan, error) {
 	none := uuid.Nil.String()
 
-	sqlStatement := `insert into plans (
+	txn, err := db.Begin()
+	if err != nil {
+		return nil, err
+	}
+
+	sqlStatement, err := txn.Prepare(`insert into plans (
 		id, 
 		user_id, 
 		user_key_id, 
@@ -692,12 +699,17 @@ func InsertPlan(db *sql.DB, req *protoPlan.NewPlanRequest) (*protoPlan.Plan, err
 		status, 
 		created_on,
 		updated_on) 
-		values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)`
+		values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)`)
+
+	if err != nil {
+		txn.Rollback()
+		return nil, errors.New("prepare insert plan failed: " + err.Error())
+	}
 
 	planID := uuid.New()
-	now := time.Now()
+	now := string(pq.FormatTimestamp(time.Now().UTC()))
 
-	_, err := db.Exec(sqlStatement,
+	_, err = txn.Stmt(sqlStatement).Exec(
 		planID,
 		req.UserID,
 		req.KeyID,
@@ -712,7 +724,8 @@ func InsertPlan(db *sql.DB, req *protoPlan.NewPlanRequest) (*protoPlan.Plan, err
 		now)
 
 	if err != nil {
-		return nil, err
+		txn.Rollback()
+		return nil, errors.New("plan insert failed: " + err.Error())
 	}
 
 	newTriggers := make([]*protoOrder.Trigger, 0, len(req.Orders))
@@ -735,9 +748,6 @@ func InsertPlan(db *sql.DB, req *protoPlan.NewPlanRequest) (*protoPlan.Plan, err
 		if or.ParentOrderID == none && req.Status == plan.Active {
 			orderStatus = status.Active
 		}
-		if err != nil {
-			return nil, err
-		}
 
 		// collect triggers for this order
 		triggers := make([]*protoOrder.Trigger, 0, len(or.Triggers))
@@ -752,8 +762,8 @@ func InsertPlan(db *sql.DB, req *protoPlan.NewPlanRequest) (*protoPlan.Plan, err
 				Code:              cond.Code,
 				Actions:           cond.Actions,
 				Triggered:         false,
-				CreatedOn:         now.String(),
-				UpdatedOn:         now.String(),
+				CreatedOn:         now,
+				UpdatedOn:         now,
 			}
 			triggers = append(triggers, &trigger)
 			// append to all new triggers so we can bulk insert
@@ -771,16 +781,23 @@ func InsertPlan(db *sql.DB, req *protoPlan.NewPlanRequest) (*protoPlan.Plan, err
 			BalancePercent:  or.BalancePercent,
 			Status:          orderStatus,
 			Triggers:        triggers,
-			CreatedOn:       now.String(),
-			UpdatedOn:       now.String(),
+			CreatedOn:       now,
+			UpdatedOn:       now,
 		}
 		newOrders = append(newOrders, &order)
 	}
 
-	if err := InsertOrders(db, planID.String(), newOrders); err != nil {
-		return nil, err
+	if err := InsertOrders(txn, planID.String(), newOrders); err != nil {
+		txn.Rollback()
+		return nil, errors.New("bulk insert InsertOrders failed: " + err.Error())
 	}
-	if err := InsertTriggers(db, newTriggers); err != nil {
+	if err := InsertTriggers(txn, newTriggers); err != nil {
+		txn.Rollback()
+		return nil, errors.New("bulk insert InsertTriggers failed: " + err.Error())
+	}
+
+	err = txn.Commit()
+	if err != nil {
 		return nil, err
 	}
 
@@ -796,8 +813,8 @@ func InsertPlan(db *sql.DB, req *protoPlan.NewPlanRequest) (*protoPlan.Plan, err
 		CurrencyBalance:     req.CurrencyBalance,
 		Orders:              newOrders,
 		Status:              req.Status,
-		CreatedOn:           now.String(),
-		UpdatedOn:           now.String(),
+		CreatedOn:           now,
+		UpdatedOn:           now,
 	}
 
 	return &plan, nil

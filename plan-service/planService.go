@@ -168,16 +168,9 @@ func (service *PlanService) NewPlan(ctx context.Context, req *protoPlan.NewPlanR
 	var balance float64
 
 	switch {
-	case req.BaseBalance > 0:
-		// base currency will be second
-		currency = currencies[1]
-		balance = req.BaseBalance
-	case req.CurrencyBalance > 0:
-		currency = currencies[0]
-		balance = req.CurrencyBalance
 	case !ValidateSingleRootNode(req.Orders):
 		res.Status = response.Fail
-		res.Message = "muliple orders with parent_order_number == 0, one is allowed"
+		res.Message = "multiple root nodes found, only one is allowed"
 		return nil
 	case !ValidateConnectedRoutes(req.Orders):
 		res.Status = response.Fail
@@ -187,6 +180,13 @@ func (service *PlanService) NewPlan(ctx context.Context, req *protoPlan.NewPlanR
 		res.Status = response.Fail
 		res.Message = "you can only post 10 inactive nodes at a time!"
 		return nil
+	case req.BaseBalance > 0:
+		// base currency will be second
+		currency = currencies[1]
+		balance = req.BaseBalance
+	case req.CurrencyBalance > 0:
+		currency = currencies[0]
+		balance = req.CurrencyBalance
 	default:
 		res.Status = response.Fail
 		res.Message = "baseBalance and currencyBalance are 0"
