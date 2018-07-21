@@ -9,12 +9,12 @@ import (
 )
 
 func InsertOrders(db *sql.DB, planID string, orders []*protoOrder.Order) error {
-	totalColumns := 12
+	totalColumns := 11
 	valueStrings := make([]string, 0, len(orders))
 	valueArgs := make([]interface{}, 0, len(orders)*totalColumns)
 
 	for _, order := range orders {
-		valueStrings = append(valueStrings, "(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)")
+		valueStrings = append(valueStrings, "(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)")
 		valueArgs = append(valueArgs, order.OrderID)
 		valueArgs = append(valueArgs, planID)
 		valueArgs = append(valueArgs, order.BalancePercent)

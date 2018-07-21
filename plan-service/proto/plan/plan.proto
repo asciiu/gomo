@@ -66,7 +66,7 @@ message Plan {
   string key = 5;
   string keySecret = 6;
   string keyDescription = 7;
-  uint32 executedOrderNumber = 8;
+  string lastExecutedOrderID = 8;
   string exchange = 9;
   string exchangeMarketName = 10;
   string marketName = 11;

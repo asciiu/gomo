@@ -70,7 +70,7 @@ func FindPlanSummary(db *sql.DB, planID string) (*protoPlan.Plan, error) {
 			&plan.UserID,
 			&plan.KeyID,
 			&plan.KeyDescription,
-			&plan.ExecutedOrderNumber,
+			&plan.LastExecutedOrderID,
 			&plan.Exchange,
 			&plan.MarketName,
 			&plan.BaseBalance,
@@ -677,13 +677,14 @@ func FindUserMarketPlansWithStatus(db *sql.DB, userID, status, exchange, marketN
 
 // TODO this should be inserted as a transaction
 func InsertPlan(db *sql.DB, req *protoPlan.NewPlanRequest) (*protoPlan.Plan, error) {
+	none := uuid.Nil.String()
 
 	sqlStatement := `insert into plans (
 		id, 
 		user_id, 
 		user_key_id, 
 		plan_template_id,
-		active_order_depth,
+		last_executed_order_id,
 		exchange_name, 
 		market_name, 
 		base_balance, 
@@ -701,7 +702,7 @@ func InsertPlan(db *sql.DB, req *protoPlan.NewPlanRequest) (*protoPlan.Plan, err
 		req.UserID,
 		req.KeyID,
 		req.PlanTemplateID,
-		0, // active order depth always starts out 0
+		none,
 		req.Exchange,
 		req.MarketName,
 		req.BaseBalance,
@@ -722,7 +723,7 @@ func InsertPlan(db *sql.DB, req *protoPlan.NewPlanRequest) (*protoPlan.Plan, err
 		orderStatus := status.Inactive
 		depth := uint32(1)
 
-		if or.ParentOrderID != "00000000-0000-0000-0000-000000000000" {
+		if or.ParentOrderID != none {
 			for _, o := range newOrders {
 				if o.OrderID == or.ParentOrderID {
 					depth = o.PlanDepth + 1
@@ -731,7 +732,7 @@ func InsertPlan(db *sql.DB, req *protoPlan.NewPlanRequest) (*protoPlan.Plan, err
 			}
 		}
 
-		if or.ParentOrderID == "00000000-0000-0000-0000-000000000000" && req.Status == plan.Active {
+		if or.ParentOrderID == none && req.Status == plan.Active {
 			orderStatus = status.Active
 		}
 		if err != nil {
@@ -788,7 +789,7 @@ func InsertPlan(db *sql.DB, req *protoPlan.NewPlanRequest) (*protoPlan.Plan, err
 		PlanTemplateID:      req.PlanTemplateID,
 		UserID:              req.UserID,
 		KeyID:               req.KeyID,
-		ExecutedOrderNumber: 0,
+		LastExecutedOrderID: none,
 		Exchange:            req.Exchange,
 		MarketName:          req.MarketName,
 		BaseBalance:         req.BaseBalance,
@@ -798,6 +799,7 @@ func InsertPlan(db *sql.DB, req *protoPlan.NewPlanRequest) (*protoPlan.Plan, err
 		CreatedOn:           now.String(),
 		UpdatedOn:           now.String(),
 	}
+
 	return &plan, nil
 }
 

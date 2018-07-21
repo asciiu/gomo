@@ -17,6 +17,7 @@ import (
 	keys "github.com/asciiu/gomo/key-service/proto/key"
 	planRepo "github.com/asciiu/gomo/plan-service/db/sql"
 	protoPlan "github.com/asciiu/gomo/plan-service/proto/plan"
+	"github.com/google/uuid"
 	micro "github.com/micro/go-micro"
 )
 
@@ -212,7 +213,7 @@ func (service *PlanService) NewPlan(ctx context.Context, req *protoPlan.NewPlanR
 	pln, error := planRepo.InsertPlan(service.DB, req)
 	if error != nil {
 		res.Status = response.Error
-		res.Message = "AddPlan error: " + error.Error()
+		res.Message = "NewPlan error: " + error.Error()
 		return nil
 	}
 
@@ -365,6 +366,8 @@ func (service *PlanService) DeletePlan(ctx context.Context, req *protoPlan.Delet
 // Can't return an error with a response object - response object is returned as nil when error is non nil.
 // Therefore, return error in response object.
 func (service *PlanService) UpdatePlan(ctx context.Context, req *protoPlan.UpdatePlanRequest, res *protoPlan.PlanResponse) error {
+	none := uuid.Nil.String()
+
 	pln, err := planRepo.FindPlanSummary(service.DB, req.PlanID)
 	switch {
 	case err == sql.ErrNoRows:
@@ -380,13 +383,13 @@ func (service *PlanService) UpdatePlan(ctx context.Context, req *protoPlan.Updat
 
 		switch {
 		// can't set base balance to 0 if first is buy
-		case pln.ExecutedOrderNumber == 0 && pln.Orders[0].Side == side.Buy && req.BaseBalance == 0:
+		case pln.LastExecutedOrderID == none && pln.Orders[0].Side == side.Buy && req.BaseBalance == 0:
 			res.Status = response.Fail
 			res.Message = fmt.Sprintf("base balance for buy plan cannot be 0")
 			return nil
 
 		//// can't set currency balance to 0 if first is sell
-		case pln.ExecutedOrderNumber == 0 && pln.Orders[0].Side == side.Sell && req.CurrencyBalance == 0:
+		case pln.LastExecutedOrderID == none && pln.Orders[0].Side == side.Sell && req.CurrencyBalance == 0:
 			res.Status = response.Fail
 			res.Message = fmt.Sprintf("currency balance for sell plan cannot be 0")
 			return nil
@@ -397,7 +400,7 @@ func (service *PlanService) UpdatePlan(ctx context.Context, req *protoPlan.Updat
 			res.Message = fmt.Sprintf("invalid status for update plan")
 			return nil
 
-		case pln.ExecutedOrderNumber == 0:
+		case pln.LastExecutedOrderID == none:
 			if req.CurrencyBalance >= 0 {
 				pln, err = planRepo.UpdatePlanCurrencyBalance(service.DB, req.PlanID, req.CurrencyBalance)
 				if err != nil {
