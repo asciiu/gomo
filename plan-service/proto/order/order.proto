@@ -2,19 +2,7 @@ syntax = "proto3";
 
 package order;
 
-// service OrderService {
-//   rpc AddOrders(OrdersRequest) returns (OrderListResponse) {}
-//   rpc GetUserOrder(GetUserOrderRequest) returns (OrderResponse) {}
-//   rpc GetUserOrders(GetUserOrdersRequest) returns (OrderListResponse) {}
-//   rpc RemoveOrder(RemoveOrderRequest) returns (OrderResponse) {}
-//   rpc UpdateOrder(UpdateOrderRequest) returns (OrderResponse) {}
-// }
-
 // Requests
-message OrdersRequest {
-  repeated OrderRequest orders = 1; 
-}
-
 message TriggerRequest {
   string triggerID = 1;
   string name = 2;
@@ -25,25 +13,24 @@ message TriggerRequest {
 
 message UpdateOrderRequest {
   uint32 orderID = 1;
-  uint32 parentOrderNumber = 2;
+  uint32 parentOrderID = 2;
   string planID = 3;
   uint32 planDepth = 4;
   string side = 5; 
-  uint32 orderNumber = 6;
-  string orderType = 7;
-  string orderTemplateID = 8;
-  double balancePercent = 9;
-  double limitPrice = 10;
-  string action = 11;
-  repeated TriggerRequest triggers = 12;
+  string orderType = 6;
+  string orderTemplateID = 7;
+  double balancePercent = 8;
+  double limitPrice = 9;
+  string action = 10;
+  repeated TriggerRequest triggers = 11;
 }
 
-message OrderRequest {
-  uint32 parentOrderNumber = 1;
-  string planID = 2;
-  string planDepth = 3;
-  string side = 4;
-  uint32 orderNumber = 5;
+message NewOrderRequest {
+  string orderID = 1;
+  string parentOrderID = 2;
+  string planID = 3;
+  string planDepth = 4;
+  string side = 5;
   string orderType = 6;
   string orderTemplateID = 7;
   double balancePercent = 8;
@@ -71,12 +58,11 @@ message Order {
   string orderID = 3;
   string side = 4;
   string orderTemplateID = 5;
-  uint32 orderNumber = 6;
   string orderType = 7;
   double limitPrice = 8;
   double balancePercent = 9;
   string status = 10;
-  uint32 parentOrderNumber = 11;
+  string parentOrderID = 11;
   string createdOn = 12;
   string updatedOn = 13;
   repeated Trigger triggers = 14;
@@ -96,30 +82,6 @@ message Trigger {
 }
 
 // Responses
-//message Order {
-//  string orderID = 1;
-//  string userID = 2;
-//  string keyID = 3;
-//  string key = 4;
-//  string secret = 5;
-//  string exchange = 6;
-//  string exchangeOrderID = 7;
-//  string exchangeMarketName = 8;
-//  string marketName = 9;
-//  string side = 10;
-//  string orderType = 11;
-//  double price = 13;
-//  double baseQuantity = 14;
-//  double basePercent = 15;
-//  double currencyQuantity = 16;
-//  double currencyPercent = 17;
-//  string status = 18;
-//  string chainStatus = 19;
-//  string conditions = 20;
-//  string condition = 21;
-//  string parentOrderID = 22;
-//}
-
 message UserOrderData {
   Order order = 1;
 }

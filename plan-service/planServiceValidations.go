@@ -30,29 +30,29 @@ func ValidateOrderAction(ot string) bool {
 }
 
 // New plans can only have a single order with parent order number == 0.
-func ValidateSingleRootNode(orderRequests []*protoOrder.OrderRequest) bool {
+func ValidateSingleRootNode(orderRequests []*protoOrder.NewOrderRequest) bool {
 	count := 0
 	for _, o := range orderRequests {
-		if o.ParentOrderNumber == 0 {
+		if o.ParentOrderID == "00000000-0000-0000-0000-000000000000" {
 			count += 1
 		}
 	}
 	return count == 1
 }
 
-// Validate connected tree
-func ValidateConnectedRoutes(orderRequests []*protoOrder.OrderRequest) bool {
-	orderNumbers := make([]uint32, 0, len(orderRequests))
-	orderNumbers = append(orderNumbers, 0)
+// Validate connected tree when tested from root node
+func ValidateConnectedRoutes(orderRequests []*protoOrder.NewOrderRequest) bool {
+	orderIDs := make([]string, 0, len(orderRequests))
+	orderIDs = append(orderIDs, "00000000-0000-0000-0000-000000000000")
 
 	for _, o := range orderRequests {
-		orderNumbers = append(orderNumbers, o.OrderNumber)
+		orderIDs = append(orderIDs, o.OrderID)
 	}
 
 	found := false
 	for _, o := range orderRequests {
-		for _, n := range orderNumbers {
-			if o.ParentOrderNumber == n {
+		for _, n := range orderIDs {
+			if o.ParentOrderID == n {
 				found = true
 				break
 			}

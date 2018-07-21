@@ -161,7 +161,7 @@ func (service *PlanService) fetchKey(keyID, userID string) (*keys.Key, error) {
 // AddPlans returns error to conform to protobuf def, but the error will always be returned as nil.
 // Can't return an error with a response object - response object is returned as nil when error is non nil.
 // Therefore, return error in response object.
-func (service *PlanService) AddPlan(ctx context.Context, req *protoPlan.PlanRequest, res *protoPlan.PlanResponse) error {
+func (service *PlanService) NewPlan(ctx context.Context, req *protoPlan.NewPlanRequest, res *protoPlan.PlanResponse) error {
 	currencies := strings.Split(req.MarketName, "-")
 	var currency string
 	var balance float64
@@ -187,15 +187,6 @@ func (service *PlanService) AddPlan(ctx context.Context, req *protoPlan.PlanRequ
 		res.Status = response.Fail
 		res.Message = "baseBalance and currencyBalance are 0"
 		return nil
-	}
-
-	// validate that we only have a single route node
-
-	count := 0
-	for _, o := range req.Orders {
-		if o.ParentOrderNumber == 0 {
-			count += 1
-		}
 	}
 
 	if err := service.validateBalance(ctx, currency, balance, req.UserID, req.KeyID); err != nil {

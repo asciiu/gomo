@@ -8,7 +8,7 @@ CREATE TABLE plans (
   plan_template_id text,             -- optional frontend plan template used with this plan - (Leo wanted this) 
   user_id UUID NOT NULL REFERENCES users (id) ON DELETE CASCADE,
   user_key_id UUID NOT NULL REFERENCES user_keys (id) ON DELETE CASCADE,
-  executed_order_number integer NOT NULL,
+  last_executed_order_id UUID NOT NULL,
   exchange_name text NOT NULL,
   market_name text NOT NULL,
   base_balance decimal NOT NULL,
@@ -20,15 +20,14 @@ CREATE TABLE plans (
 
 CREATE TABLE orders (
   id UUID PRIMARY KEY NOT NULL,
+  parent_order_id UUID NOT NULL,      -- parent order of 0 means no parent 
   plan_id UUID NOT NULL REFERENCES plans (id) ON DELETE CASCADE,
   plan_depth integer NOT NULL,
   order_template_id text,             -- optional frontend template used for this order 
   balance_percent decimal DEFAULT 0,  -- percent of balance to use base_balance(buy) currency_balance(sell)
   side text NOT NULL,
-  order_number integer NOT NULL,      -- defines the order sequence
   order_type text NOT NULL,           -- limit, market, paper
   limit_price decimal DEFAULT 0,
-  parent_order_number integer,        -- parent order number for this order
   status text NOT NULL,               -- pending, active, failed, etc
   created_on TIMESTAMP DEFAULT now(),
   updated_on TIMESTAMP DEFAULT current_timestamp
