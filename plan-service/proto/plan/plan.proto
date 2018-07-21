@@ -54,6 +54,7 @@ message UpdatePlanRequest {
   string status = 3;
   double baseBalance = 4;
   double currencyBalance = 5;
+  repeated order.UpdateOrderRequest orders = 10; 
 }
 
 // Responses

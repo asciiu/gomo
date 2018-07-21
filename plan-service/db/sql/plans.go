@@ -727,6 +727,17 @@ func InsertPlan(db *sql.DB, req *protoPlan.PlanRequest) (*protoPlan.Plan, error)
 	for _, or := range req.Orders {
 		orderID := uuid.New()
 		orderStatus := status.Inactive
+		depth := uint32(1)
+
+		if or.ParentOrderNumber != 0 {
+			for _, o := range newOrders {
+				if o.OrderNumber == or.ParentOrderNumber {
+					depth = o.PlanDepth + 1
+					break
+				}
+			}
+		}
+
 		// first order shall always be assigned an order number of 1
 		// the parent_order_number of the root order should also be 0
 		if or.OrderNumber == 1 && req.Status == plan.Active {
@@ -763,6 +774,7 @@ func InsertPlan(db *sql.DB, req *protoPlan.PlanRequest) (*protoPlan.Plan, error)
 			OrderType:         or.OrderType,
 			OrderTemplateID:   or.OrderTemplateID,
 			ParentOrderNumber: or.ParentOrderNumber,
+			PlanDepth:         depth,
 			Side:              or.Side,
 			LimitPrice:        or.LimitPrice,
 			BalancePercent:    or.BalancePercent,

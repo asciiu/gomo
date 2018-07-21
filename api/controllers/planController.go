@@ -92,22 +92,23 @@ type UserPlansData struct {
 
 // This response should never return the key secret
 type Plan struct {
-	PlanID             string          `json:"planID"`
-	PlanTemplateID     string          `json:"planTemplateID"`
-	KeyID              string          `json:"keyID"`
-	Exchange           string          `json:"exchange"`
-	ExchangeMarketName string          `json:"exchangeMarketName"`
-	MarketName         string          `json:"marketName"`
-	BaseCurrencySymbol string          `json:"baseCurrencySymbol"`
-	BaseCurrencyName   string          `json:"baseCurrencyName"`
-	BaseBalance        float64         `json:"baseBalance"`
-	CurrencySymbol     string          `json:"currencySymbol"`
-	CurrencyName       string          `json:"currencyName"`
-	CurrencyBalance    float64         `json:"currencyBalance"`
-	Status             string          `json:"status"`
-	CreatedOn          string          `json:"createdOn"`
-	UpdatedOn          string          `json:"updatedOn"`
-	Orders             []*orders.Order `json:"orders,omitempty"`
+	PlanID              string          `json:"planID"`
+	PlanTemplateID      string          `json:"planTemplateID"`
+	KeyID               string          `json:"keyID"`
+	Exchange            string          `json:"exchange"`
+	ExchangeMarketName  string          `json:"exchangeMarketName"`
+	MarketName          string          `json:"marketName"`
+	BaseCurrencySymbol  string          `json:"baseCurrencySymbol"`
+	BaseCurrencyName    string          `json:"baseCurrencyName"`
+	BaseBalance         float64         `json:"baseBalance"`
+	CurrencySymbol      string          `json:"currencySymbol"`
+	CurrencyName        string          `json:"currencyName"`
+	CurrencyBalance     float64         `json:"currencyBalance"`
+	ExecutedOrderNumber uint32          `json:"executedOrderNumber"`
+	Status              string          `json:"status"`
+	CreatedOn           string          `json:"createdOn"`
+	UpdatedOn           string          `json:"updatedOn"`
+	Orders              []*orders.Order `json:"orders,omitempty"`
 }
 
 func NewPlanController(db *sql.DB) *PlanController {
@@ -431,12 +432,15 @@ type PlanRequest struct {
 	// in: body
 	Status string `json:"status"`
 
-	// Required array of orders. The sequence of orders is assumed to be the sequence of execution.
+	// Required array of orders. The structure of the order tree will be dictated by the orderNumber and parentOrderNumber properties of each order.
 	// in: body
 	Orders []*OrderReq `json:"orders"`
 }
 
 type OrderReq struct {
+	// Required number for order. Order number should begin at 1.
+	// in: body
+	OrderNumber uint32 `json:"orderNumber"`
 	// Required "buy" or "sell"
 	// in: body
 	Side string `json:"side"`
@@ -455,6 +459,9 @@ type OrderReq struct {
 	// Required these are the conditions that trigger the order to execute: ???
 	// in: body
 	Triggers []*TriggerReq `json:"triggers"`
+	// Optional the root node of the decision tree will have a parent order number of 0. 0 delineates no parent.
+	// in: body
+	ParentOrderNumber uint32 `json:"parentOrderNumber"`
 }
 
 type TriggerReq struct {
@@ -519,11 +526,13 @@ func (controller *PlanController) HandlePostPlan(c echo.Context) error {
 		}
 
 		or := orders.OrderRequest{
-			Side:            order.Side,
-			OrderTemplateID: order.OrderTemplateID,
-			OrderType:       order.OrderType,
-			BalancePercent:  order.BalancePercent,
-			LimitPrice:      order.LimitPrice,
+			Side:              order.Side,
+			OrderNumber:       order.OrderNumber,
+			OrderTemplateID:   order.OrderTemplateID,
+			OrderType:         order.OrderType,
+			ParentOrderNumber: order.ParentOrderNumber,
+			BalancePercent:    order.BalancePercent,
+			LimitPrice:        order.LimitPrice,
 		}
 
 		for _, cond := range order.Triggers {
@@ -566,30 +575,31 @@ func (controller *PlanController) HandlePostPlan(c echo.Context) error {
 		}
 	}
 
-	names := strings.Split(r.Data.MarketName, "-")
+	names := strings.Split(r.Data.Plan.MarketName, "-")
 	baseCurrencySymbol := names[1]
 	baseCurrencyName := controller.currencies[baseCurrencySymbol]
 	currencySymbol := names[0]
 	currencyName := controller.currencies[currencySymbol]
 
-	res := &ResponsePlanWithOrderPageSuccess{
+	res := &ResponsePlanSuccess{
 		Status: response.Success,
-		Data: &PlanWithOrderPage{
-			PlanID:             r.Data.PlanID,
-			PlanTemplateID:     r.Data.PlanTemplateID,
-			KeyID:              r.Data.KeyID,
-			Exchange:           r.Data.Exchange,
-			MarketName:         r.Data.MarketName,
-			BaseCurrencySymbol: baseCurrencySymbol,
-			BaseCurrencyName:   baseCurrencyName,
-			BaseBalance:        r.Data.BaseBalance,
-			CurrencySymbol:     currencySymbol,
-			CurrencyName:       currencyName,
-			CurrencyBalance:    r.Data.CurrencyBalance,
-			Status:             r.Data.Status,
-			OrdersPage:         r.Data.OrdersPage,
-			CreatedOn:          r.Data.CreatedOn,
-			UpdatedOn:          r.Data.UpdatedOn,
+		Data: &Plan{
+			PlanID:              r.Data.Plan.PlanID,
+			PlanTemplateID:      r.Data.Plan.PlanTemplateID,
+			KeyID:               r.Data.Plan.KeyID,
+			Exchange:            r.Data.Plan.Exchange,
+			MarketName:          r.Data.Plan.MarketName,
+			BaseCurrencySymbol:  baseCurrencySymbol,
+			BaseCurrencyName:    baseCurrencyName,
+			BaseBalance:         r.Data.Plan.BaseBalance,
+			CurrencySymbol:      currencySymbol,
+			CurrencyName:        currencyName,
+			CurrencyBalance:     r.Data.Plan.CurrencyBalance,
+			Status:              r.Data.Plan.Status,
+			ExecutedOrderNumber: r.Data.Plan.ExecutedOrderNumber,
+			Orders:              r.Data.Plan.Orders,
+			CreatedOn:           r.Data.Plan.CreatedOn,
+			UpdatedOn:           r.Data.Plan.UpdatedOn,
 		},
 	}
 
@@ -607,6 +617,41 @@ type UpdatePlanRequest struct {
 	// Optional send 'inactive' to pause and 'active' to unpause
 	// in: body
 	Status string `json:"status"`
+
+	// Required array of orders. The structure of the order tree will be dictated by the orderNumber and parentOrderNumber properties of each order.
+	// in: body
+	Orders []*UpdateOrderReq `json:"orders"`
+}
+
+type UpdateOrderReq struct {
+	// Optional order ID
+	OrderID string `json:"orderID"`
+	// Required number for order. Order number should begin at 1.
+	// in: body
+	OrderNumber uint32 `json:"orderNumber"`
+	// Required "buy" or "sell"
+	// in: body
+	Side string `json:"side"`
+	// Optional order template ID.
+	// in: body
+	OrderTemplateID string `json:"orderTemplateID"`
+	// Required order types are "market", "limit", "paper". Orders not within these types will be rejected.
+	// in: body
+	OrderType string `json:"orderType"`
+	// Required for the precent of your plan's balance to use for the order - buy (percent of base balance) - sell (percent of currency balance)
+	// in: body
+	BalancePercent float64 `json:"balancePercent"`
+	// Required for 'limit' orders. Defines limit price.
+	// in: body
+	LimitPrice float64 `json:"limitPrice"`
+	// Required these are the conditions that trigger the order to execute: ???
+	// in: body
+	Triggers []*TriggerReq `json:"triggers"`
+	// Optional the root node of the decision tree will have a parent order number of 0. 0 delineates no parent.
+	// in: body
+	ParentOrderNumber uint32 `json:"parentOrderNumber"`
+	// Required action new, update, delete
+	Action string `json:"action"`
 }
 
 // swagger:route PUT /plans/:planID plans UpdatePlanParams

@@ -24,23 +24,31 @@ message TriggerRequest {
 }
 
 message UpdateOrderRequest {
-  string orderID = 1;
-  string userID = 2;
-  double balancePercent = 3;
-  double limitPrice = 4;
-  repeated TriggerRequest triggers = 5;
+  uint32 orderID = 1;
+  uint32 parentOrderNumber = 2;
+  string planID = 3;
+  uint32 planDepth = 4;
+  string side = 5; 
+  uint32 orderNumber = 6;
+  string orderType = 7;
+  string orderTemplateID = 8;
+  double balancePercent = 9;
+  double limitPrice = 10;
+  string action = 11;
+  repeated TriggerRequest triggers = 12;
 }
 
 message OrderRequest {
   uint32 parentOrderNumber = 1;
   string planID = 2;
-  string side = 3;
-  uint32 orderNumber = 4;
-  string orderType = 5;
-  string orderTemplateID = 6;
-  double balancePercent = 7;
-  double limitPrice = 8;
-  repeated TriggerRequest triggers = 9;
+  string planDepth = 3;
+  string side = 4;
+  uint32 orderNumber = 5;
+  string orderType = 6;
+  string orderTemplateID = 7;
+  double balancePercent = 8;
+  double limitPrice = 9;
+  repeated TriggerRequest triggers = 10;
 }
 
 message GetUserOrderRequest {
@@ -59,18 +67,19 @@ message RemoveOrderRequest {
 
 message Order {
   string planID = 1;
-  string orderID = 2;
-  string side = 3;
-  string orderTemplateID = 4;
-  uint32 orderNumber = 5;
-  string orderType = 6;
-  double limitPrice = 7;
-  double balancePercent = 8;
-  string status = 9;
-  uint32 parentOrderNumber = 10;
-  string createdOn = 11;
-  string updatedOn = 12;
-  repeated Trigger triggers = 13;
+  uint32 planDepth = 2;
+  string orderID = 3;
+  string side = 4;
+  string orderTemplateID = 5;
+  uint32 orderNumber = 6;
+  string orderType = 7;
+  double limitPrice = 8;
+  double balancePercent = 9;
+  string status = 10;
+  uint32 parentOrderNumber = 11;
+  string createdOn = 12;
+  string updatedOn = 13;
+  repeated Trigger triggers = 14;
 }
 
 message Trigger {
