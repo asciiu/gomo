@@ -159,7 +159,7 @@ func FindPlanWithPagedOrders(db *sql.DB, req *protoPlan.GetUserPlanRequest) (*pr
 		JOIN orders o on p.id = o.plan_id
 		JOIN triggers t on o.id = t.order_id
 		JOIN user_keys k on p.user_key_id = k.id
-		WHERE p.id = $1 ORDER BY o.order_number, t.trigger_number 
+		WHERE p.id = $1 ORDER BY o.plan_depth, t.trigger_number 
 		OFFSET $2 LIMIT $3`, req.PlanID, req.Page, req.PageSize)
 
 	if err != nil {
