@@ -487,6 +487,8 @@ func FindUserPlansWithStatus(db *sql.DB, userID, status string, page, pageSize u
 		market_name,
 		base_balance,
 		currency_balance,
+		last_executed_plan_depth,
+		last_executed_order_id,
 		status,
 		created_on,
 		updated_on
@@ -510,6 +512,8 @@ func FindUserPlansWithStatus(db *sql.DB, userID, status string, page, pageSize u
 			&plan.MarketName,
 			&plan.BaseBalance,
 			&plan.CurrencyBalance,
+			&plan.LastExecutedPlanDepth,
+			&plan.LastExecutedOrderID,
 			&plan.Status,
 			&plan.CreatedOn,
 			&plan.UpdatedOn,
@@ -556,6 +560,8 @@ func FindUserExchangePlansWithStatus(db *sql.DB, userID, status, exchange string
 		market_name,
 		base_balance,
 		currency_balance,
+		last_executed_plan_depth,
+		last_executed_order_id,
 		status,
 		created_on,
 		updated_on
@@ -579,6 +585,8 @@ func FindUserExchangePlansWithStatus(db *sql.DB, userID, status, exchange string
 			&plan.MarketName,
 			&plan.BaseBalance,
 			&plan.CurrencyBalance,
+			&plan.LastExecutedPlanDepth,
+			&plan.LastExecutedOrderID,
 			&plan.Status,
 			&plan.CreatedOn,
 			&plan.UpdatedOn)
@@ -624,6 +632,8 @@ func FindUserMarketPlansWithStatus(db *sql.DB, userID, status, exchange, marketN
 		market_name,
 		base_balance,
 		currency_balance,
+		last_executed_plan_depth,
+		last_executed_order_id,
 		status,
 		created_on,
 		updated_on
@@ -647,6 +657,8 @@ func FindUserMarketPlansWithStatus(db *sql.DB, userID, status, exchange, marketN
 			&plan.MarketName,
 			&plan.BaseBalance,
 			&plan.CurrencyBalance,
+			&plan.LastExecutedPlanDepth,
+			&plan.LastExecutedOrderID,
 			&plan.Status,
 			&plan.CreatedOn,
 			&plan.UpdatedOn,

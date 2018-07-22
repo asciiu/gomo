@@ -105,11 +105,20 @@ type Plan struct {
 	CurrencyName          string          `json:"currencyName"`
 	CurrencyBalance       float64         `json:"currencyBalance"`
 	LastExecutedOrderID   string          `json:"lastExecutedOrderID"`
-	LastExecutedPlanDepth string          `json:"lastExecutedPlanDepth"`
+	LastExecutedPlanDepth uint32          `json:"lastExecutedPlanDepth"`
 	Status                string          `json:"status"`
 	CreatedOn             string          `json:"createdOn"`
 	UpdatedOn             string          `json:"updatedOn"`
 	Orders                []*orders.Order `json:"orders,omitempty"`
+}
+
+func fail(c echo.Context, msg string) error {
+	res := &ResponseError{
+		Status:  response.Fail,
+		Message: msg,
+	}
+
+	return c.JSON(http.StatusBadRequest, res)
 }
 
 func NewPlanController(db *sql.DB) *PlanController {
