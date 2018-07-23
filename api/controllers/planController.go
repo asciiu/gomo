@@ -536,7 +536,7 @@ func (controller *PlanController) HandlePostPlan(c echo.Context) error {
 
 	// assemble the order requests
 	newOrderRequests := make([]*orders.NewOrderRequest, 0)
-	for i, order := range newPlan.Orders {
+	for _, order := range newPlan.Orders {
 
 		or := orders.NewOrderRequest{
 			OrderID:         order.OrderID,
