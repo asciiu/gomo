@@ -6,12 +6,12 @@ DROP TABLE IF EXISTS orders;
 CREATE TABLE plans (
   id UUID PRIMARY KEY NOT NULL,
   user_id UUID NOT NULL REFERENCES users (id) ON DELETE CASCADE,
-  last_executed_plan_depth integer NOT NULL,
-  last_executed_order_id UUID NOT NULL,
   exchange_name text NOT NULL,
   market_name text NOT NULL,
-  currency_name text NOT NULL,
+  currency_symbol text NOT NULL,
   currency_balance decimal NOT NULL,
+  last_executed_plan_depth integer NOT NULL,
+  last_executed_order_id UUID NOT NULL,
   plan_template_id text,             -- optional frontend plan template used with this plan - (Leo wanted this) 
   status text NOT NULL,              -- plan status is active, inactive, or failed
   created_on TIMESTAMP DEFAULT now(),
@@ -32,9 +32,9 @@ CREATE TABLE orders (
   plan_depth integer NOT NULL,
   exchange_name text NOT NULL,
   market_name text NOT NULL,
-  currency_name text NOT NULL,
-  currency_balance decimal NOT NULL,
-  currency_traded decimal NOT NULL,
+  currency_symbol text NOT NULL,
+  currency_balance decimal DEFAULT 0,
+  currency_traded decimal DEFAULT 0,
   order_template_id text,             -- optional frontend template used for this order 
   order_type text NOT NULL,           -- limit, market, paper
   side text NOT NULL,                 -- buy, sell

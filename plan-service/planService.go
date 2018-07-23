@@ -4,17 +4,22 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
-	"log"
+	"strings"
+	"time"
 
 	balances "github.com/asciiu/gomo/balance-service/proto/balance"
 	"github.com/asciiu/gomo/common/constants/key"
 	"github.com/asciiu/gomo/common/constants/plan"
 	"github.com/asciiu/gomo/common/constants/response"
+	"github.com/asciiu/gomo/common/constants/side"
 	"github.com/asciiu/gomo/common/constants/status"
 	evt "github.com/asciiu/gomo/common/proto/events"
 	keys "github.com/asciiu/gomo/key-service/proto/key"
 	planRepo "github.com/asciiu/gomo/plan-service/db/sql"
+	protoOrder "github.com/asciiu/gomo/plan-service/proto/order"
 	protoPlan "github.com/asciiu/gomo/plan-service/proto/plan"
+	"github.com/google/uuid"
+	"github.com/lib/pq"
 	micro "github.com/micro/go-micro"
 )
 
@@ -58,31 +63,31 @@ func (service *PlanService) publishPlan(ctx context.Context, plan *protoPlan.Pla
 	}
 
 	// convert order to order event
-	activeOrder := evt.ActiveOrderEvent{
-		//Exchange:        plan.Exchange,
-		OrderID: planOrder.OrderID,
-		PlanID:  plan.PlanID,
-		UserID:  plan.UserID,
-		//BaseBalance:     plan.BaseBalance,
-		//CurrencyBalance: plan.CurrencyBalance,
-		BalancePercent: planOrder.PercentBalance,
-		KeyID:          plan.KeyID,
-		Key:            plan.Key,
-		Secret:         plan.KeySecret,
-		//MarketName:      plan.MarketName,
-		Side:      planOrder.Side,
-		OrderType: planOrder.OrderType,
-		Price:     planOrder.LimitPrice,
-		//NextOrderID:     planOrder.NextOrderID,
-		Revision:    isRevision,
-		OrderStatus: planOrder.Status,
-		Triggers:    triggers,
-	}
+	// activeOrder := evt.ActiveOrderEvent{
+	// 	//Exchange:        plan.Exchange,
+	// 	OrderID: planOrder.OrderID,
+	// 	PlanID:  plan.PlanID,
+	// 	UserID:  plan.UserID,
+	// 	//BaseBalance:     plan.BaseBalance,
+	// 	//CurrencyBalance: plan.CurrencyBalance,
+	// 	BalancePercent: planOrder.PercentBalance,
+	// 	KeyID:          plan.KeyID,
+	// 	Key:            plan.Key,
+	// 	Secret:         plan.KeySecret,
+	// 	//MarketName:      plan.MarketName,
+	// 	Side:      planOrder.Side,
+	// 	OrderType: planOrder.OrderType,
+	// 	Price:     planOrder.LimitPrice,
+	// 	//NextOrderID:     planOrder.NextOrderID,
+	// 	Revision:    isRevision,
+	// 	OrderStatus: planOrder.Status,
+	// 	Triggers:    triggers,
+	// }
 
-	if err := service.OrderPub.Publish(context.Background(), &activeOrder); err != nil {
-		return fmt.Errorf("publish error: %s -- ActiveOrderEvent %+v", err, &activeOrder)
-	}
-	log.Printf("publish active order -- %+v\n", &activeOrder)
+	// if err := service.OrderPub.Publish(context.Background(), &activeOrder); err != nil {
+	// 	return fmt.Errorf("publish error: %s -- ActiveOrderEvent %+v", err, &activeOrder)
+	// }
+	//log.Printf("publish active order -- %+v\n", &activeOrder)
 	return nil
 }
 
@@ -130,13 +135,11 @@ func (service *PlanService) LoadPlanOrder(ctx context.Context, plan *protoPlan.P
 	return nil
 }
 
-func (service *PlanService) fetchKey(keyID, userID string) (*keys.Key, error) {
-	getRequest := keys.GetUserKeyRequest{
-		KeyID:  keyID,
-		UserID: userID,
-	}
+func (service *PlanService) fetchKeys(keyIDs []string) ([]*keys.Key, error) {
+	request := keys.GetKeysRequest{
+		KeyIDs: keyIDs}
 
-	r, _ := service.KeyClient.GetUserKey(context.Background(), &getRequest)
+	r, _ := service.KeyClient.GetKeys(context.Background(), &request)
 	if r.Status != response.Success {
 		if r.Status == response.Fail {
 			return nil, fmt.Errorf(r.Message)
@@ -145,20 +148,16 @@ func (service *PlanService) fetchKey(keyID, userID string) (*keys.Key, error) {
 			return nil, fmt.Errorf(r.Message)
 		}
 		if r.Status == response.Nonentity {
-			return nil, fmt.Errorf("invalid key")
+			return nil, fmt.Errorf("invalid keys")
 		}
 	}
 
-	// key must be verified status
-	if r.Data.Key.Status != key.Verified {
-		return nil, fmt.Errorf("key must be verified")
-	}
-	return r.Data.Key, nil
+	return r.Data.Keys, nil
 }
 
 // AddPlans returns error to conform to protobuf def, but the error will always be returned as nil.
 // Can't return an error with a response object - response object is returned as nil when error is non nil.
-// Therefore, return error in response object.
+// Therefore, return error in response object. MarketName example: ADA-BTC where BTC is base.
 func (service *PlanService) NewPlan(ctx context.Context, req *protoPlan.NewPlanRequest, res *protoPlan.PlanResponse) error {
 	//currencies := strings.Split(req.MarketName, "-")
 	//var currency string
@@ -196,18 +195,125 @@ func (service *PlanService) NewPlan(ctx context.Context, req *protoPlan.NewPlanR
 	//	return nil
 	//}
 
+	keyIDs := make([]string, 0, len(req.Orders))
+	for _, or := range req.Orders {
+		keyIDs = append(keyIDs, or.KeyID)
+	}
+
 	// validate plan key
-	// ky, err := service.fetchKey(req.KeyID, req.UserID)
-	// if err != nil {
-	// 	res.Status = response.Fail
-	// 	res.Message = err.Error()
-	// 	return nil
-	// }
+	kys, err := service.fetchKeys(keyIDs)
+	if err != nil {
+		res.Status = response.Fail
+		res.Message = err.Error()
+		return nil
+	}
+
+	none := uuid.Nil.String()
+	planID := uuid.New()
+	now := string(pq.FormatTimestamp(time.Now().UTC()))
+	newTriggers := make([]*protoOrder.Trigger, 0, len(req.Orders))
+	newOrders := make([]*protoOrder.Order, 0, len(req.Orders))
+	exchange := ""
+
+	for _, or := range req.Orders {
+		orderStatus := status.Inactive
+		depth := uint32(1)
+
+		if or.ParentOrderID != none {
+			for _, o := range newOrders {
+				if o.OrderID == or.ParentOrderID {
+					depth = o.PlanDepth + 1
+					break
+				}
+			}
+		}
+
+		if or.ParentOrderID == none && req.Status == plan.Active {
+			orderStatus = status.Active
+		}
+
+		for _, ky := range kys {
+			if ky.KeyID == or.KeyID {
+				exchange = ky.Exchange
+
+				if ky.Status != key.Verified {
+					res.Status = response.Fail
+					res.Message = "using an unverified key!"
+					return nil
+
+				}
+			}
+		}
+
+		// collect triggers for this order
+		triggers := make([]*protoOrder.Trigger, 0, len(or.Triggers))
+		for j, cond := range or.Triggers {
+			triggerID := uuid.New()
+			trigger := protoOrder.Trigger{
+				TriggerID:         triggerID.String(),
+				TriggerNumber:     uint32(j),
+				TriggerTemplateID: cond.TriggerTemplateID,
+				OrderID:           or.OrderID,
+				Name:              cond.Name,
+				Code:              cond.Code,
+				Actions:           cond.Actions,
+				Triggered:         false,
+				CreatedOn:         now,
+				UpdatedOn:         now,
+			}
+			triggers = append(triggers, &trigger)
+			// append to all new triggers so we can bulk insert
+			newTriggers = append(newTriggers, &trigger)
+		}
+
+		symbolPair := strings.Split(or.MarketName, "-")
+		symbol := symbolPair[1]
+		if or.Side == side.Sell {
+			symbol = symbolPair[0]
+		}
+
+		order := protoOrder.Order{
+			KeyID:           or.KeyID,
+			OrderID:         or.OrderID,
+			OrderType:       or.OrderType,
+			OrderTemplateID: or.OrderTemplateID,
+			ParentOrderID:   or.ParentOrderID,
+			PlanID:          planID.String(),
+			PlanDepth:       depth,
+			Side:            or.Side,
+			LimitPrice:      or.LimitPrice,
+			Exchange:        exchange,
+			MarketName:      or.MarketName,
+			CurrencySymbol:  symbol,
+			CurrencyBalance: or.CurrencyBalance,
+			Status:          orderStatus,
+			Triggers:        triggers,
+			CreatedOn:       now,
+			UpdatedOn:       now,
+		}
+		newOrders = append(newOrders, &order)
+	}
+
+	pln := protoPlan.Plan{
+		PlanID:                planID.String(),
+		PlanTemplateID:        req.PlanTemplateID,
+		UserID:                req.UserID,
+		CurrencySymbol:        newOrders[0].CurrencySymbol,
+		CurrencyBalance:       newOrders[0].CurrencyBalance,
+		Exchange:              newOrders[0].Exchange,
+		MarketName:            newOrders[0].MarketName,
+		LastExecutedPlanDepth: 0,
+		LastExecutedOrderID:   none,
+		Orders:                newOrders,
+		Status:                req.Status,
+		CreatedOn:             now,
+		UpdatedOn:             now,
+	}
 
 	// // insert the exchange name from the key
 	// req.Exchange = ky.Exchange
 
-	pln, error := planRepo.InsertPlan(service.DB, req)
+	error := planRepo.InsertPlan(service.DB, &pln)
 	if error != nil {
 		res.Status = response.Error
 		res.Message = "NewPlan error: " + error.Error()
@@ -221,7 +327,7 @@ func (service *PlanService) NewPlan(ctx context.Context, req *protoPlan.NewPlanR
 		//pln.KeySecret = ky.Secret
 
 		// this is a new plan
-		if err := service.publishPlan(ctx, pln, false); err != nil {
+		if err := service.publishPlan(ctx, &pln, false); err != nil {
 			// TODO return a warning here
 			res.Status = response.Error
 			res.Message = "could not publish first order: " + err.Error()
@@ -230,7 +336,7 @@ func (service *PlanService) NewPlan(ctx context.Context, req *protoPlan.NewPlanR
 	}
 
 	res.Status = response.Success
-	res.Data = &protoPlan.PlanData{Plan: pln}
+	res.Data = &protoPlan.PlanData{Plan: &pln}
 
 	return nil
 
@@ -240,25 +346,25 @@ func (service *PlanService) NewPlan(ctx context.Context, req *protoPlan.NewPlanR
 // Can't return an error with a response object - response object is returned as nil when error is non nil.
 // Therefore, return error in response object.
 func (service *PlanService) GetUserPlan(ctx context.Context, req *protoPlan.GetUserPlanRequest, res *protoPlan.PlanWithPagedOrdersResponse) error {
-	pagedPlan, error := planRepo.FindPlanWithPagedOrders(service.DB, req)
+	// pagedPlan, error := planRepo.FindPlanWithPagedOrders(service.DB, req)
 
-	switch {
-	case error == sql.ErrNoRows:
-		res.Status = response.Nonentity
-		res.Message = fmt.Sprintf("planID not found %s", req.PlanID)
-	case error != nil:
-		res.Status = response.Error
-		res.Message = error.Error()
-	case pagedPlan.OrdersPage.Total < (req.PageSize * req.Page):
-		res.Status = response.Nonentity
-		res.Message = "page index out of bounds"
-	case error == nil:
-		res.Status = response.Success
-		res.Data = pagedPlan
-	default:
-		res.Status = response.Error
-		res.Message = error.Error()
-	}
+	// switch {
+	// case error == sql.ErrNoRows:
+	// 	res.Status = response.Nonentity
+	// 	res.Message = fmt.Sprintf("planID not found %s", req.PlanID)
+	// case error != nil:
+	// 	res.Status = response.Error
+	// 	res.Message = error.Error()
+	// case pagedPlan.OrdersPage.Total < (req.PageSize * req.Page):
+	// 	res.Status = response.Nonentity
+	// 	res.Message = "page index out of bounds"
+	// case error == nil:
+	// 	res.Status = response.Success
+	// 	res.Data = pagedPlan
+	// default:
+	// 	res.Status = response.Error
+	// 	res.Message = error.Error()
+	// }
 
 	return nil
 }
@@ -365,99 +471,99 @@ func (service *PlanService) DeletePlan(ctx context.Context, req *protoPlan.Delet
 func (service *PlanService) UpdatePlan(ctx context.Context, req *protoPlan.UpdatePlanRequest, res *protoPlan.PlanResponse) error {
 	//none := uuid.Nil.String()
 
-	pln, err := planRepo.FindPlanSummary(service.DB, req.PlanID)
-	switch {
-	case err == sql.ErrNoRows:
-		res.Status = response.Nonentity
-		res.Message = fmt.Sprintf("planID not found %s", req.PlanID)
-		return nil
+	// pln, err := planRepo.FindPlanSummary(service.DB, req.PlanID)
+	// switch {
+	// case err == sql.ErrNoRows:
+	// 	res.Status = response.Nonentity
+	// 	res.Message = fmt.Sprintf("planID not found %s", req.PlanID)
+	// 	return nil
 
-	case err != nil:
-		res.Status = response.Error
-		res.Message = err.Error()
-		return nil
-	default:
+	// case err != nil:
+	// 	res.Status = response.Error
+	// 	res.Message = err.Error()
+	// 	return nil
+	// default:
 
-		switch {
-		// can't set base balance to 0 if first is buy
-		// case pln.LastExecutedOrderID == none && pln.Orders[0].Side == side.Buy && req.BaseBalance == 0:
-		// 	res.Status = response.Fail
-		// 	res.Message = fmt.Sprintf("base balance for buy plan cannot be 0")
-		// 	return nil
+	// 	switch {
+	// 	// can't set base balance to 0 if first is buy
+	// 	// case pln.LastExecutedOrderID == none && pln.Orders[0].Side == side.Buy && req.BaseBalance == 0:
+	// 	// 	res.Status = response.Fail
+	// 	// 	res.Message = fmt.Sprintf("base balance for buy plan cannot be 0")
+	// 	// 	return nil
 
-		// //// can't set currency balance to 0 if first is sell
-		// case pln.LastExecutedOrderID == none && pln.Orders[0].Side == side.Sell && req.CurrencyBalance == 0:
-		// 	res.Status = response.Fail
-		// 	res.Message = fmt.Sprintf("currency balance for sell plan cannot be 0")
-		// 	return nil
+	// 	// //// can't set currency balance to 0 if first is sell
+	// 	// case pln.LastExecutedOrderID == none && pln.Orders[0].Side == side.Sell && req.CurrencyBalance == 0:
+	// 	// 	res.Status = response.Fail
+	// 	// 	res.Message = fmt.Sprintf("currency balance for sell plan cannot be 0")
+	// 	// 	return nil
 
-		// must specify a valid status if a status was specified
-		case req.Status != "" && !plan.ValidateUpdatePlanStatus(req.Status):
-			res.Status = response.Fail
-			res.Message = fmt.Sprintf("invalid status for update plan")
-			return nil
+	// 	// must specify a valid status if a status was specified
+	// 	case req.Status != "" && !plan.ValidateUpdatePlanStatus(req.Status):
+	// 		res.Status = response.Fail
+	// 		res.Message = fmt.Sprintf("invalid status for update plan")
+	// 		return nil
 
-		// case pln.LastExecutedOrderID == none:
-		// 	if req.CurrencyBalance >= 0 {
-		// 		pln, err = planRepo.UpdatePlanCurrencyBalance(service.DB, req.PlanID, req.CurrencyBalance)
-		// 		if err != nil {
-		// 			res.Status = response.Error
-		// 			res.Message = err.Error()
-		// 			return nil
-		// 		}
-		// 	}
-		// 	if req.BaseBalance >= 0 {
-		// 		pln, err = planRepo.UpdatePlanBaseBalance(service.DB, req.PlanID, req.BaseBalance)
-		// 		if err != nil {
-		// 			res.Status = response.Error
-		// 			res.Message = err.Error()
-		// 			return nil
-		// 		}
-		// 	}
-		default:
-		}
+	// 	// case pln.LastExecutedOrderID == none:
+	// 	// 	if req.CurrencyBalance >= 0 {
+	// 	// 		pln, err = planRepo.UpdatePlanCurrencyBalance(service.DB, req.PlanID, req.CurrencyBalance)
+	// 	// 		if err != nil {
+	// 	// 			res.Status = response.Error
+	// 	// 			res.Message = err.Error()
+	// 	// 			return nil
+	// 	// 		}
+	// 	// 	}
+	// 	// 	if req.BaseBalance >= 0 {
+	// 	// 		pln, err = planRepo.UpdatePlanBaseBalance(service.DB, req.PlanID, req.BaseBalance)
+	// 	// 		if err != nil {
+	// 	// 			res.Status = response.Error
+	// 	// 			res.Message = err.Error()
+	// 	// 			return nil
+	// 	// 		}
+	// 	// 	}
+	// 	default:
+	// 	}
 
-		for _, updateOrderReq := range req.Orders {
+	// 	for _, updateOrderReq := range req.Orders {
 
-			switch {
-			case updateOrderReq.Action == New:
-			case updateOrderReq.Action == Update:
-			case updateOrderReq.Action == Delete:
-			}
+	// 		switch {
+	// 		case updateOrderReq.Action == New:
+	// 		case updateOrderReq.Action == Update:
+	// 		case updateOrderReq.Action == Delete:
+	// 		}
 
-		}
+	// 	}
 
-		isActive := pln.Status
-		if req.Status != "" {
-			pln, err = planRepo.UpdatePlanStatus(service.DB, req.PlanID, req.Status)
-			if err != nil {
-				res.Status = response.Error
-				res.Message = err.Error()
-				return nil
-			}
-		}
+	// 	isActive := pln.Status
+	// 	if req.Status != "" {
+	// 		pln, err = planRepo.UpdatePlanStatus(service.DB, req.PlanID, req.Status)
+	// 		if err != nil {
+	// 			res.Status = response.Error
+	// 			res.Message = err.Error()
+	// 			return nil
+	// 		}
+	// 	}
 
-		if isActive == plan.Active {
-			// publish the revised plan to the system
-			if err := service.publishPlan(ctx, pln, true); err != nil {
-				res.Status = response.Error
-				res.Message = err.Error()
-				return nil
-			}
-		}
+	// 	if isActive == plan.Active {
+	// 		// publish the revised plan to the system
+	// 		if err := service.publishPlan(ctx, pln, true); err != nil {
+	// 			res.Status = response.Error
+	// 			res.Message = err.Error()
+	// 			return nil
+	// 		}
+	// 	}
 
-		if isActive == plan.Inactive && pln.Status == plan.Active {
-			if err := service.publishPlan(ctx, pln, false); err != nil {
-				res.Status = response.Error
-				res.Message = err.Error()
-				return nil
-			}
-		}
+	// 	if isActive == plan.Inactive && pln.Status == plan.Active {
+	// 		if err := service.publishPlan(ctx, pln, false); err != nil {
+	// 			res.Status = response.Error
+	// 			res.Message = err.Error()
+	// 			return nil
+	// 		}
+	// 	}
 
-		res.Status = response.Success
-		res.Data = &protoPlan.PlanData{
-			Plan: pln,
-		}
-	}
+	// 	res.Status = response.Success
+	// 	res.Data = &protoPlan.PlanData{
+	// 		Plan: pln,
+	// 	}
+	// }
 	return nil
 }

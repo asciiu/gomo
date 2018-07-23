@@ -8,7 +8,7 @@ import (
 	"github.com/satori/go.uuid"
 )
 
-func InsertOrders(txn *sql.Tx, planID string, orders []*protoOrder.Order) error {
+func InsertOrders(txn *sql.Tx, orders []*protoOrder.Order) error {
 	stmt, err := txn.Prepare(pq.CopyIn("orders",
 		"id",
 		"user_key_id",
@@ -17,12 +17,11 @@ func InsertOrders(txn *sql.Tx, planID string, orders []*protoOrder.Order) error 
 		"plan_depth",
 		"exchange_name",
 		"market_name",
+		"currency_symbol",
+		"currency_balance",
 		"order_template_id",
 		"order_type",
 		"side",
-		"percent_balance",
-		"base_balance",
-		"currency_balance",
 		"limit_price",
 		"status",
 		"created_on",
@@ -36,16 +35,15 @@ func InsertOrders(txn *sql.Tx, planID string, orders []*protoOrder.Order) error 
 			uuid.FromStringOrNil(order.OrderID),
 			uuid.FromStringOrNil(order.KeyID),
 			uuid.FromStringOrNil(order.ParentOrderID),
-			uuid.FromStringOrNil(planID),
+			uuid.FromStringOrNil(order.PlanID),
 			order.PlanDepth,
 			order.Exchange,
 			order.MarketName,
+			order.CurrencySymbol,
+			order.CurrencyBalance,
 			order.OrderTemplateID,
 			order.OrderType,
 			order.Side,
-			order.PercentBalance,
-			order.BaseBalance,
-			order.CurrencyBalance,
 			order.LimitPrice,
 			order.Status,
 			order.CreatedOn,
