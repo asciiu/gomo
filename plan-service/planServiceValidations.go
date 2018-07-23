@@ -79,7 +79,7 @@ func ValidateNoneZeroBalance(orderRequests []*protoOrder.NewOrderRequest) bool {
 	switch {
 	case len(orderRequests) == 0:
 		return false
-	case orderRequests[0].CurrencyBalance <= 0:
+	case orderRequests[0].CurrencyBalance <= 0.0:
 		return false
 	default:
 		return true

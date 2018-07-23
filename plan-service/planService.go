@@ -177,7 +177,7 @@ func (service *PlanService) NewPlan(ctx context.Context, req *protoPlan.NewPlanR
 		res.Status = response.Fail
 		res.Message = "you can only post 10 inactive nodes at a time!"
 		return nil
-	case ValidateNoneZeroBalance(req.Orders):
+	case !ValidateNoneZeroBalance(req.Orders):
 		res.Status = response.Fail
 		res.Message = "non zero currency balance required for root order!"
 		return nil
