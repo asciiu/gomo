@@ -73,13 +73,13 @@ func FindPlanSummary(db *sql.DB, planID string) (*protoPlan.Plan, error) {
 			&plan.KeyID,
 			&plan.KeyDescription,
 			&plan.LastExecutedOrderID,
-			&plan.Exchange,
-			&plan.MarketName,
-			&plan.BaseBalance,
-			&plan.CurrencyBalance,
+			//&plan.Exchange,
+			//&plan.MarketName,
+			//&plan.BaseBalance,
+			//&plan.CurrencyBalance,
 			&plan.Status,
 			&order.OrderID,
-			&order.BalancePercent,
+			//&order.BalancePercent,
 			&order.Side,
 			&order.ParentOrderID,
 			&order.OrderType,
@@ -189,7 +189,7 @@ func FindPlanWithPagedOrders(db *sql.DB, req *protoPlan.GetUserPlanRequest) (*pr
 			&planPaged.CreatedOn,
 			&planPaged.UpdatedOn,
 			&order.OrderID,
-			&order.BalancePercent,
+			//&order.BalancePercent,
 			&order.Side,
 			&order.OrderType,
 			&orderTemp,
@@ -310,13 +310,13 @@ func FindActivePlans(db *sql.DB) ([]*protoPlan.Plan, error) {
 			&plan.KeyID,
 			&plan.Key,
 			&plan.KeySecret,
-			&plan.Exchange,
-			&plan.MarketName,
-			&plan.BaseBalance,
-			&plan.CurrencyBalance,
+			//&plan.Exchange,
+			//&plan.MarketName,
+			//&plan.BaseBalance,
+			//&plan.CurrencyBalance,
 			&plan.Status,
 			&order.OrderID,
-			&order.BalancePercent,
+			//&order.BalancePercent,
 			&order.Side,
 			&order.OrderType,
 			&price,
@@ -423,13 +423,13 @@ func FindChildOrders(db *sql.DB, planID, orderID string) (*protoPlan.Plan, error
 			&plan.KeyID,
 			&plan.Key,
 			&plan.KeySecret,
-			&plan.Exchange,
-			&plan.MarketName,
-			&plan.BaseBalance,
-			&plan.CurrencyBalance,
+			//&plan.Exchange,
+			//&plan.MarketName,
+			//&plan.BaseBalance,
+			//&plan.CurrencyBalance,
 			&plan.Status,
 			&order.OrderID,
-			&order.BalancePercent,
+			//&order.BalancePercent,
 			&order.Side,
 			&order.OrderType,
 			&price,
@@ -508,10 +508,10 @@ func FindUserPlansWithStatus(db *sql.DB, userID, status string, page, pageSize u
 			&plan.PlanID,
 			&planTemplateID,
 			&plan.KeyID,
-			&plan.Exchange,
-			&plan.MarketName,
-			&plan.BaseBalance,
-			&plan.CurrencyBalance,
+			//&plan.Exchange,
+			//&plan.MarketName,
+			//&plan.BaseBalance,
+			//&plan.CurrencyBalance,
 			&plan.LastExecutedPlanDepth,
 			&plan.LastExecutedOrderID,
 			&plan.Status,
@@ -581,10 +581,10 @@ func FindUserExchangePlansWithStatus(db *sql.DB, userID, status, exchange string
 			&plan.PlanID,
 			&planTemplateID,
 			&plan.KeyID,
-			&plan.Exchange,
-			&plan.MarketName,
-			&plan.BaseBalance,
-			&plan.CurrencyBalance,
+			//&plan.Exchange,
+			//&plan.MarketName,
+			//&plan.BaseBalance,
+			//&plan.CurrencyBalance,
 			&plan.LastExecutedPlanDepth,
 			&plan.LastExecutedOrderID,
 			&plan.Status,
@@ -653,10 +653,10 @@ func FindUserMarketPlansWithStatus(db *sql.DB, userID, status, exchange, marketN
 			&plan.PlanID,
 			&planTemplateID,
 			&plan.KeyID,
-			&plan.Exchange,
-			&plan.MarketName,
-			&plan.BaseBalance,
-			&plan.CurrencyBalance,
+			//&plan.Exchange,
+			//&plan.MarketName,
+			//&plan.BaseBalance,
+			//&plan.CurrencyBalance,
 			&plan.LastExecutedPlanDepth,
 			&plan.LastExecutedOrderID,
 			&plan.Status,
@@ -701,18 +701,13 @@ func InsertPlan(db *sql.DB, req *protoPlan.NewPlanRequest) (*protoPlan.Plan, err
 	sqlStatement, err := txn.Prepare(`insert into plans (
 		id, 
 		user_id, 
-		user_key_id, 
-		plan_template_id,
 		last_executed_plan_depth,
 		last_executed_order_id,
-		exchange_name, 
-		market_name, 
-		base_balance, 
-		currency_balance, 
+		plan_template_id,
 		status, 
 		created_on,
 		updated_on) 
-		values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)`)
+		values ($1, $2, $3, $4, $5, $6, $7, $8)`)
 
 	if err != nil {
 		txn.Rollback()
@@ -725,14 +720,9 @@ func InsertPlan(db *sql.DB, req *protoPlan.NewPlanRequest) (*protoPlan.Plan, err
 	_, err = txn.Stmt(sqlStatement).Exec(
 		planID,
 		req.UserID,
-		req.KeyID,
-		req.PlanTemplateID,
 		0,
 		none,
-		req.Exchange,
-		req.MarketName,
-		req.BaseBalance,
-		req.CurrencyBalance,
+		req.PlanTemplateID,
 		req.Status,
 		now,
 		now)
@@ -785,6 +775,7 @@ func InsertPlan(db *sql.DB, req *protoPlan.NewPlanRequest) (*protoPlan.Plan, err
 		}
 
 		order := protoOrder.Order{
+			KeyID:           or.KeyID,
 			OrderID:         or.OrderID,
 			OrderType:       or.OrderType,
 			OrderTemplateID: or.OrderTemplateID,
@@ -792,7 +783,11 @@ func InsertPlan(db *sql.DB, req *protoPlan.NewPlanRequest) (*protoPlan.Plan, err
 			PlanDepth:       depth,
 			Side:            or.Side,
 			LimitPrice:      or.LimitPrice,
-			BalancePercent:  or.BalancePercent,
+			Exchange:        or.Exchange,
+			MarketName:      or.MarketName,
+			BaseBalance:     or.BaseBalance,
+			CurrencyBalance: or.CurrencyBalance,
+			PercentBalance:  or.PercentBalance,
 			Status:          orderStatus,
 			Triggers:        triggers,
 			CreatedOn:       now,
@@ -816,16 +811,11 @@ func InsertPlan(db *sql.DB, req *protoPlan.NewPlanRequest) (*protoPlan.Plan, err
 	}
 
 	plan := protoPlan.Plan{
-		PlanID:         planID.String(),
-		PlanTemplateID: req.PlanTemplateID,
-		UserID:         req.UserID,
-		KeyID:          req.KeyID,
+		PlanID:                planID.String(),
+		PlanTemplateID:        req.PlanTemplateID,
+		UserID:                req.UserID,
 		LastExecutedPlanDepth: 0,
 		LastExecutedOrderID:   none,
-		Exchange:              req.Exchange,
-		MarketName:            req.MarketName,
-		BaseBalance:           req.BaseBalance,
-		CurrencyBalance:       req.CurrencyBalance,
 		Orders:                newOrders,
 		Status:                req.Status,
 		CreatedOn:             now,
@@ -857,7 +847,7 @@ func UpdatePlanBalances(db *sql.DB, planID string, base, currency float64) error
 
 func UpdatePlanStatus(db *sql.DB, planID, status string) (*protoPlan.Plan, error) {
 	sqlStatement := `UPDATE plans SET status = $1 WHERE id = $2 
-	RETURNING id, plan_template_id, user_id, user_key_id, exchange_name, market_name, base_balance, currency_balance, status`
+	RETURNING id, plan_template_id, user_id, user_key_id, status`
 
 	var p protoPlan.Plan
 	err := db.QueryRow(sqlStatement, status, planID).
@@ -865,10 +855,6 @@ func UpdatePlanStatus(db *sql.DB, planID, status string) (*protoPlan.Plan, error
 			&p.PlanTemplateID,
 			&p.UserID,
 			&p.KeyID,
-			&p.Exchange,
-			&p.MarketName,
-			&p.BaseBalance,
-			&p.CurrencyBalance,
 			&p.Status,
 		)
 
@@ -886,10 +872,6 @@ func UpdatePlanBaseBalance(db *sql.DB, planID string, baseBalance float64) (*pro
 	plan_template_id, 
 	user_id, 
 	user_key_id, 
-	exchange_name, 
-	market_name, 
-	base_balance, 
-	currency_balance, 
 	status`
 
 	var p protoPlan.Plan
@@ -898,10 +880,6 @@ func UpdatePlanBaseBalance(db *sql.DB, planID string, baseBalance float64) (*pro
 			&p.PlanTemplateID,
 			&p.UserID,
 			&p.KeyID,
-			&p.Exchange,
-			&p.MarketName,
-			&p.BaseBalance,
-			&p.CurrencyBalance,
 			&p.Status,
 		)
 
@@ -919,10 +897,6 @@ func UpdatePlanCurrencyBalance(db *sql.DB, planID string, currencyBalance float6
 	plan_template_id, 
 	user_id, 
 	user_key_id, 
-	exchange_name, 
-	market_name, 
-	base_balance, 
-	currency_balance, 
 	status`
 
 	var p protoPlan.Plan
@@ -931,10 +905,6 @@ func UpdatePlanCurrencyBalance(db *sql.DB, planID string, currencyBalance float6
 			&p.PlanTemplateID,
 			&p.UserID,
 			&p.KeyID,
-			&p.Exchange,
-			&p.MarketName,
-			&p.BaseBalance,
-			&p.CurrencyBalance,
 			&p.Status,
 		)
 

@@ -16,23 +16,16 @@ service PlanService {
 message NewPlanRequest {
   string planID = 1;
   string userID = 2;
-  string keyID = 3;
-  string planTemplateID = 4;
-  string exchange = 5;
-  string marketName = 6;
-  double baseBalance = 7;
-  double currencyBalance = 8;
-  string status = 9;
-  repeated order.NewOrderRequest orders = 10; 
+  string planTemplateID = 3;
+  string status = 4;
+  repeated order.NewOrderRequest orders = 5; 
 }
 
 message UpdatePlanRequest {
   string planID = 1;
   string userID = 2;
   string status = 3;
-  double baseBalance = 4;
-  double currencyBalance = 5;
-  repeated order.UpdateOrderRequest orders = 6; 
+  repeated order.UpdateOrderRequest orders = 4; 
 }
 
 
@@ -68,15 +61,10 @@ message Plan {
   string keyDescription = 7;
   uint32 lastExecutedPlanDepth = 8;
   string lastExecutedOrderID = 9;
-  string exchange = 10;
-  string exchangeMarketName = 11;
-  string marketName = 12;
-  double baseBalance = 13;
-  double currencyBalance = 14;
-  string status = 15;
-  string createdOn = 16;
-  string updatedOn = 17;
-  repeated order.Order orders = 18; 
+  string status = 10;
+  string createdOn = 11;
+  string updatedOn = 12;
+  repeated order.Order orders = 13; 
 }
 
 message PlanWithPagedOrders {

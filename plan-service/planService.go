@@ -5,19 +5,16 @@ import (
 	"database/sql"
 	"fmt"
 	"log"
-	"strings"
 
 	balances "github.com/asciiu/gomo/balance-service/proto/balance"
 	"github.com/asciiu/gomo/common/constants/key"
 	"github.com/asciiu/gomo/common/constants/plan"
 	"github.com/asciiu/gomo/common/constants/response"
-	"github.com/asciiu/gomo/common/constants/side"
 	"github.com/asciiu/gomo/common/constants/status"
 	evt "github.com/asciiu/gomo/common/proto/events"
 	keys "github.com/asciiu/gomo/key-service/proto/key"
 	planRepo "github.com/asciiu/gomo/plan-service/db/sql"
 	protoPlan "github.com/asciiu/gomo/plan-service/proto/plan"
-	"github.com/google/uuid"
 	micro "github.com/micro/go-micro"
 )
 
@@ -62,20 +59,20 @@ func (service *PlanService) publishPlan(ctx context.Context, plan *protoPlan.Pla
 
 	// convert order to order event
 	activeOrder := evt.ActiveOrderEvent{
-		Exchange:        plan.Exchange,
-		OrderID:         planOrder.OrderID,
-		PlanID:          plan.PlanID,
-		UserID:          plan.UserID,
-		BaseBalance:     plan.BaseBalance,
-		CurrencyBalance: plan.CurrencyBalance,
-		BalancePercent:  planOrder.BalancePercent,
-		KeyID:           plan.KeyID,
-		Key:             plan.Key,
-		Secret:          plan.KeySecret,
-		MarketName:      plan.MarketName,
-		Side:            planOrder.Side,
-		OrderType:       planOrder.OrderType,
-		Price:           planOrder.LimitPrice,
+		//Exchange:        plan.Exchange,
+		OrderID: planOrder.OrderID,
+		PlanID:  plan.PlanID,
+		UserID:  plan.UserID,
+		//BaseBalance:     plan.BaseBalance,
+		//CurrencyBalance: plan.CurrencyBalance,
+		BalancePercent: planOrder.PercentBalance,
+		KeyID:          plan.KeyID,
+		Key:            plan.Key,
+		Secret:         plan.KeySecret,
+		//MarketName:      plan.MarketName,
+		Side:      planOrder.Side,
+		OrderType: planOrder.OrderType,
+		Price:     planOrder.LimitPrice,
 		//NextOrderID:     planOrder.NextOrderID,
 		Revision:    isRevision,
 		OrderStatus: planOrder.Status,
@@ -111,24 +108,24 @@ func (service *PlanService) validateBalance(ctx context.Context, currency string
 // LoadPlanOrder will activate an order (i.e. send a plan order) to the execution engine to process.
 func (service *PlanService) LoadPlanOrder(ctx context.Context, plan *protoPlan.Plan, isRevision bool) error {
 
-	planOrder := plan.Orders[0]
-	currencies := strings.Split(plan.MarketName, "-")
-	// default market currency
-	currency := currencies[0]
-	balance := plan.CurrencyBalance
-	if planOrder.Side == side.Buy {
-		// buy uses base currency
-		currency = currencies[1]
-		balance = plan.BaseBalance
-	}
+	// planOrder := plan.Orders[0]
+	// currencies := strings.Split(plan.MarketName, "-")
+	// // default market currency
+	// currency := currencies[0]
+	// balance := plan.CurrencyBalance
+	// if planOrder.Side == side.Buy {
+	// 	// buy uses base currency
+	// 	currency = currencies[1]
+	// 	balance = plan.BaseBalance
+	// }
 
-	if err := service.validateBalance(ctx, currency, balance, plan.UserID, plan.KeyID); err != nil {
-		return err
-	}
+	// if err := service.validateBalance(ctx, currency, balance, plan.UserID, plan.KeyID); err != nil {
+	// 	return err
+	// }
 
-	if err := service.publishPlan(ctx, plan, isRevision); err != nil {
-		return err
-	}
+	// if err := service.publishPlan(ctx, plan, isRevision); err != nil {
+	// 	return err
+	// }
 
 	return nil
 }
@@ -163,9 +160,9 @@ func (service *PlanService) fetchKey(keyID, userID string) (*keys.Key, error) {
 // Can't return an error with a response object - response object is returned as nil when error is non nil.
 // Therefore, return error in response object.
 func (service *PlanService) NewPlan(ctx context.Context, req *protoPlan.NewPlanRequest, res *protoPlan.PlanResponse) error {
-	currencies := strings.Split(req.MarketName, "-")
-	var currency string
-	var balance float64
+	//currencies := strings.Split(req.MarketName, "-")
+	//var currency string
+	//var balance float64
 
 	switch {
 	case !ValidateSingleRootNode(req.Orders):
@@ -180,35 +177,35 @@ func (service *PlanService) NewPlan(ctx context.Context, req *protoPlan.NewPlanR
 		res.Status = response.Fail
 		res.Message = "you can only post 10 inactive nodes at a time!"
 		return nil
-	case req.BaseBalance > 0:
-		// base currency will be second
-		currency = currencies[1]
-		balance = req.BaseBalance
-	case req.CurrencyBalance > 0:
-		currency = currencies[0]
-		balance = req.CurrencyBalance
+	//case req.BaseBalance > 0:
+	//	// base currency will be second
+	//	currency = currencies[1]
+	//	balance = req.BaseBalance
+	//case req.CurrencyBalance > 0:
+	//	currency = currencies[0]
+	//	balance = req.CurrencyBalance
 	default:
 		res.Status = response.Fail
 		res.Message = "baseBalance and currencyBalance are 0"
 		return nil
 	}
 
-	if err := service.validateBalance(ctx, currency, balance, req.UserID, req.KeyID); err != nil {
-		res.Status = response.Fail
-		res.Message = err.Error()
-		return nil
-	}
+	//if err := service.validateBalance(ctx, currency, balance, req.UserID, req.KeyID); err != nil {
+	//	res.Status = response.Fail
+	//	res.Message = err.Error()
+	//	return nil
+	//}
 
 	// validate plan key
-	ky, err := service.fetchKey(req.KeyID, req.UserID)
-	if err != nil {
-		res.Status = response.Fail
-		res.Message = err.Error()
-		return nil
-	}
+	// ky, err := service.fetchKey(req.KeyID, req.UserID)
+	// if err != nil {
+	// 	res.Status = response.Fail
+	// 	res.Message = err.Error()
+	// 	return nil
+	// }
 
-	// insert the exchange name from the key
-	req.Exchange = ky.Exchange
+	// // insert the exchange name from the key
+	// req.Exchange = ky.Exchange
 
 	pln, error := planRepo.InsertPlan(service.DB, req)
 	if error != nil {
@@ -220,8 +217,8 @@ func (service *PlanService) NewPlan(ctx context.Context, req *protoPlan.NewPlanR
 	// activate first plan order if plan is active
 	if pln.Status == plan.Active {
 		// send key and secret with plan
-		pln.Key = ky.Key
-		pln.KeySecret = ky.Secret
+		//pln.Key = ky.Key
+		//pln.KeySecret = ky.Secret
 
 		// this is a new plan
 		if err := service.publishPlan(ctx, pln, false); err != nil {
@@ -366,7 +363,7 @@ func (service *PlanService) DeletePlan(ctx context.Context, req *protoPlan.Delet
 // Can't return an error with a response object - response object is returned as nil when error is non nil.
 // Therefore, return error in response object.
 func (service *PlanService) UpdatePlan(ctx context.Context, req *protoPlan.UpdatePlanRequest, res *protoPlan.PlanResponse) error {
-	none := uuid.Nil.String()
+	//none := uuid.Nil.String()
 
 	pln, err := planRepo.FindPlanSummary(service.DB, req.PlanID)
 	switch {
@@ -383,16 +380,16 @@ func (service *PlanService) UpdatePlan(ctx context.Context, req *protoPlan.Updat
 
 		switch {
 		// can't set base balance to 0 if first is buy
-		case pln.LastExecutedOrderID == none && pln.Orders[0].Side == side.Buy && req.BaseBalance == 0:
-			res.Status = response.Fail
-			res.Message = fmt.Sprintf("base balance for buy plan cannot be 0")
-			return nil
+		// case pln.LastExecutedOrderID == none && pln.Orders[0].Side == side.Buy && req.BaseBalance == 0:
+		// 	res.Status = response.Fail
+		// 	res.Message = fmt.Sprintf("base balance for buy plan cannot be 0")
+		// 	return nil
 
-		//// can't set currency balance to 0 if first is sell
-		case pln.LastExecutedOrderID == none && pln.Orders[0].Side == side.Sell && req.CurrencyBalance == 0:
-			res.Status = response.Fail
-			res.Message = fmt.Sprintf("currency balance for sell plan cannot be 0")
-			return nil
+		// //// can't set currency balance to 0 if first is sell
+		// case pln.LastExecutedOrderID == none && pln.Orders[0].Side == side.Sell && req.CurrencyBalance == 0:
+		// 	res.Status = response.Fail
+		// 	res.Message = fmt.Sprintf("currency balance for sell plan cannot be 0")
+		// 	return nil
 
 		// must specify a valid status if a status was specified
 		case req.Status != "" && !plan.ValidateUpdatePlanStatus(req.Status):
@@ -400,23 +397,23 @@ func (service *PlanService) UpdatePlan(ctx context.Context, req *protoPlan.Updat
 			res.Message = fmt.Sprintf("invalid status for update plan")
 			return nil
 
-		case pln.LastExecutedOrderID == none:
-			if req.CurrencyBalance >= 0 {
-				pln, err = planRepo.UpdatePlanCurrencyBalance(service.DB, req.PlanID, req.CurrencyBalance)
-				if err != nil {
-					res.Status = response.Error
-					res.Message = err.Error()
-					return nil
-				}
-			}
-			if req.BaseBalance >= 0 {
-				pln, err = planRepo.UpdatePlanBaseBalance(service.DB, req.PlanID, req.BaseBalance)
-				if err != nil {
-					res.Status = response.Error
-					res.Message = err.Error()
-					return nil
-				}
-			}
+		// case pln.LastExecutedOrderID == none:
+		// 	if req.CurrencyBalance >= 0 {
+		// 		pln, err = planRepo.UpdatePlanCurrencyBalance(service.DB, req.PlanID, req.CurrencyBalance)
+		// 		if err != nil {
+		// 			res.Status = response.Error
+		// 			res.Message = err.Error()
+		// 			return nil
+		// 		}
+		// 	}
+		// 	if req.BaseBalance >= 0 {
+		// 		pln, err = planRepo.UpdatePlanBaseBalance(service.DB, req.PlanID, req.BaseBalance)
+		// 		if err != nil {
+		// 			res.Status = response.Error
+		// 			res.Message = err.Error()
+		// 			return nil
+		// 		}
+		// 	}
 		default:
 		}
 

@@ -5,30 +5,30 @@ DROP TABLE IF EXISTS orders;
 
 CREATE TABLE plans (
   id UUID PRIMARY KEY NOT NULL,
-  plan_template_id text,             -- optional frontend plan template used with this plan - (Leo wanted this) 
   user_id UUID NOT NULL REFERENCES users (id) ON DELETE CASCADE,
-  user_key_id UUID NOT NULL REFERENCES user_keys (id) ON DELETE CASCADE,
   last_executed_plan_depth integer NOT NULL,
   last_executed_order_id UUID NOT NULL,
-  exchange_name text NOT NULL,
-  market_name text NOT NULL,
-  base_balance decimal NOT NULL,
-  currency_balance decimal NOT NULL,
-  status text NOT NULL,               -- plan status is active, inactive, or failed
+  plan_template_id text,             -- optional frontend plan template used with this plan - (Leo wanted this) 
+  status text NOT NULL,              -- plan status is active, inactive, or failed
   created_on TIMESTAMP DEFAULT now(),
   updated_on TIMESTAMP DEFAULT current_timestamp
 );
 
 CREATE TABLE orders (
   id UUID PRIMARY KEY NOT NULL,
+  user_key_id UUID NOT NULL REFERENCES user_keys (id) ON DELETE CASCADE,
   parent_order_id UUID NOT NULL,      -- parent order of 0 means no parent 
   plan_id UUID NOT NULL REFERENCES plans (id) ON DELETE CASCADE,
   plan_depth integer NOT NULL,
+  exchange_name text NOT NULL,
+  market_name text NOT NULL,
   order_template_id text,             -- optional frontend template used for this order 
-  balance_percent decimal DEFAULT 0,  -- percent of balance to use base_balance(buy) currency_balance(sell)
-  side text NOT NULL,
   order_type text NOT NULL,           -- limit, market, paper
-  limit_price decimal DEFAULT 0,
+  side text NOT NULL,                 -- buy, sell
+  percent_balance decimal NOT NULL,   -- percent of balance to use base_balance(buy) currency_balance(sell)
+  base_balance decimal NOT NULL,
+  currency_balance decimal NOT NULL,
+  limit_price decimal DEFAULT 0,      -- limit price of order when order type is limit
   status text NOT NULL,               -- pending, active, failed, etc
   created_on TIMESTAMP DEFAULT now(),
   updated_on TIMESTAMP DEFAULT current_timestamp

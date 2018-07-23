@@ -12,30 +12,40 @@ message TriggerRequest {
 }
 
 message UpdateOrderRequest {
-  uint32 orderID = 1;
-  uint32 parentOrderID = 2;
-  string planID = 3;
-  uint32 planDepth = 4;
-  string side = 5; 
-  string orderType = 6;
-  string orderTemplateID = 7;
-  double balancePercent = 8;
-  double limitPrice = 9;
-  string action = 10;
-  repeated TriggerRequest triggers = 11;
+  string orderID = 1;
+  string orderType = 2;
+  string orderTemplateID = 3;
+  string keyID = 4;
+  string parentOrderID = 5;
+  string planID = 6;
+  string planDepth = 7;
+  string exchange = 8;
+  string marketName = 9;
+  string side = 10;
+  double limitPrice = 11;
+  double percentBalance = 12;
+  double baseBalance = 13;
+  double currencyBalance = 14;
+  string action = 15;
+  repeated TriggerRequest triggers = 16;
 }
 
 message NewOrderRequest {
   string orderID = 1;
-  string parentOrderID = 2;
-  string planID = 3;
-  string planDepth = 4;
-  string side = 5;
-  string orderType = 6;
-  string orderTemplateID = 7;
-  double balancePercent = 8;
-  double limitPrice = 9;
-  repeated TriggerRequest triggers = 10;
+  string orderType = 2;
+  string orderTemplateID = 3;
+  string keyID = 4;
+  string parentOrderID = 5;
+  string planID = 6;
+  string planDepth = 7;
+  string exchange = 8;
+  string marketName = 9;
+  string side = 10;
+  double limitPrice = 11;
+  double percentBalance = 12;
+  double baseBalance = 13;
+  double currencyBalance = 14;
+  repeated TriggerRequest triggers = 15;
 }
 
 message GetUserOrderRequest {
@@ -58,14 +68,20 @@ message Order {
   string orderID = 3;
   string side = 4;
   string orderTemplateID = 5;
-  string orderType = 7;
-  double limitPrice = 8;
-  double balancePercent = 9;
-  string status = 10;
-  string parentOrderID = 11;
-  string createdOn = 12;
-  string updatedOn = 13;
-  repeated Trigger triggers = 14;
+  string keyID = 19;
+  string orderType = 6;
+  double limitPrice = 7;
+  string status = 8;
+  string parentOrderID = 9;
+  string exchange = 10;
+  string exchangeMarketName = 11;
+  string marketName = 12;
+  double baseBalance = 13;             // first buy order of tree can have base balance
+  double currencyBalance = 14;         // first sell order of tree can have currency balance 
+  double percentBalance = 15;          // this is the precent of baseBalance (buy) or currencyBalance (sell)         
+  string createdOn = 16;
+  string updatedOn = 17;
+  repeated Trigger triggers = 18;
 }
 
 message Trigger {
