@@ -63,25 +63,25 @@ message RemoveOrderRequest {
 }
 
 message Order {
-  string planID = 1;
-  uint32 planDepth = 2;
-  string orderID = 3;
-  string side = 4;
+  string orderID = 1;
+  string parentOrderID = 2;
+  string planID = 3;
+  uint32 planDepth = 4;
   string orderTemplateID = 5;
-  string keyID = 19;
-  string orderType = 6;
-  double limitPrice = 7;
-  string status = 8;
-  string parentOrderID = 9;
+  string keyID = 6;
+  string orderType = 7;                // limit, market, paper
+  string side = 8;                     // buy, sell
+  double limitPrice = 9;               //  limit price is required for 'limit' order type
   string exchange = 10;
   string exchangeMarketName = 11;
-  string marketName = 12;
-  double baseBalance = 13;             // first buy order of tree can have base balance
-  double currencyBalance = 14;         // first sell order of tree can have currency balance 
-  double percentBalance = 15;          // this is the precent of baseBalance (buy) or currencyBalance (sell)         
-  string createdOn = 16;
-  string updatedOn = 17;
-  repeated Trigger triggers = 18;
+  string marketName = 12;              // e.g. ADA-BTC
+  string currencyName = 13;            // e.g. BTC
+  double currencyBalance = 14;         // e.g. 1.0 
+  double currencyTraded = 15;          // e.g. 0.0
+  string status = 16;
+  string createdOn = 17;
+  string updatedOn = 18;
+  repeated Trigger triggers = 19;
 }
 
 message Trigger {
