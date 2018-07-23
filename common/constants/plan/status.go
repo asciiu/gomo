@@ -6,6 +6,8 @@ const (
 	// chain status
 	// the chain of orders is running
 	Active string = "active"
+	// the plan chain is closed and cannot be modified
+	Closed string = "closed"
 	// the chain of orders has completed
 	Completed string = "completed"
 	// this means the record was successfully delete from our DB
