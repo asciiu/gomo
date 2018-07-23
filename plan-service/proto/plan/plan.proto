@@ -17,7 +17,8 @@ message NewPlanRequest {
   string userID = 1;
   string planTemplateID = 2;
   string status = 3;
-  repeated order.NewOrderRequest orders = 4; 
+  bool closeOnComplete = 4;
+  repeated order.NewOrderRequest orders = 5; 
 }
 
 message UpdatePlanRequest {
@@ -62,9 +63,10 @@ message Plan {
   string currencySymbol = 12;
   double currencyBalance = 13;
   string status = 14;
-  string createdOn = 15;
-  string updatedOn = 16;
-  repeated order.Order orders = 17; 
+  bool closeOnComplete = 15;
+  string createdOn = 16;
+  string updatedOn = 17;
+  repeated order.Order orders = 18; 
 }
 
 message PlanWithPagedOrders {

@@ -778,10 +778,11 @@ func InsertPlan(db *sql.DB, newPlan *protoPlan.Plan) error {
 		last_executed_plan_depth,
 		last_executed_order_id,
 		plan_template_id,
+		close_on_complete,
 		status, 
 		created_on,
 		updated_on) 
-		values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)`)
+		values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)`)
 
 	if err != nil {
 		txn.Rollback()
@@ -797,6 +798,7 @@ func InsertPlan(db *sql.DB, newPlan *protoPlan.Plan) error {
 		newPlan.LastExecutedPlanDepth,
 		newPlan.LastExecutedOrderID,
 		newPlan.PlanTemplateID,
+		newPlan.CloseOnComplete,
 		newPlan.Status,
 		newPlan.CreatedOn,
 		newPlan.UpdatedOn)

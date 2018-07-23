@@ -315,6 +315,7 @@ func (service *PlanService) NewPlan(ctx context.Context, req *protoPlan.NewPlanR
 		LastExecutedOrderID:   none,
 		Orders:                newOrders,
 		Status:                req.Status,
+		CloseOnComplete:       req.CloseOnComplete,
 		CreatedOn:             now,
 		UpdatedOn:             now,
 	}
