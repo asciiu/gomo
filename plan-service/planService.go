@@ -181,10 +181,6 @@ func (service *PlanService) NewPlan(ctx context.Context, req *protoPlan.NewPlanR
 		res.Status = response.Fail
 		res.Message = "non zero currency balance required for root order!"
 		return nil
-	default:
-		res.Status = response.Fail
-		res.Message = "baseBalance and currencyBalance are 0"
-		return nil
 	}
 
 	// fetch all order keys
