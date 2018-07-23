@@ -23,7 +23,7 @@ func FindKeys(db *sql.DB, req *pb.GetKeysRequest) ([]*pb.Key, error) {
 		api_key, 
 		secret, 
 		description, 
-		status FROM user_keys WHERE id in $1`, pq.Array(req.KeyIDs))
+		status FROM user_keys WHERE id = Any($1)`, pq.Array(req.KeyIDs))
 
 	if err != nil {
 		return nil, err
