@@ -96,11 +96,9 @@ type Plan struct {
 	Exchange              string   `json:"exchange"`
 	ExchangeMarketName    string   `json:"exchangeMarketName"`
 	MarketName            string   `json:"marketName"`
-	BaseCurrencySymbol    string   `json:"baseCurrencySymbol"`
-	BaseCurrencyName      string   `json:"baseCurrencyName"`
-	CurrencySymbol        string   `json:"currencySymbol"`
-	CurrencyName          string   `json:"currencyName"`
-	CurrencyBalance       float64  `json:"currencyBalance"`
+	CurrencySymbol        string   `json:"activeCurrencySymbol"`
+	CurrencyName          string   `json:"activeCurrencyName"`
+	CurrencyBalance       float64  `json:"activeCurrencyBalance"`
 	LastExecutedOrderID   string   `json:"lastExecutedOrderID"`
 	LastExecutedPlanDepth uint32   `json:"lastExecutedPlanDepth"`
 	Status                string   `json:"status"`
@@ -419,9 +417,9 @@ func (controller *PlanController) HandleListPlans(c echo.Context) error {
 			//KeyID:                 plan.KeyID,
 			Exchange: plan.Exchange,
 			//ExchangeMarketName:    plan.ExchangeMarketName,
-			MarketName:         plan.MarketName,
-			BaseCurrencySymbol: baseCurrencySymbol,
-			BaseCurrencyName:   baseCurrencyName,
+			MarketName: plan.MarketName,
+			//BaseCurrencySymbol: baseCurrencySymbol,
+			//BaseCurrencyName:   baseCurrencyName,
 			//BaseBalance:           plan.BaseBalance,
 			CurrencySymbol:        currencySymbol,
 			CurrencyName:          currencyName,
@@ -623,11 +621,6 @@ func (controller *PlanController) HandlePostPlan(c echo.Context) error {
 		newOrders = append(newOrders, &newo)
 	}
 
-	names := strings.Split(r.Data.Plan.MarketName, "-")
-	baseCurrencySymbol := names[1]
-	baseCurrencyName := controller.currencies[baseCurrencySymbol]
-	currencySymbol := names[0]
-	currencyName := controller.currencies[currencySymbol]
 	res := &ResponsePlanSuccess{
 		Status: response.Success,
 		Data: &Plan{
@@ -635,10 +628,8 @@ func (controller *PlanController) HandlePostPlan(c echo.Context) error {
 			PlanTemplateID:        r.Data.Plan.PlanTemplateID,
 			Exchange:              r.Data.Plan.Exchange,
 			MarketName:            r.Data.Plan.MarketName,
-			BaseCurrencySymbol:    baseCurrencySymbol,
-			BaseCurrencyName:      baseCurrencyName,
-			CurrencySymbol:        currencySymbol,
-			CurrencyName:          currencyName,
+			CurrencySymbol:        r.Data.Plan.CurrencySymbol,
+			CurrencyName:          controller.currencies[r.Data.Plan.CurrencySymbol],
 			CurrencyBalance:       r.Data.Plan.CurrencyBalance,
 			Status:                r.Data.Plan.Status,
 			CloseOnComplete:       r.Data.Plan.CloseOnComplete,
