@@ -8,7 +8,7 @@ import (
 	"strings"
 
 	"github.com/asciiu/gomo/common/constants/exchange"
-
+	"github.com/asciiu/gomo/common/constants/response"
 	repo "github.com/asciiu/gomo/key-service/db/sql"
 	kp "github.com/asciiu/gomo/key-service/proto/key"
 	micro "github.com/micro/go-micro"
@@ -39,7 +39,7 @@ func (service *KeyService) AddKey(ctx context.Context, req *kp.KeyRequest, res *
 
 	// supported exchange keys check
 	if !stringInSupported(req.Exchange) {
-		res.Status = "fail"
+		res.Status = response.Fail
 		res.Message = fmt.Sprintf("%s is not a supported exchange", req.Exchange)
 		return nil
 	}
@@ -53,7 +53,7 @@ func (service *KeyService) AddKey(ctx context.Context, req *kp.KeyRequest, res *
 			log.Println("could not publish event new.key: ", err)
 		}
 
-		res.Status = "success"
+		res.Status = response.Success
 		res.Data = &kp.UserKeyData{
 			Key: &kp.Key{
 				KeyID:       apiKey.KeyID,
@@ -66,11 +66,27 @@ func (service *KeyService) AddKey(ctx context.Context, req *kp.KeyRequest, res *
 		}
 
 	case strings.Contains(error.Error(), "user_keys_api_key_secret_key"):
-		res.Status = "fail"
+		res.Status = response.Fail
 		res.Message = "key/secret pair already exists"
 
 	default:
-		res.Status = "error"
+		res.Status = response.Error
+		res.Message = error.Error()
+	}
+	return nil
+}
+
+func (service *KeyService) GetKeys(ctx context.Context, req *kp.GetKeysRequest, res *kp.KeyListResponse) error {
+	keys, error := repo.FindKeys(service.DB, req)
+
+	switch {
+	case error == nil:
+		res.Status = response.Success
+		res.Data = &kp.UserKeysData{
+			Keys: keys,
+		}
+	default:
+		res.Status = response.Error
 		res.Message = error.Error()
 	}
 	return nil
@@ -84,8 +100,7 @@ func (service *KeyService) GetUserKey(ctx context.Context, req *kp.GetUserKeyReq
 
 	switch {
 	case error == nil:
-		res.Status = "success"
-		res.Status = "success"
+		res.Status = response.Success
 		res.Data = &kp.UserKeyData{
 			Key: &kp.Key{
 				KeyID:       apiKey.KeyID,
@@ -98,10 +113,10 @@ func (service *KeyService) GetUserKey(ctx context.Context, req *kp.GetUserKeyReq
 			},
 		}
 	case strings.Contains(error.Error(), "no rows in result set"):
-		res.Status = "nonentity"
+		res.Status = response.Nonentity
 		res.Message = fmt.Sprintf("key not found")
 	default:
-		res.Status = "error"
+		res.Status = response.Error
 		res.Message = error.Error()
 	}
 
@@ -116,12 +131,12 @@ func (service *KeyService) GetUserKeys(ctx context.Context, req *kp.GetUserKeysR
 
 	switch {
 	case error == nil:
-		res.Status = "success"
+		res.Status = response.Success
 		res.Data = &kp.UserKeysData{
 			Keys: keys,
 		}
 	default:
-		res.Status = "error"
+		res.Status = response.Error
 		res.Message = error.Error()
 	}
 	return nil
@@ -134,9 +149,9 @@ func (service *KeyService) RemoveKey(ctx context.Context, req *kp.RemoveKeyReque
 	error := repo.DeleteKey(service.DB, req.KeyID)
 	switch {
 	case error == nil:
-		res.Status = "success"
+		res.Status = response.Success
 	default:
-		res.Status = "error"
+		res.Status = response.Error
 		res.Message = error.Error()
 	}
 	return nil
@@ -149,7 +164,7 @@ func (service *KeyService) UpdateKeyDescription(ctx context.Context, req *kp.Key
 	apiKey, error := repo.UpdateKeyDescription(service.DB, req)
 	switch {
 	case error == nil:
-		res.Status = "success"
+		res.Status = response.Success
 		res.Data = &kp.UserKeyData{
 			Key: &kp.Key{
 				KeyID:       apiKey.KeyID,
@@ -161,7 +176,7 @@ func (service *KeyService) UpdateKeyDescription(ctx context.Context, req *kp.Key
 			},
 		}
 	default:
-		res.Status = "error"
+		res.Status = response.Error
 		res.Message = error.Error()
 	}
 	return nil

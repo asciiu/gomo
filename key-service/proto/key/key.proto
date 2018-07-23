@@ -4,6 +4,7 @@ package fomo.keys;
 
 service KeyService {
   rpc AddKey(KeyRequest) returns (KeyResponse) {}
+  rpc GetKeys(GetKeysRequest) returns (KeyListResponse) {}
   rpc GetUserKey(GetUserKeyRequest) returns (KeyResponse) {}
   rpc GetUserKeys(GetUserKeysRequest) returns (KeyListResponse) {}
   rpc RemoveKey(RemoveKeyRequest) returns (KeyResponse) {}
@@ -24,6 +25,10 @@ message KeyRequest {
 message GetUserKeyRequest {
   string userID = 1;
   string keyID = 2;
+}
+
+message GetKeysRequest {
+  repeated string keyIDs = 1;
 }
 
 message GetUserKeysRequest {
