@@ -205,6 +205,17 @@ func (service *PlanService) NewPlan(ctx context.Context, req *protoPlan.NewPlanR
 		orderStatus := status.Inactive
 		depth := uint32(1)
 
+		if or.MarketName == "" || or.KeyID == "" {
+			res.Status = response.Fail
+			res.Message = "missing marketName/keyID for order"
+			return nil
+		}
+		if !strings.Contains(or.MarketName, "-") {
+			res.Status = response.Fail
+			res.Message = "marketName must be currency-base: e.g. ADA-BTC"
+			return nil
+		}
+
 		// compute the depth for the order
 		if or.ParentOrderID != none {
 			for _, o := range newOrders {
