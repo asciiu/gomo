@@ -86,6 +86,16 @@ func ValidateNoneZeroBalance(orderRequests []*protoOrder.NewOrderRequest) bool {
 	}
 }
 
+func ValidateUniformOrderType(orderRequests []*protoOrder.NewOrderRequest) bool {
+	orderType := orderRequests[0].OrderType
+	for _, o := range orderRequests {
+		if o.OrderType != orderType {
+			return false
+		}
+	}
+	return true
+}
+
 func ValidateOrderType(ot string) bool {
 	ots := [...]string{
 		orderConstants.LimitOrder,

@@ -9,6 +9,7 @@ import (
 
 	balances "github.com/asciiu/gomo/balance-service/proto/balance"
 	"github.com/asciiu/gomo/common/constants/key"
+	orderConstants "github.com/asciiu/gomo/common/constants/order"
 	"github.com/asciiu/gomo/common/constants/plan"
 	"github.com/asciiu/gomo/common/constants/response"
 	"github.com/asciiu/gomo/common/constants/side"
@@ -92,7 +93,7 @@ func (service *PlanService) publishPlan(ctx context.Context, plan *protoPlan.Pla
 }
 
 // private: validateBalance
-func (service *PlanService) validateBalance(ctx context.Context, currency string, balance float64, userID string, apikeyID string) error {
+func (service *PlanService) validateBalance(ctx context.Context, currency string, balance float64, userID string, apikeyID string) (bool, error) {
 	balRequest := balances.GetUserBalanceRequest{
 		UserID:   userID,
 		KeyID:    apikeyID,
@@ -101,13 +102,13 @@ func (service *PlanService) validateBalance(ctx context.Context, currency string
 
 	balResponse, err := service.Client.GetUserBalance(ctx, &balRequest)
 	if err != nil {
-		return fmt.Errorf("ecountered error from GetUserBalance: %s", err.Error())
+		return false, fmt.Errorf("ecountered error from GetUserBalance: %s", err.Error())
 	}
 
 	if balResponse.Data.Balance.Available < balance {
-		return fmt.Errorf("insufficient %s balance, %.8f requested", currency, balance)
+		return false, nil
 	}
-	return nil
+	return true, nil
 }
 
 // LoadPlanOrder will activate an order (i.e. send a plan order) to the execution engine to process.
@@ -180,6 +181,10 @@ func (service *PlanService) NewPlan(ctx context.Context, req *protoPlan.NewPlanR
 	case !ValidateNoneZeroBalance(req.Orders):
 		res.Status = response.Fail
 		res.Message = "non zero currency balance required for root order!"
+		return nil
+	case !ValidateUniformOrderType(req.Orders):
+		res.Status = response.Fail
+		res.Message = "all orders must be of the same order type as root"
 		return nil
 	}
 
@@ -307,10 +312,19 @@ func (service *PlanService) NewPlan(ctx context.Context, req *protoPlan.NewPlanR
 	currencyBalance := newOrders[0].CurrencyBalance
 	keyID := newOrders[0].KeyID
 
-	if err := service.validateBalance(ctx, currencySymbol, currencyBalance, req.UserID, keyID); err != nil {
-		res.Status = response.Error
-		res.Message = fmt.Sprintf("failed to validate the currency balance for %s: %s", currencySymbol, err.Error())
-		return nil
+	if newOrders[0].OrderType != orderConstants.PaperOrder {
+		validBalance, err := service.validateBalance(ctx, currencySymbol, currencyBalance, req.UserID, keyID)
+		if err != nil {
+			res.Status = response.Error
+			res.Message = fmt.Sprintf("failed to validate the currency balance for %s: %s", currencySymbol, err.Error())
+			return nil
+		}
+		if !validBalance {
+			res.Status = response.Fail
+			res.Message = fmt.Sprintf("insufficient %s balance, %.8f requested", currencySymbol, currencyBalance)
+			return nil
+
+		}
 	}
 
 	pln := protoPlan.Plan{
