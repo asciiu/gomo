@@ -1,6 +1,9 @@
 package main
 
 import (
+	orderConstants "github.com/asciiu/gomo/common/constants/order"
+	planConstants "github.com/asciiu/gomo/common/constants/plan"
+	sideConstants "github.com/asciiu/gomo/common/constants/side"
 	protoOrder "github.com/asciiu/gomo/plan-service/proto/order"
 )
 
@@ -8,7 +11,7 @@ import (
 const MinBalance = 0.00001000
 
 const (
-	// order types here
+	// order actions here
 	Delete string = "delete"
 	New    string = "new"
 	Update string = "update"
@@ -81,4 +84,64 @@ func ValidateNoneZeroBalance(orderRequests []*protoOrder.NewOrderRequest) bool {
 	default:
 		return true
 	}
+}
+
+func ValidateOrderType(ot string) bool {
+	ots := [...]string{
+		orderConstants.LimitOrder,
+		orderConstants.MarketOrder,
+		orderConstants.PaperOrder,
+	}
+
+	for _, ty := range ots {
+		if ty == ot {
+			return true
+		}
+	}
+	return false
+}
+
+func ValidateOrderSide(os string) bool {
+	ots := [...]string{
+		sideConstants.Buy,
+		sideConstants.Sell,
+	}
+
+	for _, ty := range ots {
+		if ty == os {
+			return true
+		}
+	}
+	return false
+}
+
+// validates user specified plan status
+func ValidatePlanInputStatus(pstatus string) bool {
+	pistats := [...]string{
+		planConstants.Active,
+		planConstants.Inactive,
+		planConstants.Historic,
+	}
+
+	for _, stat := range pistats {
+		if stat == pstatus {
+			return true
+		}
+	}
+	return false
+}
+
+// defines valid input for plan status when updating an executed plan (a.k.a. plan with a filled order)
+func ValidatePlanUpdateStatus(pstatus string) bool {
+	pistats := [...]string{
+		planConstants.Active,
+		planConstants.Inactive,
+	}
+
+	for _, stat := range pistats {
+		if stat == pstatus {
+			return true
+		}
+	}
+	return false
 }

@@ -10,10 +10,8 @@ import (
 	"strings"
 
 	asql "github.com/asciiu/gomo/api/db/sql"
-	orderValidator "github.com/asciiu/gomo/common/constants/order"
 	"github.com/asciiu/gomo/common/constants/plan"
 	"github.com/asciiu/gomo/common/constants/response"
-	sideValidator "github.com/asciiu/gomo/common/constants/side"
 	keys "github.com/asciiu/gomo/key-service/proto/key"
 	orders "github.com/asciiu/gomo/plan-service/proto/order"
 	plans "github.com/asciiu/gomo/plan-service/proto/plan"
@@ -92,24 +90,51 @@ type UserPlansData struct {
 
 // This response should never return the key secret
 type Plan struct {
-	PlanID                string          `json:"planID"`
-	PlanTemplateID        string          `json:"planTemplateID"`
-	KeyID                 string          `json:"keyID"`
-	Exchange              string          `json:"exchange"`
-	ExchangeMarketName    string          `json:"exchangeMarketName"`
-	MarketName            string          `json:"marketName"`
-	BaseCurrencySymbol    string          `json:"baseCurrencySymbol"`
-	BaseCurrencyName      string          `json:"baseCurrencyName"`
-	BaseBalance           float64         `json:"baseBalance"`
-	CurrencySymbol        string          `json:"currencySymbol"`
-	CurrencyName          string          `json:"currencyName"`
-	CurrencyBalance       float64         `json:"currencyBalance"`
-	LastExecutedOrderID   string          `json:"lastExecutedOrderID"`
-	LastExecutedPlanDepth uint32          `json:"lastExecutedPlanDepth"`
-	Status                string          `json:"status"`
-	CreatedOn             string          `json:"createdOn"`
-	UpdatedOn             string          `json:"updatedOn"`
-	Orders                []*orders.Order `json:"orders,omitempty"`
+	PlanID                string   `json:"planID"`
+	PlanTemplateID        string   `json:"planTemplateID"`
+	KeyID                 string   `json:"keyID"`
+	Exchange              string   `json:"exchange"`
+	ExchangeMarketName    string   `json:"exchangeMarketName"`
+	MarketName            string   `json:"marketName"`
+	BaseCurrencySymbol    string   `json:"baseCurrencySymbol"`
+	BaseCurrencyName      string   `json:"baseCurrencyName"`
+	CurrencySymbol        string   `json:"currencySymbol"`
+	CurrencyName          string   `json:"currencyName"`
+	CurrencyBalance       float64  `json:"currencyBalance"`
+	LastExecutedOrderID   string   `json:"lastExecutedOrderID"`
+	LastExecutedPlanDepth uint32   `json:"lastExecutedPlanDepth"`
+	Status                string   `json:"status"`
+	CloseOnComplete       bool     `json:"closeOnComplete"`
+	CreatedOn             string   `json:"createdOn"`
+	UpdatedOn             string   `json:"updatedOn"`
+	Orders                []*Order `json:"orders,omitempty"`
+}
+
+type Order struct {
+	OrderID            string            `name=orderID" json:"orderID,omitempty"`
+	ParentOrderID      string            `name=parentOrderID" json:"parentOrderID,omitempty"`
+	PlanDepth          uint32            `name=planDepth" json:"planDepth,omitempty"`
+	OrderTemplateID    string            `name=orderTemplateID" json:"orderTemplateID,omitempty"`
+	KeyID              string            `name=keyID" json:"keyID,omitempty"`
+	KeyPublic          string            `name=keyPublic" json:"keyPublic,omitempty"`
+	KeyDescription     string            `name=keyDescription" json:"keyDescription,omitempty"`
+	OrderPriority      uint32            `name=orderPriority" json:"orderPriority,omitempty"`
+	OrderType          string            `name=orderType" json:"orderType,omitempty"`
+	Side               string            `name=side" json:"side,omitempty"`
+	LimitPrice         float64           `name=limitPrice" json:"limitPrice,omitempty"`
+	Exchange           string            `name=exchange" json:"exchange,omitempty"`
+	ExchangeMarketName string            `name=exchangeMarketName" json:"exchangeMarketName,omitempty"`
+	MarketName         string            `name=marketName" json:"marketName,omitempty"`
+	BaseCurrencySymbol string            `json:"baseCurrencySymbol"`
+	BaseCurrencyName   string            `json:"baseCurrencyName"`
+	CurrencySymbol     string            `name=currencySymbol" json:"currencySymbol,omitempty"`
+	CurrencyName       string            `json:"currencyName"`
+	CurrencyBalance    float64           `name=currencyBalance" json:"currencyBalance,omitempty"`
+	CurrencyTraded     float64           `name=currencyTraded" json:"currencyTraded,omitempty"`
+	Status             string            `name=status" json:"status,omitempty"`
+	CreatedOn          string            `name=createdOn" json:"createdOn,omitempty"`
+	UpdatedOn          string            `name=updatedOn" json:"updatedOn,omitempty"`
+	Triggers           []*orders.Trigger `name=triggers" json:"triggers,omitempty"`
 }
 
 func fail(c echo.Context, msg string) error {
@@ -196,20 +221,20 @@ func (controller *PlanController) HandleDeletePlan(c echo.Context) error {
 	res := &ResponsePlanWithOrderPageSuccess{
 		Status: response.Success,
 		Data: &PlanWithOrderPage{
-			PlanID:             r.Data.Plan.PlanID,
-			PlanTemplateID:     r.Data.Plan.PlanTemplateID,
-			KeyID:              r.Data.Plan.KeyID,
+			PlanID:         r.Data.Plan.PlanID,
+			PlanTemplateID: r.Data.Plan.PlanTemplateID,
+			//KeyID:              r.Data.Plan.KeyID,
 			Exchange:           r.Data.Plan.Exchange,
 			MarketName:         r.Data.Plan.MarketName,
 			BaseCurrencySymbol: baseCurrencySymbol,
 			BaseCurrencyName:   baseCurrencyName,
-			BaseBalance:        r.Data.Plan.BaseBalance,
-			CurrencySymbol:     currencySymbol,
-			CurrencyName:       currencyName,
-			CurrencyBalance:    r.Data.Plan.CurrencyBalance,
-			Status:             r.Data.Plan.Status,
-			CreatedOn:          r.Data.Plan.CreatedOn,
-			UpdatedOn:          r.Data.Plan.UpdatedOn,
+			//BaseBalance:        r.Data.Plan.BaseBalance,
+			CurrencySymbol:  currencySymbol,
+			CurrencyName:    currencyName,
+			CurrencyBalance: r.Data.Plan.CurrencyBalance,
+			Status:          r.Data.Plan.Status,
+			CreatedOn:       r.Data.Plan.CreatedOn,
+			UpdatedOn:       r.Data.Plan.UpdatedOn,
 		},
 	}
 
@@ -389,15 +414,15 @@ func (controller *PlanController) HandleListPlans(c echo.Context) error {
 		currencyName := controller.currencies[currencySymbol]
 
 		pln := Plan{
-			PlanTemplateID:        plan.PlanTemplateID,
-			PlanID:                plan.PlanID,
-			KeyID:                 plan.KeyID,
-			Exchange:              plan.Exchange,
-			ExchangeMarketName:    plan.ExchangeMarketName,
-			MarketName:            plan.MarketName,
-			BaseCurrencySymbol:    baseCurrencySymbol,
-			BaseCurrencyName:      baseCurrencyName,
-			BaseBalance:           plan.BaseBalance,
+			PlanTemplateID: plan.PlanTemplateID,
+			PlanID:         plan.PlanID,
+			//KeyID:                 plan.KeyID,
+			Exchange: plan.Exchange,
+			//ExchangeMarketName:    plan.ExchangeMarketName,
+			MarketName:         plan.MarketName,
+			BaseCurrencySymbol: baseCurrencySymbol,
+			BaseCurrencyName:   baseCurrencyName,
+			//BaseBalance:           plan.BaseBalance,
 			CurrencySymbol:        currencySymbol,
 			CurrencyName:          currencyName,
 			CurrencyBalance:       plan.CurrencyBalance,
@@ -428,52 +453,51 @@ type PlanRequest struct {
 	// Optional plan template ID.
 	// in: body
 	PlanTemplateID string `json:"planTemplateID"`
-	// Required this is our api key ID (string uuid) assigned to the user's exchange key and secret.
-	// in: body
-	KeyID string `json:"keyID"`
-	// Required e.g. ADA-BTC. Base pair should be the suffix.
-	// in: body
-	MarketName string `json:"marketName"`
-	// Required When first order is buy. Base should be in suffix of market name.
-	// in: body
-	BaseBalance float64 `json:"baseBalance"`
-	// Required When first order is buy. Base should be in suffix of market name.
-	// in: body
-	CurrencyBalance float64 `json:"currencyBalance"`
 	// Optional defaults to 'active' status. Valid input status is 'active', 'inactive', or 'historic'
 	// in: body
 	Status string `json:"status"`
-
+	// Required bool to indicate that you want the plan to be 'closed' when the last order for the plan finishes (note: order status fail will also close the plan)
+	// in: body
+	CloseOnComplete bool `json:"closeOnComplete"`
 	// Required array of orders. The structure of the order tree will be dictated by the orderNumber and parentOrderNumber properties of each order.
 	// in: body
 	Orders []*NewOrderReq `json:"orders"`
 }
 
 type NewOrderReq struct {
-	// Required the client assigns the uuid.
+	// Required the client assigns the order ID as a UUID, the format is 8-4-4-4-12.
 	// in: body
 	OrderID string `json:"orderID"`
-	// Required "buy" or "sell"
+	// Optional precedence of orders when multiple orders are at the same depth: value of 1 is highest priority. Example: depth 2 buy ADA (1) or buy EOS (2). ADA with higher priority 1 will execute and EOS will not execute.
 	// in: body
-	Side string `json:"side"`
-	// Optional order template ID.
-	// in: body
-	OrderTemplateID string `json:"orderTemplateID"`
+	OrderPriority uint32 `json:"orderPriority"`
 	// Required order types are "market", "limit", "paper". Orders not within these types will be rejected.
 	// in: body
 	OrderType string `json:"orderType"`
-	// Required for the precent of your plan's balance to use for the order - buy (percent of base balance) - sell (percent of currency balance)
+	// Optional order template ID.
 	// in: body
-	BalancePercent float64 `json:"balancePercent"`
-	// Required for 'limit' orders. Defines limit price.
+	OrderTemplateID string `json:"orderTemplateID"`
+	// Required this is our api key ID (string uuid) assigned to the user's exchange key and secret.
 	// in: body
-	LimitPrice float64 `json:"limitPrice"`
-	// Required these are the conditions that trigger the order to execute: ???
-	// in: body
-	Triggers []*TriggerReq `json:"triggers"`
+	KeyID string `json:"keyID"`
 	// Required the root node of the decision tree should be assigned a parentOrderID of "00000000-0000-0000-0000-000000000000" .
 	// in: body
 	ParentOrderID string `json:"parentOrderID"`
+	// Required e.g. ADA-BTC. Base pair should be the suffix.
+	// in: body
+	MarketName string `json:"marketName"`
+	// Required "buy" or "sell"
+	// in: body
+	Side string `json:"side"`
+	// Required for 'limit' orders. Defines limit price.
+	// in: body
+	LimitPrice float64 `json:"limitPrice"`
+	// Required for the root order of the tree. Child orders for tree may or may not have a currencyBalance.
+	// in: body
+	CurrencyBalance float64 `json:"currencyBalance"`
+	// Required these are the conditions that trigger the order to execute: ???
+	// in: body
+	Triggers []*TriggerReq `json:"triggers"`
 }
 
 type TriggerReq struct {
@@ -510,42 +534,21 @@ func (controller *PlanController) HandlePostPlan(c echo.Context) error {
 		return fail(c, err.Error())
 	}
 
-	// market name and api key are required
-	if newPlan.MarketName == "" || newPlan.KeyID == "" {
-		return fail(c, "marketName and keyID required!")
-	}
-	if !strings.Contains(newPlan.MarketName, "-") {
-		return fail(c, "marketName must be currency-base: e.g. ADA-BTC")
-	}
-	if len(newPlan.Orders) == 0 {
-		return fail(c, "at least one order required for a trade plan")
-	}
-	if !plan.ValidatePlanInputStatus(newPlan.Status) {
-		return fail(c, "valid status is active, inactive, or historic")
-	}
-
-	// error check all orders
-	ors := make([]*orders.NewOrderRequest, 0)
+	// assemble the order requests
+	newOrderRequests := make([]*orders.NewOrderRequest, 0)
 	for i, order := range newPlan.Orders {
-		log.Printf("order %d: %+v\n", i, order)
-
-		if !orderValidator.ValidateOrderType(order.OrderType) {
-			return fail(c, "market, limit, or paper orders only!")
-		}
-
-		if !sideValidator.ValidateSide(order.Side) {
-			return fail(c, "buy or sell required for side!")
-		}
 
 		or := orders.NewOrderRequest{
 			OrderID:         order.OrderID,
-			Side:            order.Side,
-			OrderTemplateID: order.OrderTemplateID,
+			OrderPriority:   order.OrderPriority,
 			OrderType:       order.OrderType,
+			OrderTemplateID: order.OrderTemplateID,
+			KeyID:           order.KeyID,
 			ParentOrderID:   order.ParentOrderID,
-			BalancePercent:  order.BalancePercent,
+			MarketName:      order.MarketName,
+			Side:            order.Side,
 			LimitPrice:      order.LimitPrice,
-		}
+			CurrencyBalance: order.CurrencyBalance}
 
 		for _, cond := range order.Triggers {
 			trigger := orders.TriggerRequest{
@@ -557,18 +560,15 @@ func (controller *PlanController) HandlePostPlan(c echo.Context) error {
 			or.Triggers = append(or.Triggers, &trigger)
 		}
 
-		ors = append(ors, &or)
+		newOrderRequests = append(newOrderRequests, &or)
 	}
 
 	newPlanRequest := plans.NewPlanRequest{
-		PlanTemplateID:  newPlan.PlanTemplateID,
 		UserID:          userID,
-		KeyID:           newPlan.KeyID,
-		MarketName:      newPlan.MarketName,
-		BaseBalance:     newPlan.BaseBalance,
-		CurrencyBalance: newPlan.CurrencyBalance,
+		PlanTemplateID:  newPlan.PlanTemplateID,
 		Status:          newPlan.Status,
-		Orders:          ors,
+		CloseOnComplete: newPlan.CloseOnComplete,
+		Orders:          newOrderRequests,
 	}
 
 	// add plan returns nil for error
@@ -587,30 +587,64 @@ func (controller *PlanController) HandlePostPlan(c echo.Context) error {
 		}
 	}
 
+	newOrders := make([]*Order, 0)
+	for _, o := range r.Data.Plan.Orders {
+		names := strings.Split(o.MarketName, "-")
+		baseCurrencySymbol := names[1]
+		baseCurrencyName := controller.currencies[baseCurrencySymbol]
+		currencySymbol := names[0]
+		currencyName := controller.currencies[currencySymbol]
+		newo := Order{
+			OrderID:            o.OrderID,
+			ParentOrderID:      o.ParentOrderID,
+			PlanDepth:          o.PlanDepth,
+			OrderTemplateID:    o.OrderTemplateID,
+			KeyID:              o.KeyID,
+			KeyPublic:          o.KeyPublic,
+			KeyDescription:     o.KeyDescription,
+			OrderPriority:      o.OrderPriority,
+			OrderType:          o.OrderType,
+			Side:               o.Side,
+			LimitPrice:         o.LimitPrice,
+			Exchange:           o.Exchange,
+			ExchangeMarketName: o.ExchangeMarketName,
+			MarketName:         o.MarketName,
+			BaseCurrencySymbol: baseCurrencySymbol,
+			BaseCurrencyName:   baseCurrencyName,
+			CurrencySymbol:     o.CurrencySymbol,
+			CurrencyName:       currencyName,
+			CurrencyBalance:    o.CurrencyBalance,
+			CurrencyTraded:     o.CurrencyTraded,
+			Status:             o.Status,
+			CreatedOn:          o.CreatedOn,
+			UpdatedOn:          o.UpdatedOn,
+			Triggers:           o.Triggers,
+		}
+		newOrders = append(newOrders, &newo)
+	}
+
 	names := strings.Split(r.Data.Plan.MarketName, "-")
 	baseCurrencySymbol := names[1]
 	baseCurrencyName := controller.currencies[baseCurrencySymbol]
 	currencySymbol := names[0]
 	currencyName := controller.currencies[currencySymbol]
-
 	res := &ResponsePlanSuccess{
 		Status: response.Success,
 		Data: &Plan{
 			PlanID:                r.Data.Plan.PlanID,
 			PlanTemplateID:        r.Data.Plan.PlanTemplateID,
-			KeyID:                 r.Data.Plan.KeyID,
 			Exchange:              r.Data.Plan.Exchange,
 			MarketName:            r.Data.Plan.MarketName,
 			BaseCurrencySymbol:    baseCurrencySymbol,
 			BaseCurrencyName:      baseCurrencyName,
-			BaseBalance:           r.Data.Plan.BaseBalance,
 			CurrencySymbol:        currencySymbol,
 			CurrencyName:          currencyName,
 			CurrencyBalance:       r.Data.Plan.CurrencyBalance,
 			Status:                r.Data.Plan.Status,
+			CloseOnComplete:       r.Data.Plan.CloseOnComplete,
 			LastExecutedOrderID:   r.Data.Plan.LastExecutedOrderID,
 			LastExecutedPlanDepth: r.Data.Plan.LastExecutedPlanDepth,
-			Orders:                r.Data.Plan.Orders,
+			Orders:                newOrders,
 			CreatedOn:             r.Data.Plan.CreatedOn,
 			UpdatedOn:             r.Data.Plan.UpdatedOn,
 		},
@@ -710,11 +744,11 @@ func (controller *PlanController) HandleUpdatePlan(c echo.Context) error {
 	}
 
 	updateRequest := plans.UpdatePlanRequest{
-		PlanID:          planID,
-		UserID:          userID,
-		Status:          updateParams.Status,
-		BaseBalance:     updateParams.BaseBalance,
-		CurrencyBalance: updateParams.CurrencyBalance,
+		PlanID: planID,
+		UserID: userID,
+		Status: updateParams.Status,
+		//BaseBalance:     updateParams.BaseBalance,
+		//CurrencyBalance: updateParams.CurrencyBalance,
 	}
 
 	r, _ := controller.Plans.UpdatePlan(context.Background(), &updateRequest)
@@ -743,20 +777,20 @@ func (controller *PlanController) HandleUpdatePlan(c echo.Context) error {
 	res := &ResponsePlanWithOrderPageSuccess{
 		Status: response.Success,
 		Data: &PlanWithOrderPage{
-			PlanID:             r.Data.Plan.PlanID,
-			PlanTemplateID:     r.Data.Plan.PlanTemplateID,
-			KeyID:              r.Data.Plan.KeyID,
+			PlanID:         r.Data.Plan.PlanID,
+			PlanTemplateID: r.Data.Plan.PlanTemplateID,
+			//KeyID:              r.Data.Plan.KeyID,
 			Exchange:           r.Data.Plan.Exchange,
 			MarketName:         r.Data.Plan.MarketName,
 			BaseCurrencySymbol: baseCurrencySymbol,
 			BaseCurrencyName:   baseCurrencyName,
-			BaseBalance:        r.Data.Plan.BaseBalance,
-			CurrencySymbol:     currencySymbol,
-			CurrencyName:       currencyName,
-			CurrencyBalance:    r.Data.Plan.CurrencyBalance,
-			Status:             r.Data.Plan.Status,
-			CreatedOn:          r.Data.Plan.CreatedOn,
-			UpdatedOn:          r.Data.Plan.UpdatedOn,
+			//BaseBalance:        r.Data.Plan.BaseBalance,
+			CurrencySymbol:  currencySymbol,
+			CurrencyName:    currencyName,
+			CurrencyBalance: r.Data.Plan.CurrencyBalance,
+			Status:          r.Data.Plan.Status,
+			CreatedOn:       r.Data.Plan.CreatedOn,
+			UpdatedOn:       r.Data.Plan.UpdatedOn,
 		},
 	}
 

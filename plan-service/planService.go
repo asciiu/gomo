@@ -161,6 +161,10 @@ func (service *PlanService) fetchKeys(keyIDs []string) ([]*keys.Key, error) {
 func (service *PlanService) NewPlan(ctx context.Context, req *protoPlan.NewPlanRequest, res *protoPlan.PlanResponse) error {
 
 	switch {
+	case !ValidatePlanInputStatus(req.Status):
+		res.Status = response.Fail
+		res.Message = "plan status must be active, inactive, or historic"
+		return nil
 	case !ValidateSingleRootNode(req.Orders):
 		res.Status = response.Fail
 		res.Message = "multiple root nodes found, only one is allowed"
@@ -213,6 +217,16 @@ func (service *PlanService) NewPlan(ctx context.Context, req *protoPlan.NewPlanR
 		if !strings.Contains(or.MarketName, "-") {
 			res.Status = response.Fail
 			res.Message = "marketName must be currency-base: e.g. ADA-BTC"
+			return nil
+		}
+		if !ValidateOrderType(or.OrderType) {
+			res.Status = response.Fail
+			res.Message = "market, limit, or paper required for order type"
+			return nil
+		}
+		if !ValidateOrderSide(or.Side) {
+			res.Status = response.Fail
+			res.Message = "buy or sell required for order side"
 			return nil
 		}
 

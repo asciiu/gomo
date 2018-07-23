@@ -13,6 +13,7 @@ CREATE TABLE plans (
   last_executed_plan_depth integer NOT NULL,
   last_executed_order_id UUID NOT NULL,
   plan_template_id text,             -- optional frontend plan template used with this plan - (Leo wanted this) 
+  close_on_complete boolean DEFAULT false, -- sets status of this plan to 'closed' when the last order of plan finishes
   status text NOT NULL,              -- plan status is active, inactive, or failed
   created_on TIMESTAMP DEFAULT now(),
   updated_on TIMESTAMP DEFAULT current_timestamp

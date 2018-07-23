@@ -7,18 +7,3 @@ const (
 	PaperOrder       string = "paper"
 	UnknownOrderType string = "???"
 )
-
-func ValidateOrderType(ot string) bool {
-	ots := [...]string{
-		LimitOrder,
-		MarketOrder,
-		PaperOrder,
-	}
-
-	for _, ty := range ots {
-		if ty == ot {
-			return true
-		}
-	}
-	return false
-}
