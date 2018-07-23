@@ -13,29 +13,31 @@ message TriggerRequest {
 
 message UpdateOrderRequest {
   string orderID = 1;
-  string orderType = 2;
-  string orderTemplateID = 3;
-  string keyID = 4;
-  string parentOrderID = 5;
-  string marketName = 6;
-  string side = 7;
-  double limitPrice = 8;
-  double currencyBalance = 9;
-  string action = 10;
-  repeated TriggerRequest triggers = 11;
+  uint32 orderPriority = 2;
+  string orderType = 3;
+  string orderTemplateID = 4;
+  string keyID = 5;
+  string parentOrderID = 6;
+  string marketName = 7;
+  string side = 8;
+  double limitPrice = 9;
+  double currencyBalance = 10;
+  string action = 11;
+  repeated TriggerRequest triggers = 12;
 }
 
 message NewOrderRequest {
   string orderID = 1;
-  string orderType = 2;
-  string orderTemplateID = 3;
-  string keyID = 4;
-  string parentOrderID = 5;
-  string marketName = 6;
-  string side = 7;
-  double limitPrice = 8;
-  double currencyBalance = 9;
-  repeated TriggerRequest triggers = 10;
+  uint32 orderPriority = 2;
+  string orderType = 3;
+  string orderTemplateID = 4;
+  string keyID = 5;
+  string parentOrderID = 6;
+  string marketName = 7;
+  string side = 8;
+  double limitPrice = 9;
+  double currencyBalance = 10;
+  repeated TriggerRequest triggers = 11;
 }
 
 message GetUserOrderRequest {
@@ -62,19 +64,20 @@ message Order {
   string keyPublic = 7;
   string keySecret = 8;
   string keyDescription = 9;
-  string orderType = 10;                // limit, market, paper
-  string side = 11;                     // buy, sell
-  double limitPrice = 12;               //  limit price is required for 'limit' order type
-  string exchange = 13;
-  string exchangeMarketName = 14;
-  string marketName = 15;              // e.g. ADA-BTC
-  string currencySymbol = 16;          // e.g. BTC
-  double currencyBalance = 17;         // e.g. 1.0 
-  double currencyTraded = 18;          // e.g. 0.0
-  string status = 19;
-  string createdOn = 20;
-  string updatedOn = 21;
-  repeated Trigger triggers = 22;
+  uint32 orderPriority = 10;
+  string orderType = 11;                // limit, market, paper
+  string side = 12;                     // buy, sell
+  double limitPrice = 13;               // limit price is required for 'limit' order type
+  string exchange = 14;
+  string exchangeMarketName = 15;
+  string marketName = 16;               // e.g. ADA-BTC
+  string currencySymbol = 17;           // e.g. BTC
+  double currencyBalance = 18;          // e.g. 1.0 
+  double currencyTraded = 19;           // e.g. 0.0
+  string status = 20;
+  string createdOn = 21;
+  string updatedOn = 22;
+  repeated Trigger triggers = 23;
 }
 
 message Trigger {

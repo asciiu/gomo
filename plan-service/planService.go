@@ -159,9 +159,6 @@ func (service *PlanService) fetchKeys(keyIDs []string) ([]*keys.Key, error) {
 // Can't return an error with a response object - response object is returned as nil when error is non nil.
 // Therefore, return error in response object. MarketName example: ADA-BTC where BTC is base.
 func (service *PlanService) NewPlan(ctx context.Context, req *protoPlan.NewPlanRequest, res *protoPlan.PlanResponse) error {
-	//currencies := strings.Split(req.MarketName, "-")
-	//var currency string
-	//var balance float64
 
 	switch {
 	case !ValidateSingleRootNode(req.Orders):
@@ -176,31 +173,21 @@ func (service *PlanService) NewPlan(ctx context.Context, req *protoPlan.NewPlanR
 		res.Status = response.Fail
 		res.Message = "you can only post 10 inactive nodes at a time!"
 		return nil
-	//case req.BaseBalance > 0:
-	//	// base currency will be second
-	//	currency = currencies[1]
-	//	balance = req.BaseBalance
-	//case req.CurrencyBalance > 0:
-	//	currency = currencies[0]
-	//	balance = req.CurrencyBalance
+	case ValidateNoneZeroBalance(req.Orders):
+		res.Status = response.Fail
+		res.Message = "non zero currency balance required for root order!"
+		return nil
 	default:
 		res.Status = response.Fail
 		res.Message = "baseBalance and currencyBalance are 0"
 		return nil
 	}
 
-	//if err := service.validateBalance(ctx, currency, balance, req.UserID, req.KeyID); err != nil {
-	//	res.Status = response.Fail
-	//	res.Message = err.Error()
-	//	return nil
-	//}
-
+	// fetch all order keys
 	keyIDs := make([]string, 0, len(req.Orders))
 	for _, or := range req.Orders {
 		keyIDs = append(keyIDs, or.KeyID)
 	}
-
-	// validate plan key
 	kys, err := service.fetchKeys(keyIDs)
 	if err != nil {
 		res.Status = response.Fail
@@ -211,7 +198,6 @@ func (service *PlanService) NewPlan(ctx context.Context, req *protoPlan.NewPlanR
 	none := uuid.Nil.String()
 	planID := uuid.New()
 	now := string(pq.FormatTimestamp(time.Now().UTC()))
-	newTriggers := make([]*protoOrder.Trigger, 0, len(req.Orders))
 	newOrders := make([]*protoOrder.Order, 0, len(req.Orders))
 	exchange := ""
 
@@ -219,6 +205,7 @@ func (service *PlanService) NewPlan(ctx context.Context, req *protoPlan.NewPlanR
 		orderStatus := status.Inactive
 		depth := uint32(1)
 
+		// compute the depth for the order
 		if or.ParentOrderID != none {
 			for _, o := range newOrders {
 				if o.OrderID == or.ParentOrderID {
@@ -232,6 +219,7 @@ func (service *PlanService) NewPlan(ctx context.Context, req *protoPlan.NewPlanR
 			orderStatus = status.Active
 		}
 
+		// assign exchange name from key
 		for _, ky := range kys {
 			if ky.KeyID == or.KeyID {
 				exchange = ky.Exchange
@@ -262,10 +250,9 @@ func (service *PlanService) NewPlan(ctx context.Context, req *protoPlan.NewPlanR
 				UpdatedOn:         now,
 			}
 			triggers = append(triggers, &trigger)
-			// append to all new triggers so we can bulk insert
-			newTriggers = append(newTriggers, &trigger)
 		}
 
+		// market name will be Currency-Base: ADA-BTC
 		symbolPair := strings.Split(or.MarketName, "-")
 		symbol := symbolPair[1]
 		if or.Side == side.Sell {
@@ -275,6 +262,7 @@ func (service *PlanService) NewPlan(ctx context.Context, req *protoPlan.NewPlanR
 		order := protoOrder.Order{
 			KeyID:           or.KeyID,
 			OrderID:         or.OrderID,
+			OrderPriority:   or.OrderPriority,
 			OrderType:       or.OrderType,
 			OrderTemplateID: or.OrderTemplateID,
 			ParentOrderID:   or.ParentOrderID,
@@ -294,6 +282,16 @@ func (service *PlanService) NewPlan(ctx context.Context, req *protoPlan.NewPlanR
 		newOrders = append(newOrders, &order)
 	}
 
+	currencySymbol := newOrders[0].CurrencySymbol
+	currencyBalance := newOrders[0].CurrencyBalance
+	keyID := newOrders[0].KeyID
+
+	if err := service.validateBalance(ctx, currencySymbol, currencyBalance, req.UserID, keyID); err != nil {
+		res.Status = response.Fail
+		res.Message = err.Error()
+		return nil
+	}
+
 	pln := protoPlan.Plan{
 		PlanID:                planID.String(),
 		PlanTemplateID:        req.PlanTemplateID,
@@ -309,9 +307,6 @@ func (service *PlanService) NewPlan(ctx context.Context, req *protoPlan.NewPlanR
 		CreatedOn:             now,
 		UpdatedOn:             now,
 	}
-
-	// // insert the exchange name from the key
-	// req.Exchange = ky.Exchange
 
 	error := planRepo.InsertPlan(service.DB, &pln)
 	if error != nil {
