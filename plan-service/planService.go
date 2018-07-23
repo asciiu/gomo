@@ -190,8 +190,8 @@ func (service *PlanService) NewPlan(ctx context.Context, req *protoPlan.NewPlanR
 	}
 	kys, err := service.fetchKeys(keyIDs)
 	if err != nil {
-		res.Status = response.Fail
-		res.Message = err.Error()
+		res.Status = response.Error
+		res.Message = fmt.Sprintf("ecountered error when fetching keys: %s", err.Error())
 		return nil
 	}
 
@@ -308,8 +308,8 @@ func (service *PlanService) NewPlan(ctx context.Context, req *protoPlan.NewPlanR
 	keyID := newOrders[0].KeyID
 
 	if err := service.validateBalance(ctx, currencySymbol, currencyBalance, req.UserID, keyID); err != nil {
-		res.Status = response.Fail
-		res.Message = err.Error()
+		res.Status = response.Error
+		res.Message = fmt.Sprintf("failed to validate the currency balance for %s: %s", currencySymbol, err.Error())
 		return nil
 	}
 

@@ -810,7 +810,7 @@ func InsertPlan(db *sql.DB, newPlan *protoPlan.Plan) error {
 
 	if err := InsertOrders(txn, newPlan.Orders); err != nil {
 		txn.Rollback()
-		return errors.New("bulk insert InsertOrders failed: " + err.Error())
+		return errors.New("insert orders failed: " + err.Error())
 	}
 
 	newTriggers := make([]*protoOrder.Trigger, 0, len(newPlan.Orders))
@@ -822,7 +822,7 @@ func InsertPlan(db *sql.DB, newPlan *protoPlan.Plan) error {
 
 	if err := InsertTriggers(txn, newTriggers); err != nil {
 		txn.Rollback()
-		return errors.New("bulk insert InsertTriggers failed: " + err.Error())
+		return errors.New("bulk triggers failed: " + err.Error())
 	}
 
 	err = txn.Commit()
