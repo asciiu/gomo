@@ -567,6 +567,7 @@ func FindUserPlansWithStatus(db *sql.DB, userID, status string, page, pageSize u
 			last_executed_plan_depth,
 			last_executed_order_id,
 			plan_template_id,
+			close_on_complete,
 			status,
 			created_on,
 			updated_on
@@ -591,6 +592,7 @@ func FindUserPlansWithStatus(db *sql.DB, userID, status string, page, pageSize u
 			&plan.LastExecutedPlanDepth,
 			&plan.LastExecutedOrderID,
 			&planTemplateID,
+			&plan.CloseOnComplete,
 			&plan.Status,
 			&plan.CreatedOn,
 			&plan.UpdatedOn)
@@ -637,6 +639,7 @@ func FindUserExchangePlansWithStatus(db *sql.DB, userID, status, exchange string
 			last_executed_plan_depth,
 			last_executed_order_id,
 			plan_template_id,
+			close_on_complete,
 			status,
 			created_on,
 			updated_on
@@ -661,6 +664,7 @@ func FindUserExchangePlansWithStatus(db *sql.DB, userID, status, exchange string
 			&plan.LastExecutedPlanDepth,
 			&plan.LastExecutedOrderID,
 			&planTemplateID,
+			&plan.CloseOnComplete,
 			&plan.Status,
 			&plan.CreatedOn,
 			&plan.UpdatedOn)
@@ -707,6 +711,7 @@ func FindUserMarketPlansWithStatus(db *sql.DB, userID, status, exchange, marketN
 			last_executed_plan_depth,
 			last_executed_order_id,
 			plan_template_id,
+			close_on_complete,
 			status,
 			created_on,
 			updated_on
@@ -731,6 +736,7 @@ func FindUserMarketPlansWithStatus(db *sql.DB, userID, status, exchange, marketN
 			&plan.LastExecutedPlanDepth,
 			&plan.LastExecutedOrderID,
 			&planTemplateID,
+			&plan.CloseOnComplete,
 			&plan.Status,
 			&plan.CreatedOn,
 			&plan.UpdatedOn)
