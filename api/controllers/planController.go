@@ -92,7 +92,6 @@ type UserPlansData struct {
 type Plan struct {
 	PlanID                string   `json:"planID"`
 	PlanTemplateID        string   `json:"planTemplateID"`
-	KeyID                 string   `json:"keyID"`
 	Exchange              string   `json:"exchange"`
 	ExchangeMarketName    string   `json:"exchangeMarketName"`
 	MarketName            string   `json:"marketName"`
@@ -406,8 +405,8 @@ func (controller *PlanController) HandleListPlans(c echo.Context) error {
 	plans := make([]*Plan, 0)
 	for _, plan := range r.Data.Plans {
 		names := strings.Split(plan.MarketName, "-")
-		baseCurrencySymbol := names[1]
-		baseCurrencyName := controller.currencies[baseCurrencySymbol]
+		//baseCurrencySymbol := names[1]
+		//baseCurrencyName := controller.currencies[baseCurrencySymbol]
 		currencySymbol := names[0]
 		currencyName := controller.currencies[currencySymbol]
 
