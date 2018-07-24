@@ -108,30 +108,30 @@ type Plan struct {
 }
 
 type Order struct {
-	OrderID            string            `name=orderID" json:"orderID,omitempty"`
-	ParentOrderID      string            `name=parentOrderID" json:"parentOrderID,omitempty"`
-	PlanDepth          uint32            `name=planDepth" json:"planDepth,omitempty"`
-	OrderTemplateID    string            `name=orderTemplateID" json:"orderTemplateID,omitempty"`
-	KeyID              string            `name=keyID" json:"keyID,omitempty"`
-	KeyPublic          string            `name=keyPublic" json:"keyPublic,omitempty"`
-	KeyDescription     string            `name=keyDescription" json:"keyDescription,omitempty"`
-	OrderPriority      uint32            `name=orderPriority" json:"orderPriority,omitempty"`
-	OrderType          string            `name=orderType" json:"orderType,omitempty"`
-	Side               string            `name=side" json:"side,omitempty"`
-	LimitPrice         float64           `name=limitPrice" json:"limitPrice,omitempty"`
-	Exchange           string            `name=exchange" json:"exchange,omitempty"`
-	ExchangeMarketName string            `name=exchangeMarketName" json:"exchangeMarketName,omitempty"`
-	MarketName         string            `name=marketName" json:"marketName,omitempty"`
+	OrderID            string            `json:"orderID,omitempty"`
+	ParentOrderID      string            `json:"parentOrderID,omitempty"`
+	PlanDepth          uint32            `json:"planDepth,omitempty"`
+	OrderTemplateID    string            `json:"orderTemplateID,omitempty"`
+	KeyID              string            `json:"keyID,omitempty"`
+	KeyPublic          string            `json:"keyPublic,omitempty"`
+	KeyDescription     string            `json:"keyDescription,omitempty"`
+	OrderPriority      uint32            `json:"orderPriority,omitempty"`
+	OrderType          string            `json:"orderType,omitempty"`
+	Side               string            `json:"side,omitempty"`
+	LimitPrice         float64           `json:"limitPrice,omitempty"`
+	Exchange           string            `json:"exchange,omitempty"`
+	ExchangeMarketName string            `json:"exchangeMarketName,omitempty"`
+	MarketName         string            `json:"marketName,omitempty"`
 	BaseCurrencySymbol string            `json:"baseCurrencySymbol"`
 	BaseCurrencyName   string            `json:"baseCurrencyName"`
-	CurrencySymbol     string            `name=currencySymbol" json:"currencySymbol,omitempty"`
+	CurrencySymbol     string            `json:"currencySymbol,omitempty"`
 	CurrencyName       string            `json:"currencyName"`
-	CurrencyBalance    float64           `name=currencyBalance" json:"currencyBalance,omitempty"`
-	CurrencyTraded     float64           `name=currencyTraded" json:"currencyTraded,omitempty"`
-	Status             string            `name=status" json:"status,omitempty"`
-	CreatedOn          string            `name=createdOn" json:"createdOn,omitempty"`
-	UpdatedOn          string            `name=updatedOn" json:"updatedOn,omitempty"`
-	Triggers           []*orders.Trigger `name=triggers" json:"triggers,omitempty"`
+	CurrencyBalance    float64           `json:"currencyBalance,omitempty"`
+	CurrencyTraded     float64           `json:"currencyTraded,omitempty"`
+	Status             string            `json:"status,omitempty"`
+	CreatedOn          string            `json:"createdOn,omitempty"`
+	UpdatedOn          string            `json:"updatedOn,omitempty"`
+	Triggers           []*orders.Trigger `json:"triggers,omitempty"`
 }
 
 func fail(c echo.Context, msg string) error {
@@ -404,26 +404,16 @@ func (controller *PlanController) HandleListPlans(c echo.Context) error {
 
 	plans := make([]*Plan, 0)
 	for _, plan := range r.Data.Plans {
-		names := strings.Split(plan.MarketName, "-")
-		//baseCurrencySymbol := names[1]
-		//baseCurrencyName := controller.currencies[baseCurrencySymbol]
-		currencySymbol := names[0]
-		currencyName := controller.currencies[currencySymbol]
-
 		pln := Plan{
-			PlanTemplateID: plan.PlanTemplateID,
-			PlanID:         plan.PlanID,
-			//KeyID:                 plan.KeyID,
-			Exchange: plan.Exchange,
-			//ExchangeMarketName:    plan.ExchangeMarketName,
-			MarketName: plan.MarketName,
-			//BaseCurrencySymbol: baseCurrencySymbol,
-			//BaseCurrencyName:   baseCurrencyName,
-			//BaseBalance:           plan.BaseBalance,
-			CurrencySymbol:        currencySymbol,
-			CurrencyName:          currencyName,
+			PlanID:                plan.PlanID,
+			PlanTemplateID:        plan.PlanTemplateID,
+			Exchange:              plan.Exchange,
+			MarketName:            plan.MarketName,
+			CurrencySymbol:        plan.CurrencySymbol,
+			CurrencyName:          controller.currencies[plan.CurrencySymbol],
 			CurrencyBalance:       plan.CurrencyBalance,
 			Status:                plan.Status,
+			CloseOnComplete:       plan.CloseOnComplete,
 			LastExecutedOrderID:   plan.LastExecutedOrderID,
 			LastExecutedPlanDepth: plan.LastExecutedPlanDepth,
 			CreatedOn:             plan.CreatedOn,
