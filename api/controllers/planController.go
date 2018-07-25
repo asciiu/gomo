@@ -2,8 +2,6 @@ package controllers
 
 import (
 	"database/sql"
-	"encoding/json"
-	"io/ioutil"
 	"log"
 	"net/http"
 	"strconv"
@@ -537,7 +535,7 @@ type NewOrderReq struct {
 	LimitPrice float64 `json:"limitPrice"`
 	// Required for the root order of the tree. Child orders for tree may or may not have a currencyBalance.
 	// in: body
-	ActiveCurrencyBalance float64 `json:"currencyBalance"`
+	ActiveCurrencyBalance float64 `json:"activeCurrencyBalance"`
 	// Required these are the conditions that trigger the order to execute: ???
 	// in: body
 	Triggers []*TriggerReq `json:"triggers"`
@@ -702,49 +700,56 @@ func (controller *PlanController) HandlePostPlan(c echo.Context) error {
 
 // swagger:parameters UpdatePlanParams
 type UpdatePlanRequest struct {
-	// Optional change base balance of unexecuted plan
+	// Optional plan template ID.
 	// in: body
-	BaseBalance float64 `json:"baseBalance"`
-	// Optional change currency balance of unexecuted plan
-	// in: body
-	CurrencyBalance float64 `json:"currencyBalance"`
-	// Optional send 'inactive' to pause and 'active' to unpause
+	PlanTemplateID string `json:"planTemplateID"`
+	// Optional only needed to update the status of the plan to 'inactive', 'active'
 	// in: body
 	Status string `json:"status"`
-
-	// Required array of orders. The structure of the order tree will be dictated by the orderNumber and parentOrderNumber properties of each order.
+	// Optional bool to indicate that you want the plan to be 'closed' when the last order for the plan finishes (note: order status fail will also close the plan)
+	// in: body
+	CloseOnComplete bool `json:"closeOnComplete"`
+	// Required array of orders. You cannot update executed orders. The entire inactive chain is assumed to be in this array.
 	// in: body
 	Orders []*UpdateOrderReq `json:"orders"`
 }
 
 type UpdateOrderReq struct {
-	// Optional order ID
+	// Required the client assigns the order ID as a UUID, the format is 8-4-4-4-12.
+	// in: body
 	OrderID string `json:"orderID"`
-	// Required number for order. Order number should begin at 1.
+	// Optional precedence of orders when multiple orders are at the same depth: value of 1 is highest priority. Example: depth 2 buy ADA (1) or buy EOS (2). ADA with higher priority 1 will execute and EOS will not execute.
 	// in: body
-	OrderNumber uint32 `json:"orderNumber"`
-	// Required "buy" or "sell"
-	// in: body
-	Side string `json:"side"`
-	// Optional order template ID.
-	// in: body
-	OrderTemplateID string `json:"orderTemplateID"`
+	OrderPriority uint32 `json:"orderPriority"`
 	// Required order types are "market", "limit", "paper". Orders not within these types will be rejected.
 	// in: body
 	OrderType string `json:"orderType"`
-	// Required for the precent of your plan's balance to use for the order - buy (percent of base balance) - sell (percent of currency balance)
+	// Optional order template ID.
 	// in: body
-	BalancePercent float64 `json:"balancePercent"`
+	OrderTemplateID string `json:"orderTemplateID"`
+	// Required this is our api key ID (string uuid) assigned to the user's exchange key and secret.
+	// in: body
+	KeyID string `json:"keyID"`
+	// Required the root node of the decision tree should be assigned a parentOrderID of "00000000-0000-0000-0000-000000000000" .
+	// in: body
+	ParentOrderID string `json:"parentOrderID"`
+	// Required e.g. ADA-BTC. Base pair should be the suffix.
+	// in: body
+	MarketName string `json:"marketName"`
+	// Required "buy" or "sell"
+	// in: body
+	Side string `json:"side"`
 	// Required for 'limit' orders. Defines limit price.
 	// in: body
 	LimitPrice float64 `json:"limitPrice"`
+	// Required for the root order of the tree. Child orders for tree may or may not have a currencyBalance. Depending on what tool you want to use - scale in, scale out require the quantity that you want scaled. When active currency balance is set to 0 the order's active balance will result from the previous executed order.
+	// in: body
+	ActiveCurrencyBalance float64 `json:"activeCurrencyBalance"`
 	// Required these are the conditions that trigger the order to execute: ???
 	// in: body
 	Triggers []*TriggerReq `json:"triggers"`
-	// Optional the root node of the decision tree will have a parent order number of 0. 0 delineates no parent.
+	// Required action new, update, delete, unchanged
 	// in: body
-	ParentOrderNumber uint32 `json:"parentOrderNumber"`
-	// Required action new, update, delete
 	Action string `json:"action"`
 }
 
@@ -752,12 +757,10 @@ type UpdateOrderReq struct {
 //
 // update a plan (protected)
 //
-// You may update the base balance and currency balance before the plan has executed its first order. Once a
-// plan order has been executed you cannot change the balances for the plan.
-// Other use case for this endpoint is to pause the plan by sending status='inactive'. Use DELETE to abort the plan.
+// You must send in the entire inactive chain that you want updated in a single call. Send in all orders that need to be updated, deleted, or added.
 //
 // responses:
-//  200: responsePlanSuccess "data" will contain plan summary with "status": "success"
+//  200: responsePlanSuccess "data" will contain plan with inactive orders (all orders that have yet to be executed) with "status": "success"
 //  500: responseError the message will state what the internal server error was with "status": "error" "data" will contain order info with "status": "success"
 func (controller *PlanController) HandleUpdatePlan(c echo.Context) error {
 	token := c.Get("user").(*jwt.Token)
@@ -765,79 +768,132 @@ func (controller *PlanController) HandleUpdatePlan(c echo.Context) error {
 	userID := claims["jti"].(string)
 	planID := c.Param("planID")
 
-	requestBody, _ := ioutil.ReadAll(c.Request().Body)
-
-	// there's got to be a better way to do this validation
-	if !strings.Contains(string(requestBody), "baseBalance") ||
-		!strings.Contains(string(requestBody), "currencyBalance") ||
-		!strings.Contains(string(requestBody), "status") {
-		res := &ResponseError{
-			Status:  response.Fail,
-			Message: "baseBalance, currencyBalance, and status are required",
-		}
-		return c.JSON(http.StatusBadRequest, res)
-	}
-
-	var updateParams UpdatePlanRequest
-
-	err := json.Unmarshal([]byte(requestBody), &updateParams)
+	// read strategy from post body
+	updatePlan := new(UpdatePlanRequest)
+	err := c.Bind(&updatePlan)
 	if err != nil {
-		res := &ResponseError{
-			Status:  response.Fail,
-			Message: err.Error(),
+		return fail(c, err.Error())
+	}
+
+	// assemble the order requests
+	updateOrderRequests := make([]*orders.UpdateOrderRequest, 0)
+	for _, order := range updatePlan.Orders {
+
+		or := orders.UpdateOrderRequest{
+			OrderID:               order.OrderID,
+			OrderPriority:         order.OrderPriority,
+			OrderType:             order.OrderType,
+			OrderTemplateID:       order.OrderTemplateID,
+			KeyID:                 order.KeyID,
+			ParentOrderID:         order.ParentOrderID,
+			MarketName:            order.MarketName,
+			Side:                  order.Side,
+			LimitPrice:            order.LimitPrice,
+			ActiveCurrencyBalance: order.ActiveCurrencyBalance,
+			Action:                order.Action}
+
+		for _, cond := range order.Triggers {
+			trigger := orders.TriggerRequest{
+				TriggerTemplateID: cond.TriggerTemplateID,
+				Name:              cond.Name,
+				Code:              cond.Code,
+				Actions:           cond.Actions,
+			}
+			or.Triggers = append(or.Triggers, &trigger)
 		}
 
-		return c.JSON(http.StatusBadRequest, res)
+		updateOrderRequests = append(updateOrderRequests, &or)
 	}
 
-	updateRequest := plans.UpdatePlanRequest{
-		PlanID: planID,
-		UserID: userID,
-		Status: updateParams.Status,
-		//BaseBalance:     updateParams.BaseBalance,
-		//CurrencyBalance: updateParams.CurrencyBalance,
+	updatePlanRequest := plans.UpdatePlanRequest{
+		PlanID:          planID,
+		UserID:          userID,
+		PlanTemplateID:  updatePlan.PlanTemplateID,
+		Status:          updatePlan.Status,
+		CloseOnComplete: updatePlan.CloseOnComplete,
+		Orders:          updateOrderRequests,
 	}
 
-	r, _ := controller.Plans.UpdatePlan(context.Background(), &updateRequest)
+	// add plan returns nil for error
+	r, _ := controller.Plans.UpdatePlan(context.Background(), &updatePlanRequest)
 	if r.Status != response.Success {
 		res := &ResponseError{
 			Status:  r.Status,
 			Message: r.Message,
 		}
 
-		switch {
-		case r.Status == response.Nonentity:
-			return c.JSON(http.StatusNotFound, res)
-		case r.Status == response.Fail:
+		if r.Status == response.Fail {
 			return c.JSON(http.StatusBadRequest, res)
-		default:
+		}
+		if r.Status == response.Error {
 			return c.JSON(http.StatusInternalServerError, res)
 		}
+	}
+
+	newOrders := make([]*Order, 0)
+	for _, o := range r.Data.Plan.Orders {
+		names := strings.Split(o.MarketName, "-")
+		baseCurrencySymbol := names[1]
+		baseCurrencyName := controller.currencies[baseCurrencySymbol]
+		marketCurrencySymbol := names[0]
+		marketCurrencyName := controller.currencies[marketCurrencySymbol]
+		newo := Order{
+			OrderID:               o.OrderID,
+			ParentOrderID:         o.ParentOrderID,
+			PlanDepth:             o.PlanDepth,
+			OrderTemplateID:       o.OrderTemplateID,
+			KeyID:                 o.KeyID,
+			KeyPublic:             o.KeyPublic,
+			KeyDescription:        o.KeyDescription,
+			OrderPriority:         o.OrderPriority,
+			OrderType:             o.OrderType,
+			Side:                  o.Side,
+			LimitPrice:            o.LimitPrice,
+			Exchange:              o.Exchange,
+			ExchangeMarketName:    o.ExchangeMarketName,
+			MarketName:            o.MarketName,
+			BaseCurrencySymbol:    baseCurrencySymbol,
+			BaseCurrencyName:      baseCurrencyName,
+			MarketCurrencySymbol:  marketCurrencySymbol,
+			MarketCurrencyName:    marketCurrencyName,
+			ActiveCurrencySymbol:  o.ActiveCurrencySymbol,
+			ActiveCurrencyName:    controller.currencies[o.ActiveCurrencySymbol],
+			ActiveCurrencyBalance: o.ActiveCurrencyBalance,
+			ActiveCurrencyTraded:  o.ActiveCurrencyTraded,
+			Status:                o.Status,
+			CreatedOn:             o.CreatedOn,
+			UpdatedOn:             o.UpdatedOn,
+			Triggers:              o.Triggers,
+		}
+		newOrders = append(newOrders, &newo)
 	}
 
 	names := strings.Split(r.Data.Plan.MarketName, "-")
 	baseCurrencySymbol := names[1]
 	baseCurrencyName := controller.currencies[baseCurrencySymbol]
-	currencySymbol := names[0]
-	currencyName := controller.currencies[currencySymbol]
-
-	res := &ResponsePlanWithOrderPageSuccess{
+	marketCurrencySymbol := names[0]
+	marketCurrencyName := controller.currencies[marketCurrencySymbol]
+	res := &ResponsePlanSuccess{
 		Status: response.Success,
-		Data: &PlanWithOrderPage{
-			PlanID:         r.Data.Plan.PlanID,
-			PlanTemplateID: r.Data.Plan.PlanTemplateID,
-			//KeyID:              r.Data.Plan.KeyID,
-			Exchange:           r.Data.Plan.Exchange,
-			MarketName:         r.Data.Plan.MarketName,
-			BaseCurrencySymbol: baseCurrencySymbol,
-			BaseCurrencyName:   baseCurrencyName,
-			//BaseBalance:        r.Data.Plan.BaseBalance,
-			CurrencySymbol: currencySymbol,
-			CurrencyName:   currencyName,
-			//CurrencyBalance: r.Data.Plan.CurrencyBalance,
-			Status:    r.Data.Plan.Status,
-			CreatedOn: r.Data.Plan.CreatedOn,
-			UpdatedOn: r.Data.Plan.UpdatedOn,
+		Data: &Plan{
+			PlanID:                r.Data.Plan.PlanID,
+			PlanTemplateID:        r.Data.Plan.PlanTemplateID,
+			Exchange:              r.Data.Plan.Exchange,
+			MarketName:            r.Data.Plan.MarketName,
+			ActiveCurrencySymbol:  r.Data.Plan.ActiveCurrencySymbol,
+			ActiveCurrencyName:    controller.currencies[r.Data.Plan.ActiveCurrencySymbol],
+			ActiveCurrencyBalance: r.Data.Plan.ActiveCurrencyBalance,
+			BaseCurrencySymbol:    baseCurrencySymbol,
+			BaseCurrencyName:      baseCurrencyName,
+			MarketCurrencySymbol:  marketCurrencySymbol,
+			MarketCurrencyName:    marketCurrencyName,
+			Status:                r.Data.Plan.Status,
+			CloseOnComplete:       r.Data.Plan.CloseOnComplete,
+			LastExecutedOrderID:   r.Data.Plan.LastExecutedOrderID,
+			LastExecutedPlanDepth: r.Data.Plan.LastExecutedPlanDepth,
+			Orders:                newOrders,
+			CreatedOn:             r.Data.Plan.CreatedOn,
+			UpdatedOn:             r.Data.Plan.UpdatedOn,
 		},
 	}
 
