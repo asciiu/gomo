@@ -21,7 +21,7 @@ message UpdateOrderRequest {
   string marketName = 7;
   string side = 8;
   double limitPrice = 9;
-  double currencyBalance = 10;
+  double activeCurrencyBalance = 10;
   string action = 11;
   repeated TriggerRequest triggers = 12;
 }
@@ -36,7 +36,7 @@ message NewOrderRequest {
   string marketName = 7;
   string side = 8;
   double limitPrice = 9;
-  double currencyBalance = 10;
+  double activeCurrencyBalance = 10;
   repeated TriggerRequest triggers = 11;
 }
 
@@ -71,9 +71,9 @@ message Order {
   string exchange = 14;
   string exchangeMarketName = 15;
   string marketName = 16;               // e.g. ADA-BTC
-  string currencySymbol = 17;           // e.g. BTC
-  double currencyBalance = 18;          // e.g. 1.0 
-  double currencyTraded = 19;           // e.g. 0.0
+  string activeCurrencySymbol = 17;     // e.g. BTC
+  double activeCurrencyBalance = 18;    // e.g. 1.0 
+  double activeCurrencyTraded = 19;     // e.g. 0.0
   string status = 20;
   string createdOn = 21;
   string updatedOn = 22;

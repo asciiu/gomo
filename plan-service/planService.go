@@ -286,30 +286,30 @@ func (service *PlanService) NewPlan(ctx context.Context, req *protoPlan.NewPlanR
 		}
 
 		order := protoOrder.Order{
-			KeyID:           or.KeyID,
-			OrderID:         or.OrderID,
-			OrderPriority:   or.OrderPriority,
-			OrderType:       or.OrderType,
-			OrderTemplateID: or.OrderTemplateID,
-			ParentOrderID:   or.ParentOrderID,
-			PlanID:          planID.String(),
-			PlanDepth:       depth,
-			Side:            or.Side,
-			LimitPrice:      or.LimitPrice,
-			Exchange:        exchange,
-			MarketName:      or.MarketName,
-			CurrencySymbol:  symbol,
-			CurrencyBalance: or.CurrencyBalance,
-			Status:          orderStatus,
-			Triggers:        triggers,
-			CreatedOn:       now,
-			UpdatedOn:       now,
+			KeyID:                 or.KeyID,
+			OrderID:               or.OrderID,
+			OrderPriority:         or.OrderPriority,
+			OrderType:             or.OrderType,
+			OrderTemplateID:       or.OrderTemplateID,
+			ParentOrderID:         or.ParentOrderID,
+			PlanID:                planID.String(),
+			PlanDepth:             depth,
+			Side:                  or.Side,
+			LimitPrice:            or.LimitPrice,
+			Exchange:              exchange,
+			MarketName:            or.MarketName,
+			ActiveCurrencySymbol:  symbol,
+			ActiveCurrencyBalance: or.ActiveCurrencyBalance,
+			Status:                orderStatus,
+			Triggers:              triggers,
+			CreatedOn:             now,
+			UpdatedOn:             now,
 		}
 		newOrders = append(newOrders, &order)
 	}
 
-	currencySymbol := newOrders[0].CurrencySymbol
-	currencyBalance := newOrders[0].CurrencyBalance
+	currencySymbol := newOrders[0].ActiveCurrencySymbol
+	currencyBalance := newOrders[0].ActiveCurrencyBalance
 	keyID := newOrders[0].KeyID
 
 	if newOrders[0].OrderType != orderConstants.PaperOrder {
@@ -331,8 +331,8 @@ func (service *PlanService) NewPlan(ctx context.Context, req *protoPlan.NewPlanR
 		PlanID:                planID.String(),
 		PlanTemplateID:        req.PlanTemplateID,
 		UserID:                req.UserID,
-		CurrencySymbol:        newOrders[0].CurrencySymbol,
-		CurrencyBalance:       newOrders[0].CurrencyBalance,
+		ActiveCurrencySymbol:  newOrders[0].ActiveCurrencySymbol,
+		ActiveCurrencyBalance: newOrders[0].ActiveCurrencyBalance,
 		Exchange:              newOrders[0].Exchange,
 		MarketName:            newOrders[0].MarketName,
 		LastExecutedPlanDepth: 0,

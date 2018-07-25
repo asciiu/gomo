@@ -60,8 +60,8 @@ message Plan {
   string lastExecutedOrderID = 9;
   string exchange = 10;
   string marketName = 11;
-  string currencySymbol = 12;
-  double currencyBalance = 13;
+  string activeCurrencySymbol = 12;
+  double activeCurrencyBalance = 13;
   string status = 14;
   bool closeOnComplete = 15;
   string createdOn = 16;
