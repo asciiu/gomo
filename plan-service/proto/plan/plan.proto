@@ -69,25 +69,6 @@ message Plan {
   repeated order.Order orders = 18; 
 }
 
-message PlanWithPagedOrders {
-  string planID = 1;
-  string planTemplateID = 2;
-  string userID = 3;
-  string keyID = 4;
-  string key = 5;
-  string keySecret = 6;
-  string keyDescription = 7;
-  string exchange = 8;
-  string exchangeMarketName = 9;
-  string marketName = 10;
-  double baseBalance = 11;
-  double currencyBalance = 12;
-  string status = 13;
-  string createdOn = 14;
-  string updatedOn = 15;
-  order.OrdersPage ordersPage = 16;
-}
-
 message PlanData {
   Plan plan = 1;
 }
@@ -96,12 +77,6 @@ message PlanResponse {
   string status = 1;
   string message = 2;
   PlanData data = 3;
-}
-
-message PlanWithPagedOrdersResponse {
-  string status = 1;
-  string message = 2;
-  PlanWithPagedOrders data = 3;
 }
 
 message PlansPageResponse {
