@@ -102,7 +102,6 @@ type Plan struct {
 	ActiveCurrencySymbol  string   `json:"activeCurrencySymbol"`
 	ActiveCurrencyName    string   `json:"activeCurrencyName"`
 	ActiveCurrencyBalance float64  `json:"activeCurrencyBalance"`
-	ActiveCurrencyTraded  float64  `json:"activeCurrencyTraded"`
 	LastExecutedOrderID   string   `json:"lastExecutedOrderID"`
 	LastExecutedPlanDepth uint32   `json:"lastExecutedPlanDepth"`
 	Status                string   `json:"status"`
