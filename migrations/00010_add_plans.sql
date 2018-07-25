@@ -52,7 +52,7 @@ CREATE TABLE triggers (
   trigger_number integer NOT NULL,      -- defines the order sequence
   trigger_template_id text,             -- optional frontend template used for this trigger 
   name text NOT NULL,
-  code jsonb NOT NULL,
+  code text NOT NULL,
   actions text[] NOT NULL,
   triggered BOOLEAN NOT NULL DEFAULT false,
   created_on TIMESTAMP DEFAULT now(),

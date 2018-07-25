@@ -2,7 +2,6 @@ package sql
 
 import (
 	"database/sql"
-	"encoding/json"
 
 	protoOrder "github.com/asciiu/gomo/plan-service/proto/order"
 	"github.com/lib/pq"
@@ -26,7 +25,6 @@ func InsertTriggers(txn *sql.Tx, triggers []*protoOrder.Trigger) error {
 	}
 
 	for _, trigger := range triggers {
-		jsonCode, err := json.Marshal(trigger.Code)
 		if err != nil {
 			return err
 		}
@@ -36,7 +34,7 @@ func InsertTriggers(txn *sql.Tx, triggers []*protoOrder.Trigger) error {
 			trigger.TriggerNumber,
 			trigger.TriggerTemplateID,
 			trigger.Name,
-			jsonCode,
+			trigger.Code,
 			pq.Array(trigger.Actions),
 			trigger.CreatedOn,
 			trigger.UpdatedOn)

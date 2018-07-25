@@ -368,9 +368,6 @@ func FindActivePlans(db *sql.DB) ([]*protoPlan.Plan, error) {
 		if err := json.Unmarshal([]byte(actionsStr), &trigger.Actions); err != nil {
 			return nil, err
 		}
-		if err := json.Unmarshal([]byte(trigger.Code), &trigger.Code); err != nil {
-			return nil, err
-		}
 
 		// add order to plan if planID matches
 		var foundPlan = false
@@ -531,9 +528,6 @@ func FindPlanOrders(db *sql.DB, req *protoPlan.GetUserPlanRequest) (*protoPlan.P
 		if err := json.Unmarshal([]byte(actionsStr), &trigger.Actions); err != nil {
 			return nil, err
 		}
-		if err := json.Unmarshal([]byte(trigger.Code), &trigger.Code); err != nil {
-			return nil, err
-		}
 		trigger.OrderID = order.OrderID
 
 		// loop through the orders and append trigger to existing
@@ -670,9 +664,6 @@ func FindChildOrders(db *sql.DB, planID, parentOrderID string) (*protoPlan.Plan,
 			trigger.TriggerTemplateID = triggerTemplateID.String
 		}
 		if err := json.Unmarshal([]byte(actionsStr), &trigger.Actions); err != nil {
-			return nil, err
-		}
-		if err := json.Unmarshal([]byte(trigger.Code), &trigger.Code); err != nil {
 			return nil, err
 		}
 		trigger.OrderID = order.OrderID
