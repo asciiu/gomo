@@ -547,6 +547,10 @@ func FindPlanOrders(db *sql.DB, req *protoPlan.GetUserPlanRequest) (*protoPlan.P
 		}
 	}
 
+	if plan.PlanID == "" {
+		return nil, sql.ErrNoRows
+	}
+
 	return &plan, nil
 }
 
@@ -816,7 +820,6 @@ func FindUserExchangePlansWithStatus(db *sql.DB, userID, status, exchange string
 	}
 	err = rows.Err()
 	if err != nil {
-		log.Fatal(err)
 		return nil, err
 	}
 
@@ -888,7 +891,6 @@ func FindUserMarketPlansWithStatus(db *sql.DB, userID, status, exchange, marketN
 	}
 	err = rows.Err()
 	if err != nil {
-		log.Fatal(err)
 		return nil, err
 	}
 
