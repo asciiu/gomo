@@ -414,6 +414,142 @@ func FindActivePlans(db *sql.DB) ([]*protoPlan.Plan, error) {
 	return activePlans, nil
 }
 
+func FindPlanOrders(db *sql.DB, req *protoPlan.GetUserPlanRequest) (*protoPlan.Plan, error) {
+	rows, err := db.Query(`SELECT 
+		p.id as plan_id,
+		p.user_id,
+		p.exchange_name,
+		p.market_name,
+		p.currency_symbol,
+		p.currency_balance,
+		p.last_executed_plan_depth,
+		p.last_executed_order_id,
+		p.status,
+		k.api_key,
+		k.secret,
+		k.description,
+		o.id as order_id,
+		o.parent_order_id,
+		o.plan_id,
+		o.plan_depth,
+		o.exchange_name,
+		o.market_name,
+		o.currency_symbol,
+		o.currency_balance,
+		o.currency_traded,
+		o.order_template_id,
+		o.order_type,
+		o.side,
+		o.limit_price, 
+		o.status,
+		o.created_on,
+		o.updated_on,
+		t.id as trigger_id,
+		t.name,
+		t.code,
+		array_to_json(t.actions),
+		t.trigger_number,
+		t.triggered,
+		t.trigger_template_id,
+		t.created_on,
+		t.updated_on
+		FROM plans p 
+		JOIN orders o on p.id = o.plan_id
+		JOIN triggers t on o.id = t.order_id
+		JOIN user_keys k on o.user_key_id = k.id
+		WHERE p.id = $1 AND o.plan_depth BETWEEN $2 AND $3 
+		ORDER BY o.id, t.trigger_number`, req.PlanID, req.PlanDepth, req.PlanDepth+req.PlanLength)
+
+	if err != nil {
+		return nil, err
+	}
+
+	defer rows.Close()
+
+	var plan protoPlan.Plan
+	var price sql.NullFloat64
+
+	for rows.Next() {
+		var trigger protoOrder.Trigger
+		var triggerTemplateID sql.NullString
+		var actionsStr string
+		var order protoOrder.Order
+
+		err := rows.Scan(
+			&plan.PlanID,
+			&plan.UserID,
+			&plan.Exchange,
+			&plan.MarketName,
+			&plan.CurrencySymbol,
+			&plan.CurrencyBalance,
+			&plan.LastExecutedPlanDepth,
+			&plan.LastExecutedOrderID,
+			&plan.Status,
+			&order.KeyPublic,
+			&order.KeySecret,
+			&order.KeyDescription,
+			&order.OrderID,
+			&order.ParentOrderID,
+			&order.PlanID,
+			&order.PlanDepth,
+			&order.Exchange,
+			&order.MarketName,
+			&order.CurrencySymbol,
+			&order.CurrencyBalance,
+			&order.CurrencyTraded,
+			&order.OrderTemplateID,
+			&order.OrderType,
+			&order.Side,
+			&price,
+			&order.Status,
+			&order.CreatedOn,
+			&order.UpdatedOn,
+			&trigger.TriggerID,
+			&trigger.Name,
+			&trigger.Code,
+			&actionsStr,
+			&trigger.TriggerNumber,
+			&trigger.Triggered,
+			&triggerTemplateID,
+			&trigger.CreatedOn,
+			&trigger.UpdatedOn)
+
+		if err != nil {
+			return nil, err
+		}
+		if price.Valid {
+			order.LimitPrice = price.Float64
+		}
+
+		if triggerTemplateID.Valid {
+			trigger.TriggerTemplateID = triggerTemplateID.String
+		}
+		if err := json.Unmarshal([]byte(actionsStr), &trigger.Actions); err != nil {
+			return nil, err
+		}
+		if err := json.Unmarshal([]byte(trigger.Code), &trigger.Code); err != nil {
+			return nil, err
+		}
+		trigger.OrderID = order.OrderID
+
+		// loop through the orders and append trigger to existing
+		var found = false
+		for _, o := range plan.Orders {
+			if o.OrderID == order.OrderID {
+				o.Triggers = append(o.Triggers, &trigger)
+				found = true
+				break
+			}
+		}
+		if !found {
+			order.Triggers = append(order.Triggers, &trigger)
+			plan.Orders = append(plan.Orders, &order)
+		}
+	}
+
+	return &plan, nil
+}
+
 // Returns plan with specific order that has a verified key.
 func FindChildOrders(db *sql.DB, planID, parentOrderID string) (*protoPlan.Plan, error) {
 	rows, err := db.Query(`SELECT 

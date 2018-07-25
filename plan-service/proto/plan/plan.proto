@@ -6,7 +6,7 @@ import "github.com/asciiu/gomo/plan-service/proto/order/order.proto";
 
 service PlanService {
   rpc NewPlan(NewPlanRequest) returns (PlanResponse) {}
-  rpc GetUserPlan(GetUserPlanRequest) returns (PlanWithPagedOrdersResponse) {}
+  rpc GetUserPlan(GetUserPlanRequest) returns (PlanResponse) {}
   rpc GetUserPlans(GetUserPlansRequest) returns (PlansPageResponse) {}
   rpc DeletePlan(DeletePlanRequest) returns (PlanResponse) {}
   rpc UpdatePlan(UpdatePlanRequest) returns (PlanResponse) {}
@@ -33,8 +33,8 @@ message UpdatePlanRequest {
 message GetUserPlanRequest {
   string planID = 1;
   string userID = 2;
-  uint32 page = 3;
-  uint32 pageSize = 4;
+  uint32 planDepth = 3;
+  uint32 planLength = 4;
 }
 
 message GetUserPlansRequest {

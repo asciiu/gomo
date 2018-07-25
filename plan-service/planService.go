@@ -376,26 +376,23 @@ func (service *PlanService) NewPlan(ctx context.Context, req *protoPlan.NewPlanR
 // GetUserPlan returns error to conform to protobuf def, but the error will always be returned as nil.
 // Can't return an error with a response object - response object is returned as nil when error is non nil.
 // Therefore, return error in response object.
-func (service *PlanService) GetUserPlan(ctx context.Context, req *protoPlan.GetUserPlanRequest, res *protoPlan.PlanWithPagedOrdersResponse) error {
-	// pagedPlan, error := planRepo.FindPlanWithPagedOrders(service.DB, req)
+func (service *PlanService) GetUserPlan(ctx context.Context, req *protoPlan.GetUserPlanRequest, res *protoPlan.PlanResponse) error {
+	plan, error := planRepo.FindPlanOrders(service.DB, req)
 
-	// switch {
-	// case error == sql.ErrNoRows:
+	switch {
+	case error == sql.ErrNoRows:
+		res.Status = response.Nonentity
+		res.Message = fmt.Sprintf("planID not found %s", req.PlanID)
+	case error != nil:
+		res.Status = response.Error
+		res.Message = error.Error()
+	// case plan.totalDepth < req.PlanDepth:
 	// 	res.Status = response.Nonentity
-	// 	res.Message = fmt.Sprintf("planID not found %s", req.PlanID)
-	// case error != nil:
-	// 	res.Status = response.Error
-	// 	res.Message = error.Error()
-	// case pagedPlan.OrdersPage.Total < (req.PageSize * req.Page):
-	// 	res.Status = response.Nonentity
-	// 	res.Message = "page index out of bounds"
-	// case error == nil:
-	// 	res.Status = response.Success
-	// 	res.Data = pagedPlan
-	// default:
-	// 	res.Status = response.Error
-	// 	res.Message = error.Error()
-	// }
+	// 	res.Message = "plan depth out of bounds, max depth is %s"
+	case error == nil:
+		res.Status = response.Success
+		res.Data = &protoPlan.PlanData{Plan: plan}
+	}
 
 	return nil
 }

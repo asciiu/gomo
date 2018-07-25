@@ -263,22 +263,22 @@ func (controller *PlanController) HandleGetPlan(c echo.Context) error {
 	userID := claims["jti"].(string)
 	planID := c.Param("planID")
 
-	pageStr := c.QueryParam("page")
-	pageSizeStr := c.QueryParam("pageSize")
-	// defaults for page and page size here
+	planDepth := c.QueryParam("planDepth")
+	planLength := c.QueryParam("planLength")
+
+	// defaults for plan depth and plan length
 	// ignore the errors and assume the values are int
-	page, _ := strconv.ParseUint(pageStr, 10, 32)
-	pageSize, _ := strconv.ParseUint(pageSizeStr, 10, 32)
-	if pageSize == 0 {
-		pageSize = 20
+	pd, _ := strconv.ParseUint(planDepth, 10, 32)
+	pl, _ := strconv.ParseUint(planLength, 10, 32)
+	if pl == 0 {
+		pl = 10
 	}
 
 	getRequest := plans.GetUserPlanRequest{
-		PlanID:   planID,
-		UserID:   userID,
-		Page:     uint32(page),
-		PageSize: uint32(pageSize),
-	}
+		PlanID:     planID,
+		UserID:     userID,
+		PlanDepth:  uint32(pd),
+		PlanLength: uint32(pl)}
 
 	r, _ := controller.Plans.GetUserPlan(context.Background(), &getRequest)
 	if r.Status != response.Success {
@@ -297,30 +297,59 @@ func (controller *PlanController) HandleGetPlan(c echo.Context) error {
 		}
 	}
 
-	names := strings.Split(r.Data.MarketName, "-")
-	baseCurrencySymbol := names[1]
-	baseCurrencyName := controller.currencies[baseCurrencySymbol]
-	currencySymbol := names[0]
-	currencyName := controller.currencies[currencySymbol]
-
-	res := &ResponsePlanWithOrderPageSuccess{
-		Status: response.Success,
-		Data: &PlanWithOrderPage{
-			PlanID:             r.Data.PlanID,
-			PlanTemplateID:     r.Data.PlanTemplateID,
-			KeyID:              r.Data.KeyID,
-			Exchange:           r.Data.Exchange,
-			MarketName:         r.Data.MarketName,
+	newOrders := make([]*Order, 0)
+	for _, o := range r.Data.Plan.Orders {
+		names := strings.Split(o.MarketName, "-")
+		baseCurrencySymbol := names[1]
+		baseCurrencyName := controller.currencies[baseCurrencySymbol]
+		currencySymbol := names[0]
+		currencyName := controller.currencies[currencySymbol]
+		newo := Order{
+			OrderID:            o.OrderID,
+			ParentOrderID:      o.ParentOrderID,
+			PlanDepth:          o.PlanDepth,
+			OrderTemplateID:    o.OrderTemplateID,
+			KeyID:              o.KeyID,
+			KeyPublic:          o.KeyPublic,
+			KeyDescription:     o.KeyDescription,
+			OrderPriority:      o.OrderPriority,
+			OrderType:          o.OrderType,
+			Side:               o.Side,
+			LimitPrice:         o.LimitPrice,
+			Exchange:           o.Exchange,
+			ExchangeMarketName: o.ExchangeMarketName,
+			MarketName:         o.MarketName,
 			BaseCurrencySymbol: baseCurrencySymbol,
 			BaseCurrencyName:   baseCurrencyName,
-			BaseBalance:        r.Data.BaseBalance,
-			CurrencySymbol:     currencySymbol,
+			CurrencySymbol:     o.CurrencySymbol,
 			CurrencyName:       currencyName,
-			CurrencyBalance:    r.Data.CurrencyBalance,
-			Status:             r.Data.Status,
-			OrdersPage:         r.Data.OrdersPage,
-			CreatedOn:          r.Data.CreatedOn,
-			UpdatedOn:          r.Data.UpdatedOn,
+			CurrencyBalance:    o.CurrencyBalance,
+			CurrencyTraded:     o.CurrencyTraded,
+			Status:             o.Status,
+			CreatedOn:          o.CreatedOn,
+			UpdatedOn:          o.UpdatedOn,
+			Triggers:           o.Triggers,
+		}
+		newOrders = append(newOrders, &newo)
+	}
+
+	res := &ResponsePlanSuccess{
+		Status: response.Success,
+		Data: &Plan{
+			PlanID:                r.Data.Plan.PlanID,
+			PlanTemplateID:        r.Data.Plan.PlanTemplateID,
+			Exchange:              r.Data.Plan.Exchange,
+			MarketName:            r.Data.Plan.MarketName,
+			CurrencySymbol:        r.Data.Plan.CurrencySymbol,
+			CurrencyName:          controller.currencies[r.Data.Plan.CurrencySymbol],
+			CurrencyBalance:       r.Data.Plan.CurrencyBalance,
+			Status:                r.Data.Plan.Status,
+			CloseOnComplete:       r.Data.Plan.CloseOnComplete,
+			LastExecutedOrderID:   r.Data.Plan.LastExecutedOrderID,
+			LastExecutedPlanDepth: r.Data.Plan.LastExecutedPlanDepth,
+			Orders:                newOrders,
+			CreatedOn:             r.Data.Plan.CreatedOn,
+			UpdatedOn:             r.Data.Plan.UpdatedOn,
 		},
 	}
 
