@@ -436,6 +436,7 @@ func FindPlanOrders(db *sql.DB, req *protoPlan.GetUserPlanRequest) (*protoPlan.P
 		o.currency_symbol,
 		o.currency_balance,
 		o.currency_traded,
+		o.order_priority,
 		o.order_template_id,
 		o.order_type,
 		o.side,
@@ -457,7 +458,7 @@ func FindPlanOrders(db *sql.DB, req *protoPlan.GetUserPlanRequest) (*protoPlan.P
 		JOIN triggers t on o.id = t.order_id
 		JOIN user_keys k on o.user_key_id = k.id
 		WHERE p.id = $1 AND o.plan_depth BETWEEN $2 AND $3 
-		ORDER BY o.id, t.trigger_number`, req.PlanID, req.PlanDepth, req.PlanDepth+req.PlanLength)
+		ORDER BY o.plan_depth, o.order_priority, o.id, t.trigger_number`, req.PlanID, req.PlanDepth, req.PlanDepth+req.PlanLength)
 
 	if err != nil {
 		return nil, err
@@ -498,6 +499,7 @@ func FindPlanOrders(db *sql.DB, req *protoPlan.GetUserPlanRequest) (*protoPlan.P
 			&order.CurrencySymbol,
 			&order.CurrencyBalance,
 			&order.CurrencyTraded,
+			&order.OrderPriority,
 			&order.OrderTemplateID,
 			&order.OrderType,
 			&order.Side,
