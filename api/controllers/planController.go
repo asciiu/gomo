@@ -711,46 +711,7 @@ type UpdatePlanRequest struct {
 	CloseOnComplete bool `json:"closeOnComplete"`
 	// Required array of orders. You cannot update executed orders. The entire inactive chain is assumed to be in this array.
 	// in: body
-	Orders []*UpdateOrderReq `json:"orders"`
-}
-
-type UpdateOrderReq struct {
-	// Required the client assigns the order ID as a UUID, the format is 8-4-4-4-12.
-	// in: body
-	OrderID string `json:"orderID"`
-	// Optional precedence of orders when multiple orders are at the same depth: value of 1 is highest priority. Example: depth 2 buy ADA (1) or buy EOS (2). ADA with higher priority 1 will execute and EOS will not execute.
-	// in: body
-	OrderPriority uint32 `json:"orderPriority"`
-	// Required order types are "market", "limit", "paper". Orders not within these types will be rejected.
-	// in: body
-	OrderType string `json:"orderType"`
-	// Optional order template ID.
-	// in: body
-	OrderTemplateID string `json:"orderTemplateID"`
-	// Required this is our api key ID (string uuid) assigned to the user's exchange key and secret.
-	// in: body
-	KeyID string `json:"keyID"`
-	// Required the root node of the decision tree should be assigned a parentOrderID of "00000000-0000-0000-0000-000000000000" .
-	// in: body
-	ParentOrderID string `json:"parentOrderID"`
-	// Required e.g. ADA-BTC. Base pair should be the suffix.
-	// in: body
-	MarketName string `json:"marketName"`
-	// Required "buy" or "sell"
-	// in: body
-	Side string `json:"side"`
-	// Required for 'limit' orders. Defines limit price.
-	// in: body
-	LimitPrice float64 `json:"limitPrice"`
-	// Required for the root order of the tree. Child orders for tree may or may not have a currencyBalance. Depending on what tool you want to use - scale in, scale out require the quantity that you want scaled. When active currency balance is set to 0 the order's active balance will result from the previous executed order.
-	// in: body
-	ActiveCurrencyBalance float64 `json:"activeCurrencyBalance"`
-	// Required these are the conditions that trigger the order to execute: ???
-	// in: body
-	Triggers []*TriggerReq `json:"triggers"`
-	// Required action new, update, delete, unchanged
-	// in: body
-	Action string `json:"action"`
+	Orders []*NewOrderReq `json:"orders"`
 }
 
 // swagger:route PUT /plans/:planID plans UpdatePlanParams
@@ -776,10 +737,10 @@ func (controller *PlanController) HandleUpdatePlan(c echo.Context) error {
 	}
 
 	// assemble the order requests
-	updateOrderRequests := make([]*orders.UpdateOrderRequest, 0)
+	orderRequests := make([]*orders.NewOrderRequest, 0)
 	for _, order := range updatePlan.Orders {
 
-		or := orders.UpdateOrderRequest{
+		or := orders.NewOrderRequest{
 			OrderID:               order.OrderID,
 			OrderPriority:         order.OrderPriority,
 			OrderType:             order.OrderType,
@@ -789,8 +750,7 @@ func (controller *PlanController) HandleUpdatePlan(c echo.Context) error {
 			MarketName:            order.MarketName,
 			Side:                  order.Side,
 			LimitPrice:            order.LimitPrice,
-			ActiveCurrencyBalance: order.ActiveCurrencyBalance,
-			Action:                order.Action}
+			ActiveCurrencyBalance: order.ActiveCurrencyBalance}
 
 		for _, cond := range order.Triggers {
 			trigger := orders.TriggerRequest{
@@ -802,7 +762,7 @@ func (controller *PlanController) HandleUpdatePlan(c echo.Context) error {
 			or.Triggers = append(or.Triggers, &trigger)
 		}
 
-		updateOrderRequests = append(updateOrderRequests, &or)
+		orderRequests = append(orderRequests, &or)
 	}
 
 	updatePlanRequest := plans.UpdatePlanRequest{
@@ -811,7 +771,7 @@ func (controller *PlanController) HandleUpdatePlan(c echo.Context) error {
 		PlanTemplateID:  updatePlan.PlanTemplateID,
 		Status:          updatePlan.Status,
 		CloseOnComplete: updatePlan.CloseOnComplete,
-		Orders:          updateOrderRequests,
+		Orders:          orderRequests,
 	}
 
 	// add plan returns nil for error
