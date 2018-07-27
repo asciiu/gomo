@@ -22,12 +22,12 @@ message NewPlanRequest {
 }
 
 message UpdatePlanRequest {
-  string userID = 1;
-  string planID = 2;
+  string planID = 1;
+  string userID = 2;
   string planTemplateID = 3;
   string status = 4;
   bool closeOnComplete = 5;
-  repeated order.UpdateOrderRequest orders = 6; 
+  repeated order.NewOrderRequest orders = 6; 
 }
 
 

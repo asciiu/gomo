@@ -11,21 +11,6 @@ message TriggerRequest {
   repeated string actions = 5;
 }
 
-message UpdateOrderRequest {
-  string orderID = 1;
-  uint32 orderPriority = 2;
-  string orderType = 3;
-  string orderTemplateID = 4;
-  string keyID = 5;
-  string parentOrderID = 6;
-  string marketName = 7;
-  string side = 8;
-  double limitPrice = 9;
-  double activeCurrencyBalance = 10;
-  string action = 11;
-  repeated TriggerRequest triggers = 12;
-}
-
 message NewOrderRequest {
   string orderID = 1;
   uint32 orderPriority = 2;

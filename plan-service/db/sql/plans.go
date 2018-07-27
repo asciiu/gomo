@@ -19,8 +19,7 @@ func DeletePlan(db *sql.DB, planID string) error {
 	return err
 }
 
-// FindPlanSummary will load the order with the active order number as its only order
-// this is so we can examine the current state of the plan
+// Retrieve all unexecuted orders for the plan including the last executed order.
 func FindPlanWithUnexecutedOrders(db *sql.DB, planID string) (*protoPlan.Plan, error) {
 	rows, err := db.Query(`SELECT 
 		p.id as plan_id,
@@ -897,76 +896,82 @@ func UpdatePlanExecutedOrder(db *sql.DB, planID, orderID string) error {
 	return nil
 }
 
-func UpdatePlanBalances(db *sql.DB, planID string, base, currency float64) error {
-	sqlStatement := `UPDATE plans SET base_balance = $1, currency_balance = $2 WHERE id = $3`
+// func UpdatePlanBalances(db *sql.DB, planID string, base, currency float64) error {
+// 	sqlStatement := `UPDATE plans SET base_balance = $1, currency_balance = $2 WHERE id = $3`
 
-	_, error := db.Exec(sqlStatement, base, currency, planID)
-	return error
+// 	_, error := db.Exec(sqlStatement, base, currency, planID)
+// 	return error
+// }
+
+func UpdatePlanContext(txn *sql.Tx, ctx context.Context, planID, symbol, exchange, marketName string, activeBalance float64) error {
+	_, err := txn.ExecContext(ctx, `
+		UPDATE plans 
+		SET 
+			active_currency_symbol = @symbol,
+			active_currency_balance = @bal,
+			market_name = @market,
+			exchange_name = @exchange
+		WHERE
+			id = @planid`,
+		sql.Named("planid", planID),
+		sql.Named("symbol", symbol),
+		sql.Named("bal", activeBalance),
+		sql.Named("market", marketName),
+		sql.Named("exchange", exchange))
+
+	return err
 }
 
-func UpdatePlanStatus(db *sql.DB, planID, status string) (*protoPlan.Plan, error) {
-	sqlStatement := `UPDATE plans SET status = $1 WHERE id = $2 
-	RETURNING id, plan_template_id, user_id, status`
+func UpdatePlanStatus(txn *sql.Tx, ctx context.Context, planID, status string) error {
+	_, err := txn.ExecContext(ctx, `
+		UPDATE plans 
+		SET 
+			status = @status
+		WHERE
+			id = @planid`,
+		sql.Named("planid", planID),
+		sql.Named("status", status))
 
-	var p protoPlan.Plan
-	err := db.QueryRow(sqlStatement, status, planID).
-		Scan(&p.PlanID,
-			&p.PlanTemplateID,
-			&p.UserID,
-			&p.Status,
-		)
-
-	if err != nil {
-		return nil, err
-	}
-
-	return &p, nil
+	return err
 }
 
-func UpdatePlanBaseBalance(db *sql.DB, planID string, baseBalance float64) (*protoPlan.Plan, error) {
-	sqlStatement := `UPDATE plans SET base_balance = $1 WHERE id = $2 
-	RETURNING 
-	id, 
-	plan_template_id, 
-	user_id, 
-	status`
+func UpdatePlanCloseOnComplete(txn *sql.Tx, ctx context.Context, planID string, closeOnComplete bool) error {
+	_, err := txn.ExecContext(ctx, `
+		UPDATE plans 
+		SET 
+			close_on_complete = @close
+		WHERE
+			id = @planid`,
+		sql.Named("planid", planID),
+		sql.Named("close", closeOnComplete))
 
-	var p protoPlan.Plan
-	err := db.QueryRow(sqlStatement, baseBalance, planID).
-		Scan(&p.PlanID,
-			&p.PlanTemplateID,
-			&p.UserID,
-			&p.Status,
-		)
-
-	if err != nil {
-		return nil, err
-	}
-
-	return &p, nil
+	return err
 }
 
-func UpdatePlanCurrencyBalance(db *sql.DB, planID string, currencyBalance float64) (*protoPlan.Plan, error) {
-	sqlStatement := `UPDATE plans SET currency_balance = $1 WHERE id = $2 
-	RETURNING 
-	id, 
-	plan_template_id, 
-	user_id, 
-	status`
+func UpdatePlanTemplate(txn *sql.Tx, ctx context.Context, planID, template string) error {
+	_, err := txn.ExecContext(ctx, `
+		UPDATE plans 
+		SET 
+			plan_template_id = @t
+		WHERE
+			id = @planid`,
+		sql.Named("planid", planID),
+		sql.Named("t", template))
 
-	var p protoPlan.Plan
-	err := db.QueryRow(sqlStatement, currencyBalance, planID).
-		Scan(&p.PlanID,
-			&p.PlanTemplateID,
-			&p.UserID,
-			&p.Status,
-		)
+	return err
+}
 
-	if err != nil {
-		return nil, err
-	}
+func UpdatePlanTimestamp(txn *sql.Tx, ctx context.Context, planID, timestamp string) error {
+	_, err := txn.ExecContext(ctx, `
+		UPDATE plans 
+		SET 
+			updated_on = @t
+		WHERE
+			id = @planid`,
+		sql.Named("planid", planID),
+		sql.Named("t", timestamp))
 
-	return &p, nil
+	return err
 }
 
 // this should only be called when updating the an executed plan since the state of plan
@@ -981,7 +986,7 @@ func UpdatePlan(txn *sql.Tx, ctx context.Context, plan *protoPlan.Plan) error {
 			active_currency_balance = @bal,
 			plan_template_id = @temp,
 			close_on_complete = @close,
-			status = @status,
+			status = @status
 		WHERE
 			id = @planid`,
 		sql.Named("planid", plan.PlanID),

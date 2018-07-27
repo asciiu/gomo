@@ -5,48 +5,23 @@ import (
 	planConstants "github.com/asciiu/gomo/common/constants/plan"
 	sideConstants "github.com/asciiu/gomo/common/constants/side"
 	protoOrder "github.com/asciiu/gomo/plan-service/proto/order"
+	"github.com/google/uuid"
 )
-
-// MinBalance needed to submit order
-const MinBalance = 0.00001000
-
-const (
-	// order actions here
-	Delete string = "delete"
-	New    string = "new"
-	Update string = "update"
-)
-
-func ValidateOrderAction(ot string) bool {
-	ots := [...]string{
-		Delete,
-		New,
-		Update,
-	}
-
-	for _, ty := range ots {
-		if ty == ot {
-			return true
-		}
-	}
-	return false
-}
 
 // New plans can only have a single order with parent order number == 0.
 func ValidateSingleRootNode(orderRequests []*protoOrder.NewOrderRequest) bool {
 	count := 0
 	for _, o := range orderRequests {
-		if o.ParentOrderID == "00000000-0000-0000-0000-000000000000" || o.ParentOrderID == "" {
+		if o.ParentOrderID == uuid.Nil.String() || o.ParentOrderID == "" {
 			count += 1
 		}
 	}
 	return count == 1
 }
 
-// Validate connected tree when tested from root node
-func ValidateConnectedRoutes(orderRequests []*protoOrder.NewOrderRequest) bool {
-	orderIDs := make([]string, 0, len(orderRequests))
-	orderIDs = append(orderIDs, "00000000-0000-0000-0000-000000000000")
+func ValidateConnectedRoutesFromParent(parentOrderID string, orderRequests []*protoOrder.NewOrderRequest) bool {
+	orderIDs := make([]string, 0, len(orderRequests)+1)
+	orderIDs = append(orderIDs, parentOrderID)
 
 	for _, o := range orderRequests {
 		orderIDs = append(orderIDs, o.OrderID)
@@ -69,24 +44,10 @@ func ValidateConnectedRoutes(orderRequests []*protoOrder.NewOrderRequest) bool {
 	return true
 }
 
-func ValidateConnectedRoutesFromOrderID(parentOrderID string, orderRequests []*protoOrder.UpdateOrderRequest) bool {
-	orderIDs := make([]string, 0, len(orderRequests)+1)
-	orderIDs = append(orderIDs, parentOrderID)
-
+// Child orders must have a valid parent order ID
+func ValidateChildNodes(orderRequests []*protoOrder.NewOrderRequest) bool {
 	for _, o := range orderRequests {
-		orderIDs = append(orderIDs, o.OrderID)
-	}
-
-	for _, o := range orderRequests {
-		found := false
-		// check connected graph
-		for _, n := range orderIDs {
-			if o.ParentOrderID == n {
-				found = true
-				break
-			}
-		}
-		if !found {
+		if o.ParentOrderID == uuid.Nil.String() {
 			return false
 		}
 	}
@@ -122,20 +83,18 @@ func ValidateNoneZeroBalance(orderRequests []*protoOrder.NewOrderRequest) bool {
 // 	}
 // }
 
-func ValidateUniformOrderType(orderRequests []*protoOrder.NewOrderRequest) bool {
-	orderType := orderRequests[0].OrderType
+func ValidatePaperOrders(orderRequests []*protoOrder.NewOrderRequest) bool {
 	for _, o := range orderRequests {
-		if o.OrderType != orderType {
+		if o.OrderType != orderConstants.PaperOrder {
 			return false
 		}
 	}
 	return true
 }
 
-func ValidateUpdateOrderType(orderRequests []*protoOrder.UpdateOrderRequest) bool {
-	orderType := orderRequests[0].OrderType
+func ValidateNotPaperOrders(orderRequests []*protoOrder.NewOrderRequest) bool {
 	for _, o := range orderRequests {
-		if o.OrderType != orderType {
+		if o.OrderType == orderConstants.PaperOrder {
 			return false
 		}
 	}

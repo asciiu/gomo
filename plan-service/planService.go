@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"database/sql"
+	"errors"
 	"fmt"
 	"strings"
 	"time"
@@ -170,7 +171,7 @@ func (service *PlanService) NewPlan(ctx context.Context, req *protoPlan.NewPlanR
 		res.Status = response.Fail
 		res.Message = "multiple root nodes found, only one is allowed"
 		return nil
-	case !ValidateConnectedRoutes(req.Orders):
+	case !ValidateConnectedRoutesFromParent(uuid.Nil.String(), req.Orders):
 		res.Status = response.Fail
 		res.Message = "an order does not have a valid parent_order_id in your request"
 		return nil
@@ -182,9 +183,13 @@ func (service *PlanService) NewPlan(ctx context.Context, req *protoPlan.NewPlanR
 		res.Status = response.Fail
 		res.Message = "non zero currency balance required for root order!"
 		return nil
-	case !ValidateUniformOrderType(req.Orders):
+	case req.Orders[0].OrderType == orderConstants.PaperOrder && !ValidatePaperOrders(req.Orders):
 		res.Status = response.Fail
-		res.Message = "all orders must be of the same order type as root"
+		res.Message = "you cannot add a market/limit order to a plan that will begin with a paper order"
+		return nil
+	case req.Orders[0].OrderType != orderConstants.PaperOrder && !ValidateNotPaperOrders(req.Orders):
+		res.Status = response.Fail
+		res.Message = "you cannot add paper orders to a plan that will begin with a market/limit order"
 		return nil
 	}
 
@@ -492,66 +497,56 @@ func (service *PlanService) DeletePlan(ctx context.Context, req *protoPlan.Delet
 	return nil
 }
 
-func NewOrder(planID, exchange, orderStatus, timestamp string, ur *protoOrder.UpdateOrderRequest) *protoOrder.Order {
-	// collect triggers for this order
-	triggers := make([]*protoOrder.Trigger, 0, len(ur.Triggers))
-	for j, cond := range ur.Triggers {
-		triggerID := uuid.New()
-		trigger := protoOrder.Trigger{
-			TriggerID:         triggerID.String(),
-			TriggerNumber:     uint32(j),
-			TriggerTemplateID: cond.TriggerTemplateID,
-			OrderID:           ur.OrderID,
-			Name:              cond.Name,
-			Code:              cond.Code,
-			Actions:           cond.Actions,
-			Triggered:         false,
-			CreatedOn:         timestamp,
-			UpdatedOn:         timestamp,
-		}
-		triggers = append(triggers, &trigger)
-	}
-
-	// market name will be Currency-Base: ADA-BTC
-	symbolPair := strings.Split(ur.MarketName, "-")
-	symbol := symbolPair[1]
-	if ur.Side == side.Sell {
-		symbol = symbolPair[0]
-	}
-
-	return &protoOrder.Order{
-		KeyID:                 ur.KeyID,
-		OrderID:               ur.OrderID,
-		OrderPriority:         ur.OrderPriority,
-		OrderType:             ur.OrderType,
-		OrderTemplateID:       ur.OrderTemplateID,
-		ParentOrderID:         ur.ParentOrderID,
-		PlanID:                planID,
-		Side:                  ur.Side,
-		LimitPrice:            ur.LimitPrice,
-		Exchange:              exchange,
-		MarketName:            ur.MarketName,
-		ActiveCurrencySymbol:  symbol,
-		ActiveCurrencyBalance: ur.ActiveCurrencyBalance,
-		Status:                orderStatus,
-		Triggers:              triggers,
-		CreatedOn:             timestamp,
-		UpdatedOn:             timestamp,
-	}
-}
-
 // UpdatePlan returns error to conform to protobuf def, but the error will always be returned as nil.
 // Can't return an error with a response object - response object is returned as nil when error is non nil.
 // Therefore, return error in response object.
 func (service *PlanService) UpdatePlan(ctx context.Context, req *protoPlan.UpdatePlanRequest, res *protoPlan.PlanResponse) error {
 
 	// load current state of plan
-	// let's assume the plan has been paused while editing
+	// the plan should be paused long before UpdatePlan is called
+	// this function assumes that the plan is inactive
 	pln, err := planRepo.FindPlanWithUnexecutedOrders(service.DB, req.PlanID)
 
-	pln.PlanTemplateID = req.PlanTemplateID
-	pln.Status = req.Status
-	pln.CloseOnComplete = req.CloseOnComplete
+	switch {
+	case !ValidatePlanInputStatus(req.Status):
+		res.Status = response.Fail
+		res.Message = "plan status must be active, inactive"
+		return nil
+	case !ValidateConnectedRoutesFromParent(pln.LastExecutedOrderID, req.Orders):
+		// all orders must be connected using parentOrderID
+		res.Status = response.Fail
+		res.Message = "this ain't no tree! All orders must be connected using the parentOrderID relationship."
+		return nil
+	case pln.LastExecutedPlanDepth == 0 && !ValidateNoneZeroBalance(req.Orders):
+		// you must commit a balance for the plan in the first order
+		res.Status = response.Fail
+		res.Message = "the activeCurrencyBalance must be set for the root order"
+		return nil
+	case pln.LastExecutedPlanDepth == 0 && !ValidateSingleRootNode(req.Orders):
+		// you can't start a plan without a root order
+		res.Status = response.Fail
+		res.Message = "multiple root nodes found, only one is allowed"
+		return nil
+	case pln.LastExecutedPlanDepth > 0 && !ValidateChildNodes(req.Orders):
+		// update on an executed tree can only append child orders
+		res.Status = response.Fail
+		res.Message = fmt.Sprintf("an order's parentOrderID is %s. This plan already has an executed root order.", uuid.Nil.String())
+		return nil
+	case !ValidateNodeCount(req.Orders):
+		res.Status = response.Fail
+		res.Message = "you can only apply 10 inactive orders at a time!"
+		return nil
+	case pln.LastExecutedPlanDepth == 0 && req.Orders[0].OrderType == orderConstants.PaperOrder && !ValidatePaperOrders(req.Orders):
+		// can't mix real orders to a paper plan
+		res.Status = response.Fail
+		res.Message = "you cannot append market or limit orders to a plan that will begin with a paper order"
+		return nil
+	case pln.LastExecutedPlanDepth > 0 && pln.Orders[0].OrderType != orderConstants.PaperOrder && !ValidateNotPaperOrders(req.Orders):
+		// the executed plan was live - can't add paper orders to this plan
+		res.Status = response.Fail
+		res.Message = "you cannot add paper orders with a plan that has already executed a live order"
+		return nil
+	}
 
 	// fetch all order keys
 	keyIDs := make([]string, 0, len(req.Orders))
@@ -565,121 +560,242 @@ func (service *PlanService) UpdatePlan(ctx context.Context, req *protoPlan.Updat
 		return nil
 	}
 
-	currentTimestamp := string(pq.FormatTimestamp(time.Now().UTC()))
-	newOrders := make([]*protoOrder.Order, 0)
-	allTriggers := make([]*protoOrder.Trigger, 0)
-	deleteOrderIDs := make([]string, 0)
+	none := uuid.Nil.String()
+	now := string(pq.FormatTimestamp(time.Now().UTC()))
+	newOrders := make([]*protoOrder.Order, 0, len(req.Orders))
+	exchange := ""
+
+	for _, or := range req.Orders {
+		orderStatus := status.Inactive
+		depth := pln.LastExecutedPlanDepth + 1
+
+		if or.MarketName == "" || or.KeyID == "" {
+			res.Status = response.Fail
+			res.Message = "missing marketName/keyID for order"
+			return nil
+		}
+		if !strings.Contains(or.MarketName, "-") {
+			res.Status = response.Fail
+			res.Message = "marketName must be currency-base: e.g. ADA-BTC"
+			return nil
+		}
+		if !ValidateOrderType(or.OrderType) {
+			res.Status = response.Fail
+			res.Message = "market, limit, or paper required for order type"
+			return nil
+		}
+		if !ValidateOrderSide(or.Side) {
+			res.Status = response.Fail
+			res.Message = "buy or sell required for order side"
+			return nil
+		}
+
+		// compute the depth for the order
+		if or.ParentOrderID != none {
+			for _, o := range newOrders {
+				if o.OrderID == or.ParentOrderID {
+					depth = o.PlanDepth + 1
+					break
+				}
+			}
+		}
+
+		if or.ParentOrderID == none && req.Status == plan.Active {
+			orderStatus = status.Active
+		}
+
+		// assign exchange name from key
+		for _, ky := range kys {
+			if ky.KeyID == or.KeyID {
+				exchange = ky.Exchange
+
+				if ky.Status != key.Verified {
+					res.Status = response.Fail
+					res.Message = "using an unverified key!"
+					return nil
+
+				}
+			}
+		}
+
+		// collect triggers for this order
+		triggers := make([]*protoOrder.Trigger, 0, len(or.Triggers))
+		for j, cond := range or.Triggers {
+			triggerID := uuid.New()
+			trigger := protoOrder.Trigger{
+				TriggerID:         triggerID.String(),
+				TriggerNumber:     uint32(j),
+				TriggerTemplateID: cond.TriggerTemplateID,
+				OrderID:           or.OrderID,
+				Name:              cond.Name,
+				Code:              cond.Code,
+				Actions:           cond.Actions,
+				Triggered:         false,
+				CreatedOn:         now,
+				UpdatedOn:         now,
+			}
+			triggers = append(triggers, &trigger)
+		}
+
+		// market name will be Currency-Base: ADA-BTC
+		// the currency context of this order is dictated with the side of the
+		// order. If you're buying, you're using the base (BTC). If
+		// you're selling, you're using the currency (ADA).
+		symbolPair := strings.Split(or.MarketName, "-")
+		currencySymbol := symbolPair[1]
+		if or.Side == side.Sell {
+			currencySymbol = symbolPair[0]
+		}
+
+		// validate the balance for non paper orders that are set to use a predefined balance
+		if or.OrderType != orderConstants.PaperOrder && or.ActiveCurrencyBalance > 0 {
+			validBalance, err := service.validateBalance(ctx, currencySymbol, or.ActiveCurrencyBalance, req.UserID, or.KeyID)
+			if err != nil {
+				res.Status = response.Error
+				res.Message = fmt.Sprintf("failed to validate the currency balance for %s: %s", currencySymbol, err.Error())
+				return nil
+			}
+			if !validBalance {
+				res.Status = response.Fail
+				res.Message = fmt.Sprintf("insufficient %s balance, %.8f requested in orderID: %s", currencySymbol, or.ActiveCurrencyBalance, or.OrderID)
+				return nil
+			}
+		}
+
+		order := protoOrder.Order{
+			KeyID:                 or.KeyID,
+			OrderID:               or.OrderID,
+			OrderPriority:         or.OrderPriority,
+			OrderType:             or.OrderType,
+			OrderTemplateID:       or.OrderTemplateID,
+			ParentOrderID:         or.ParentOrderID,
+			PlanID:                req.PlanID,
+			PlanDepth:             depth,
+			Side:                  or.Side,
+			LimitPrice:            or.LimitPrice,
+			Exchange:              exchange,
+			MarketName:            or.MarketName,
+			ActiveCurrencySymbol:  currencySymbol,
+			ActiveCurrencyBalance: or.ActiveCurrencyBalance,
+			Status:                orderStatus,
+			Triggers:              triggers,
+			CreatedOn:             now,
+			UpdatedOn:             now,
+		}
+		newOrders = append(newOrders, &order)
+	}
+
+	// Overwrite the entire unexecuted portion of the plan tree with the new orders above.
+	// Gather all previous orderIDs for this plan so we can drop them from the DB.
+	orderIDs := make([]string, 0)
+	for _, o := range pln.Orders {
+		if o.Status != status.Inactive {
+			orderIDs = append(orderIDs, o.OrderID)
+		}
+	}
+
 	txn, err := service.DB.Begin()
 	if err != nil {
 		return err
 	}
 
-	for _, o := range req.Orders {
+	pln.Orders = newOrders
 
-		switch o.Action {
-		case orderConstants.NewOrder:
-			// assign exchange name from key
-			for _, ky := range kys {
-				if ky.KeyID == o.KeyID {
-					if ky.Status != key.Verified {
-						res.Status = response.Fail
-						res.Message = "using an unverified key!"
-						return nil
+	if pln.LastExecutedPlanDepth == 0 {
+		pln.ActiveCurrencySymbol = newOrders[0].ActiveCurrencySymbol
+		pln.ActiveCurrencyBalance = newOrders[0].ActiveCurrencyBalance
+		pln.Exchange = newOrders[0].Exchange
+		pln.MarketName = newOrders[0].MarketName
+		if err := planRepo.UpdatePlanContext(txn, ctx, pln.PlanID, pln.ActiveCurrencySymbol, pln.Exchange, pln.MarketName, pln.ActiveCurrencyBalance); err != nil {
+			txn.Rollback()
+			res.Status = response.Error
+			res.Message = "error encountered while updating the plan context: " + err.Error()
+			return nil
 
-					}
-					newOrder := NewOrder(
-						pln.PlanID,
-						ky.Exchange,
-						status.Inactive,
-						currentTimestamp,
-						o)
+		}
+	}
+	if pln.Status != req.Status {
+		pln.Status = req.Status
+		if err := planRepo.UpdatePlanStatus(txn, ctx, pln.PlanID, pln.Status); err != nil {
+			txn.Rollback()
+			res.Status = response.Error
+			res.Message = "error encountered while updating the plan status: " + err.Error()
+			return nil
 
-					pln.Orders = append(pln.Orders, newOrder)
+		}
+	}
+	if pln.CloseOnComplete != req.CloseOnComplete {
+		pln.CloseOnComplete = req.CloseOnComplete
+		if err := planRepo.UpdatePlanCloseOnComplete(txn, ctx, pln.PlanID, pln.CloseOnComplete); err != nil {
+			txn.Rollback()
+			res.Status = response.Error
+			res.Message = "error encountered while updating the plan close on complete option: " + err.Error()
+			return nil
 
-					// bulk insert orders
-					newOrders = append(newOrders, newOrder)
+		}
+	}
+	if pln.PlanTemplateID != req.PlanTemplateID {
+		pln.PlanTemplateID = req.PlanTemplateID
+		if err := planRepo.UpdatePlanTemplate(txn, ctx, pln.PlanID, pln.PlanTemplateID); err != nil {
+			txn.Rollback()
+			res.Status = response.Error
+			res.Message = "error encountered while updating the plan template: " + err.Error()
+			return nil
 
-					// bulk insert triggers
-					allTriggers = append(allTriggers, newOrder.Triggers...)
-				}
-			}
-
-		case orderConstants.UpdateOrder:
-			// assign exchange name from key
-			for _, ky := range kys {
-				if ky.KeyID == o.KeyID {
-					if ky.Status != key.Verified {
-						res.Status = response.Fail
-						res.Message = "using an unverified key!"
-						return nil
-
-					}
-
-					for _, uo := range pln.Orders {
-						if uo.OrderID == o.OrderID {
-							symbolPair := strings.Split(o.MarketName, "-")
-							symbol := symbolPair[1]
-							if o.Side == side.Sell {
-								symbol = symbolPair[0]
-							}
-
-							uo.Exchange = ky.Exchange
-							uo.KeyID = ky.KeyID
-							uo.ParentOrderID = o.ParentOrderID
-							//uo.PlanDepth = o.PlanDepth
-							uo.MarketName = o.MarketName
-							uo.ActiveCurrencySymbol = symbol
-							uo.ActiveCurrencyBalance = o.ActiveCurrencyBalance
-							uo.OrderPriority = o.OrderPriority
-							uo.OrderTemplateID = o.OrderTemplateID
-							uo.Side = o.Side
-							uo.LimitPrice = o.LimitPrice
-
-							//planRepo.UpdateOrder(txn, ctx, &uo)
-
-							// assumes the trigger requests were updated also, therefore, drop the previous triggers
-							planRepo.DeleteTriggersWithOrderID(txn, ctx, uo.OrderID)
-
-							triggers := make([]*protoOrder.Trigger, 0, len(o.Triggers))
-							for j, cond := range o.Triggers {
-								triggerID := uuid.New()
-								trigger := protoOrder.Trigger{
-									TriggerID:         triggerID.String(),
-									TriggerNumber:     uint32(j),
-									TriggerTemplateID: cond.TriggerTemplateID,
-									OrderID:           o.OrderID,
-									Name:              cond.Name,
-									Code:              cond.Code,
-									Actions:           cond.Actions,
-									Triggered:         false,
-									CreatedOn:         currentTimestamp,
-									UpdatedOn:         currentTimestamp,
-								}
-								triggers = append(triggers, &trigger)
-							}
-							uo.Triggers = triggers
-							// append to bulk insert of triggers
-							allTriggers = append(allTriggers, triggers...)
-							// update the order
-						}
-					}
-				}
-			}
-		case orderConstants.DeleteOrder:
-			for i, do := range pln.Orders {
-				if do.OrderID == o.OrderID {
-					deleteOrderIDs = append(deleteOrderIDs, o.OrderID)
-					// swap with last order and delete it from the plan
-					pln.Orders[len(pln.Orders)-1], pln.Orders[i] = pln.Orders[i], pln.Orders[len(pln.Orders)-1]
-					pln.Orders = pln.Orders[:len(pln.Orders)-1]
-				}
-			}
 		}
 	}
 
-	planRepo.DeleteOrders(txn, ctx, deleteOrderIDs)
-	planRepo.InsertOrders(txn, newOrders)
-	planRepo.InsertTriggers(txn, allTriggers)
+	// keep the update timestamp of the plan in sync with the orders
+	// no particular reason, but it could be useful in debugging
+	if err := planRepo.UpdatePlanTimestamp(txn, ctx, pln.PlanID, now); err != nil {
+		txn.Rollback()
+		res.Status = response.Error
+		res.Message = "error encountered while updating the plan timestamp: " + err.Error()
+		return nil
+	}
+
+	// drop current orders from the plan
+	if err := planRepo.DeleteOrders(txn, ctx, orderIDs); err != nil {
+		txn.Rollback()
+		res.Status = response.Error
+		res.Message = "error while deleting the previous orders: " + err.Error()
+		return nil
+	}
+
+	// insert the updated version of the plan
+	if err := planRepo.InsertOrders(txn, newOrders); err != nil {
+		txn.Rollback()
+		res.Status = response.Error
+		res.Message = "insert orders error: " + err.Error()
+		return nil
+	}
+
+	newTriggers := make([]*protoOrder.Trigger, 0, len(newOrders))
+	for _, o := range newOrders {
+		for _, t := range o.Triggers {
+			newTriggers = append(newTriggers, t)
+		}
+	}
+
+	if err := planRepo.InsertTriggers(txn, newTriggers); err != nil {
+		txn.Rollback()
+		return errors.New("bulk triggers failed: " + err.Error())
+	}
+
+	// activate first plan order if plan is active
+	if pln.Status == plan.Active {
+		// send key and secret with plan
+		//pln.Key = ky.Key
+		//pln.KeySecret = ky.Secret
+
+		// this is a new plan
+		if err := service.publishPlan(ctx, pln, false); err != nil {
+			// TODO return a warning here
+			res.Status = response.Error
+			res.Message = "could not publish first order: " + err.Error()
+			return nil
+		}
+	}
 
 	res.Status = response.Success
 	res.Data = &protoPlan.PlanData{Plan: pln}
