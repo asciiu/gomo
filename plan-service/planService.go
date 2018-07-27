@@ -370,7 +370,6 @@ func (service *PlanService) NewPlan(ctx context.Context, req *protoPlan.NewPlanR
 	res.Data = &protoPlan.PlanData{Plan: &pln}
 
 	return nil
-
 }
 
 // GetUserPlan returns error to conform to protobuf def, but the error will always be returned as nil.
@@ -493,105 +492,197 @@ func (service *PlanService) DeletePlan(ctx context.Context, req *protoPlan.Delet
 	return nil
 }
 
+func NewOrder(planID, exchange, orderStatus, timestamp string, ur *protoOrder.UpdateOrderRequest) *protoOrder.Order {
+	// collect triggers for this order
+	triggers := make([]*protoOrder.Trigger, 0, len(ur.Triggers))
+	for j, cond := range ur.Triggers {
+		triggerID := uuid.New()
+		trigger := protoOrder.Trigger{
+			TriggerID:         triggerID.String(),
+			TriggerNumber:     uint32(j),
+			TriggerTemplateID: cond.TriggerTemplateID,
+			OrderID:           ur.OrderID,
+			Name:              cond.Name,
+			Code:              cond.Code,
+			Actions:           cond.Actions,
+			Triggered:         false,
+			CreatedOn:         timestamp,
+			UpdatedOn:         timestamp,
+		}
+		triggers = append(triggers, &trigger)
+	}
+
+	// market name will be Currency-Base: ADA-BTC
+	symbolPair := strings.Split(ur.MarketName, "-")
+	symbol := symbolPair[1]
+	if ur.Side == side.Sell {
+		symbol = symbolPair[0]
+	}
+
+	return &protoOrder.Order{
+		KeyID:                 ur.KeyID,
+		OrderID:               ur.OrderID,
+		OrderPriority:         ur.OrderPriority,
+		OrderType:             ur.OrderType,
+		OrderTemplateID:       ur.OrderTemplateID,
+		ParentOrderID:         ur.ParentOrderID,
+		PlanID:                planID,
+		Side:                  ur.Side,
+		LimitPrice:            ur.LimitPrice,
+		Exchange:              exchange,
+		MarketName:            ur.MarketName,
+		ActiveCurrencySymbol:  symbol,
+		ActiveCurrencyBalance: ur.ActiveCurrencyBalance,
+		Status:                orderStatus,
+		Triggers:              triggers,
+		CreatedOn:             timestamp,
+		UpdatedOn:             timestamp,
+	}
+}
+
 // UpdatePlan returns error to conform to protobuf def, but the error will always be returned as nil.
 // Can't return an error with a response object - response object is returned as nil when error is non nil.
 // Therefore, return error in response object.
 func (service *PlanService) UpdatePlan(ctx context.Context, req *protoPlan.UpdatePlanRequest, res *protoPlan.PlanResponse) error {
-	//none := uuid.Nil.String()
 
-	// pln, err := planRepo.FindPlanSummary(service.DB, req.PlanID)
-	// switch {
-	// case err == sql.ErrNoRows:
-	// 	res.Status = response.Nonentity
-	// 	res.Message = fmt.Sprintf("planID not found %s", req.PlanID)
-	// 	return nil
+	// load current state of plan
+	// let's assume the plan has been paused while editing
+	pln, err := planRepo.FindPlanWithUnexecutedOrders(service.DB, req.PlanID)
 
-	// case err != nil:
-	// 	res.Status = response.Error
-	// 	res.Message = err.Error()
-	// 	return nil
-	// default:
+	pln.PlanTemplateID = req.PlanTemplateID
+	pln.Status = req.Status
+	pln.CloseOnComplete = req.CloseOnComplete
 
-	// 	switch {
-	// 	// can't set base balance to 0 if first is buy
-	// 	// case pln.LastExecutedOrderID == none && pln.Orders[0].Side == side.Buy && req.BaseBalance == 0:
-	// 	// 	res.Status = response.Fail
-	// 	// 	res.Message = fmt.Sprintf("base balance for buy plan cannot be 0")
-	// 	// 	return nil
+	// fetch all order keys
+	keyIDs := make([]string, 0, len(req.Orders))
+	for _, or := range req.Orders {
+		keyIDs = append(keyIDs, or.KeyID)
+	}
+	kys, err := service.fetchKeys(keyIDs)
+	if err != nil {
+		res.Status = response.Error
+		res.Message = fmt.Sprintf("ecountered error when fetching keys: %s", err.Error())
+		return nil
+	}
 
-	// 	// //// can't set currency balance to 0 if first is sell
-	// 	// case pln.LastExecutedOrderID == none && pln.Orders[0].Side == side.Sell && req.CurrencyBalance == 0:
-	// 	// 	res.Status = response.Fail
-	// 	// 	res.Message = fmt.Sprintf("currency balance for sell plan cannot be 0")
-	// 	// 	return nil
+	currentTimestamp := string(pq.FormatTimestamp(time.Now().UTC()))
+	newOrders := make([]*protoOrder.Order, 0)
+	allTriggers := make([]*protoOrder.Trigger, 0)
+	deleteOrderIDs := make([]string, 0)
+	txn, err := service.DB.Begin()
+	if err != nil {
+		return err
+	}
 
-	// 	// must specify a valid status if a status was specified
-	// 	case req.Status != "" && !plan.ValidateUpdatePlanStatus(req.Status):
-	// 		res.Status = response.Fail
-	// 		res.Message = fmt.Sprintf("invalid status for update plan")
-	// 		return nil
+	for _, o := range req.Orders {
 
-	// 	// case pln.LastExecutedOrderID == none:
-	// 	// 	if req.CurrencyBalance >= 0 {
-	// 	// 		pln, err = planRepo.UpdatePlanCurrencyBalance(service.DB, req.PlanID, req.CurrencyBalance)
-	// 	// 		if err != nil {
-	// 	// 			res.Status = response.Error
-	// 	// 			res.Message = err.Error()
-	// 	// 			return nil
-	// 	// 		}
-	// 	// 	}
-	// 	// 	if req.BaseBalance >= 0 {
-	// 	// 		pln, err = planRepo.UpdatePlanBaseBalance(service.DB, req.PlanID, req.BaseBalance)
-	// 	// 		if err != nil {
-	// 	// 			res.Status = response.Error
-	// 	// 			res.Message = err.Error()
-	// 	// 			return nil
-	// 	// 		}
-	// 	// 	}
-	// 	default:
-	// 	}
+		switch o.Action {
+		case orderConstants.NewOrder:
+			// assign exchange name from key
+			for _, ky := range kys {
+				if ky.KeyID == o.KeyID {
+					if ky.Status != key.Verified {
+						res.Status = response.Fail
+						res.Message = "using an unverified key!"
+						return nil
 
-	// 	for _, updateOrderReq := range req.Orders {
+					}
+					newOrder := NewOrder(
+						pln.PlanID,
+						ky.Exchange,
+						status.Inactive,
+						currentTimestamp,
+						o)
 
-	// 		switch {
-	// 		case updateOrderReq.Action == New:
-	// 		case updateOrderReq.Action == Update:
-	// 		case updateOrderReq.Action == Delete:
-	// 		}
+					pln.Orders = append(pln.Orders, newOrder)
 
-	// 	}
+					// bulk insert orders
+					newOrders = append(newOrders, newOrder)
 
-	// 	isActive := pln.Status
-	// 	if req.Status != "" {
-	// 		pln, err = planRepo.UpdatePlanStatus(service.DB, req.PlanID, req.Status)
-	// 		if err != nil {
-	// 			res.Status = response.Error
-	// 			res.Message = err.Error()
-	// 			return nil
-	// 		}
-	// 	}
+					// bulk insert triggers
+					allTriggers = append(allTriggers, newOrder.Triggers...)
+				}
+			}
 
-	// 	if isActive == plan.Active {
-	// 		// publish the revised plan to the system
-	// 		if err := service.publishPlan(ctx, pln, true); err != nil {
-	// 			res.Status = response.Error
-	// 			res.Message = err.Error()
-	// 			return nil
-	// 		}
-	// 	}
+		case orderConstants.UpdateOrder:
+			// assign exchange name from key
+			for _, ky := range kys {
+				if ky.KeyID == o.KeyID {
+					if ky.Status != key.Verified {
+						res.Status = response.Fail
+						res.Message = "using an unverified key!"
+						return nil
 
-	// 	if isActive == plan.Inactive && pln.Status == plan.Active {
-	// 		if err := service.publishPlan(ctx, pln, false); err != nil {
-	// 			res.Status = response.Error
-	// 			res.Message = err.Error()
-	// 			return nil
-	// 		}
-	// 	}
+					}
 
-	// 	res.Status = response.Success
-	// 	res.Data = &protoPlan.PlanData{
-	// 		Plan: pln,
-	// 	}
-	// }
+					for _, uo := range pln.Orders {
+						if uo.OrderID == o.OrderID {
+							symbolPair := strings.Split(o.MarketName, "-")
+							symbol := symbolPair[1]
+							if o.Side == side.Sell {
+								symbol = symbolPair[0]
+							}
+
+							uo.Exchange = ky.Exchange
+							uo.KeyID = ky.KeyID
+							uo.ParentOrderID = o.ParentOrderID
+							//uo.PlanDepth = o.PlanDepth
+							uo.MarketName = o.MarketName
+							uo.ActiveCurrencySymbol = symbol
+							uo.ActiveCurrencyBalance = o.ActiveCurrencyBalance
+							uo.OrderPriority = o.OrderPriority
+							uo.OrderTemplateID = o.OrderTemplateID
+							uo.Side = o.Side
+							uo.LimitPrice = o.LimitPrice
+
+							//planRepo.UpdateOrder(txn, ctx, &uo)
+
+							// assumes the trigger requests were updated also, therefore, drop the previous triggers
+							planRepo.DeleteTriggersWithOrderID(txn, ctx, uo.OrderID)
+
+							triggers := make([]*protoOrder.Trigger, 0, len(o.Triggers))
+							for j, cond := range o.Triggers {
+								triggerID := uuid.New()
+								trigger := protoOrder.Trigger{
+									TriggerID:         triggerID.String(),
+									TriggerNumber:     uint32(j),
+									TriggerTemplateID: cond.TriggerTemplateID,
+									OrderID:           o.OrderID,
+									Name:              cond.Name,
+									Code:              cond.Code,
+									Actions:           cond.Actions,
+									Triggered:         false,
+									CreatedOn:         currentTimestamp,
+									UpdatedOn:         currentTimestamp,
+								}
+								triggers = append(triggers, &trigger)
+							}
+							uo.Triggers = triggers
+							// append to bulk insert of triggers
+							allTriggers = append(allTriggers, triggers...)
+							// update the order
+						}
+					}
+				}
+			}
+		case orderConstants.DeleteOrder:
+			for i, do := range pln.Orders {
+				if do.OrderID == o.OrderID {
+					deleteOrderIDs = append(deleteOrderIDs, o.OrderID)
+					// swap with last order and delete it from the plan
+					pln.Orders[len(pln.Orders)-1], pln.Orders[i] = pln.Orders[i], pln.Orders[len(pln.Orders)-1]
+					pln.Orders = pln.Orders[:len(pln.Orders)-1]
+				}
+			}
+		}
+	}
+
+	planRepo.DeleteOrders(txn, ctx, deleteOrderIDs)
+	planRepo.InsertOrders(txn, newOrders)
+	planRepo.InsertTriggers(txn, allTriggers)
+
+	res.Status = response.Success
+	res.Data = &protoPlan.PlanData{Plan: pln}
+
 	return nil
 }

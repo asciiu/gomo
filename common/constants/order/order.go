@@ -6,4 +6,9 @@ const (
 	MarketOrder      string = "market"
 	PaperOrder       string = "paper"
 	UnknownOrderType string = "???"
+
+	NewOrder    string = "new"
+	DeleteOrder string = "delete"
+	UpdateOrder string = "update"
+	Unchanged   string = "unchanged"
 )

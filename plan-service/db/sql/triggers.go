@@ -1,12 +1,23 @@
 package sql
 
 import (
+	"context"
 	"database/sql"
 
 	protoOrder "github.com/asciiu/gomo/plan-service/proto/order"
 	"github.com/lib/pq"
 	"github.com/satori/go.uuid"
 )
+
+func DeleteTriggersWithOrderID(txn *sql.Tx, ctx context.Context, orderID string) error {
+	_, err := txn.ExecContext(ctx, `
+		DELETE FROM triggers 
+		WHERE
+			order_id = id`,
+		sql.Named("id", orderID))
+
+	return err
+}
 
 func InsertTriggers(txn *sql.Tx, triggers []*protoOrder.Trigger) error {
 	stmt, err := txn.Prepare(pq.CopyIn("triggers",

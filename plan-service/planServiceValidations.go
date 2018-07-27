@@ -69,6 +69,31 @@ func ValidateConnectedRoutes(orderRequests []*protoOrder.NewOrderRequest) bool {
 	return true
 }
 
+func ValidateConnectedRoutesFromOrderID(parentOrderID string, orderRequests []*protoOrder.UpdateOrderRequest) bool {
+	orderIDs := make([]string, 0, len(orderRequests)+1)
+	orderIDs = append(orderIDs, parentOrderID)
+
+	for _, o := range orderRequests {
+		orderIDs = append(orderIDs, o.OrderID)
+	}
+
+	for _, o := range orderRequests {
+		found := false
+		// check connected graph
+		for _, n := range orderIDs {
+			if o.ParentOrderID == n {
+				found = true
+				break
+			}
+		}
+		if !found {
+			return false
+		}
+	}
+
+	return true
+}
+
 // limit node count for new requests to 10
 func ValidateNodeCount(orderRequests []*protoOrder.NewOrderRequest) bool {
 	return len(orderRequests) <= 10
@@ -86,7 +111,28 @@ func ValidateNoneZeroBalance(orderRequests []*protoOrder.NewOrderRequest) bool {
 	}
 }
 
+// func ValidateNoneZeroBalance(orderRequests []*protoOrder.UpdateOrderRequest) bool {
+// 	switch {
+// 	case len(orderRequests) == 0:
+// 		return false
+// 	case orderRequests[0].ActiveCurrencyBalance <= 0.0:
+// 		return false
+// 	default:
+// 		return true
+// 	}
+// }
+
 func ValidateUniformOrderType(orderRequests []*protoOrder.NewOrderRequest) bool {
+	orderType := orderRequests[0].OrderType
+	for _, o := range orderRequests {
+		if o.OrderType != orderType {
+			return false
+		}
+	}
+	return true
+}
+
+func ValidateUpdateOrderType(orderRequests []*protoOrder.UpdateOrderRequest) bool {
 	orderType := orderRequests[0].OrderType
 	for _, o := range orderRequests {
 		if o.OrderType != orderType {
