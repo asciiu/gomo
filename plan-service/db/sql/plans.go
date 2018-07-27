@@ -896,6 +896,22 @@ func UpdatePlanExecutedOrder(db *sql.DB, planID, orderID string) error {
 	return nil
 }
 
+func UpdatePlanStatus(db *sql.DB, planID, status string) error {
+	stmt := `
+	UPDATE plans 
+	SET 
+		status = $1 
+	WHERE
+		id = $2`
+
+	_, err := db.Exec(stmt, status, planID)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
 // func UpdatePlanBalances(db *sql.DB, planID string, base, currency float64) error {
 // 	sqlStatement := `UPDATE plans SET base_balance = $1, currency_balance = $2 WHERE id = $3`
 
@@ -903,7 +919,7 @@ func UpdatePlanExecutedOrder(db *sql.DB, planID, orderID string) error {
 // 	return error
 // }
 
-func UpdatePlanContext(txn *sql.Tx, ctx context.Context, planID, symbol, exchange, marketName string, activeBalance float64) error {
+func UpdatePlanContextTxn(txn *sql.Tx, ctx context.Context, planID, symbol, exchange, marketName string, activeBalance float64) error {
 	_, err := txn.ExecContext(ctx, `
 		UPDATE plans 
 		SET 
@@ -922,7 +938,7 @@ func UpdatePlanContext(txn *sql.Tx, ctx context.Context, planID, symbol, exchang
 	return err
 }
 
-func UpdatePlanStatus(txn *sql.Tx, ctx context.Context, planID, status string) error {
+func UpdatePlanStatusTxn(txn *sql.Tx, ctx context.Context, planID, status string) error {
 	_, err := txn.ExecContext(ctx, `
 		UPDATE plans 
 		SET 
@@ -935,7 +951,7 @@ func UpdatePlanStatus(txn *sql.Tx, ctx context.Context, planID, status string) e
 	return err
 }
 
-func UpdatePlanCloseOnComplete(txn *sql.Tx, ctx context.Context, planID string, closeOnComplete bool) error {
+func UpdatePlanCloseOnCompleteTxn(txn *sql.Tx, ctx context.Context, planID string, closeOnComplete bool) error {
 	_, err := txn.ExecContext(ctx, `
 		UPDATE plans 
 		SET 
@@ -948,7 +964,7 @@ func UpdatePlanCloseOnComplete(txn *sql.Tx, ctx context.Context, planID string, 
 	return err
 }
 
-func UpdatePlanTemplate(txn *sql.Tx, ctx context.Context, planID, template string) error {
+func UpdatePlanTemplateTxn(txn *sql.Tx, ctx context.Context, planID, template string) error {
 	_, err := txn.ExecContext(ctx, `
 		UPDATE plans 
 		SET 
@@ -961,7 +977,7 @@ func UpdatePlanTemplate(txn *sql.Tx, ctx context.Context, planID, template strin
 	return err
 }
 
-func UpdatePlanTimestamp(txn *sql.Tx, ctx context.Context, planID, timestamp string) error {
+func UpdatePlanTimestampTxn(txn *sql.Tx, ctx context.Context, planID, timestamp string) error {
 	_, err := txn.ExecContext(ctx, `
 		UPDATE plans 
 		SET 
@@ -976,7 +992,7 @@ func UpdatePlanTimestamp(txn *sql.Tx, ctx context.Context, planID, timestamp str
 
 // this should only be called when updating the an executed plan since the state of plan
 // is dictated by the first root order
-func UpdatePlan(txn *sql.Tx, ctx context.Context, plan *protoPlan.Plan) error {
+func UpdatePlanTxn(txn *sql.Tx, ctx context.Context, plan *protoPlan.Plan) error {
 	_, err := txn.ExecContext(ctx, `
 		UPDATE plans 
 		SET 

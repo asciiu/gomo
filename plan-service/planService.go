@@ -436,64 +436,58 @@ func (service *PlanService) GetUserPlans(ctx context.Context, req *protoPlan.Get
 // We can delete plans that have no filled orders and that are inactive. This becomes an abort plan
 // if the plan status is active.
 func (service *PlanService) DeletePlan(ctx context.Context, req *protoPlan.DeletePlanRequest, res *protoPlan.PlanResponse) error {
-	// pln, err := planRepo.FindPlanSummary(service.DB, req.PlanID)
-	// switch {
-	// case err == sql.ErrNoRows:
-	// 	res.Status = response.Nonentity
-	// 	res.Message = fmt.Sprintf("planID not found %s", req.PlanID)
-	// 	return nil
+	pln, err := planRepo.FindPlanWithUnexecutedOrders(service.DB, req.PlanID)
+	switch {
+	case err == sql.ErrNoRows:
+		res.Status = response.Nonentity
+		res.Message = fmt.Sprintf("planID not found %s", req.PlanID)
+		return nil
 
-	// case err != nil:
-	// 	res.Status = response.Error
-	// 	res.Message = fmt.Sprintf("unexpected error in DeletePlan: %s", err.Error())
-	// 	return nil
+	case err != nil:
+		res.Status = response.Error
+		res.Message = fmt.Sprintf("unexpected error in DeletePlan: %s", err.Error())
+		return nil
 
-	// default:
+	case pln.Status == plan.Active:
+		pln.Status = plan.PendingAbort
+		err = planRepo.UpdatePlanStatus(service.DB, req.PlanID, pln.Status)
 
-	// 	switch {
-	// 	case pln.ActiveOrderNumber == 0 && pln.Status != plan.Active:
-	// 		// we can safely delete this plan from the system because the plan is not in memory
-	// 		// (i.e. not active) and the first order of the plan has not been executed
-	// 		err = planRepo.DeletePlan(service.DB, req.PlanID)
-	// 		if err != nil {
-	// 			res.Status = response.Error
-	// 			res.Message = err.Error()
-	// 		} else {
-	// 			pln.Status = plan.Deleted
-	// 			res.Status = response.Success
-	// 			res.Data = &protoPlan.PlanData{
-	// 				Plan: pln,
-	// 			}
-	// 		}
+		if err != nil {
+			res.Status = response.Error
+			res.Message = err.Error()
+			return nil
+		}
 
-	// 	case pln.Status == plan.Active:
-	// 		pln.Status = plan.PendingAbort
-	// 		_, err = planRepo.UpdatePlanStatus(service.DB, req.PlanID, pln.Status)
-	// 		if err != nil {
-	// 			res.Status = response.Error
-	// 			res.Message = err.Error()
-	// 			return nil
-	// 		}
+		// 		// set the plan order status to aborted we are going to use
+		// 		// this status in the execution engine to remove order from memory
+		// 		pln.Orders[0].Status = status.Aborted
+		// 		// publish this revision to the system so the plan order can be removed from execution
+		// 		if err := service.publishPlan(ctx, pln, true); err != nil {
+		// 			res.Status = response.Error
+		// 			res.Message = fmt.Sprintf("failed to remove active plan order from execution: %s", err.Error())
+		// 			return nil
+		// 		}
 
-	// 		// set the plan order status to aborted we are going to use
-	// 		// this status in the execution engine to remove order from memory
-	// 		pln.Orders[0].Status = status.Aborted
-	// 		// publish this revision to the system so the plan order can be removed from execution
-	// 		if err := service.publishPlan(ctx, pln, true); err != nil {
-	// 			res.Status = response.Error
-	// 			res.Message = fmt.Sprintf("failed to remove active plan order from execution: %s", err.Error())
-	// 			return nil
-	// 		}
+		res.Status = response.Success
+		res.Data = &protoPlan.PlanData{
+			Plan: pln,
+		}
 
-	// 		res.Status = response.Success
-	// 		res.Data = &protoPlan.PlanData{
-	// 			Plan: pln,
-	// 		}
-
-	// 	default:
-	// 		// what's this?
-	// 	}
-	// }
+	case pln.LastExecutedPlanDepth == 0 && pln.Status != plan.Active:
+		// we can safely delete this plan from the system because the plan is not in memory
+		// (i.e. not active) and the first order of the plan has not been executed
+		err = planRepo.DeletePlan(service.DB, req.PlanID)
+		if err != nil {
+			res.Status = response.Error
+			res.Message = err.Error()
+		} else {
+			pln.Status = plan.Deleted
+			res.Status = response.Success
+			res.Data = &protoPlan.PlanData{
+				Plan: pln,
+			}
+		}
+	}
 	return nil
 }
 
@@ -706,7 +700,7 @@ func (service *PlanService) UpdatePlan(ctx context.Context, req *protoPlan.Updat
 		pln.ActiveCurrencyBalance = newOrders[0].ActiveCurrencyBalance
 		pln.Exchange = newOrders[0].Exchange
 		pln.MarketName = newOrders[0].MarketName
-		if err := planRepo.UpdatePlanContext(txn, ctx, pln.PlanID, pln.ActiveCurrencySymbol, pln.Exchange, pln.MarketName, pln.ActiveCurrencyBalance); err != nil {
+		if err := planRepo.UpdatePlanContextTxn(txn, ctx, pln.PlanID, pln.ActiveCurrencySymbol, pln.Exchange, pln.MarketName, pln.ActiveCurrencyBalance); err != nil {
 			txn.Rollback()
 			res.Status = response.Error
 			res.Message = "error encountered while updating the plan context: " + err.Error()
@@ -716,7 +710,7 @@ func (service *PlanService) UpdatePlan(ctx context.Context, req *protoPlan.Updat
 	}
 	if pln.Status != req.Status {
 		pln.Status = req.Status
-		if err := planRepo.UpdatePlanStatus(txn, ctx, pln.PlanID, pln.Status); err != nil {
+		if err := planRepo.UpdatePlanStatusTxn(txn, ctx, pln.PlanID, pln.Status); err != nil {
 			txn.Rollback()
 			res.Status = response.Error
 			res.Message = "error encountered while updating the plan status: " + err.Error()
@@ -726,7 +720,7 @@ func (service *PlanService) UpdatePlan(ctx context.Context, req *protoPlan.Updat
 	}
 	if pln.CloseOnComplete != req.CloseOnComplete {
 		pln.CloseOnComplete = req.CloseOnComplete
-		if err := planRepo.UpdatePlanCloseOnComplete(txn, ctx, pln.PlanID, pln.CloseOnComplete); err != nil {
+		if err := planRepo.UpdatePlanCloseOnCompleteTxn(txn, ctx, pln.PlanID, pln.CloseOnComplete); err != nil {
 			txn.Rollback()
 			res.Status = response.Error
 			res.Message = "error encountered while updating the plan close on complete option: " + err.Error()
@@ -736,7 +730,7 @@ func (service *PlanService) UpdatePlan(ctx context.Context, req *protoPlan.Updat
 	}
 	if pln.PlanTemplateID != req.PlanTemplateID {
 		pln.PlanTemplateID = req.PlanTemplateID
-		if err := planRepo.UpdatePlanTemplate(txn, ctx, pln.PlanID, pln.PlanTemplateID); err != nil {
+		if err := planRepo.UpdatePlanTemplateTxn(txn, ctx, pln.PlanID, pln.PlanTemplateID); err != nil {
 			txn.Rollback()
 			res.Status = response.Error
 			res.Message = "error encountered while updating the plan template: " + err.Error()
@@ -747,7 +741,7 @@ func (service *PlanService) UpdatePlan(ctx context.Context, req *protoPlan.Updat
 
 	// keep the update timestamp of the plan in sync with the orders
 	// no particular reason, but it could be useful in debugging
-	if err := planRepo.UpdatePlanTimestamp(txn, ctx, pln.PlanID, now); err != nil {
+	if err := planRepo.UpdatePlanTimestampTxn(txn, ctx, pln.PlanID, now); err != nil {
 		txn.Rollback()
 		res.Status = response.Error
 		res.Message = "error encountered while updating the plan timestamp: " + err.Error()
