@@ -2,7 +2,6 @@ package sql
 
 import (
 	"database/sql"
-	"log"
 
 	pb "github.com/asciiu/gomo/device-service/proto/device"
 	"github.com/google/uuid"
@@ -42,7 +41,6 @@ func FindDevicesByUserID(db *sql.DB, req *pb.GetUserDevicesRequest) ([]*pb.Devic
 
 	rows, err := db.Query("SELECT id, user_id, device_id, device_type, device_token FROM user_devices WHERE user_id = $1", req.UserID)
 	if err != nil {
-		log.Fatal(err)
 		return nil, err
 	}
 	defer rows.Close()
@@ -50,14 +48,12 @@ func FindDevicesByUserID(db *sql.DB, req *pb.GetUserDevicesRequest) ([]*pb.Devic
 		var d pb.Device
 		err := rows.Scan(&d.DeviceID, &d.UserID, &d.ExternalDeviceID, &d.DeviceType, &d.DeviceToken)
 		if err != nil {
-			log.Fatal(err)
 			return nil, err
 		}
 		results = append(results, &d)
 	}
 	err = rows.Err()
 	if err != nil {
-		log.Fatal(err)
 		return nil, err
 	}
 
