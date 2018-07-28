@@ -16,7 +16,6 @@ import (
 	jwt "github.com/dgrijalva/jwt-go"
 	"github.com/labstack/echo"
 	micro "github.com/micro/go-micro"
-	k8s "github.com/micro/kubernetes/go/micro"
 	"golang.org/x/net/context"
 )
 
@@ -147,11 +146,7 @@ func fail(c echo.Context, msg string) error {
 	return c.JSON(http.StatusBadRequest, res)
 }
 
-func NewPlanController(db *sql.DB) *PlanController {
-	// Create a new service. Optionally include some options here.
-	service := k8s.NewService(micro.Name("apikey.client"))
-	service.Init()
-
+func NewPlanController(db *sql.DB, service micro.Service) *PlanController {
 	controller := PlanController{
 		DB:         db,
 		Plans:      plans.NewPlanServiceClient("plans", service.Client()),

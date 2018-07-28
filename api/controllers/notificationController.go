@@ -8,7 +8,6 @@ import (
 	jwt "github.com/dgrijalva/jwt-go"
 	"github.com/labstack/echo"
 	micro "github.com/micro/go-micro"
-	k8s "github.com/micro/kubernetes/go/micro"
 	"golang.org/x/net/context"
 )
 
@@ -38,10 +37,7 @@ type NotificationController struct {
 	Notifications notifications.NotificationServiceClient
 }
 
-func NewNotificationController() *NotificationController {
-	service := k8s.NewService(micro.Name("notification.client"))
-	service.Init()
-
+func NewNotificationController(service micro.Service) *NotificationController {
 	controller := NotificationController{
 		Notifications: notifications.NewNotificationServiceClient("notifications", service.Client()),
 	}

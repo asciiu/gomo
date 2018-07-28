@@ -47,14 +47,20 @@ func NewRouter(db *sql.DB) *echo.Echo {
 
 	middlewares.SetMainMiddlewares(e)
 
+	service := k8s.NewService(
+		micro.Name("fomo.api"),
+		micro.Version("latest"),
+	)
+	service.Init()
+
 	// controllers
-	keyController := controllers.NewKeyController(db)
-	authController := controllers.NewAuthController(db)
-	balanceController := controllers.NewBalanceController(db)
-	deviceController := controllers.NewDeviceController(db)
-	notificationController := controllers.NewNotificationController()
-	sessionController := controllers.NewSessionController(db)
-	userController := controllers.NewUserController(db)
+	keyController := controllers.NewKeyController(db, service)
+	authController := controllers.NewAuthController(db, service)
+	balanceController := controllers.NewBalanceController(db, service)
+	deviceController := controllers.NewDeviceController(db, service)
+	notificationController := controllers.NewNotificationController(service)
+	sessionController := controllers.NewSessionController(db, service)
+	userController := controllers.NewUserController(db, service)
 	socketController := controllers.NewWebsocketController()
 	searchController := controllers.NewSearchController(db)
 	planController := controllers.NewPlanController(db)
@@ -114,12 +120,6 @@ func NewRouter(db *sql.DB) *echo.Echo {
 
 	// search endpoint
 	protectedApi.GET("/search", searchController.Search)
-
-	service := k8s.NewService(
-		micro.Name("fomo.api"),
-		micro.Version("latest"),
-	)
-	service.Init()
 
 	micro.RegisterSubscriber(msg.TopicAggTrade, service.Server(), func(ctx context.Context, tradeEvents *evt.TradeEvents) error {
 		socketController.CacheEvents(tradeEvents)

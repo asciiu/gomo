@@ -18,7 +18,6 @@ import (
 	gsql "github.com/asciiu/gomo/user-service/db/sql"
 	users "github.com/asciiu/gomo/user-service/proto/user"
 	micro "github.com/micro/go-micro"
-	k8s "github.com/micro/kubernetes/go/micro"
 
 	apiModels "github.com/asciiu/gomo/api/models"
 	models "github.com/asciiu/gomo/user-service/models"
@@ -102,10 +101,7 @@ type ResponseError struct {
 	Message string `json:"message"`
 }
 
-func NewAuthController(db *sql.DB) *AuthController {
-
-	service := k8s.NewService(micro.Name("user.client"))
-	service.Init()
+func NewAuthController(db *sql.DB, service micro.Service) *AuthController {
 
 	controller := AuthController{
 		DB:       db,
@@ -248,7 +244,6 @@ func (controller *AuthController) HandleLogin(c echo.Context) error {
 		return c.JSON(http.StatusUnauthorized, response)
 
 	case err != nil:
-		log.Fatal(err)
 		response := &ResponseError{
 			Status:  "error",
 			Message: err.Error(),
@@ -291,7 +286,10 @@ func (controller *AuthController) HandleLogin(c echo.Context) error {
 				UserID: user.ID,
 			}
 
-			r, _ := controller.Devices.GetUserDevices(context.Background(), &getRequest)
+			r, err := controller.Devices.GetUserDevices(context.Background(), &getRequest)
+			fmt.Printf("%+v\n", r)
+			fmt.Println(err)
+
 			if r.Status != responseConstants.Success {
 				response := &ResponseError{
 					Status:  r.Status,

@@ -9,7 +9,6 @@ import (
 	jwt "github.com/dgrijalva/jwt-go"
 	"github.com/labstack/echo"
 	micro "github.com/micro/go-micro"
-	k8s "github.com/micro/kubernetes/go/micro"
 	"golang.org/x/net/context"
 )
 
@@ -60,11 +59,7 @@ type ApiDevice struct {
 	DeviceToken      string `json:"deviceToken"`
 }
 
-func NewDeviceController(db *sql.DB) *DeviceController {
-	// Create a new service. Optionally include some options here.
-	service := k8s.NewService(micro.Name("device.client"))
-	service.Init()
-
+func NewDeviceController(db *sql.DB, service micro.Service) *DeviceController {
 	controller := DeviceController{
 		DB:      db,
 		Devices: devices.NewDeviceServiceClient("devices", service.Client()),

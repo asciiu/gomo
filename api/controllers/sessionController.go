@@ -9,7 +9,6 @@ import (
 	jwt "github.com/dgrijalva/jwt-go"
 	"github.com/labstack/echo"
 	micro "github.com/micro/go-micro"
-	k8s "github.com/micro/kubernetes/go/micro"
 	"golang.org/x/net/context"
 )
 
@@ -45,10 +44,7 @@ type ResponseSessionSuccess struct {
 	Data   *UserMetaData `json:"data"`
 }
 
-func NewSessionController(db *sql.DB) *SessionController {
-	service := k8s.NewService(micro.Name("user.client"))
-	service.Init()
-
+func NewSessionController(db *sql.DB, service micro.Service) *SessionController {
 	controller := SessionController{
 		DB:    db,
 		Users: users.NewUserServiceClient("users", service.Client()),

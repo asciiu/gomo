@@ -10,7 +10,6 @@ import (
 	jwt "github.com/dgrijalva/jwt-go"
 	"github.com/labstack/echo"
 	micro "github.com/micro/go-micro"
-	k8s "github.com/micro/kubernetes/go/micro"
 	"golang.org/x/net/context"
 )
 
@@ -42,10 +41,7 @@ type UpdateUserRequest struct {
 	Email string `json:"email"`
 }
 
-func NewUserController(db *sql.DB) *UserController {
-	service := k8s.NewService(micro.Name("user.client"))
-	service.Init()
-
+func NewUserController(db *sql.DB, service micro.Service) *UserController {
 	controller := UserController{
 		DB:    db,
 		Users: users.NewUserServiceClient("users", service.Client()),

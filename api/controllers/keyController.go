@@ -10,7 +10,6 @@ import (
 	jwt "github.com/dgrijalva/jwt-go"
 	"github.com/labstack/echo"
 	micro "github.com/micro/go-micro"
-	k8s "github.com/micro/kubernetes/go/micro"
 	"golang.org/x/net/context"
 )
 
@@ -72,11 +71,7 @@ type Key struct {
 	Status      string `json:"status"`
 }
 
-func NewKeyController(db *sql.DB) *KeyController {
-	// Create a new service. Optionally include some options here.
-	service := k8s.NewService(micro.Name("key.client"))
-	service.Init()
-
+func NewKeyController(db *sql.DB, service micro.Service) *KeyController {
 	controller := KeyController{
 		DB:   db,
 		Keys: keys.NewKeyServiceClient("keys", service.Client()),

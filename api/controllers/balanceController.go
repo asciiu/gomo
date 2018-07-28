@@ -8,7 +8,6 @@ import (
 	jwt "github.com/dgrijalva/jwt-go"
 	"github.com/labstack/echo"
 	micro "github.com/micro/go-micro"
-	k8s "github.com/micro/kubernetes/go/micro"
 	"golang.org/x/net/context"
 )
 
@@ -49,10 +48,7 @@ type BalanceController struct {
 	Balances balances.BalanceServiceClient
 }
 
-func NewBalanceController(db *sql.DB) *BalanceController {
-	service := k8s.NewService(micro.Name("balance.client"))
-	service.Init()
-
+func NewBalanceController(db *sql.DB, service micro.Service) *BalanceController {
 	controller := BalanceController{
 		DB:       db,
 		Balances: balances.NewBalanceServiceClient("balances", service.Client()),
