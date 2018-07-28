@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 
+	responseConstants "github.com/asciiu/gomo/common/constants/response"
 	deviceRepo "github.com/asciiu/gomo/device-service/db/sql"
 	devices "github.com/asciiu/gomo/device-service/proto/device"
 )
@@ -30,7 +31,7 @@ func (service *DeviceService) AddDevice(ctx context.Context, req *devices.AddDev
 		di, error := deviceRepo.InsertDevice(service.DB, req)
 		switch {
 		case error == nil:
-			res.Status = "success"
+			res.Status = responseConstants.Success
 			res.Data = &devices.UserDeviceData{
 				Device: &devices.Device{
 					DeviceID:         di.DeviceID,
@@ -41,7 +42,7 @@ func (service *DeviceService) AddDevice(ctx context.Context, req *devices.AddDev
 				},
 			}
 		default:
-			res.Status = "error"
+			res.Status = responseConstants.Error
 			res.Message = error.Error()
 		}
 
@@ -57,7 +58,7 @@ func (service *DeviceService) AddDevice(ctx context.Context, req *devices.AddDev
 		du, error := deviceRepo.UpdateDevice(service.DB, &ureq)
 		switch {
 		case error == nil:
-			res.Status = "success"
+			res.Status = responseConstants.Success
 			res.Data = &devices.UserDeviceData{
 				Device: &devices.Device{
 					DeviceID:         du.DeviceID,
@@ -83,7 +84,7 @@ func (service *DeviceService) GetUserDevice(ctx context.Context, req *devices.Ge
 	device, error := deviceRepo.FindDeviceByDeviceID(service.DB, req)
 
 	if error == nil {
-		res.Status = "success"
+		res.Status = responseConstants.Success
 		res.Data = &devices.UserDeviceData{
 			Device: &devices.Device{
 				DeviceID:         device.DeviceID,
@@ -94,7 +95,7 @@ func (service *DeviceService) GetUserDevice(ctx context.Context, req *devices.Ge
 			},
 		}
 	} else {
-		res.Status = "error"
+		res.Status = responseConstants.Error
 		res.Message = error.Error()
 	}
 
@@ -108,12 +109,12 @@ func (service *DeviceService) GetUserDevices(ctx context.Context, req *devices.G
 	dvs, error := deviceRepo.FindDevicesByUserID(service.DB, req)
 
 	if error == nil {
-		res.Status = "success"
+		res.Status = responseConstants.Success
 		res.Data = &devices.UserDevicesData{
 			Devices: dvs,
 		}
 	} else {
-		res.Status = "error"
+		res.Status = responseConstants.Error
 		res.Message = error.Error()
 	}
 
@@ -126,9 +127,9 @@ func (service *DeviceService) GetUserDevices(ctx context.Context, req *devices.G
 func (service *DeviceService) RemoveDevice(ctx context.Context, req *devices.RemoveDeviceRequest, res *devices.DeviceResponse) error {
 	error := deviceRepo.DeleteDevice(service.DB, req.DeviceID)
 	if error == nil {
-		res.Status = "success"
+		res.Status = responseConstants.Success
 	} else {
-		res.Status = "error"
+		res.Status = responseConstants.Error
 		res.Message = error.Error()
 	}
 	return nil
@@ -140,7 +141,7 @@ func (service *DeviceService) RemoveDevice(ctx context.Context, req *devices.Rem
 func (service *DeviceService) UpdateDevice(ctx context.Context, req *devices.UpdateDeviceRequest, res *devices.DeviceResponse) error {
 	device, error := deviceRepo.UpdateDevice(service.DB, req)
 	if error == nil {
-		res.Status = "success"
+		res.Status = responseConstants.Success
 		res.Data = &devices.UserDeviceData{
 			Device: &devices.Device{
 				DeviceID:         device.DeviceID,
@@ -151,7 +152,7 @@ func (service *DeviceService) UpdateDevice(ctx context.Context, req *devices.Upd
 			},
 		}
 	} else {
-		res.Status = "error"
+		res.Status = responseConstants.Error
 		res.Message = error.Error()
 	}
 
