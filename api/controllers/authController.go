@@ -12,6 +12,7 @@ import (
 
 	asql "github.com/asciiu/gomo/api/db/sql"
 	balances "github.com/asciiu/gomo/balance-service/proto/balance"
+	responseConstants "github.com/asciiu/gomo/common/constants/response"
 	devices "github.com/asciiu/gomo/device-service/proto/device"
 	keys "github.com/asciiu/gomo/key-service/proto/key"
 	gsql "github.com/asciiu/gomo/user-service/db/sql"
@@ -291,7 +292,7 @@ func (controller *AuthController) HandleLogin(c echo.Context) error {
 			}
 
 			r, _ := controller.Devices.GetUserDevices(context.Background(), &getRequest)
-			if r.Status != "success" {
+			if r.Status != responseConstants.Success {
 				response := &ResponseError{
 					Status:  r.Status,
 					Message: r.Message,
