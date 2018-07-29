@@ -106,16 +106,16 @@ func (service *DeviceService) GetUserDevice(ctx context.Context, req *devices.Ge
 // Can't return an error with a response object - response object is returned as nil when error is non nil.
 // Therefore, return error in response object.
 func (service *DeviceService) GetUserDevices(ctx context.Context, req *devices.GetUserDevicesRequest, res *devices.DeviceListResponse) error {
-	dvs, error := deviceRepo.FindDevicesByUserID(service.DB, req)
+	dvs, err := deviceRepo.FindDevicesByUserID(service.DB, req)
 
-	if error == nil {
+	if err == nil {
 		res.Status = responseConstants.Success
 		res.Data = &devices.UserDevicesData{
 			Devices: dvs,
 		}
 	} else {
 		res.Status = responseConstants.Error
-		res.Message = error.Error()
+		res.Message = err.Error()
 	}
 
 	return nil

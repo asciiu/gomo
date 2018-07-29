@@ -44,16 +44,16 @@ func FindDevicesByUserID(db *sql.DB, req *pb.GetUserDevicesRequest) ([]*pb.Devic
 		return nil, err
 	}
 	defer rows.Close()
+
 	for rows.Next() {
 		var d pb.Device
-		err := rows.Scan(&d.DeviceID, &d.UserID, &d.ExternalDeviceID, &d.DeviceType, &d.DeviceToken)
-		if err != nil {
+		if err := rows.Scan(&d.DeviceID, &d.UserID, &d.ExternalDeviceID, &d.DeviceType, &d.DeviceToken); err != nil {
 			return nil, err
 		}
 		results = append(results, &d)
 	}
-	err = rows.Err()
-	if err != nil {
+
+	if err := rows.Err(); err != nil {
 		return nil, err
 	}
 
