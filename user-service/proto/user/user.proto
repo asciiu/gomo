@@ -1,7 +1,5 @@
 syntax = "proto3";
 
-package fomo.users; 
-
 service UserService {
   rpc ChangePassword(ChangePasswordRequest) returns (Response) {}
   rpc CreateUser(CreateUserRequest) returns (UserResponse) {}

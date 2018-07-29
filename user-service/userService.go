@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"strings"
 
+	responseConstants "github.com/asciiu/gomo/common/constants/response"
 	userRepo "github.com/asciiu/gomo/user-service/db/sql"
 	"github.com/asciiu/gomo/user-service/models"
 	pb "github.com/asciiu/gomo/user-service/proto/user"
@@ -25,7 +26,7 @@ func (service *UserService) CreateUser(ctx context.Context, req *pb.CreateUserRe
 
 	switch {
 	case error == nil:
-		res.Status = "success"
+		res.Status = responseConstants.Success
 		res.Data = &pb.UserData{
 			User: &pb.User{
 				UserID: user.ID,
@@ -37,12 +38,12 @@ func (service *UserService) CreateUser(ctx context.Context, req *pb.CreateUserRe
 		return nil
 
 	case strings.Contains(error.Error(), "violates unique constraint \"users_email_key\""):
-		res.Status = "fail"
+		res.Status = responseConstants.Fail
 		res.Message = "email already exists"
 		return nil
 
 	default:
-		res.Status = "error"
+		res.Status = responseConstants.Error
 		res.Message = error.Error()
 		return nil
 	}
@@ -60,9 +61,9 @@ func (service *UserService) DeleteUser(ctx context.Context, req *pb.DeleteUserRe
 	}
 
 	if err == nil {
-		res.Status = "success"
+		res.Status = responseConstants.Success
 	} else {
-		res.Status = "error"
+		res.Status = responseConstants.Error
 		res.Message = err.Error()
 	}
 	return nil
@@ -82,23 +83,23 @@ func (service *UserService) ChangePassword(ctx context.Context, req *pb.ChangePa
 
 			err := userRepo.UpdateUserPassword(service.DB, req.UserID, models.HashAndSalt([]byte(req.NewPassword)))
 			if err != nil {
-				res.Status = "error"
+				res.Status = responseConstants.Error
 				res.Message = err.Error()
 			} else {
-				res.Status = "success"
+				res.Status = responseConstants.Success
 			}
 
 		} else {
-			res.Status = "fail"
+			res.Status = responseConstants.Fail
 			res.Message = "current password mismatch"
 		}
 
 	case strings.Contains(error.Error(), "no rows in result set"):
-		res.Status = "fail"
+		res.Status = responseConstants.Fail
 		res.Message = fmt.Sprintf("user id not found: %s", req.UserID)
 
 	default:
-		res.Status = "error"
+		res.Status = responseConstants.Error
 		res.Message = error.Error()
 	}
 
@@ -111,10 +112,10 @@ func (service *UserService) ChangePassword(ctx context.Context, req *pb.ChangePa
 func (service *UserService) GetUserInfo(ctx context.Context, req *pb.GetUserInfoRequest, res *pb.UserResponse) error {
 	user, error := userRepo.FindUserByID(service.DB, req.UserID)
 	if error != nil {
-		res.Status = "fail"
+		res.Status = responseConstants.Error
 		res.Message = error.Error()
 	} else if error == nil {
-		res.Status = "success"
+		res.Status = responseConstants.Success
 		res.Data = &pb.UserData{
 			User: &pb.User{
 				UserID: user.ID,
@@ -141,10 +142,10 @@ func (service *UserService) UpdateUser(ctx context.Context, req *pb.UpdateUserRe
 
 		user, error = userRepo.UpdateUserInfo(service.DB, user)
 		if error != nil {
-			res.Status = "error"
+			res.Status = responseConstants.Error
 			res.Message = error.Error()
 		} else {
-			res.Status = "success"
+			res.Status = responseConstants.Success
 			res.Data = &pb.UserData{
 				User: &pb.User{
 					UserID: user.ID,
@@ -156,11 +157,11 @@ func (service *UserService) UpdateUser(ctx context.Context, req *pb.UpdateUserRe
 		}
 
 	case strings.Contains(error.Error(), "no rows in result set"):
-		res.Status = "fail"
+		res.Status = responseConstants.Fail
 		res.Message = "user does not exist by that id"
 
 	default:
-		res.Status = "error"
+		res.Status = responseConstants.Error
 		res.Message = error.Error()
 	}
 
