@@ -6,7 +6,7 @@ import (
 	"os"
 
 	"github.com/asciiu/gomo/common/db"
-	pb "github.com/asciiu/gomo/device-service/proto/device"
+	deviceProto "github.com/asciiu/gomo/device-service/proto/device"
 	micro "github.com/micro/go-micro"
 	k8s "github.com/micro/kubernetes/go/micro"
 )
@@ -33,14 +33,14 @@ func NewDeviceService(name, dbUrl string) micro.Service {
 	// Register our service with the gRPC server, this will tie our
 	// implementation into the auto-generated interface code for our
 	// protobuf definition.
-	pb.RegisterDeviceServiceHandler(srv.Server(), &DeviceService{gomoDB})
+	deviceProto.RegisterDeviceServiceHandler(srv.Server(), &DeviceService{gomoDB})
 
 	return srv
 }
 
 func main() {
 	dbUrl := fmt.Sprintf("%s", os.Getenv("DB_URL"))
-	srv := NewDeviceService("fomo.devices", dbUrl)
+	srv := NewDeviceService("devices", dbUrl)
 
 	if err := srv.Run(); err != nil {
 		log.Fatal(err)
