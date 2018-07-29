@@ -1,7 +1,5 @@
 syntax = "proto3";
 
-package fomo.devices; 
-
 service DeviceService {
   rpc AddDevice(AddDeviceRequest) returns (DeviceResponse) {}
   rpc GetUserDevice(GetUserDeviceRequest) returns (DeviceResponse) {}

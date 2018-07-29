@@ -1,4 +1,4 @@
-apiVersion: apps/v1beta1
+apiVersion: extensions/v1beta1
 kind: Deployment
 metadata:
   name: devices 
@@ -19,14 +19,15 @@ spec:
           command: [
             "./device-service",
             "--selector=static",
-            "--server_address=:8080"
+            "--server_address=0.0.0.0:8080",
+            "--broker_address=0.0.0.0:10001"
           ]
           envFrom:
           - configMapRef:
               name: fomo-config
           env:
           - name: UPDATED_AT
-            value: "Sat Jul 28 18:59:51 MDT 2018" 
+            value: "Sun Jul 29 15:27:00 MDT 2018" 
           ports:
           - containerPort: 8080
             name: devices-port
