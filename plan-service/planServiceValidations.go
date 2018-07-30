@@ -1,6 +1,8 @@
 package main
 
 import (
+	"fmt"
+
 	orderConstants "github.com/asciiu/gomo/common/constants/order"
 	planConstants "github.com/asciiu/gomo/common/constants/plan"
 	sideConstants "github.com/asciiu/gomo/common/constants/side"
@@ -63,6 +65,8 @@ func ValidateNodeCount(orderRequests []*protoOrder.NewOrderRequest) bool {
 // validate non zero currency balance
 func ValidateNoneZeroBalance(orderRequests []*protoOrder.NewOrderRequest) bool {
 	for _, o := range orderRequests {
+		fmt.Println(uuid.Nil.String())
+		fmt.Printf("%+v\n", o)
 		if o.ParentOrderID == uuid.Nil.String() && o.ActiveCurrencyBalance > 0 {
 			return true
 		}

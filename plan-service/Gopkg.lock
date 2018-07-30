@@ -18,7 +18,7 @@
     "key-service/proto/key",
     "notification-service/proto"
   ]
-  revision = "1e90129a87349803d910b2b6e176c4c2044a6866"
+  revision = "239ceb7419f4e2468cc10f7227a0550385979b55"
 
 [[projects]]
   name = "github.com/go-log/log"
@@ -128,8 +128,8 @@
     "transport/codec",
     "transport/http"
   ]
-  revision = "88505388c1d32136d5203876218f5f54d53a0e46"
-  version = "v0.10.0"
+  revision = "356cf82af5becf5f64c3c0a1a2ded65f8fd0c366"
+  version = "v0.9.0"
 
 [[projects]]
   name = "github.com/micro/go-plugins"
