@@ -1154,7 +1154,7 @@
     },
     "BalanceServiceClient": {
       "type": "object",
-      "x-go-package": "github.com/asciiu/gomo/balance-service/proto/balance"
+      "x-go-package": "github.com/asciiu/gomo/api/vendor/github.com/asciiu/gomo/balance-service/proto/balance"
     },
     "DB": {
       "description": "The sql package creates and frees connections automatically; it\nalso maintains a free pool of idle connections. If the database has\na concept of per-connection state, such state can only be reliably\nobserved within a transaction. Once DB.Begin is called, the\nreturned Tx is bound to a single connection. Once Commit or\nRollback is called on the transaction, that transaction's\nconnection is returned to DB's idle connection pool. The pool size\ncan be controlled with SetMaxIdleConns.",
@@ -1219,7 +1219,7 @@
     },
     "DeviceServiceClient": {
       "type": "object",
-      "x-go-package": "github.com/asciiu/gomo/device-service/proto/device"
+      "x-go-package": "github.com/asciiu/gomo/api/vendor/github.com/asciiu/gomo/device-service/proto/device"
     },
     "GetPlanParams": {
       "description": "required for swaggered, otherwise never used",
@@ -1396,7 +1396,7 @@
     },
     "KeyServiceClient": {
       "type": "object",
-      "x-go-package": "github.com/asciiu/gomo/key-service/proto/key"
+      "x-go-package": "github.com/asciiu/gomo/api/vendor/github.com/asciiu/gomo/key-service/proto/key"
     },
     "LoginRequest": {
       "type": "object",
@@ -1500,6 +1500,11 @@
           "format": "double",
           "x-go-name": "ActiveCurrencyBalance"
         },
+        "grupo": {
+          "description": "Optional group of order\nin: body",
+          "type": "string",
+          "x-go-name": "Grupo"
+        },
         "keyID": {
           "description": "Required this is our api key ID (string uuid) assigned to the user's exchange key and secret.\nin: body",
           "type": "string",
@@ -1595,7 +1600,7 @@
           "x-go-name": "UserID"
         }
       },
-      "x-go-package": "github.com/asciiu/gomo/notification-service/proto"
+      "x-go-package": "github.com/asciiu/gomo/api/vendor/github.com/asciiu/gomo/notification-service/proto"
     },
     "NotificationController": {
       "type": "object",
@@ -1608,7 +1613,7 @@
     },
     "NotificationServiceClient": {
       "type": "object",
-      "x-go-package": "github.com/asciiu/gomo/notification-service/proto"
+      "x-go-package": "github.com/asciiu/gomo/api/vendor/github.com/asciiu/gomo/notification-service/proto"
     },
     "Order": {
       "type": "object",
@@ -1650,6 +1655,10 @@
         "exchangeMarketName": {
           "type": "string",
           "x-go-name": "ExchangeMarketName"
+        },
+        "grupo": {
+          "type": "string",
+          "x-go-name": "Grupo"
         },
         "keyDescription": {
           "type": "string",
@@ -1890,7 +1899,7 @@
     },
     "PlanServiceClient": {
       "type": "object",
-      "x-go-package": "github.com/asciiu/gomo/plan-service/proto/plan"
+      "x-go-package": "github.com/asciiu/gomo/api/vendor/github.com/asciiu/gomo/plan-service/proto/plan"
     },
     "PlanWithOrderPage": {
       "type": "object",
@@ -2197,7 +2206,7 @@
           "x-go-name": "UpdatedOn"
         }
       },
-      "x-go-package": "github.com/asciiu/gomo/plan-service/proto/order"
+      "x-go-package": "github.com/asciiu/gomo/api/vendor/github.com/asciiu/gomo/plan-service/proto/order"
     },
     "TriggerReq": {
       "type": "object",
@@ -2320,7 +2329,7 @@
           "x-go-name": "UserID"
         }
       },
-      "x-go-package": "github.com/asciiu/gomo/user-service/models"
+      "x-go-package": "github.com/asciiu/gomo/api/vendor/github.com/asciiu/gomo/user-service/models"
     },
     "UserKeyData": {
       "type": "object",
@@ -2408,7 +2417,7 @@
           "x-go-name": "Total"
         }
       },
-      "x-go-package": "github.com/asciiu/gomo/notification-service/proto"
+      "x-go-package": "github.com/asciiu/gomo/api/vendor/github.com/asciiu/gomo/notification-service/proto"
     },
     "UserPlansData": {
       "type": "object",
@@ -2425,7 +2434,7 @@
     },
     "UserServiceClient": {
       "type": "object",
-      "x-go-package": "github.com/asciiu/gomo/user-service/proto/user"
+      "x-go-package": "github.com/asciiu/gomo/api/vendor/github.com/asciiu/gomo/user-service/proto/user"
     },
     "responseBalancesSuccess": {
       "type": "object",

@@ -131,6 +131,7 @@ type Order struct {
 	ActiveCurrencyName    string            `json:"activeCurrencyName"`
 	ActiveCurrencyBalance float64           `json:"activeCurrencyBalance"`
 	ActiveCurrencyTraded  float64           `json:"activeCurrencyTraded"`
+	Grupo                 string            `json:"grupo"`
 	Status                string            `json:"status,omitempty"`
 	CreatedOn             string            `json:"createdOn,omitempty"`
 	UpdatedOn             string            `json:"updatedOn,omitempty"`
@@ -326,6 +327,7 @@ func (controller *PlanController) HandleGetPlan(c echo.Context) error {
 			ActiveCurrencyName:    controller.currencies[o.ActiveCurrencySymbol],
 			ActiveCurrencyBalance: o.ActiveCurrencyBalance,
 			ActiveCurrencyTraded:  o.ActiveCurrencyTraded,
+			Grupo:                 o.Grupo,
 			Status:                o.Status,
 			CreatedOn:             o.CreatedOn,
 			UpdatedOn:             o.UpdatedOn,
@@ -534,6 +536,9 @@ type NewOrderReq struct {
 	// Required these are the conditions that trigger the order to execute: ???
 	// in: body
 	Triggers []*TriggerReq `json:"triggers"`
+	// Optional group of order
+	// in: body
+	Grupo string `json:"grupo"`
 }
 
 type TriggerReq struct {
@@ -582,6 +587,7 @@ func (controller *PlanController) HandlePostPlan(c echo.Context) error {
 			KeyID:                 order.KeyID,
 			ParentOrderID:         order.ParentOrderID,
 			MarketName:            order.MarketName,
+			Grupo:                 order.Grupo,
 			Side:                  order.Side,
 			LimitPrice:            order.LimitPrice,
 			ActiveCurrencyBalance: order.ActiveCurrencyBalance}
@@ -653,6 +659,7 @@ func (controller *PlanController) HandlePostPlan(c echo.Context) error {
 			ActiveCurrencyName:    controller.currencies[o.ActiveCurrencySymbol],
 			ActiveCurrencyBalance: o.ActiveCurrencyBalance,
 			ActiveCurrencyTraded:  o.ActiveCurrencyTraded,
+			Grupo:                 o.Grupo,
 			Status:                o.Status,
 			CreatedOn:             o.CreatedOn,
 			UpdatedOn:             o.UpdatedOn,
@@ -815,6 +822,7 @@ func (controller *PlanController) HandleUpdatePlan(c echo.Context) error {
 			ActiveCurrencyName:    controller.currencies[o.ActiveCurrencySymbol],
 			ActiveCurrencyBalance: o.ActiveCurrencyBalance,
 			ActiveCurrencyTraded:  o.ActiveCurrencyTraded,
+			Grupo:                 o.Grupo,
 			Status:                o.Status,
 			CreatedOn:             o.CreatedOn,
 			UpdatedOn:             o.UpdatedOn,
