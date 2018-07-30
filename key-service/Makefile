@@ -1,6 +1,6 @@
 build:
 	protoc -I. --go_out=plugins=micro:$(GOPATH)/src/github.com/asciiu/gomo/key-service proto/key/key.proto
-	find . -name '*.pb.go' | xargs -n1 -IX bash -c 'sed s/,omitempty// X > X.tmp && mv X{.tmp,}'
+	find . -name 'key.pb.go' | xargs -n1 -IX bash -c 'sed s/,omitempty// X > X.tmp && mv X{.tmp,}'
 	docker build -t us.gcr.io/fomo-204904/key-service:dev .
 
 stage:
