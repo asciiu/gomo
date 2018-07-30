@@ -48,14 +48,13 @@ func NewRouter(db *sql.DB) *echo.Echo {
 	middlewares.SetMainMiddlewares(e)
 
 	service := k8s.NewService(
-		micro.Name("fomo.api"),
-		micro.Version("latest"),
-	)
+		micro.Name("api"))
+
 	service.Init()
 
 	// controllers
-	keyController := controllers.NewKeyController(db, service)
 	authController := controllers.NewAuthController(db, service)
+	keyController := controllers.NewKeyController(db, service)
 	balanceController := controllers.NewBalanceController(db, service)
 	deviceController := controllers.NewDeviceController(db, service)
 	notificationController := controllers.NewNotificationController(service)

@@ -1,6 +1,7 @@
 apiVersion: apps/v1beta1
 kind: Deployment
 metadata:
+  namespace: default
   name: api 
 spec:
   replicas: 1
@@ -25,7 +26,7 @@ spec:
               name: fomo-config
           env:
           - name: UPDATED_AT
-            value: "Fri Jun 15 13:34:54 MDT 2018"
+            value: "{{ UPDATED_AT }}"
           ports:
           - containerPort:  443 
             name: https-port

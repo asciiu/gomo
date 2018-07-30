@@ -529,285 +529,6 @@
         }
       }
     },
-    "/orders": {
-      "get": {
-        "description": "Currently returns all orders. Eventually going to add params to filter orders.",
-        "tags": [
-          "orders"
-        ],
-        "summary": "get all orders (protected)",
-        "operationId": "getAllOrders",
-        "responses": {
-          "200": {
-            "description": "\"data\" will contain a list of order info with \"status\": \"success\"",
-            "schema": {
-              "$ref": "#/definitions/responseOrdersSuccess"
-            }
-          },
-          "500": {
-            "description": "the message will state what the internal server error was with \"status\": \"error\"",
-            "schema": {
-              "$ref": "#/definitions/responseError"
-            }
-          }
-        }
-      },
-      "post": {
-        "description": "This will create a new chain of orders for the user.\nExample:\n[\n{\n\"keyID\": \"680d6bbf-1feb-4122-bd10-0e7ce080676a\",\n\"marketName\": \"ADA-BTC\",\n\"side\": \"buy\",\n\"baseQuantity\": 0.50,\n\"orderType\": \"market\",\n\"conditions\": \"price \u003c= 0.00002800\"\n},\n{\n\"keyID\": \"680d6bbf-1feb-4122-bd10-0e7ce080676a\",\n\"marketName\": \"ADA-BTC\",\n\"side\": \"sell\",\n\"currencyPercent\": 1.0,\n\"orderType\": \"market\",\n\"conditions\": \"price \u003c= 0.00002200 or trailingStopPts(0, 0.0)\"\n}\n]\n\nThe order chain starts out with a reserve base balance of 0.5 BTC. This order chain will buy 0.5 BTC at\nmarket price when the market price reaches 2800 satoshi or less. The following sell order will sell 100% of the order\nstrategy's (i.e. chain of orders) cardano balance. Cardano balance should in theory be dictated by the Cardano that this\nchain bought - 100% does not mean 100% of user's cardano balance. The conditions will likely be a json string of conditionLabel: condition.\nexample: \"stopLoss: price \u003c= 0.00002200, takeProfit: ....\"",
-        "tags": [
-          "orders"
-        ],
-        "summary": "create a new order chain (protected)",
-        "operationId": "addOrder",
-        "parameters": [
-          {
-            "x-go-name": "KeyID",
-            "description": "Required this is our api key ID (string uuid) assigned to the user's exchange key and secret.",
-            "name": "keyID",
-            "in": "body",
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "x-go-name": "MarketName",
-            "description": "Required e.g. ADA-BTC. Base pair should be the suffix.",
-            "name": "marketName",
-            "in": "body",
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "x-go-name": "Side",
-            "description": "Required \"buy\" or \"sell\"",
-            "name": "side",
-            "in": "body",
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "x-go-name": "OrderType",
-            "description": "Required Valid order types are \"market\", \"limit\", \"virtual\". Orders not within these types will be rejected.",
-            "name": "orderType",
-            "in": "body",
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "x-go-name": "BaseQuantity",
-            "description": "Required for buy side when order is first in chain. This will designate the reserve base balance to use during the execution of the chained order stategy.",
-            "name": "baseQuantity",
-            "in": "body",
-            "schema": {
-              "type": "number",
-              "format": "double"
-            }
-          },
-          {
-            "x-go-name": "BasePercent",
-            "description": "Required for buy side on chained orders. Specifies the precent of the reserve balance to allocate for the order.",
-            "name": "basePercent",
-            "in": "body",
-            "schema": {
-              "type": "number",
-              "format": "double"
-            }
-          },
-          {
-            "x-go-name": "CurrencyQuantity",
-            "description": "Required for sell side when an order is first in a chain. This is the quantity of market currency to sell.",
-            "name": "currencyQuantity",
-            "in": "body",
-            "schema": {
-              "type": "number",
-              "format": "double"
-            }
-          },
-          {
-            "x-go-name": "CurrencyPercent",
-            "description": "Required for sell side for all orders that are chained. Similar to the basePercent, but for sell orders.",
-            "name": "currencyPercent",
-            "in": "body",
-            "schema": {
-              "type": "number",
-              "format": "double"
-            }
-          },
-          {
-            "example": "???",
-            "x-go-name": "Conditions",
-            "name": "conditions",
-            "in": "body",
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "x-go-name": "Price",
-            "description": "Optional this is required only when the order type is 'limit'. This is the limit order price.",
-            "name": "price",
-            "in": "body",
-            "schema": {
-              "type": "number",
-              "format": "double"
-            }
-          },
-          {
-            "x-go-name": "Active",
-            "description": "Optional to set the chain status (default true for active)",
-            "name": "active",
-            "in": "body",
-            "schema": {
-              "type": "boolean"
-            }
-          },
-          {
-            "type": "string",
-            "x-go-name": "ParentOrderID",
-            "description": "Optional parent order ID to add this chain of orders to. When you want to add children to an existing order.",
-            "name": "parentOrderID",
-            "in": "query"
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "\"data\" will contain list of orders with \"status\": \"success\"",
-            "schema": {
-              "$ref": "#/definitions/responseOrdersSuccess"
-            }
-          },
-          "400": {
-            "description": "missing or incorrect params with \"status\": \"fail\"",
-            "schema": {
-              "$ref": "#/definitions/responseError"
-            }
-          },
-          "500": {
-            "description": "the message will state what the internal server error was with \"status\": \"error\"",
-            "schema": {
-              "$ref": "#/definitions/responseError"
-            }
-          }
-        }
-      }
-    },
-    "/orders/:orderID": {
-      "get": {
-        "description": "Get info about an order.",
-        "tags": [
-          "orders"
-        ],
-        "summary": "show order (protected)",
-        "operationId": "getOrder",
-        "responses": {
-          "200": {
-            "description": "\"data\" will contain order stuffs with \"status\": \"success\"",
-            "schema": {
-              "$ref": "#/definitions/responseOrderSuccess"
-            }
-          },
-          "500": {
-            "description": "the message will state what the internal server error was with \"status\": \"error\"",
-            "schema": {
-              "$ref": "#/definitions/responseError"
-            }
-          }
-        }
-      },
-      "put": {
-        "description": "You can only update pending orders.",
-        "tags": [
-          "orders"
-        ],
-        "summary": "update and order (protected)",
-        "operationId": "updateOrder",
-        "parameters": [
-          {
-            "x-go-name": "OrderType",
-            "description": "Optional.",
-            "name": "orderType",
-            "in": "body",
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "x-go-name": "Price",
-            "description": "Optional.",
-            "name": "price",
-            "in": "body",
-            "schema": {
-              "type": "number",
-              "format": "double"
-            }
-          },
-          {
-            "x-go-name": "BaseQuantity",
-            "description": "Optional.",
-            "name": "baseQuantity",
-            "in": "body",
-            "schema": {
-              "type": "number",
-              "format": "double"
-            }
-          },
-          {
-            "x-go-name": "Conditions",
-            "description": "Optional.",
-            "name": "conditions",
-            "in": "body",
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "\"data\" will contain order info with \"status\": \"success\"",
-            "schema": {
-              "$ref": "#/definitions/responseOrderSuccess"
-            }
-          },
-          "400": {
-            "description": "missing params with \"status\": \"fail\"",
-            "schema": {
-              "$ref": "#/definitions/responseError"
-            }
-          },
-          "500": {
-            "description": "the message will state what the internal server error was with \"status\": \"error\"",
-            "schema": {
-              "$ref": "#/definitions/responseError"
-            }
-          }
-        }
-      },
-      "delete": {
-        "description": "Cannot remove orders that have already executed.",
-        "tags": [
-          "orders"
-        ],
-        "summary": "Remove and order (protected)",
-        "operationId": "deleteOrder",
-        "responses": {
-          "200": {
-            "description": "data will be null with \"status\": \"success\"",
-            "schema": {
-              "$ref": "#/definitions/responseOrderSuccess"
-            }
-          },
-          "500": {
-            "description": "the message will state what the internal server error was with \"status\": \"error\"",
-            "schema": {
-              "$ref": "#/definitions/responseError"
-            }
-          }
-        }
-      }
-    },
     "/plans": {
       "get": {
         "description": "Returns a summary of plans. The plan orders will not be returned and will be null.\nQuery Params: status, marketName, exchange, page, pageSize\n\nThe defaults for the params are:\nstatus - active\npage - 0\npageSize - 50\n\nexample: /plans?exchange=binance",
@@ -883,44 +604,6 @@
             }
           },
           {
-            "x-go-name": "KeyID",
-            "description": "Required this is our api key ID (string uuid) assigned to the user's exchange key and secret.",
-            "name": "keyID",
-            "in": "body",
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "x-go-name": "MarketName",
-            "description": "Required e.g. ADA-BTC. Base pair should be the suffix.",
-            "name": "marketName",
-            "in": "body",
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "x-go-name": "BaseBalance",
-            "description": "Required When first order is buy. Base should be in suffix of market name.",
-            "name": "baseBalance",
-            "in": "body",
-            "schema": {
-              "type": "number",
-              "format": "double"
-            }
-          },
-          {
-            "x-go-name": "CurrencyBalance",
-            "description": "Required When first order is buy. Base should be in suffix of market name.",
-            "name": "currencyBalance",
-            "in": "body",
-            "schema": {
-              "type": "number",
-              "format": "double"
-            }
-          },
-          {
             "x-go-name": "Status",
             "description": "Optional defaults to 'active' status. Valid input status is 'active', 'inactive', or 'historic'",
             "name": "status",
@@ -930,14 +613,23 @@
             }
           },
           {
+            "x-go-name": "CloseOnComplete",
+            "description": "Required bool to indicate that you want the plan to be 'closed' when the last order for the plan finishes (note: order status fail will also close the plan)",
+            "name": "closeOnComplete",
+            "in": "body",
+            "schema": {
+              "type": "boolean"
+            }
+          },
+          {
             "x-go-name": "Orders",
-            "description": "Required array of orders. The sequence of orders is assumed to be the sequence of execution.",
+            "description": "Required array of orders. The structure of the order tree will be dictated by the orderNumber and parentOrderNumber properties of each order.",
             "name": "orders",
             "in": "body",
             "schema": {
               "type": "array",
               "items": {
-                "$ref": "#/definitions/OrderReq"
+                "$ref": "#/definitions/NewOrderReq"
               }
             }
           }
@@ -1004,7 +696,7 @@
         }
       },
       "put": {
-        "description": "You may update the base balance and currency balance before the plan has executed its first order. Once a\nplan order has been executed you cannot change the balances for the plan.\nOther use case for this endpoint is to pause the plan by sending status='inactive'. Use DELETE to abort the plan.",
+        "description": "You must send in the entire inactive chain that you want updated in a single call. Send in all orders that need to be updated, deleted, or added.",
         "tags": [
           "plans"
         ],
@@ -1012,32 +704,42 @@
         "operationId": "UpdatePlanParams",
         "parameters": [
           {
-            "x-go-name": "BaseBalance",
-            "description": "Optional change base balance of unexecuted plan",
-            "name": "baseBalance",
+            "x-go-name": "PlanTemplateID",
+            "description": "Optional plan template ID.",
+            "name": "planTemplateID",
             "in": "body",
             "schema": {
-              "type": "number",
-              "format": "double"
-            }
-          },
-          {
-            "x-go-name": "CurrencyBalance",
-            "description": "Optional change currency balance of unexecuted plan",
-            "name": "currencyBalance",
-            "in": "body",
-            "schema": {
-              "type": "number",
-              "format": "double"
+              "type": "string"
             }
           },
           {
             "x-go-name": "Status",
-            "description": "Optional send 'inactive' to pause and 'active' to unpause",
+            "description": "Optional only needed to update the status of the plan to 'inactive', 'active'",
             "name": "status",
             "in": "body",
             "schema": {
               "type": "string"
+            }
+          },
+          {
+            "x-go-name": "CloseOnComplete",
+            "description": "Optional bool to indicate that you want the plan to be 'closed' when the last order for the plan finishes (note: order status fail will also close the plan)",
+            "name": "closeOnComplete",
+            "in": "body",
+            "schema": {
+              "type": "boolean"
+            }
+          },
+          {
+            "x-go-name": "Orders",
+            "description": "Required array of orders. You cannot update executed orders. The entire inactive chain is assumed to be in this array.",
+            "name": "orders",
+            "in": "body",
+            "schema": {
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/NewOrderReq"
+              }
             }
           }
         ],
@@ -1114,7 +816,7 @@
           "200": {
             "description": "data will be non null with status \"success\"",
             "schema": {
-              "$ref": "#/definitions/responseSuccess"
+              "$ref": "#/definitions/ResponseSessionSuccess"
             }
           },
           "410": {
@@ -1644,6 +1346,28 @@
       },
       "x-go-package": "github.com/asciiu/gomo/api/controllers"
     },
+    "KeyMeta": {
+      "type": "object",
+      "properties": {
+        "description": {
+          "type": "string",
+          "x-go-name": "Description"
+        },
+        "exchange": {
+          "type": "string",
+          "x-go-name": "Exchange"
+        },
+        "keyID": {
+          "type": "string",
+          "x-go-name": "KeyID"
+        },
+        "status": {
+          "type": "string",
+          "x-go-name": "Status"
+        }
+      },
+      "x-go-package": "github.com/asciiu/gomo/api/controllers"
+    },
     "KeyRequest": {
       "type": "object",
       "properties": {
@@ -1707,7 +1431,8 @@
           "x-go-name": "BaseCurrencyLong"
         },
         "basePrecision": {
-          "type": "string",
+          "type": "integer",
+          "format": "int32",
           "x-go-name": "BasePrecision"
         },
         "exchange": {
@@ -1731,7 +1456,8 @@
           "x-go-name": "MarketName"
         },
         "marketPrecision": {
-          "type": "string",
+          "type": "integer",
+          "format": "int32",
           "x-go-name": "MarketPrecision"
         },
         "marketPriceStep": {
@@ -1761,6 +1487,73 @@
         "tradeSizeStep": {
           "type": "string",
           "x-go-name": "TradeSizeStep"
+        }
+      },
+      "x-go-package": "github.com/asciiu/gomo/api/controllers"
+    },
+    "NewOrderReq": {
+      "type": "object",
+      "properties": {
+        "activeCurrencyBalance": {
+          "description": "Required for the root order of the tree. Child orders for tree may or may not have a currencyBalance.\nin: body",
+          "type": "number",
+          "format": "double",
+          "x-go-name": "ActiveCurrencyBalance"
+        },
+        "keyID": {
+          "description": "Required this is our api key ID (string uuid) assigned to the user's exchange key and secret.\nin: body",
+          "type": "string",
+          "x-go-name": "KeyID"
+        },
+        "limitPrice": {
+          "description": "Required for 'limit' orders. Defines limit price.\nin: body",
+          "type": "number",
+          "format": "double",
+          "x-go-name": "LimitPrice"
+        },
+        "marketName": {
+          "description": "Required e.g. ADA-BTC. Base pair should be the suffix.\nin: body",
+          "type": "string",
+          "x-go-name": "MarketName"
+        },
+        "orderID": {
+          "description": "Required the client assigns the order ID as a UUID, the format is 8-4-4-4-12.\nin: body",
+          "type": "string",
+          "x-go-name": "OrderID"
+        },
+        "orderPriority": {
+          "description": "Optional precedence of orders when multiple orders are at the same depth: value of 1 is highest priority. E.g. depth 2 buy ADA (1) or buy EOS (2). ADA with higher priority 1 will execute and EOS will not execute.\nin: body",
+          "type": "integer",
+          "format": "uint32",
+          "x-go-name": "OrderPriority"
+        },
+        "orderTemplateID": {
+          "description": "Optional order template ID.\nin: body",
+          "type": "string",
+          "x-go-name": "OrderTemplateID"
+        },
+        "orderType": {
+          "description": "Required order types are \"market\", \"limit\", \"paper\". Orders not within these types will be rejected.\nin: body",
+          "type": "string",
+          "x-go-name": "OrderType"
+        },
+        "parentOrderID": {
+          "description": "Required the root node of the decision tree should be assigned a parentOrderID of \"00000000-0000-0000-0000-000000000000\" .\nin: body",
+          "type": "string",
+          "x-go-name": "ParentOrderID"
+        },
+        "side": {
+          "description": "Required \"buy\" or \"sell\"\nin: body",
+          "type": "string",
+          "x-go-name": "Side"
+        },
+        "triggers": {
+          "description": "Required these are the conditions that trigger the order to execute: ???\nin: body",
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/TriggerReq"
+          },
+          "x-go-name": "Triggers"
         }
       },
       "x-go-package": "github.com/asciiu/gomo/api/controllers"
@@ -1820,28 +1613,81 @@
     "Order": {
       "type": "object",
       "properties": {
-        "balancePercent": {
+        "activeCurrencyBalance": {
           "type": "number",
           "format": "double",
-          "x-go-name": "BalancePercent"
+          "x-go-name": "ActiveCurrencyBalance"
+        },
+        "activeCurrencyName": {
+          "type": "string",
+          "x-go-name": "ActiveCurrencyName"
+        },
+        "activeCurrencySymbol": {
+          "type": "string",
+          "x-go-name": "ActiveCurrencySymbol"
+        },
+        "activeCurrencyTraded": {
+          "type": "number",
+          "format": "double",
+          "x-go-name": "ActiveCurrencyTraded"
+        },
+        "baseCurrencyName": {
+          "type": "string",
+          "x-go-name": "BaseCurrencyName"
+        },
+        "baseCurrencySymbol": {
+          "type": "string",
+          "x-go-name": "BaseCurrencySymbol"
+        },
+        "createdOn": {
+          "type": "string",
+          "x-go-name": "CreatedOn"
+        },
+        "exchange": {
+          "type": "string",
+          "x-go-name": "Exchange"
+        },
+        "exchangeMarketName": {
+          "type": "string",
+          "x-go-name": "ExchangeMarketName"
+        },
+        "keyDescription": {
+          "type": "string",
+          "x-go-name": "KeyDescription"
+        },
+        "keyID": {
+          "type": "string",
+          "x-go-name": "KeyID"
+        },
+        "keyPublic": {
+          "type": "string",
+          "x-go-name": "KeyPublic"
         },
         "limitPrice": {
           "type": "number",
           "format": "double",
           "x-go-name": "LimitPrice"
         },
-        "nextOrderID": {
+        "marketCurrencyName": {
           "type": "string",
-          "x-go-name": "NextOrderID"
+          "x-go-name": "MarketCurrencyName"
+        },
+        "marketCurrencySymbol": {
+          "type": "string",
+          "x-go-name": "MarketCurrencySymbol"
+        },
+        "marketName": {
+          "type": "string",
+          "x-go-name": "MarketName"
         },
         "orderID": {
           "type": "string",
           "x-go-name": "OrderID"
         },
-        "orderNumber": {
+        "orderPriority": {
           "type": "integer",
           "format": "uint32",
-          "x-go-name": "OrderNumber"
+          "x-go-name": "OrderPriority"
         },
         "orderTemplateID": {
           "type": "string",
@@ -1850,6 +1696,15 @@
         "orderType": {
           "type": "string",
           "x-go-name": "OrderType"
+        },
+        "parentOrderID": {
+          "type": "string",
+          "x-go-name": "ParentOrderID"
+        },
+        "planDepth": {
+          "type": "integer",
+          "format": "uint32",
+          "x-go-name": "PlanDepth"
         },
         "side": {
           "type": "string",
@@ -1865,240 +1720,13 @@
             "$ref": "#/definitions/Trigger"
           },
           "x-go-name": "Triggers"
-        }
-      },
-      "x-go-package": "github.com/asciiu/gomo/order-service/proto/order"
-    },
-    "OrderController": {
-      "type": "object",
-      "properties": {
-        "DB": {
-          "$ref": "#/definitions/DB"
         },
-        "Keys": {
-          "$ref": "#/definitions/KeyServiceClient"
-        },
-        "Orders": {
-          "$ref": "#/definitions/OrderServiceClient"
+        "updatedOn": {
+          "type": "string",
+          "x-go-name": "UpdatedOn"
         }
       },
       "x-go-package": "github.com/asciiu/gomo/api/controllers"
-    },
-    "OrderReq": {
-      "type": "object",
-      "properties": {
-        "balancePercent": {
-          "description": "Required for the precent of your plan's balance to use for the order - buy (percent of base balance) - sell (percent of currency balance)\nin: body",
-          "type": "number",
-          "format": "double",
-          "x-go-name": "BalancePercent"
-        },
-        "limitPrice": {
-          "description": "Required for 'limit' orders. Defines limit price.\nin: body",
-          "type": "number",
-          "format": "double",
-          "x-go-name": "LimitPrice"
-        },
-        "orderTemplateID": {
-          "description": "Optional order template ID.\nin: body",
-          "type": "string",
-          "x-go-name": "OrderTemplateID"
-        },
-        "orderType": {
-          "description": "Required order types are \"market\", \"limit\", \"paper\". Orders not within these types will be rejected.\nin: body",
-          "type": "string",
-          "x-go-name": "OrderType"
-        },
-        "side": {
-          "description": "Required \"buy\" or \"sell\"\nin: body",
-          "type": "string",
-          "x-go-name": "Side"
-        },
-        "triggers": {
-          "description": "Required these are the conditions that trigger the order to execute: ???\nin: body",
-          "type": "array",
-          "items": {
-            "$ref": "#/definitions/TriggerReq"
-          },
-          "x-go-name": "Triggers"
-        }
-      },
-      "x-go-package": "github.com/asciiu/gomo/api/controllers"
-    },
-    "OrderRequest": {
-      "type": "object",
-      "properties": {
-        "active": {
-          "description": "Optional to set the chain status (default true for active)\nin: body",
-          "type": "boolean",
-          "x-go-name": "Active"
-        },
-        "basePercent": {
-          "description": "Required for buy side on chained orders. Specifies the precent of the reserve balance to allocate for the order.\nin: body",
-          "type": "number",
-          "format": "double",
-          "x-go-name": "BasePercent"
-        },
-        "baseQuantity": {
-          "description": "Required for buy side when order is first in chain. This will designate the reserve base balance to use during the execution of the chained order stategy.\nin: body",
-          "type": "number",
-          "format": "double",
-          "x-go-name": "BaseQuantity"
-        },
-        "conditions": {
-          "type": "string",
-          "x-go-name": "Conditions",
-          "example": "???"
-        },
-        "currencyPercent": {
-          "description": "Required for sell side for all orders that are chained. Similar to the basePercent, but for sell orders.\nin: body",
-          "type": "number",
-          "format": "double",
-          "x-go-name": "CurrencyPercent"
-        },
-        "currencyQuantity": {
-          "description": "Required for sell side when an order is first in a chain. This is the quantity of market currency to sell.\nin: body",
-          "type": "number",
-          "format": "double",
-          "x-go-name": "CurrencyQuantity"
-        },
-        "keyID": {
-          "description": "Required this is our api key ID (string uuid) assigned to the user's exchange key and secret.\nin: body",
-          "type": "string",
-          "x-go-name": "KeyID"
-        },
-        "marketName": {
-          "description": "Required e.g. ADA-BTC. Base pair should be the suffix.\nin: body",
-          "type": "string",
-          "x-go-name": "MarketName"
-        },
-        "orderType": {
-          "description": "Required Valid order types are \"market\", \"limit\", \"virtual\". Orders not within these types will be rejected.\nin: body",
-          "type": "string",
-          "x-go-name": "OrderType"
-        },
-        "parentOrderID": {
-          "description": "Optional parent order ID to add this chain of orders to. When you want to add children to an existing order.",
-          "type": "string",
-          "x-go-name": "ParentOrderID"
-        },
-        "price": {
-          "description": "Optional this is required only when the order type is 'limit'. This is the limit order price.\nin: body",
-          "type": "number",
-          "format": "double",
-          "x-go-name": "Price"
-        },
-        "side": {
-          "description": "Required \"buy\" or \"sell\"\nin: body",
-          "type": "string",
-          "x-go-name": "Side"
-        }
-      },
-      "x-go-package": "github.com/asciiu/gomo/api/controllers"
-    },
-    "OrderResponse": {
-      "description": "This is the response struct for order",
-      "type": "object",
-      "properties": {
-        "baseCurrencyName": {
-          "type": "string",
-          "x-go-name": "BaseCurrencyName"
-        },
-        "baseCurrencySymbol": {
-          "type": "string",
-          "x-go-name": "BaseCurrencySymbol"
-        },
-        "basePercent": {
-          "type": "number",
-          "format": "double",
-          "x-go-name": "BasePercent"
-        },
-        "baseQuantity": {
-          "type": "number",
-          "format": "double",
-          "x-go-name": "BaseQuantity"
-        },
-        "chainStatus": {
-          "type": "string",
-          "x-go-name": "ChainStatus"
-        },
-        "condition": {
-          "type": "string",
-          "x-go-name": "Condition"
-        },
-        "conditions": {
-          "type": "string",
-          "x-go-name": "Conditions"
-        },
-        "currencyName": {
-          "type": "string",
-          "x-go-name": "CurrencyName"
-        },
-        "currencyPercent": {
-          "type": "number",
-          "format": "double",
-          "x-go-name": "CurrencyPercent"
-        },
-        "currencyQuantity": {
-          "type": "number",
-          "format": "double",
-          "x-go-name": "CurrencyQuantity"
-        },
-        "currencySymbol": {
-          "type": "string",
-          "x-go-name": "CurrencySymbol"
-        },
-        "exchange": {
-          "type": "string",
-          "x-go-name": "Exchange"
-        },
-        "exchangeMarketName": {
-          "type": "string",
-          "x-go-name": "ExchangeMarketName"
-        },
-        "exchangeOrderID": {
-          "type": "string",
-          "x-go-name": "ExchangeOrderID"
-        },
-        "keyID": {
-          "type": "string",
-          "x-go-name": "KeyID"
-        },
-        "marketName": {
-          "type": "string",
-          "x-go-name": "MarketName"
-        },
-        "orderID": {
-          "type": "string",
-          "x-go-name": "OrderID"
-        },
-        "orderType": {
-          "type": "string",
-          "x-go-name": "OrderType"
-        },
-        "parentOrderID": {
-          "type": "string",
-          "x-go-name": "ParentOrderID"
-        },
-        "price": {
-          "type": "number",
-          "format": "double",
-          "x-go-name": "Price"
-        },
-        "side": {
-          "type": "string",
-          "x-go-name": "Side"
-        },
-        "status": {
-          "type": "string",
-          "x-go-name": "Status"
-        }
-      },
-      "x-go-package": "github.com/asciiu/gomo/api/controllers"
-    },
-    "OrderServiceClient": {
-      "type": "object",
-      "x-go-package": "github.com/asciiu/gomo/order-service/proto/order"
     },
     "OrdersPage": {
       "type": "object",
@@ -2128,85 +1756,22 @@
       },
       "x-go-package": "github.com/asciiu/gomo/api/controllers"
     },
-    "PagedPlan": {
-      "type": "object",
-      "properties": {
-        "baseBalance": {
-          "type": "number",
-          "format": "double",
-          "x-go-name": "BaseBalance"
-        },
-        "baseCurrencyName": {
-          "type": "string",
-          "x-go-name": "BaseCurrencyName"
-        },
-        "baseCurrencySymbol": {
-          "type": "string",
-          "x-go-name": "BaseCurrencySymbol"
-        },
-        "currencyBalance": {
-          "type": "number",
-          "format": "double",
-          "x-go-name": "CurrencyBalance"
-        },
-        "currencyName": {
-          "type": "string",
-          "x-go-name": "CurrencyName"
-        },
-        "currencySymbol": {
-          "type": "string",
-          "x-go-name": "CurrencySymbol"
-        },
-        "description": {
-          "type": "string",
-          "x-go-name": "KeyDescription"
-        },
-        "exchange": {
-          "type": "string",
-          "x-go-name": "Exchange"
-        },
-        "exchangeMarketName": {
-          "type": "string",
-          "x-go-name": "ExchangeMarketName"
-        },
-        "keyID": {
-          "type": "string",
-          "x-go-name": "KeyID"
-        },
-        "marketName": {
-          "type": "string",
-          "x-go-name": "MarketName"
-        },
-        "orders": {
-          "type": "array",
-          "items": {
-            "$ref": "#/definitions/Order"
-          },
-          "x-go-name": "Orders"
-        },
-        "planID": {
-          "type": "string",
-          "x-go-name": "PlanID"
-        },
-        "planTemplateID": {
-          "type": "string",
-          "x-go-name": "PlanTemplateID"
-        },
-        "status": {
-          "type": "string",
-          "x-go-name": "Status"
-        }
-      },
-      "x-go-package": "github.com/asciiu/gomo/api/controllers"
-    },
     "Plan": {
       "description": "This response should never return the key secret",
       "type": "object",
       "properties": {
-        "baseBalance": {
+        "activeCurrencyBalance": {
           "type": "number",
           "format": "double",
-          "x-go-name": "BaseBalance"
+          "x-go-name": "ActiveCurrencyBalance"
+        },
+        "activeCurrencyName": {
+          "type": "string",
+          "x-go-name": "ActiveCurrencyName"
+        },
+        "activeCurrencySymbol": {
+          "type": "string",
+          "x-go-name": "ActiveCurrencySymbol"
         },
         "baseCurrencyName": {
           "type": "string",
@@ -2216,18 +1781,13 @@
           "type": "string",
           "x-go-name": "BaseCurrencySymbol"
         },
-        "currencyBalance": {
-          "type": "number",
-          "format": "double",
-          "x-go-name": "CurrencyBalance"
+        "closeOnComplete": {
+          "type": "boolean",
+          "x-go-name": "CloseOnComplete"
         },
-        "currencyName": {
+        "createdOn": {
           "type": "string",
-          "x-go-name": "CurrencyName"
-        },
-        "currencySymbol": {
-          "type": "string",
-          "x-go-name": "CurrencySymbol"
+          "x-go-name": "CreatedOn"
         },
         "exchange": {
           "type": "string",
@@ -2237,9 +1797,22 @@
           "type": "string",
           "x-go-name": "ExchangeMarketName"
         },
-        "keyID": {
+        "lastExecutedOrderID": {
           "type": "string",
-          "x-go-name": "KeyID"
+          "x-go-name": "LastExecutedOrderID"
+        },
+        "lastExecutedPlanDepth": {
+          "type": "integer",
+          "format": "uint32",
+          "x-go-name": "LastExecutedPlanDepth"
+        },
+        "marketCurrencyName": {
+          "type": "string",
+          "x-go-name": "MarketCurrencyName"
+        },
+        "marketCurrencySymbol": {
+          "type": "string",
+          "x-go-name": "MarketCurrencySymbol"
         },
         "marketName": {
           "type": "string",
@@ -2263,6 +1836,10 @@
         "status": {
           "type": "string",
           "x-go-name": "Status"
+        },
+        "updatedOn": {
+          "type": "string",
+          "x-go-name": "UpdatedOn"
         }
       },
       "x-go-package": "github.com/asciiu/gomo/api/controllers"
@@ -2285,33 +1862,16 @@
     "PlanRequest": {
       "type": "object",
       "properties": {
-        "baseBalance": {
-          "description": "Required When first order is buy. Base should be in suffix of market name.\nin: body",
-          "type": "number",
-          "format": "double",
-          "x-go-name": "BaseBalance"
-        },
-        "currencyBalance": {
-          "description": "Required When first order is buy. Base should be in suffix of market name.\nin: body",
-          "type": "number",
-          "format": "double",
-          "x-go-name": "CurrencyBalance"
-        },
-        "keyID": {
-          "description": "Required this is our api key ID (string uuid) assigned to the user's exchange key and secret.\nin: body",
-          "type": "string",
-          "x-go-name": "KeyID"
-        },
-        "marketName": {
-          "description": "Required e.g. ADA-BTC. Base pair should be the suffix.\nin: body",
-          "type": "string",
-          "x-go-name": "MarketName"
+        "closeOnComplete": {
+          "description": "Required bool to indicate that you want the plan to be 'closed' when the last order for the plan finishes (note: order status fail will also close the plan)\nin: body",
+          "type": "boolean",
+          "x-go-name": "CloseOnComplete"
         },
         "orders": {
-          "description": "Required array of orders. The sequence of orders is assumed to be the sequence of execution.\nin: body",
+          "description": "Required array of orders. The structure of the order tree will be dictated by the orderNumber and parentOrderNumber properties of each order.\nin: body",
           "type": "array",
           "items": {
-            "$ref": "#/definitions/OrderReq"
+            "$ref": "#/definitions/NewOrderReq"
           },
           "x-go-name": "Orders"
         },
@@ -2347,6 +1907,10 @@
         "baseCurrencySymbol": {
           "type": "string",
           "x-go-name": "BaseCurrencySymbol"
+        },
+        "createdOn": {
+          "type": "string",
+          "x-go-name": "CreatedOn"
         },
         "currencyBalance": {
           "type": "number",
@@ -2391,6 +1955,10 @@
         "status": {
           "type": "string",
           "x-go-name": "Status"
+        },
+        "updatedOn": {
+          "type": "string",
+          "x-go-name": "UpdatedOn"
         }
       },
       "x-go-package": "github.com/asciiu/gomo/api/controllers"
@@ -2478,6 +2046,20 @@
       },
       "x-go-package": "github.com/asciiu/gomo/api/controllers"
     },
+    "ResponseSessionSuccess": {
+      "type": "object",
+      "title": "A ResponseSessionSuccess will always contain a status of \"successful\".",
+      "properties": {
+        "data": {
+          "$ref": "#/definitions/UserMetaData"
+        },
+        "status": {
+          "type": "string",
+          "x-go-name": "Status"
+        }
+      },
+      "x-go-package": "github.com/asciiu/gomo/api/controllers"
+    },
     "SearchController": {
       "type": "object",
       "x-go-package": "github.com/asciiu/gomo/api/controllers"
@@ -2526,6 +2108,21 @@
       },
       "x-go-package": "github.com/asciiu/gomo/api/controllers"
     },
+    "SessionController": {
+      "type": "object",
+      "properties": {
+        "DB": {
+          "$ref": "#/definitions/DB"
+        },
+        "Keys": {
+          "$ref": "#/definitions/KeyServiceClient"
+        },
+        "Users": {
+          "$ref": "#/definitions/UserServiceClient"
+        }
+      },
+      "x-go-package": "github.com/asciiu/gomo/api/controllers"
+    },
     "SignupRequest": {
       "type": "object",
       "properties": {
@@ -2566,6 +2163,10 @@
           "type": "string",
           "x-go-name": "Code"
         },
+        "createdOn": {
+          "type": "string",
+          "x-go-name": "CreatedOn"
+        },
         "name": {
           "type": "string",
           "x-go-name": "Name"
@@ -2590,9 +2191,13 @@
         "triggered": {
           "type": "boolean",
           "x-go-name": "Triggered"
+        },
+        "updatedOn": {
+          "type": "string",
+          "x-go-name": "UpdatedOn"
         }
       },
-      "x-go-package": "github.com/asciiu/gomo/order-service/proto/order"
+      "x-go-package": "github.com/asciiu/gomo/plan-service/proto/order"
     },
     "TriggerReq": {
       "type": "object",
@@ -2628,51 +2233,29 @@
       },
       "x-go-package": "github.com/asciiu/gomo/api/controllers"
     },
-    "UpdateOrderRequest": {
-      "type": "object",
-      "properties": {
-        "baseQuantity": {
-          "description": "Optional.\nin: body",
-          "type": "number",
-          "format": "double",
-          "x-go-name": "BaseQuantity"
-        },
-        "conditions": {
-          "description": "Optional.\nin: body",
-          "type": "string",
-          "x-go-name": "Conditions"
-        },
-        "orderType": {
-          "description": "Optional.\nin: body",
-          "type": "string",
-          "x-go-name": "OrderType"
-        },
-        "price": {
-          "description": "Optional.\nin: body",
-          "type": "number",
-          "format": "double",
-          "x-go-name": "Price"
-        }
-      },
-      "x-go-package": "github.com/asciiu/gomo/api/controllers"
-    },
     "UpdatePlanRequest": {
       "type": "object",
       "properties": {
-        "baseBalance": {
-          "description": "Optional change base balance of unexecuted plan\nin: body",
-          "type": "number",
-          "format": "double",
-          "x-go-name": "BaseBalance"
+        "closeOnComplete": {
+          "description": "Optional bool to indicate that you want the plan to be 'closed' when the last order for the plan finishes (note: order status fail will also close the plan)\nin: body",
+          "type": "boolean",
+          "x-go-name": "CloseOnComplete"
         },
-        "currencyBalance": {
-          "description": "Optional change currency balance of unexecuted plan\nin: body",
-          "type": "number",
-          "format": "double",
-          "x-go-name": "CurrencyBalance"
+        "orders": {
+          "description": "Required array of orders. You cannot update executed orders. The entire inactive chain is assumed to be in this array.\nin: body",
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/NewOrderReq"
+          },
+          "x-go-name": "Orders"
+        },
+        "planTemplateID": {
+          "description": "Optional plan template ID.\nin: body",
+          "type": "string",
+          "x-go-name": "PlanTemplateID"
         },
         "status": {
-          "description": "Optional send 'inactive' to pause and 'active' to unpause\nin: body",
+          "description": "Optional only needed to update the status of the plan to 'inactive', 'active'\nin: body",
           "type": "string",
           "x-go-name": "Status"
         }
@@ -2761,6 +2344,44 @@
       },
       "x-go-package": "github.com/asciiu/gomo/api/controllers"
     },
+    "UserMeta": {
+      "type": "object",
+      "properties": {
+        "email": {
+          "type": "string",
+          "x-go-name": "Email"
+        },
+        "first": {
+          "type": "string",
+          "x-go-name": "First"
+        },
+        "keys": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/KeyMeta"
+          },
+          "x-go-name": "Keys"
+        },
+        "last": {
+          "type": "string",
+          "x-go-name": "Last"
+        },
+        "userID": {
+          "type": "string",
+          "x-go-name": "UserID"
+        }
+      },
+      "x-go-package": "github.com/asciiu/gomo/api/controllers"
+    },
+    "UserMetaData": {
+      "type": "object",
+      "properties": {
+        "user": {
+          "$ref": "#/definitions/UserMeta"
+        }
+      },
+      "x-go-package": "github.com/asciiu/gomo/api/controllers"
+    },
     "UserNotificationsPage": {
       "type": "object",
       "properties": {
@@ -2788,28 +2409,6 @@
         }
       },
       "x-go-package": "github.com/asciiu/gomo/notification-service/proto"
-    },
-    "UserOrderData": {
-      "type": "object",
-      "properties": {
-        "order": {
-          "$ref": "#/definitions/OrderResponse"
-        }
-      },
-      "x-go-package": "github.com/asciiu/gomo/api/controllers"
-    },
-    "UserOrdersData": {
-      "type": "object",
-      "properties": {
-        "orders": {
-          "type": "array",
-          "items": {
-            "$ref": "#/definitions/OrderResponse"
-          },
-          "x-go-name": "Orders"
-        }
-      },
-      "x-go-package": "github.com/asciiu/gomo/api/controllers"
     },
     "UserPlansData": {
       "type": "object",
@@ -2933,36 +2532,6 @@
         }
       },
       "x-go-name": "ResponseNotificationSuccess",
-      "x-go-package": "github.com/asciiu/gomo/api/controllers"
-    },
-    "responseOrderSuccess": {
-      "type": "object",
-      "title": "A ResponseKeySuccess will always contain a status of \"successful\".",
-      "properties": {
-        "data": {
-          "$ref": "#/definitions/UserOrderData"
-        },
-        "status": {
-          "type": "string",
-          "x-go-name": "Status"
-        }
-      },
-      "x-go-name": "ResponseOrderSuccess",
-      "x-go-package": "github.com/asciiu/gomo/api/controllers"
-    },
-    "responseOrdersSuccess": {
-      "type": "object",
-      "title": "A ResponseKeysSuccess will always contain a status of \"successful\".",
-      "properties": {
-        "data": {
-          "$ref": "#/definitions/UserOrdersData"
-        },
-        "status": {
-          "type": "string",
-          "x-go-name": "Status"
-        }
-      },
-      "x-go-name": "ResponseOrdersSuccess",
       "x-go-package": "github.com/asciiu/gomo/api/controllers"
     },
     "responseSearchSuccess": {

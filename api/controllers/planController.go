@@ -504,7 +504,7 @@ type NewOrderReq struct {
 	// Required the client assigns the order ID as a UUID, the format is 8-4-4-4-12.
 	// in: body
 	OrderID string `json:"orderID"`
-	// Optional precedence of orders when multiple orders are at the same depth: value of 1 is highest priority. Example: depth 2 buy ADA (1) or buy EOS (2). ADA with higher priority 1 will execute and EOS will not execute.
+	// Optional precedence of orders when multiple orders are at the same depth: value of 1 is highest priority. E.g. depth 2 buy ADA (1) or buy EOS (2). ADA with higher priority 1 will execute and EOS will not execute.
 	// in: body
 	OrderPriority uint32 `json:"orderPriority"`
 	// Required order types are "market", "limit", "paper". Orders not within these types will be rejected.

@@ -1,6 +1,7 @@
 package controllers
 
 import (
+	"context"
 	"database/sql"
 	"encoding/json"
 	"fmt"
@@ -11,12 +12,12 @@ import (
 	"time"
 
 	asql "github.com/asciiu/gomo/api/db/sql"
-	balances "github.com/asciiu/gomo/balance-service/proto/balance"
+	balancesProto "github.com/asciiu/gomo/balance-service/proto/balance"
 	responseConstants "github.com/asciiu/gomo/common/constants/response"
-	devices "github.com/asciiu/gomo/device-service/proto/device"
-	keys "github.com/asciiu/gomo/key-service/proto/key"
+	devicesProto "github.com/asciiu/gomo/device-service/proto/device"
+	keysProto "github.com/asciiu/gomo/key-service/proto/key"
 	gsql "github.com/asciiu/gomo/user-service/db/sql"
-	users "github.com/asciiu/gomo/user-service/proto/user"
+	usersProto "github.com/asciiu/gomo/user-service/proto/user"
 	micro "github.com/micro/go-micro"
 
 	apiModels "github.com/asciiu/gomo/api/models"
@@ -24,7 +25,6 @@ import (
 	jwt "github.com/dgrijalva/jwt-go"
 	"github.com/labstack/echo"
 	"golang.org/x/crypto/bcrypt"
-	"golang.org/x/net/context"
 )
 
 //const refreshDuration = 720 * time.Hour
@@ -34,10 +34,10 @@ const jwtDuration = 30 * time.Minute
 
 type AuthController struct {
 	DB       *sql.DB
-	Users    users.UserServiceClient
-	Balances balances.BalanceServiceClient
-	Keys     keys.KeyServiceClient
-	Devices  devices.DeviceServiceClient
+	Users    usersProto.UserServiceClient
+	Balances balancesProto.BalanceServiceClient
+	Keys     keysProto.KeyServiceClient
+	Devices  devicesProto.DeviceServiceClient
 }
 
 type JwtClaims struct {
@@ -102,13 +102,12 @@ type ResponseError struct {
 }
 
 func NewAuthController(db *sql.DB, service micro.Service) *AuthController {
-
 	controller := AuthController{
 		DB:       db,
-		Users:    users.NewUserServiceClient("users", service.Client()),
-		Balances: balances.NewBalanceServiceClient("balances", service.Client()),
-		Keys:     keys.NewKeyServiceClient("keys", service.Client()),
-		Devices:  devices.NewDeviceServiceClient("devices", service.Client()),
+		Users:    usersProto.NewUserServiceClient("users", service.Client()),
+		Balances: balancesProto.NewBalanceServiceClient("balances", service.Client()),
+		Keys:     keysProto.NewKeyServiceClient("keys", service.Client()),
+		Devices:  devicesProto.NewDeviceServiceClient("devices", service.Client()),
 	}
 
 	return &controller
@@ -226,7 +225,7 @@ func (controller *AuthController) HandleLogin(c echo.Context) error {
 	err := json.NewDecoder(c.Request().Body).Decode(&loginRequest)
 	if err != nil {
 		response := &ResponseError{
-			Status:  "fail",
+			Status:  responseConstants.Fail,
 			Message: "malformed json request for 'email' and 'password'",
 		}
 		return c.JSON(http.StatusBadRequest, response)
@@ -237,7 +236,7 @@ func (controller *AuthController) HandleLogin(c echo.Context) error {
 	switch {
 	case err == sql.ErrNoRows:
 		response := &ResponseError{
-			Status:  "fail",
+			Status:  responseConstants.Fail,
 			Message: "password/login incorrect",
 		}
 		// no user by this email send unauthorized response
@@ -245,7 +244,7 @@ func (controller *AuthController) HandleLogin(c echo.Context) error {
 
 	case err != nil:
 		response := &ResponseError{
-			Status:  "error",
+			Status:  responseConstants.Error,
 			Message: err.Error(),
 		}
 		return c.JSON(http.StatusInternalServerError, response)
@@ -256,7 +255,7 @@ func (controller *AuthController) HandleLogin(c echo.Context) error {
 			accessToken, err := createJwtToken(user.ID, jwtDuration)
 			if err != nil {
 				response := &ResponseError{
-					Status:  "error",
+					Status:  responseConstants.Error,
 					Message: err.Error(),
 				}
 				return c.JSON(http.StatusInternalServerError, response)
@@ -271,7 +270,7 @@ func (controller *AuthController) HandleLogin(c echo.Context) error {
 
 				if err3 != nil {
 					response := &ResponseError{
-						Status:  "error",
+						Status:  responseConstants.Error,
 						Message: err.Error(),
 					}
 					return c.JSON(http.StatusInternalServerError, response)
@@ -282,13 +281,11 @@ func (controller *AuthController) HandleLogin(c echo.Context) error {
 
 			// TODO refactor with device controller implementtion
 			// get user devices here
-			getRequest := devices.GetUserDevicesRequest{
+			getRequest := devicesProto.GetUserDevicesRequest{
 				UserID: user.ID,
 			}
 
 			r, err := controller.Devices.GetUserDevices(context.Background(), &getRequest)
-			fmt.Printf("%+v\n", r)
-			fmt.Println(err)
 
 			if r.Status != responseConstants.Success {
 				response := &ResponseError{
@@ -296,15 +293,15 @@ func (controller *AuthController) HandleLogin(c echo.Context) error {
 					Message: r.Message,
 				}
 
-				if r.Status == "fail" {
+				if r.Status == responseConstants.Fail {
 					return c.JSON(http.StatusBadRequest, response)
 				}
-				if r.Status == "error" {
+				if r.Status == responseConstants.Error {
 					return c.JSON(http.StatusInternalServerError, response)
 				}
 			}
 
-			devices := make([]*Device, 0)
+			dvs := make([]*Device, 0)
 			for _, d := range r.Data.Devices {
 				// api removes the secret
 				device := Device{
@@ -313,14 +310,14 @@ func (controller *AuthController) HandleLogin(c echo.Context) error {
 					ExternalDeviceID: d.ExternalDeviceID,
 					DeviceToken:      d.DeviceToken,
 				}
-				devices = append(devices, &device)
+				dvs = append(dvs, &device)
 			}
 
 			response := &ResponseSuccess{
-				Status: "success",
+				Status: responseConstants.Success,
 				Data: &UserData{
 					User:    user.Info(),
-					Devices: devices,
+					Devices: dvs,
 				},
 			}
 
@@ -329,7 +326,7 @@ func (controller *AuthController) HandleLogin(c echo.Context) error {
 	}
 
 	response := &ResponseError{
-		Status:  "fail",
+		Status:  responseConstants.Fail,
 		Message: "password/login incorrect",
 	}
 	return c.JSON(http.StatusUnauthorized, response)
@@ -352,7 +349,7 @@ func (controller *AuthController) HandleLogout(c echo.Context) error {
 
 		if len(sa) != 2 {
 			response := &ResponseError{
-				Status:  "fail",
+				Status:  responseConstants.Fail,
 				Message: "refresh token invalid",
 			}
 			return c.JSON(http.StatusBadRequest, response)
@@ -362,7 +359,7 @@ func (controller *AuthController) HandleLogout(c echo.Context) error {
 	}
 
 	response := &ResponseSuccess{
-		Status: "success",
+		Status: responseConstants.Success,
 	}
 	return c.JSON(http.StatusOK, response)
 }
@@ -385,7 +382,7 @@ func (controller *AuthController) HandleSignup(c echo.Context) error {
 	err := json.NewDecoder(c.Request().Body).Decode(&signupRequest)
 	if err != nil {
 		response := &ResponseError{
-			Status:  "fail",
+			Status:  responseConstants.Fail,
 			Message: err.Error(),
 		}
 
@@ -394,38 +391,37 @@ func (controller *AuthController) HandleSignup(c echo.Context) error {
 
 	if signupRequest.Email == "" || signupRequest.Password == "" {
 		response := &ResponseError{
-			Status:  "fail",
+			Status:  responseConstants.Fail,
 			Message: "email and password are required",
 		}
 
 		return c.JSON(http.StatusBadRequest, response)
 	}
 
-	createRequest := users.CreateUserRequest{
+	createRequest := usersProto.CreateUserRequest{
 		First:    signupRequest.First,
 		Last:     signupRequest.Last,
 		Email:    signupRequest.Email,
 		Password: signupRequest.Password,
 	}
 
-	r, e := controller.Users.CreateUser(context.Background(), &createRequest)
-	fmt.Printf("error was %+v\n", e)
-	if r.Status != "success" {
+	r, _ := controller.Users.CreateUser(context.Background(), &createRequest)
+	if r.Status != responseConstants.Success {
 		response := &ResponseError{
 			Status:  r.Status,
 			Message: r.Message,
 		}
 
-		if r.Status == "fail" {
+		if r.Status == responseConstants.Fail {
 			return c.JSON(http.StatusBadRequest, response)
 		}
-		if r.Status == "error" {
+		if r.Status == responseConstants.Error {
 			return c.JSON(http.StatusInternalServerError, response)
 		}
 	}
 
 	response := &ResponseSuccess{
-		Status: "success",
+		Status: responseConstants.Success,
 		Data: &UserData{
 			User: &models.UserInfo{
 				UserID: r.Data.User.UserID,
