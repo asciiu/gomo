@@ -120,7 +120,7 @@
     "transport/codec",
     "transport/http"
   ]
-  revision = "88505388c1d32136d5203876218f5f54d53a0e46"
+  revision = "356cf82af5becf5f64c3c0a1a2ded65f8fd0c366"
   version = "v0.9.0"
 
 [[projects]]
