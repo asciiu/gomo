@@ -181,7 +181,7 @@ func (service *PlanService) NewPlan(ctx context.Context, req *protoPlan.NewPlanR
 		return nil
 	case !ValidateNoneZeroBalance(req.Orders):
 		res.Status = response.Fail
-		res.Message = "non zero currency balance required for root order!"
+		res.Message = "non zero activeCurrencyBalance required for root order!"
 		return nil
 	case req.Orders[0].OrderType == orderConstants.PaperOrder && !ValidatePaperOrders(req.Orders):
 		res.Status = response.Fail
