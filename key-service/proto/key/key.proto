@@ -1,7 +1,5 @@
 syntax = "proto3";
 
-package fomo.keys; 
-
 service KeyService {
   rpc AddKey(KeyRequest) returns (KeyResponse) {}
   rpc GetKeys(GetKeysRequest) returns (KeyListResponse) {}
