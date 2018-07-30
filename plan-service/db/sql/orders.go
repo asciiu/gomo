@@ -36,6 +36,7 @@ func UpdateOrder(txn *sql.Tx, ctx context.Context, order *protoOrder.Order) erro
 			market_name = @market,
 			active_currency_symbol = @sym,
 			active_currency_balance = @bal,
+			grupo = @group,
 			order_priority = @priority,
 			order_template_id = @templateid,
 			side = @side,
@@ -55,6 +56,7 @@ func UpdateOrder(txn *sql.Tx, ctx context.Context, order *protoOrder.Order) erro
 		sql.Named("templateid", order.OrderTemplateID),
 		sql.Named("side", order.Side),
 		sql.Named("price", order.LimitPrice),
+		sql.Named("group", order.Grupo),
 		sql.Named("status", order.Status))
 
 	return err
@@ -71,6 +73,7 @@ func InsertOrders(txn *sql.Tx, orders []*protoOrder.Order) error {
 		"market_name",
 		"active_currency_symbol",
 		"active_currency_balance",
+		"grupo",
 		"order_priority",
 		"order_template_id",
 		"order_type",
@@ -94,6 +97,7 @@ func InsertOrders(txn *sql.Tx, orders []*protoOrder.Order) error {
 			order.MarketName,
 			order.ActiveCurrencySymbol,
 			order.ActiveCurrencyBalance,
+			order.Grupo,
 			order.OrderPriority,
 			order.OrderTemplateID,
 			order.OrderType,

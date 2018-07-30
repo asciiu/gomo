@@ -306,6 +306,7 @@ func (service *PlanService) NewPlan(ctx context.Context, req *protoPlan.NewPlanR
 			ActiveCurrencySymbol:  symbol,
 			ActiveCurrencyBalance: or.ActiveCurrencyBalance,
 			Status:                orderStatus,
+			Grupo:                 or.Grupo,
 			Triggers:              triggers,
 			CreatedOn:             now,
 			UpdatedOn:             now,
@@ -671,10 +672,11 @@ func (service *PlanService) UpdatePlan(ctx context.Context, req *protoPlan.Updat
 			MarketName:            or.MarketName,
 			ActiveCurrencySymbol:  currencySymbol,
 			ActiveCurrencyBalance: or.ActiveCurrencyBalance,
-			Status:                orderStatus,
-			Triggers:              triggers,
-			CreatedOn:             now,
-			UpdatedOn:             now,
+			Grupo:     or.Grupo,
+			Status:    orderStatus,
+			Triggers:  triggers,
+			CreatedOn: now,
+			UpdatedOn: now,
 		}
 		newOrders = append(newOrders, &order)
 	}
