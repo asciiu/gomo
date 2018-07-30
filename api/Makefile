@@ -1,4 +1,5 @@
 build:
+	dep ensure -update github.com/asciiu/gomo
 	docker build --no-cache -t us.gcr.io/fomo-204904/api:dev .
 
 stage:

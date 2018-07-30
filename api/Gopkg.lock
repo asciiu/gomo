@@ -20,7 +20,7 @@
     "user-service/models",
     "user-service/proto/user"
   ]
-  revision = "430d047cfabcbb43a6d686b592302058ab8f05d8"
+  revision = "50c84fcc150dcd1798fe1f7840a1e94781abaa7d"
 
 [[projects]]
   name = "github.com/dgrijalva/jwt-go"
@@ -174,7 +174,7 @@
     "transport/codec",
     "transport/http"
   ]
-  revision = "356cf82af5becf5f64c3c0a1a2ded65f8fd0c366"
+  revision = "5372707d0ec1ebd736bec36818ddb2e700606589"
   version = "v0.9.0"
 
 [[projects]]

@@ -18,7 +18,7 @@
     "key-service/proto/key",
     "notification-service/proto"
   ]
-  revision = "239ceb7419f4e2468cc10f7227a0550385979b55"
+  revision = "a2903de0da6580e299f4e0ca78a0dca48c3bb6a0"
 
 [[projects]]
   name = "github.com/go-log/log"
@@ -128,7 +128,7 @@
     "transport/codec",
     "transport/http"
   ]
-  revision = "356cf82af5becf5f64c3c0a1a2ded65f8fd0c366"
+  revision = "5372707d0ec1ebd736bec36818ddb2e700606589"
   version = "v0.9.0"
 
 [[projects]]
@@ -307,6 +307,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "734001f38cca54db9b582a607808c818e9d9934cf9647ccdd0cffba0b40cdc0b"
+  inputs-digest = "6bbf74b2b2be0ce54561d04a7ef2f1b7476148065bbce0829bd64dca4b62ffb3"
   solver-name = "gps-cdcl"
   solver-version = 1

@@ -13,7 +13,7 @@
     "user-service/db/sql",
     "user-service/models"
   ]
-  revision = "50c84fcc150dcd1798fe1f7840a1e94781abaa7d"
+  revision = "a2903de0da6580e299f4e0ca78a0dca48c3bb6a0"
 
 [[projects]]
   name = "github.com/go-log/log"
@@ -123,7 +123,7 @@
     "transport/codec",
     "transport/http"
   ]
-  revision = "356cf82af5becf5f64c3c0a1a2ded65f8fd0c366"
+  revision = "5372707d0ec1ebd736bec36818ddb2e700606589"
   version = "v0.9.0"
 
 [[projects]]
@@ -298,6 +298,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "52ec1cef13e101e6e3ca002fe98e90df515f27a8ba8f848196921e4c95b893e4"
+  inputs-digest = "4b66ac5a2c389a4b3638ff37215a61000dd9835f4906cb1d24355d919e17d4eb"
   solver-name = "gps-cdcl"
   solver-version = 1
