@@ -1,6 +1,7 @@
 apiVersion: extensions/v1beta1
 kind: Deployment
 metadata:
+  namespace: default
   name: devices 
 spec:
   replicas: 1
@@ -19,8 +20,7 @@ spec:
           command: [
             "./device-service",
             "--selector=static",
-            "--server_address=0.0.0.0:8080",
-            "--broker_address=0.0.0.0:10001"
+            "--server_address=:8080"
           ]
           envFrom:
           - configMapRef:

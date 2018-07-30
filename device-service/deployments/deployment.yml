@@ -1,6 +1,7 @@
 apiVersion: extensions/v1beta1
 kind: Deployment
 metadata:
+  namespace: default
   name: devices 
 spec:
   replicas: 1
@@ -19,15 +20,14 @@ spec:
           command: [
             "./device-service",
             "--selector=static",
-            "--server_address=0.0.0.0:8080",
-            "--broker_address=0.0.0.0:10001"
+            "--server_address=:8080"
           ]
           envFrom:
           - configMapRef:
               name: fomo-config
           env:
           - name: UPDATED_AT
-            value: "Sun Jul 29 15:27:00 MDT 2018" 
+            value: "Sun Jul 29 20:02:36 MDT 2018" 
           ports:
           - containerPort: 8080
             name: devices-port
