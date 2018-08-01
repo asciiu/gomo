@@ -18,7 +18,7 @@
     "key-service/proto/key",
     "notification-service/proto"
   ]
-  revision = "0075bfd3600795cff7b7580c6291517aa55657f4"
+  revision = "fbb5c4b349c92405daa995e8f5997531c361e314"
 
 [[projects]]
   name = "github.com/go-log/log"

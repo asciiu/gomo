@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"log"
 	"strings"
 	"time"
 
@@ -200,8 +201,17 @@ func (service *PlanService) NewPlan(ctx context.Context, req *protoPlan.NewPlanR
 	}
 	kys, err := service.fetchKeys(keyIDs)
 	if err != nil {
+		if strings.Contains(err.Error(), "invalid input") {
+			res.Status = response.Fail
+			res.Message = fmt.Sprintf("valid keyID required for each order")
+			return nil
+		}
+
+		msg := fmt.Sprintf("ecountered error when fetching keys: %s\n", err.Error())
+		log.Println(msg)
+
 		res.Status = response.Error
-		res.Message = fmt.Sprintf("ecountered error when fetching keys: %s", err.Error())
+		res.Message = msg
 		return nil
 	}
 
@@ -322,15 +332,17 @@ func (service *PlanService) NewPlan(ctx context.Context, req *protoPlan.NewPlanR
 	if newOrders[0].OrderType != orderConstants.PaperOrder {
 		validBalance, err := service.validateBalance(ctx, currencySymbol, currencyBalance, req.UserID, keyID)
 		if err != nil {
+			msg := fmt.Sprintf("failed to validate the currency balance for %s: %s", currencySymbol, err.Error())
+			log.Println(msg)
+
 			res.Status = response.Error
-			res.Message = fmt.Sprintf("failed to validate the currency balance for %s: %s", currencySymbol, err.Error())
+			res.Message = msg
 			return nil
 		}
 		if !validBalance {
 			res.Status = response.Fail
 			res.Message = fmt.Sprintf("insufficient %s balance, %.8f requested", currencySymbol, currencyBalance)
 			return nil
-
 		}
 	}
 
@@ -353,8 +365,11 @@ func (service *PlanService) NewPlan(ctx context.Context, req *protoPlan.NewPlanR
 
 	error := planRepo.InsertPlan(service.DB, &pln)
 	if error != nil {
+		msg := fmt.Sprintf("insert plan failed %s", err.Error())
+		log.Println(msg)
+
 		res.Status = response.Error
-		res.Message = "NewPlan error: " + error.Error()
+		res.Message = msg
 		return nil
 	}
 

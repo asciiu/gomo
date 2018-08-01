@@ -377,7 +377,7 @@ func FindPlanOrders(db *sql.DB, req *protoPlan.GetUserPlanRequest) (*protoPlan.P
 		JOIN triggers t on o.id = t.order_id
 		JOIN user_keys k on o.user_key_id = k.id
 		WHERE p.id = $1 AND o.plan_depth BETWEEN $2 AND $3 
-		ORDER BY o.plan_depth, o.order_priority, o.id, t.trigger_number`, req.PlanID, req.PlanDepth, req.PlanDepth+req.PlanLength)
+		ORDER BY o.plan_depth, o.order_priority, o.id, t.index`, req.PlanID, req.PlanDepth, req.PlanDepth+req.PlanLength)
 
 	if err != nil {
 		return nil, err
