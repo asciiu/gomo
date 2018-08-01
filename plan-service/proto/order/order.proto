@@ -4,11 +4,13 @@ package order;
 
 // Requests
 message TriggerRequest {
-  string triggerID = 1;
-  string name = 2;
-  string code = 3;
-  string triggerTemplateID = 4;
-  repeated string actions = 5;
+  string triggerID = 1;             // uuid 
+  string code = 2;                  // this is required
+  uint32 index = 3;                 // Weo will assign the index
+  string name = 4;                  // this is what Weo will use to identify which trigger form this belongs in
+  string title = 5;                 // this is what the user sees
+  string triggerTemplateID = 6;     // optional template
+  repeated string actions = 7;      // trigger actions
 }
 
 message NewOrderRequest {
@@ -69,15 +71,16 @@ message Order {
 
 message Trigger {
   string triggerID = 1;
-  string orderID = 2;
-  uint32 triggerNumber = 3;
-  string triggerTemplateID = 4;
-  string name = 5;
-  string code = 6;
-  bool triggered = 7;
-  string createdOn = 8;
-  string updatedOn = 9;
-  repeated string actions = 10;
+  string triggerTemplateID = 2;
+  string orderID = 3;
+  uint32 index = 4;
+  string title = 5;
+  string name = 6;
+  string code = 7;
+  bool triggered = 8;
+  string createdOn = 9;
+  string updatedOn = 10;
+  repeated string actions = 11;
 }
 
 // Responses

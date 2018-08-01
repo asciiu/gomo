@@ -497,7 +497,7 @@ type PlanRequest struct {
 	// Required bool to indicate that you want the plan to be 'closed' when the last order for the plan finishes (note: order status fail will also close the plan)
 	// in: body
 	CloseOnComplete bool `json:"closeOnComplete"`
-	// Required array of orders. The structure of the order tree will be dictated by the orderNumber and parentOrderNumber properties of each order.
+	// Required array of orders. The structure of the order tree will be dictated by the parentOrderID. All orders following the root order must have a parentOrderID. The root order must have a parentOrderID of "00000000-0000-0000-0000-000000000000". Use grupo (aka spanish for group) to assign a group label to orders.
 	// in: body
 	Orders []*NewOrderReq `json:"orders"`
 }
@@ -544,11 +544,12 @@ type NewOrderReq struct {
 type TriggerReq struct {
 	// Optional trigger template ID.
 	// in: body
-	TriggerTemplateID string `json:"triggerTemplateID"`
-
-	Name    string
-	Code    string
-	Actions []string
+	TriggerTemplateID string   `json:"triggerTemplateID"`
+	Name              string   `json:"name"`
+	Title             string   `json:"title"`
+	Code              string   `json:"code"`
+	Actions           []string `json:"actions"`
+	Index             string   `json:"index"`
 }
 
 // swagger:route POST /plans plans PostPlan
@@ -595,6 +596,8 @@ func (controller *PlanController) HandlePostPlan(c echo.Context) error {
 		for _, cond := range order.Triggers {
 			trigger := orders.TriggerRequest{
 				TriggerTemplateID: cond.TriggerTemplateID,
+				Index:             cond.Index,
+				Title:             cond.Title,
 				Name:              cond.Name,
 				Code:              cond.Code,
 				Actions:           cond.Actions,
@@ -757,6 +760,8 @@ func (controller *PlanController) HandleUpdatePlan(c echo.Context) error {
 		for _, cond := range order.Triggers {
 			trigger := orders.TriggerRequest{
 				TriggerTemplateID: cond.TriggerTemplateID,
+				Index:             cond.Index,
+				Title:             cond.Title,
 				Name:              cond.Name,
 				Code:              cond.Code,
 				Actions:           cond.Actions,

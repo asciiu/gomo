@@ -623,7 +623,7 @@
           },
           {
             "x-go-name": "Orders",
-            "description": "Required array of orders. The structure of the order tree will be dictated by the orderNumber and parentOrderNumber properties of each order.",
+            "description": "Required array of orders. The structure of the order tree will be dictated by the parentOrderID. All orders following the root order must have a parentOrderID. The root order must have a parentOrderID of \"00000000-0000-0000-0000-000000000000\". Use grupo (aka spanish for group) to assign a group label to orders.",
             "name": "orders",
             "in": "body",
             "schema": {
@@ -1877,7 +1877,7 @@
           "x-go-name": "CloseOnComplete"
         },
         "orders": {
-          "description": "Required array of orders. The structure of the order tree will be dictated by the orderNumber and parentOrderNumber properties of each order.\nin: body",
+          "description": "Required array of orders. The structure of the order tree will be dictated by the parentOrderID. All orders following the root order must have a parentOrderID. The root order must have a parentOrderID of \"00000000-0000-0000-0000-000000000000\". Use grupo (aka spanish for group) to assign a group label to orders.\nin: body",
           "type": "array",
           "items": {
             "$ref": "#/definitions/NewOrderReq"

@@ -13,7 +13,7 @@
     "user-service/db/sql",
     "user-service/models"
   ]
-  revision = "a2903de0da6580e299f4e0ca78a0dca48c3bb6a0"
+  revision = "6da4012e50595bdb66c8e2018244969b52293304"
 
 [[projects]]
   name = "github.com/go-log/log"

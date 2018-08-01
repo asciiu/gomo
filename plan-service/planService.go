@@ -266,13 +266,14 @@ func (service *PlanService) NewPlan(ctx context.Context, req *protoPlan.NewPlanR
 
 		// collect triggers for this order
 		triggers := make([]*protoOrder.Trigger, 0, len(or.Triggers))
-		for j, cond := range or.Triggers {
+		for _, cond := range or.Triggers {
 			triggerID := uuid.New()
 			trigger := protoOrder.Trigger{
 				TriggerID:         triggerID.String(),
-				TriggerNumber:     uint32(j),
 				TriggerTemplateID: cond.TriggerTemplateID,
 				OrderID:           or.OrderID,
+				Index:             cond.Index,
+				Title:             cond.Title,
 				Name:              cond.Name,
 				Code:              cond.Code,
 				Actions:           cond.Actions,
@@ -615,13 +616,14 @@ func (service *PlanService) UpdatePlan(ctx context.Context, req *protoPlan.Updat
 
 		// collect triggers for this order
 		triggers := make([]*protoOrder.Trigger, 0, len(or.Triggers))
-		for j, cond := range or.Triggers {
+		for _, cond := range or.Triggers {
 			triggerID := uuid.New()
 			trigger := protoOrder.Trigger{
 				TriggerID:         triggerID.String(),
-				TriggerNumber:     uint32(j),
 				TriggerTemplateID: cond.TriggerTemplateID,
 				OrderID:           or.OrderID,
+				Index:             cond.Index,
+				Title:             cond.Title,
 				Name:              cond.Name,
 				Code:              cond.Code,
 				Actions:           cond.Actions,

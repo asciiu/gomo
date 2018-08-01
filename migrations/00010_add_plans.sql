@@ -50,9 +50,10 @@ CREATE TABLE orders (
 CREATE TABLE triggers (
   id UUID PRIMARY KEY NOT NULL,
   order_id UUID NOT NULL REFERENCES orders (id) ON DELETE CASCADE,
-  trigger_number integer NOT NULL,      -- defines the order sequence
-  trigger_template_id text,             -- optional frontend template used for this trigger 
-  name text NOT NULL,
+  trigger_template_id text,    -- optional frontend template used for this trigger 
+  index integer NOT NULL,      -- assigned by Weo 
+  title text,                  -- this will be human readable and displayed on client 
+  name text NOT NULL,          -- used to identify specific trigger type so we can associate with the form input on the client
   code text NOT NULL,
   actions text[] NOT NULL,
   triggered BOOLEAN NOT NULL DEFAULT false,
