@@ -636,9 +636,9 @@
         ],
         "responses": {
           "200": {
-            "description": "\"data\" will contain paged orders",
+            "description": "\"data\" will contain the order tree",
             "schema": {
-              "$ref": "#/definitions/ResponsePlanWithOrderPageSuccess"
+              "$ref": "#/definitions/ResponsePlanSuccess"
             }
           },
           "400": {
@@ -696,7 +696,7 @@
         }
       },
       "put": {
-        "description": "You must send in the entire inactive chain that you want updated in a single call. Send in all orders that need to be updated, deleted, or added.",
+        "description": "You must send in the entire inactive chain that you want updated in a single call.",
         "tags": [
           "plans"
         ],
