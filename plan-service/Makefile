@@ -3,6 +3,7 @@ build:
 	protoc --proto_path=$(GOPATH)/src --go_out=plugins=micro:$(GOPATH)/src github.com/asciiu/gomo/plan-service/proto/order/order.proto
 	protoc --proto_path=$(GOPATH)/src --go_out=plugins=micro:$(GOPATH)/src github.com/asciiu/gomo/plan-service/proto/plan/plan.proto
 	find . -name 'plan.pb.go' | xargs -n1 -IX bash -c 'sed s/,omitempty// X > X.tmp && mv X{.tmp,}'
+	find . -name 'order.pb.go' | xargs -n1 -IX bash -c 'sed s/,omitempty// X > X.tmp && mv X{.tmp,}'
 	docker build --no-cache -t us.gcr.io/fomo-204904/plan-service:dev .
 
 stage:

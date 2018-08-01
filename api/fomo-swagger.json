@@ -2176,6 +2176,11 @@
           "type": "string",
           "x-go-name": "CreatedOn"
         },
+        "index": {
+          "type": "integer",
+          "format": "uint32",
+          "x-go-name": "Index"
+        },
         "name": {
           "type": "string",
           "x-go-name": "Name"
@@ -2184,14 +2189,13 @@
           "type": "string",
           "x-go-name": "OrderID"
         },
+        "title": {
+          "type": "string",
+          "x-go-name": "Title"
+        },
         "triggerID": {
           "type": "string",
           "x-go-name": "TriggerID"
-        },
-        "triggerNumber": {
-          "type": "integer",
-          "format": "uint32",
-          "x-go-name": "TriggerNumber"
         },
         "triggerTemplateID": {
           "type": "string",
@@ -2211,17 +2215,29 @@
     "TriggerReq": {
       "type": "object",
       "properties": {
-        "Actions": {
+        "actions": {
           "type": "array",
           "items": {
             "type": "string"
-          }
+          },
+          "x-go-name": "Actions"
         },
-        "Code": {
-          "type": "string"
+        "code": {
+          "type": "string",
+          "x-go-name": "Code"
         },
-        "Name": {
-          "type": "string"
+        "index": {
+          "type": "integer",
+          "format": "uint32",
+          "x-go-name": "Index"
+        },
+        "name": {
+          "type": "string",
+          "x-go-name": "Name"
+        },
+        "title": {
+          "type": "string",
+          "x-go-name": "Title"
         },
         "triggerTemplateID": {
           "description": "Optional trigger template ID.\nin: body",

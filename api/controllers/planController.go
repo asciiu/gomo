@@ -549,7 +549,7 @@ type TriggerReq struct {
 	Title             string   `json:"title"`
 	Code              string   `json:"code"`
 	Actions           []string `json:"actions"`
-	Index             string   `json:"index"`
+	Index             uint32   `json:"index"`
 }
 
 // swagger:route POST /plans plans PostPlan

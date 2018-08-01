@@ -40,13 +40,13 @@ const _ = proto.ProtoPackageIsVersion2 // please upgrade the proto package
 
 // Requests
 type TriggerRequest struct {
-	TriggerID         string   `protobuf:"bytes,1,opt,name=triggerID" json:"triggerID,omitempty"`
-	Code              string   `protobuf:"bytes,2,opt,name=code" json:"code,omitempty"`
-	Index             uint32   `protobuf:"varint,3,opt,name=index" json:"index,omitempty"`
-	Name              string   `protobuf:"bytes,4,opt,name=name" json:"name,omitempty"`
-	Title             string   `protobuf:"bytes,5,opt,name=title" json:"title,omitempty"`
-	TriggerTemplateID string   `protobuf:"bytes,6,opt,name=triggerTemplateID" json:"triggerTemplateID,omitempty"`
-	Actions           []string `protobuf:"bytes,7,rep,name=actions" json:"actions,omitempty"`
+	TriggerID         string   `protobuf:"bytes,1,opt,name=triggerID" json:"triggerID"`
+	Code              string   `protobuf:"bytes,2,opt,name=code" json:"code"`
+	Index             uint32   `protobuf:"varint,3,opt,name=index" json:"index"`
+	Name              string   `protobuf:"bytes,4,opt,name=name" json:"name"`
+	Title             string   `protobuf:"bytes,5,opt,name=title" json:"title"`
+	TriggerTemplateID string   `protobuf:"bytes,6,opt,name=triggerTemplateID" json:"triggerTemplateID"`
+	Actions           []string `protobuf:"bytes,7,rep,name=actions" json:"actions"`
 }
 
 func (m *TriggerRequest) Reset()                    { *m = TriggerRequest{} }
@@ -104,18 +104,18 @@ func (m *TriggerRequest) GetActions() []string {
 }
 
 type NewOrderRequest struct {
-	OrderID               string            `protobuf:"bytes,1,opt,name=orderID" json:"orderID,omitempty"`
-	OrderPriority         uint32            `protobuf:"varint,2,opt,name=orderPriority" json:"orderPriority,omitempty"`
-	OrderType             string            `protobuf:"bytes,3,opt,name=orderType" json:"orderType,omitempty"`
-	OrderTemplateID       string            `protobuf:"bytes,4,opt,name=orderTemplateID" json:"orderTemplateID,omitempty"`
-	KeyID                 string            `protobuf:"bytes,5,opt,name=keyID" json:"keyID,omitempty"`
-	ParentOrderID         string            `protobuf:"bytes,6,opt,name=parentOrderID" json:"parentOrderID,omitempty"`
-	Grupo                 string            `protobuf:"bytes,7,opt,name=grupo" json:"grupo,omitempty"`
-	MarketName            string            `protobuf:"bytes,8,opt,name=marketName" json:"marketName,omitempty"`
-	Side                  string            `protobuf:"bytes,9,opt,name=side" json:"side,omitempty"`
-	LimitPrice            float64           `protobuf:"fixed64,10,opt,name=limitPrice" json:"limitPrice,omitempty"`
-	ActiveCurrencyBalance float64           `protobuf:"fixed64,11,opt,name=activeCurrencyBalance" json:"activeCurrencyBalance,omitempty"`
-	Triggers              []*TriggerRequest `protobuf:"bytes,12,rep,name=triggers" json:"triggers,omitempty"`
+	OrderID               string            `protobuf:"bytes,1,opt,name=orderID" json:"orderID"`
+	OrderPriority         uint32            `protobuf:"varint,2,opt,name=orderPriority" json:"orderPriority"`
+	OrderType             string            `protobuf:"bytes,3,opt,name=orderType" json:"orderType"`
+	OrderTemplateID       string            `protobuf:"bytes,4,opt,name=orderTemplateID" json:"orderTemplateID"`
+	KeyID                 string            `protobuf:"bytes,5,opt,name=keyID" json:"keyID"`
+	ParentOrderID         string            `protobuf:"bytes,6,opt,name=parentOrderID" json:"parentOrderID"`
+	Grupo                 string            `protobuf:"bytes,7,opt,name=grupo" json:"grupo"`
+	MarketName            string            `protobuf:"bytes,8,opt,name=marketName" json:"marketName"`
+	Side                  string            `protobuf:"bytes,9,opt,name=side" json:"side"`
+	LimitPrice            float64           `protobuf:"fixed64,10,opt,name=limitPrice" json:"limitPrice"`
+	ActiveCurrencyBalance float64           `protobuf:"fixed64,11,opt,name=activeCurrencyBalance" json:"activeCurrencyBalance"`
+	Triggers              []*TriggerRequest `protobuf:"bytes,12,rep,name=triggers" json:"triggers"`
 }
 
 func (m *NewOrderRequest) Reset()                    { *m = NewOrderRequest{} }
@@ -208,8 +208,8 @@ func (m *NewOrderRequest) GetTriggers() []*TriggerRequest {
 }
 
 type GetUserOrderRequest struct {
-	OrderID string `protobuf:"bytes,1,opt,name=orderID" json:"orderID,omitempty"`
-	UserID  string `protobuf:"bytes,2,opt,name=userID" json:"userID,omitempty"`
+	OrderID string `protobuf:"bytes,1,opt,name=orderID" json:"orderID"`
+	UserID  string `protobuf:"bytes,2,opt,name=userID" json:"userID"`
 }
 
 func (m *GetUserOrderRequest) Reset()                    { *m = GetUserOrderRequest{} }
@@ -232,7 +232,7 @@ func (m *GetUserOrderRequest) GetUserID() string {
 }
 
 type GetUserOrdersRequest struct {
-	UserID string `protobuf:"bytes,1,opt,name=userID" json:"userID,omitempty"`
+	UserID string `protobuf:"bytes,1,opt,name=userID" json:"userID"`
 }
 
 func (m *GetUserOrdersRequest) Reset()                    { *m = GetUserOrdersRequest{} }
@@ -248,8 +248,8 @@ func (m *GetUserOrdersRequest) GetUserID() string {
 }
 
 type RemoveOrderRequest struct {
-	OrderID string `protobuf:"bytes,1,opt,name=orderID" json:"orderID,omitempty"`
-	UserID  string `protobuf:"bytes,2,opt,name=userID" json:"userID,omitempty"`
+	OrderID string `protobuf:"bytes,1,opt,name=orderID" json:"orderID"`
+	UserID  string `protobuf:"bytes,2,opt,name=userID" json:"userID"`
 }
 
 func (m *RemoveOrderRequest) Reset()                    { *m = RemoveOrderRequest{} }
@@ -272,30 +272,30 @@ func (m *RemoveOrderRequest) GetUserID() string {
 }
 
 type Order struct {
-	OrderID               string     `protobuf:"bytes,1,opt,name=orderID" json:"orderID,omitempty"`
-	ParentOrderID         string     `protobuf:"bytes,2,opt,name=parentOrderID" json:"parentOrderID,omitempty"`
-	PlanID                string     `protobuf:"bytes,3,opt,name=planID" json:"planID,omitempty"`
-	PlanDepth             uint32     `protobuf:"varint,4,opt,name=planDepth" json:"planDepth,omitempty"`
-	OrderTemplateID       string     `protobuf:"bytes,5,opt,name=orderTemplateID" json:"orderTemplateID,omitempty"`
-	KeyID                 string     `protobuf:"bytes,6,opt,name=keyID" json:"keyID,omitempty"`
-	KeyPublic             string     `protobuf:"bytes,7,opt,name=keyPublic" json:"keyPublic,omitempty"`
-	KeySecret             string     `protobuf:"bytes,8,opt,name=keySecret" json:"keySecret,omitempty"`
-	KeyDescription        string     `protobuf:"bytes,9,opt,name=keyDescription" json:"keyDescription,omitempty"`
-	OrderPriority         uint32     `protobuf:"varint,10,opt,name=orderPriority" json:"orderPriority,omitempty"`
-	OrderType             string     `protobuf:"bytes,11,opt,name=orderType" json:"orderType,omitempty"`
-	Side                  string     `protobuf:"bytes,12,opt,name=side" json:"side,omitempty"`
-	LimitPrice            float64    `protobuf:"fixed64,13,opt,name=limitPrice" json:"limitPrice,omitempty"`
-	Exchange              string     `protobuf:"bytes,14,opt,name=exchange" json:"exchange,omitempty"`
-	ExchangeMarketName    string     `protobuf:"bytes,15,opt,name=exchangeMarketName" json:"exchangeMarketName,omitempty"`
-	MarketName            string     `protobuf:"bytes,16,opt,name=marketName" json:"marketName,omitempty"`
-	ActiveCurrencySymbol  string     `protobuf:"bytes,17,opt,name=activeCurrencySymbol" json:"activeCurrencySymbol,omitempty"`
-	ActiveCurrencyBalance float64    `protobuf:"fixed64,18,opt,name=activeCurrencyBalance" json:"activeCurrencyBalance,omitempty"`
-	ActiveCurrencyTraded  float64    `protobuf:"fixed64,19,opt,name=activeCurrencyTraded" json:"activeCurrencyTraded,omitempty"`
-	Status                string     `protobuf:"bytes,20,opt,name=status" json:"status,omitempty"`
-	Grupo                 string     `protobuf:"bytes,21,opt,name=grupo" json:"grupo,omitempty"`
-	CreatedOn             string     `protobuf:"bytes,22,opt,name=createdOn" json:"createdOn,omitempty"`
-	UpdatedOn             string     `protobuf:"bytes,23,opt,name=updatedOn" json:"updatedOn,omitempty"`
-	Triggers              []*Trigger `protobuf:"bytes,24,rep,name=triggers" json:"triggers,omitempty"`
+	OrderID               string     `protobuf:"bytes,1,opt,name=orderID" json:"orderID"`
+	ParentOrderID         string     `protobuf:"bytes,2,opt,name=parentOrderID" json:"parentOrderID"`
+	PlanID                string     `protobuf:"bytes,3,opt,name=planID" json:"planID"`
+	PlanDepth             uint32     `protobuf:"varint,4,opt,name=planDepth" json:"planDepth"`
+	OrderTemplateID       string     `protobuf:"bytes,5,opt,name=orderTemplateID" json:"orderTemplateID"`
+	KeyID                 string     `protobuf:"bytes,6,opt,name=keyID" json:"keyID"`
+	KeyPublic             string     `protobuf:"bytes,7,opt,name=keyPublic" json:"keyPublic"`
+	KeySecret             string     `protobuf:"bytes,8,opt,name=keySecret" json:"keySecret"`
+	KeyDescription        string     `protobuf:"bytes,9,opt,name=keyDescription" json:"keyDescription"`
+	OrderPriority         uint32     `protobuf:"varint,10,opt,name=orderPriority" json:"orderPriority"`
+	OrderType             string     `protobuf:"bytes,11,opt,name=orderType" json:"orderType"`
+	Side                  string     `protobuf:"bytes,12,opt,name=side" json:"side"`
+	LimitPrice            float64    `protobuf:"fixed64,13,opt,name=limitPrice" json:"limitPrice"`
+	Exchange              string     `protobuf:"bytes,14,opt,name=exchange" json:"exchange"`
+	ExchangeMarketName    string     `protobuf:"bytes,15,opt,name=exchangeMarketName" json:"exchangeMarketName"`
+	MarketName            string     `protobuf:"bytes,16,opt,name=marketName" json:"marketName"`
+	ActiveCurrencySymbol  string     `protobuf:"bytes,17,opt,name=activeCurrencySymbol" json:"activeCurrencySymbol"`
+	ActiveCurrencyBalance float64    `protobuf:"fixed64,18,opt,name=activeCurrencyBalance" json:"activeCurrencyBalance"`
+	ActiveCurrencyTraded  float64    `protobuf:"fixed64,19,opt,name=activeCurrencyTraded" json:"activeCurrencyTraded"`
+	Status                string     `protobuf:"bytes,20,opt,name=status" json:"status"`
+	Grupo                 string     `protobuf:"bytes,21,opt,name=grupo" json:"grupo"`
+	CreatedOn             string     `protobuf:"bytes,22,opt,name=createdOn" json:"createdOn"`
+	UpdatedOn             string     `protobuf:"bytes,23,opt,name=updatedOn" json:"updatedOn"`
+	Triggers              []*Trigger `protobuf:"bytes,24,rep,name=triggers" json:"triggers"`
 }
 
 func (m *Order) Reset()                    { *m = Order{} }
@@ -472,17 +472,17 @@ func (m *Order) GetTriggers() []*Trigger {
 }
 
 type Trigger struct {
-	TriggerID         string   `protobuf:"bytes,1,opt,name=triggerID" json:"triggerID,omitempty"`
-	TriggerTemplateID string   `protobuf:"bytes,2,opt,name=triggerTemplateID" json:"triggerTemplateID,omitempty"`
-	OrderID           string   `protobuf:"bytes,3,opt,name=orderID" json:"orderID,omitempty"`
-	Index             uint32   `protobuf:"varint,4,opt,name=index" json:"index,omitempty"`
-	Title             string   `protobuf:"bytes,5,opt,name=title" json:"title,omitempty"`
-	Name              string   `protobuf:"bytes,6,opt,name=name" json:"name,omitempty"`
-	Code              string   `protobuf:"bytes,7,opt,name=code" json:"code,omitempty"`
-	Triggered         bool     `protobuf:"varint,8,opt,name=triggered" json:"triggered,omitempty"`
-	CreatedOn         string   `protobuf:"bytes,9,opt,name=createdOn" json:"createdOn,omitempty"`
-	UpdatedOn         string   `protobuf:"bytes,10,opt,name=updatedOn" json:"updatedOn,omitempty"`
-	Actions           []string `protobuf:"bytes,11,rep,name=actions" json:"actions,omitempty"`
+	TriggerID         string   `protobuf:"bytes,1,opt,name=triggerID" json:"triggerID"`
+	TriggerTemplateID string   `protobuf:"bytes,2,opt,name=triggerTemplateID" json:"triggerTemplateID"`
+	OrderID           string   `protobuf:"bytes,3,opt,name=orderID" json:"orderID"`
+	Index             uint32   `protobuf:"varint,4,opt,name=index" json:"index"`
+	Title             string   `protobuf:"bytes,5,opt,name=title" json:"title"`
+	Name              string   `protobuf:"bytes,6,opt,name=name" json:"name"`
+	Code              string   `protobuf:"bytes,7,opt,name=code" json:"code"`
+	Triggered         bool     `protobuf:"varint,8,opt,name=triggered" json:"triggered"`
+	CreatedOn         string   `protobuf:"bytes,9,opt,name=createdOn" json:"createdOn"`
+	UpdatedOn         string   `protobuf:"bytes,10,opt,name=updatedOn" json:"updatedOn"`
+	Actions           []string `protobuf:"bytes,11,rep,name=actions" json:"actions"`
 }
 
 func (m *Trigger) Reset()                    { *m = Trigger{} }
@@ -569,7 +569,7 @@ func (m *Trigger) GetActions() []string {
 
 // Responses
 type UserOrderData struct {
-	Order *Order `protobuf:"bytes,1,opt,name=order" json:"order,omitempty"`
+	Order *Order `protobuf:"bytes,1,opt,name=order" json:"order"`
 }
 
 func (m *UserOrderData) Reset()                    { *m = UserOrderData{} }
@@ -585,7 +585,7 @@ func (m *UserOrderData) GetOrder() *Order {
 }
 
 type UserOrdersData struct {
-	Orders []*Order `protobuf:"bytes,1,rep,name=orders" json:"orders,omitempty"`
+	Orders []*Order `protobuf:"bytes,1,rep,name=orders" json:"orders"`
 }
 
 func (m *UserOrdersData) Reset()                    { *m = UserOrdersData{} }
@@ -601,9 +601,9 @@ func (m *UserOrdersData) GetOrders() []*Order {
 }
 
 type OrderResponse struct {
-	Status  string         `protobuf:"bytes,1,opt,name=status" json:"status,omitempty"`
-	Message string         `protobuf:"bytes,2,opt,name=message" json:"message,omitempty"`
-	Data    *UserOrderData `protobuf:"bytes,3,opt,name=data" json:"data,omitempty"`
+	Status  string         `protobuf:"bytes,1,opt,name=status" json:"status"`
+	Message string         `protobuf:"bytes,2,opt,name=message" json:"message"`
+	Data    *UserOrderData `protobuf:"bytes,3,opt,name=data" json:"data"`
 }
 
 func (m *OrderResponse) Reset()                    { *m = OrderResponse{} }
@@ -633,9 +633,9 @@ func (m *OrderResponse) GetData() *UserOrderData {
 }
 
 type OrderListResponse struct {
-	Status  string          `protobuf:"bytes,1,opt,name=status" json:"status,omitempty"`
-	Message string          `protobuf:"bytes,2,opt,name=message" json:"message,omitempty"`
-	Data    *UserOrdersData `protobuf:"bytes,3,opt,name=data" json:"data,omitempty"`
+	Status  string          `protobuf:"bytes,1,opt,name=status" json:"status"`
+	Message string          `protobuf:"bytes,2,opt,name=message" json:"message"`
+	Data    *UserOrdersData `protobuf:"bytes,3,opt,name=data" json:"data"`
 }
 
 func (m *OrderListResponse) Reset()                    { *m = OrderListResponse{} }
@@ -665,10 +665,10 @@ func (m *OrderListResponse) GetData() *UserOrdersData {
 }
 
 type OrdersPage struct {
-	Page     uint32   `protobuf:"varint,1,opt,name=page" json:"page,omitempty"`
-	PageSize uint32   `protobuf:"varint,2,opt,name=pageSize" json:"pageSize,omitempty"`
-	Total    uint32   `protobuf:"varint,3,opt,name=total" json:"total,omitempty"`
-	Orders   []*Order `protobuf:"bytes,4,rep,name=orders" json:"orders,omitempty"`
+	Page     uint32   `protobuf:"varint,1,opt,name=page" json:"page"`
+	PageSize uint32   `protobuf:"varint,2,opt,name=pageSize" json:"pageSize"`
+	Total    uint32   `protobuf:"varint,3,opt,name=total" json:"total"`
+	Orders   []*Order `protobuf:"bytes,4,rep,name=orders" json:"orders"`
 }
 
 func (m *OrdersPage) Reset()                    { *m = OrdersPage{} }
