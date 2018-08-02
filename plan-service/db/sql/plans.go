@@ -940,17 +940,13 @@ func UpdatePlanContextTxn(txn *sql.Tx, ctx context.Context, planID, symbol, exch
 	_, err := txn.ExecContext(ctx, `
 		UPDATE plans 
 		SET 
-			active_currency_symbol = @symbol,
-			active_currency_balance = @bal,
-			market_name = @market,
-			exchange_name = @exchange
+			active_currency_symbol = $1,
+			active_currency_balance = $2,
+			market_name = $3,
+			exchange_name = $4 
 		WHERE
-			id = @planid`,
-		sql.Named("planid", planID),
-		sql.Named("symbol", symbol),
-		sql.Named("bal", activeBalance),
-		sql.Named("market", marketName),
-		sql.Named("exchange", exchange))
+			id = $5`,
+		symbol, activeBalance, marketName, exchange, planID)
 
 	return err
 }
@@ -959,11 +955,10 @@ func UpdatePlanStatusTxn(txn *sql.Tx, ctx context.Context, planID, status string
 	_, err := txn.ExecContext(ctx, `
 		UPDATE plans 
 		SET 
-			status = @status
+			status = $1 
 		WHERE
-			id = @planid`,
-		sql.Named("planid", planID),
-		sql.Named("status", status))
+			id = $2`,
+		status, planID)
 
 	return err
 }
@@ -972,11 +967,10 @@ func UpdatePlanCloseOnCompleteTxn(txn *sql.Tx, ctx context.Context, planID strin
 	_, err := txn.ExecContext(ctx, `
 		UPDATE plans 
 		SET 
-			close_on_complete = @close
+			close_on_complete = $1 
 		WHERE
-			id = @planid`,
-		sql.Named("planid", planID),
-		sql.Named("close", closeOnComplete))
+			id = $2`,
+		closeOnComplete, planID)
 
 	return err
 }
@@ -985,11 +979,10 @@ func UpdatePlanTemplateTxn(txn *sql.Tx, ctx context.Context, planID, template st
 	_, err := txn.ExecContext(ctx, `
 		UPDATE plans 
 		SET 
-			plan_template_id = @t
+			plan_template_id = $1 
 		WHERE
-			id = @planid`,
-		sql.Named("planid", planID),
-		sql.Named("t", template))
+			id = $2`,
+		template, planID)
 
 	return err
 }
@@ -998,11 +991,10 @@ func UpdatePlanTimestampTxn(txn *sql.Tx, ctx context.Context, planID, timestamp 
 	_, err := txn.ExecContext(ctx, `
 		UPDATE plans 
 		SET 
-			updated_on = @t
+			updated_on = $1 
 		WHERE
-			id = @planid`,
-		sql.Named("planid", planID),
-		sql.Named("t", timestamp))
+			id = $2`,
+		timestamp, planID)
 
 	return err
 }
@@ -1013,23 +1005,23 @@ func UpdatePlanTxn(txn *sql.Tx, ctx context.Context, plan *protoPlan.Plan) error
 	_, err := txn.ExecContext(ctx, `
 		UPDATE plans 
 		SET 
-			exchange_name = @ex,
-			market_name = @market,
-			active_currency_symbol = @symb,
-			active_currency_balance = @bal,
-			plan_template_id = @temp,
-			close_on_complete = @close,
-			status = @status
+			exchange_name = $1,
+			market_name = $2,
+			active_currency_symbol = $3,
+			active_currency_balance = $4,
+			plan_template_id = $5,
+			close_on_complete = $6,
+			status = $7 
 		WHERE
-			id = @planid`,
-		sql.Named("planid", plan.PlanID),
-		sql.Named("ex", plan.Exchange),
-		sql.Named("market", plan.MarketName),
-		sql.Named("symb", plan.ActiveCurrencySymbol),
-		sql.Named("bal", plan.ActiveCurrencyBalance),
-		sql.Named("temp", plan.PlanTemplateID),
-		sql.Named("close", plan.CloseOnComplete),
-		sql.Named("status", plan.Status))
+			id = $8`,
+		plan.Exchange,
+		plan.MarketName,
+		plan.ActiveCurrencySymbol,
+		plan.ActiveCurrencyBalance,
+		plan.PlanTemplateID,
+		plan.CloseOnComplete,
+		plan.Status,
+		plan.PlanID)
 
 	return err
 }
