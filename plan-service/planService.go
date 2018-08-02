@@ -513,6 +513,8 @@ func (service *PlanService) DeletePlan(ctx context.Context, req *protoPlan.Delet
 // Therefore, return error in response object.
 func (service *PlanService) UpdatePlan(ctx context.Context, req *protoPlan.UpdatePlanRequest, res *protoPlan.PlanResponse) error {
 
+	// TODO pause the plan here before going any further
+
 	// load current state of plan
 	// the plan should be paused long before UpdatePlan is called
 	// this function assumes that the plan is inactive
@@ -528,6 +530,10 @@ func (service *PlanService) UpdatePlan(ctx context.Context, req *protoPlan.Updat
 		log.Println(msg)
 		res.Status = response.Error
 		res.Message = fmt.Sprintf(err.Error())
+		return nil
+	case len(req.Orders) == 0 && pln.LastExecutedPlanDepth == 0:
+		res.Status = response.Fail
+		res.Message = "to plan or not to plan. That is the question. A plan must have at least 1 order."
 		return nil
 	case !ValidatePlanInputStatus(req.Status):
 		res.Status = response.Fail
@@ -574,11 +580,15 @@ func (service *PlanService) UpdatePlan(ctx context.Context, req *protoPlan.Updat
 	for _, or := range req.Orders {
 		keyIDs = append(keyIDs, or.KeyID)
 	}
-	kys, err := service.fetchKeys(keyIDs)
-	if err != nil {
-		res.Status = response.Error
-		res.Message = fmt.Sprintf("ecountered error when fetching keys: %s", err.Error())
-		return nil
+	kys := make([]*keys.Key, 0)
+
+	if len(req.Orders) > 0 {
+		kys, err = service.fetchKeys(keyIDs)
+		if err != nil {
+			res.Status = response.Error
+			res.Message = fmt.Sprintf("ecountered error when fetching keys: %s", err.Error())
+			return nil
+		}
 	}
 
 	none := uuid.Nil.String()
@@ -708,23 +718,23 @@ func (service *PlanService) UpdatePlan(ctx context.Context, req *protoPlan.Updat
 		newOrders = append(newOrders, &order)
 	}
 
-	// Overwrite the entire unexecuted portion of the plan tree with the new orders above.
-	// Gather all previous orderIDs for this plan so we can drop them from the DB.
-	orderIDs := make([]string, 0)
-	for _, o := range pln.Orders {
-		if o.Status != status.Inactive {
-			orderIDs = append(orderIDs, o.OrderID)
-		}
-	}
+	pln.Orders = newOrders
 
 	txn, err := service.DB.Begin()
 	if err != nil {
 		return err
 	}
 
-	pln.Orders = newOrders
+	// Overwrite the entire unexecuted portion of the plan tree with the new orders above.
+	// Gather all previous orderIDs for this plan so we can drop them from the DB.
+	orderIDs := make([]string, 0)
+	for _, o := range pln.Orders {
+		if o.Status != status.Filled {
+			orderIDs = append(orderIDs, o.OrderID)
+		}
+	}
 
-	if pln.LastExecutedPlanDepth == 0 {
+	if pln.LastExecutedPlanDepth == 0 && len(newOrders) > 0 {
 		pln.ActiveCurrencySymbol = newOrders[0].ActiveCurrencySymbol
 		pln.ActiveCurrencyBalance = newOrders[0].ActiveCurrencyBalance
 		pln.Exchange = newOrders[0].Exchange
@@ -785,24 +795,26 @@ func (service *PlanService) UpdatePlan(ctx context.Context, req *protoPlan.Updat
 		return nil
 	}
 
-	// insert the updated version of the plan
-	if err := planRepo.InsertOrders(txn, newOrders); err != nil {
-		txn.Rollback()
-		res.Status = response.Error
-		res.Message = "insert orders error: " + err.Error()
-		return nil
-	}
-
-	newTriggers := make([]*protoOrder.Trigger, 0, len(newOrders))
-	for _, o := range newOrders {
-		for _, t := range o.Triggers {
-			newTriggers = append(newTriggers, t)
+	if len(newOrders) > 0 {
+		// insert new orders for this plan
+		if err := planRepo.InsertOrders(txn, newOrders); err != nil {
+			txn.Rollback()
+			res.Status = response.Error
+			res.Message = "insert orders error: " + err.Error()
+			return nil
 		}
-	}
 
-	if err := planRepo.InsertTriggers(txn, newTriggers); err != nil {
-		txn.Rollback()
-		return errors.New("bulk triggers failed: " + err.Error())
+		newTriggers := make([]*protoOrder.Trigger, 0, len(newOrders))
+		for _, o := range newOrders {
+			for _, t := range o.Triggers {
+				newTriggers = append(newTriggers, t)
+			}
+		}
+
+		if err := planRepo.InsertTriggers(txn, newTriggers); err != nil {
+			txn.Rollback()
+			return errors.New("bulk triggers failed: " + err.Error())
+		}
 	}
 
 	txn.Commit()
