@@ -3,7 +3,6 @@ package sql
 import (
 	"context"
 	"database/sql"
-	"fmt"
 
 	protoOrder "github.com/asciiu/gomo/plan-service/proto/order"
 	"github.com/lib/pq"
@@ -11,16 +10,14 @@ import (
 )
 
 func DeleteOrders(txn *sql.Tx, ctx context.Context, orderIDs []string) error {
-	result, err := txn.ExecContext(ctx, `
+	_, err := txn.ExecContext(ctx, `
 		DELETE FROM orders 
 		WHERE
-			id = Any(@ids)`,
-		sql.Named("ids", pq.Array(orderIDs)))
+			id = Any($1)`, pq.Array(orderIDs))
 
 	if err != nil {
 		return err
 	}
-	fmt.Println(result)
 
 	return nil
 }

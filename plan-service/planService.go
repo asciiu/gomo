@@ -805,6 +805,8 @@ func (service *PlanService) UpdatePlan(ctx context.Context, req *protoPlan.Updat
 		return errors.New("bulk triggers failed: " + err.Error())
 	}
 
+	txn.Commit()
+
 	// activate first plan order if plan is active
 	if pln.Status == plan.Active {
 		// send key and secret with plan

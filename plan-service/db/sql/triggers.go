@@ -13,8 +13,7 @@ func DeleteTriggersWithOrderID(txn *sql.Tx, ctx context.Context, orderID string)
 	_, err := txn.ExecContext(ctx, `
 		DELETE FROM triggers 
 		WHERE
-			order_id = id`,
-		sql.Named("id", orderID))
+			order_id = $1`, orderID)
 
 	return err
 }
