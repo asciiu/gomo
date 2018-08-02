@@ -69,7 +69,7 @@ func FindPlanWithUnexecutedOrders(db *sql.DB, planID string) (*protoPlan.Plan, e
 		JOIN triggers t on o.id = t.order_id
 		JOIN user_keys k on o.user_key_id = k.id
 		WHERE p.id = $1
-		ORDER BY o.plan_depth, o.order_priority, o.id, t.trigger_number`, planID)
+		ORDER BY o.plan_depth, o.order_priority, o.id, t.index`, planID)
 
 	if err != nil {
 		return nil, err

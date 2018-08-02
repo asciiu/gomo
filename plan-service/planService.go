@@ -519,6 +519,16 @@ func (service *PlanService) UpdatePlan(ctx context.Context, req *protoPlan.Updat
 	pln, err := planRepo.FindPlanWithUnexecutedOrders(service.DB, req.PlanID)
 
 	switch {
+	case err == sql.ErrNoRows:
+		res.Status = response.Nonentity
+		res.Message = fmt.Sprintf("planID not found %s", req.PlanID)
+		return nil
+	case err != nil:
+		msg := fmt.Sprintf("FindPlanWithUnexecutedOrders error: %s", err.Error())
+		log.Println(msg)
+		res.Status = response.Error
+		res.Message = fmt.Sprintf(err.Error())
+		return nil
 	case !ValidatePlanInputStatus(req.Status):
 		res.Status = response.Fail
 		res.Message = "plan status must be active, inactive"

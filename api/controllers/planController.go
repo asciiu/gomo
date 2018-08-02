@@ -789,11 +789,13 @@ func (controller *PlanController) HandleUpdatePlan(c echo.Context) error {
 			Message: r.Message,
 		}
 
-		if r.Status == response.Fail {
+		switch r.Status {
+		case response.Fail:
 			return c.JSON(http.StatusBadRequest, res)
-		}
-		if r.Status == response.Error {
+		case response.Error:
 			return c.JSON(http.StatusInternalServerError, res)
+		case response.Nonentity:
+			return c.JSON(http.StatusBadRequest, res)
 		}
 	}
 
