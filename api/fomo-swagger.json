@@ -658,7 +658,7 @@
     },
     "/plans/:planID": {
       "get": {
-        "description": "Returns a plan with completd currency and base currency names. There is no limit on planned orders - these are the\norders that belong to a trade plan. Therefore, the response data will contain a paged structure for the plan orders.\n\nexample: /plans/:some_plan_id?page0\u0026pageSize=50",
+        "description": "Returns a plan with the currency and base currency names. Plan orders will be retrieved\nbased upon planDepth and planLength. The root order of a plan begins at planDepth=0. The\nplanLength deteremines the length of the tree to retrieve.\n\nexample: /plans/:some_plan_id?planDepth=0\u0026planLength=10\nThe example above will retrieve the orders from planDepth 0 to planDepth 10.",
         "tags": [
           "plans"
         ],
@@ -668,15 +668,15 @@
           {
             "type": "integer",
             "format": "uint32",
-            "x-go-name": "Page",
-            "name": "page",
+            "x-go-name": "PlanDepth",
+            "name": "planDepth",
             "in": "query"
           },
           {
             "type": "integer",
             "format": "uint32",
-            "x-go-name": "PageSize",
-            "name": "pageSize",
+            "x-go-name": "PlanLength",
+            "name": "planLength",
             "in": "query"
           }
         ],
@@ -1225,15 +1225,15 @@
       "description": "required for swaggered, otherwise never used",
       "type": "object",
       "properties": {
-        "page": {
+        "planDepth": {
           "type": "integer",
           "format": "uint32",
-          "x-go-name": "Page"
+          "x-go-name": "PlanDepth"
         },
-        "pageSize": {
+        "planLength": {
           "type": "integer",
           "format": "uint32",
-          "x-go-name": "PageSize"
+          "x-go-name": "PlanLength"
         }
       },
       "x-go-package": "github.com/asciiu/gomo/api/controllers"

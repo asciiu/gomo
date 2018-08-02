@@ -168,6 +168,10 @@ func (service *PlanService) NewPlan(ctx context.Context, req *protoPlan.NewPlanR
 		res.Status = response.Fail
 		res.Message = "plan status must be active, inactive, or historic"
 		return nil
+	case !ValidateMinOrder(req.Orders):
+		res.Status = response.Fail
+		res.Message = "at least one order required for a new plan."
+		return nil
 	case !ValidateSingleRootNode(req.Orders):
 		res.Status = response.Fail
 		res.Message = "multiple root nodes found, only one is allowed"
@@ -519,6 +523,8 @@ func (service *PlanService) UpdatePlan(ctx context.Context, req *protoPlan.Updat
 	// the plan should be paused long before UpdatePlan is called
 	// this function assumes that the plan is inactive
 	pln, err := planRepo.FindPlanWithUnexecutedOrders(service.DB, req.PlanID)
+	fmt.Println(len(pln.Orders))
+	fmt.Println(pln)
 
 	switch {
 	case err == sql.ErrNoRows:

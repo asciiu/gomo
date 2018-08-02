@@ -241,18 +241,20 @@ func (controller *PlanController) HandleDeletePlan(c echo.Context) error {
 // required for swaggered, otherwise never used
 // swagger:parameters GetPlanParams
 type GetPlanParams struct {
-	Page     uint32 `json:"page"`
-	PageSize uint32 `json:"pageSize"`
+	PlanDepth  uint32 `json:"planDepth"`
+	PlanLength uint32 `json:"planLength"`
 }
 
 // swagger:route GET /plans/:planID plans GetPlanParams
 //
 // get plan with planID (protected)
 //
-// Returns a plan with completd currency and base currency names. There is no limit on planned orders - these are the
-// orders that belong to a trade plan. Therefore, the response data will contain a paged structure for the plan orders.
+// Returns a plan with the currency and base currency names. Plan orders will be retrieved
+// based upon planDepth and planLength. The root order of a plan begins at planDepth=0. The
+// planLength deteremines the length of the tree to retrieve.
 //
-// example: /plans/:some_plan_id?page0&pageSize=50
+// example: /plans/:some_plan_id?planDepth=0&planLength=10
+// The example above will retrieve the orders from planDepth 0 to planDepth 10.
 //
 // responses:
 //  200: ResponsePlanWithOrderPageSuccess "data" will contain paged orders

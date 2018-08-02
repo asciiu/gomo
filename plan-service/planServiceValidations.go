@@ -19,6 +19,11 @@ func ValidateSingleRootNode(orderRequests []*protoOrder.NewOrderRequest) bool {
 	return count == 1
 }
 
+// plan must have at least one order
+func ValidateMinOrder(orderRequests []*protoOrder.NewOrderRequest) bool {
+	return len(orderRequests) > 0
+}
+
 func ValidateConnectedRoutesFromParent(parentOrderID string, orderRequests []*protoOrder.NewOrderRequest) bool {
 	orderIDs := make([]string, 0, len(orderRequests)+1)
 	orderIDs = append(orderIDs, parentOrderID)
