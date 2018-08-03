@@ -367,8 +367,8 @@ func (service *PlanService) NewPlan(ctx context.Context, req *protoPlan.NewPlanR
 		UpdatedOn:             now,
 	}
 
-	error := planRepo.InsertPlan(service.DB, &pln)
-	if error != nil {
+	err = planRepo.InsertPlan(service.DB, &pln)
+	if err != nil {
 		msg := fmt.Sprintf("insert plan failed %s", err.Error())
 		log.Println(msg)
 
