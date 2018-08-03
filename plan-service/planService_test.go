@@ -8,11 +8,11 @@ import (
 	"github.com/asciiu/gomo/common/db"
 	repoKey "github.com/asciiu/gomo/key-service/db/sql"
 	protoKey "github.com/asciiu/gomo/key-service/proto/key"
+	testKey "github.com/asciiu/gomo/key-service/test"
 	protoOrder "github.com/asciiu/gomo/plan-service/proto/order"
 	protoPlan "github.com/asciiu/gomo/plan-service/proto/plan"
 	repoUser "github.com/asciiu/gomo/user-service/db/sql"
 	user "github.com/asciiu/gomo/user-service/models"
-	"github.com/micro/go-micro/client"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -23,52 +23,13 @@ func checkErr(err error) {
 	}
 }
 
-type mockKeyService struct {
-}
-
-func (m *mockKeyService) GetKeys(ctx context.Context, req *protoKey.GetKeysRequest, opts ...client.CallOption) (*protoKey.KeyListResponse, error) {
-	keys := make([]*protoKey.Key, 0)
-	keys = append(keys, &protoKey.Key{
-		KeyID:    "examplekey",
-		UserID:   "testuser",
-		Exchange: "testex",
-	})
-
-	return &protoKey.KeyListResponse{
-		Status: "success",
-		Data: &protoKey.UserKeysData{
-			Keys: keys,
-		},
-	}, nil
-}
-
-func (m *mockKeyService) AddKey(ctx context.Context, in *protoKey.KeyRequest, opts ...client.CallOption) (*protoKey.KeyResponse, error) {
-	return &protoKey.KeyResponse{}, nil
-}
-func (m *mockKeyService) GetUserKey(ctx context.Context, in *protoKey.GetUserKeyRequest, opts ...client.CallOption) (*protoKey.KeyResponse, error) {
-	return &protoKey.KeyResponse{}, nil
-}
-func (m *mockKeyService) GetUserKeys(ctx context.Context, in *protoKey.GetUserKeysRequest, opts ...client.CallOption) (*protoKey.KeyListResponse, error) {
-	return &protoKey.KeyListResponse{}, nil
-}
-func (m *mockKeyService) RemoveKey(ctx context.Context, in *protoKey.RemoveKeyRequest, opts ...client.CallOption) (*protoKey.KeyResponse, error) {
-	return &protoKey.KeyResponse{}, nil
-}
-func (m *mockKeyService) UpdateKeyDescription(ctx context.Context, in *protoKey.KeyRequest, opts ...client.CallOption) (*protoKey.KeyResponse, error) {
-	return &protoKey.KeyResponse{}, nil
-}
-
-func MokieKeyService() protoKey.KeyServiceClient {
-	return new(mockKeyService)
-}
-
 func setupService() (*PlanService, *user.User, *protoKey.Key) {
 	dbUrl := "postgres://postgres@localhost:5432/gomo_test?&sslmode=disable"
 	db, _ := db.NewDB(dbUrl)
 
 	planService := PlanService{
 		DB:        db,
-		KeyClient: MokieKeyService(),
+		KeyClient: testKey.MockKeyServiceClient(),
 	}
 
 	user := user.NewUser("first", "last", "test@email", "hash")
