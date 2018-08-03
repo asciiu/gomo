@@ -189,16 +189,29 @@ func TestOrderUpdatePlan(t *testing.T) {
 
 	assert.Equal(t, "success", res.Status, "return status of inserting plan should be success")
 
+	triggers = make([]*protoOrder.TriggerRequest, 0)
+	trigger = protoOrder.TriggerRequest{
+		TriggerID:         "ab4734f7-5ab7-46eb-9972-ed632ac752f8",
+		Code:              "price <= 5",
+		Index:             0,
+		Name:              "price_trigger",
+		Title:             "Testing update",
+		TriggerTemplateID: "testtemplate",
+		Actions:           []string{"placeOrder"},
+	}
+	triggers = append(triggers, &trigger)
+
 	orders = make([]*protoOrder.NewOrderRequest, 0)
 	order = protoOrder.NewOrderRequest{
 		OrderID:         "4d671984-d7dd-4dce-a20f-23f25d6daf7f",
 		KeyID:           key.KeyID,
 		OrderType:       "paper",
-		OrderTemplateID: "mokie",
+		OrderTemplateID: "mokie22",
 		ParentOrderID:   "00000000-0000-0000-0000-000000000000",
 		MarketName:      "ADA-BTC",
-		Side:            "buy",
-		ActiveCurrencyBalance: 100,
+		Side:            "sell",
+		ActiveCurrencyBalance: 70,
+		Triggers:              triggers,
 	}
 
 	orders = append(orders, &order)
@@ -213,7 +226,9 @@ func TestOrderUpdatePlan(t *testing.T) {
 	res = protoPlan.PlanResponse{}
 	service.UpdatePlan(context.Background(), &req2, &res)
 
-	assert.Equal(t, "fail", res.Status, "return status of updating an invalid plan should be fail")
+	assert.Equal(t, "success", res.Status, "return status of updating an invalid plan should be fail")
+	assert.Equal(t, 1, len(res.Data.Plan.Orders), "update should have yielded a single order")
+	assert.Equal(t, 70.0, res.Data.Plan.Orders[0].ActiveCurrencyBalance, "active currency balance after update order incorrect")
 
 	repoUser.DeleteUserHard(service.DB, user.ID)
 }
