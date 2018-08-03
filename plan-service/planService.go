@@ -543,6 +543,10 @@ func (service *PlanService) UpdatePlan(ctx context.Context, req *protoPlan.Updat
 		res.Status = response.Fail
 		res.Message = "to plan or not to plan. That is the question. A plan must have at least 1 order."
 		return nil
+	case !ValidateNonExecutedOrder(pln.Orders, req.Orders):
+		res.Status = response.Fail
+		res.Message = "an order has executed."
+		return nil
 	case !ValidateOrderTrigger(req.Orders):
 		res.Status = response.Fail
 		res.Message = "orders must have triggers"
