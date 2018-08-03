@@ -172,6 +172,10 @@ func (service *PlanService) NewPlan(ctx context.Context, req *protoPlan.NewPlanR
 		res.Status = response.Fail
 		res.Message = "at least one order required for a new plan."
 		return nil
+	case !ValidateOrderTrigger(req.Orders):
+		res.Status = response.Fail
+		res.Message = "orders must have triggers"
+		return nil
 	case !ValidateSingleRootNode(req.Orders):
 		res.Status = response.Fail
 		res.Message = "multiple root nodes found, only one is allowed"
@@ -523,8 +527,6 @@ func (service *PlanService) UpdatePlan(ctx context.Context, req *protoPlan.Updat
 	// the plan should be paused long before UpdatePlan is called
 	// this function assumes that the plan is inactive
 	pln, err := planRepo.FindPlanWithUnexecutedOrders(service.DB, req.PlanID)
-	fmt.Println(len(pln.Orders))
-	fmt.Println(pln)
 
 	switch {
 	case err == sql.ErrNoRows:
@@ -540,6 +542,10 @@ func (service *PlanService) UpdatePlan(ctx context.Context, req *protoPlan.Updat
 	case len(req.Orders) == 0 && pln.LastExecutedPlanDepth == 0:
 		res.Status = response.Fail
 		res.Message = "to plan or not to plan. That is the question. A plan must have at least 1 order."
+		return nil
+	case !ValidateOrderTrigger(req.Orders):
+		res.Status = response.Fail
+		res.Message = "orders must have triggers"
 		return nil
 	case !ValidatePlanInputStatus(req.Status):
 		res.Status = response.Fail

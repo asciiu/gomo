@@ -49,6 +49,17 @@ func ValidateConnectedRoutesFromParent(parentOrderID string, orderRequests []*pr
 	return true
 }
 
+// All orders must contain triggers
+func ValidateOrderTrigger(orderRequests []*protoOrder.NewOrderRequest) bool {
+	for _, o := range orderRequests {
+		if len(o.Triggers) == 0 {
+			return false
+		}
+	}
+
+	return true
+}
+
 // Child orders must have a valid parent order ID
 func ValidateChildNodes(orderRequests []*protoOrder.NewOrderRequest) bool {
 	for _, o := range orderRequests {
