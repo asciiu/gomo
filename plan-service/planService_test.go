@@ -149,6 +149,64 @@ func TestSuccessfulOrderPlan(t *testing.T) {
 	repoUser.DeleteUserHard(service.DB, user.ID)
 }
 
+// Test failure of order when incorrect order
+func TestUnsortedPlan(t *testing.T) {
+	service, user, key := setupService()
+
+	defer service.DB.Close()
+
+	triggers := make([]*protoOrder.TriggerRequest, 0)
+	trigger := protoOrder.TriggerRequest{
+		TriggerID:         "ab4734f7-5ab7-46eb-9972-ed632ac752f8",
+		Code:              "test",
+		Index:             0,
+		Name:              "test_trigger",
+		Title:             "Testing",
+		TriggerTemplateID: "testtemplate",
+		Actions:           []string{"placeOrder"},
+	}
+	triggers = append(triggers, &trigger)
+
+	orders := make([]*protoOrder.NewOrderRequest, 0)
+	order1 := protoOrder.NewOrderRequest{
+		OrderID:         "4d671984-d7dd-4dce-a20f-23f25d6daf7f",
+		KeyID:           key.KeyID,
+		OrderType:       "paper",
+		OrderTemplateID: "mokie22",
+		ParentOrderID:   "4d671984-d7dd-4dce-a20f-23f25d6daf7f",
+		MarketName:      "ADA-BTC",
+		Side:            "buy",
+		ActiveCurrencyBalance: 70,
+		Triggers:              triggers,
+	}
+	order2 := protoOrder.NewOrderRequest{
+		OrderID:         "4d671984-d7dd-4dce-a20f-23f25d6daf76",
+		KeyID:           key.KeyID,
+		OrderType:       "paper",
+		OrderTemplateID: "mokie22",
+		ParentOrderID:   "00000000-0000-0000-0000-000000000000",
+		MarketName:      "BTC-USDT",
+		Side:            "buy",
+		ActiveCurrencyBalance: 70,
+		Triggers:              triggers,
+	}
+	orders = append(orders, &order1, &order2)
+
+	req := protoPlan.NewPlanRequest{
+		UserID:          user.ID,
+		Status:          "active",
+		CloseOnComplete: false,
+		PlanTemplateID:  "thing",
+		Orders:          orders,
+	}
+	res := protoPlan.PlanResponse{}
+	service.NewPlan(context.Background(), &req, &res)
+
+	assert.Equal(t, "fail", res.Status, "an unsorted plan should have failed")
+
+	repoUser.DeleteUserHard(service.DB, user.ID)
+}
+
 // Test updating a plan
 func TestOrderUpdatePlan(t *testing.T) {
 	service, user, key := setupService()

@@ -228,10 +228,10 @@ func (service *PlanService) NewPlan(ctx context.Context, req *protoPlan.NewPlanR
 	now := string(pq.FormatTimestamp(time.Now().UTC()))
 	newOrders := make([]*protoOrder.Order, 0, len(req.Orders))
 	exchange := ""
+	depth := uint32(0)
 
 	for _, or := range req.Orders {
 		orderStatus := status.Inactive
-		depth := uint32(1)
 
 		if or.MarketName == "" || or.KeyID == "" {
 			res.Status = response.Fail
@@ -254,13 +254,24 @@ func (service *PlanService) NewPlan(ctx context.Context, req *protoPlan.NewPlanR
 			return nil
 		}
 
-		// compute the depth for the order
-		if or.ParentOrderID != none {
+		// root order starts at depth 1
+		if or.ParentOrderID == none {
+			depth = 1
+		} else {
+
 			for _, o := range newOrders {
 				if o.OrderID == or.ParentOrderID {
 					depth = o.PlanDepth + 1
 					break
 				}
+			}
+
+			// this will happen if the parent order for this order cannot be found
+			// it essentially means the orders are not in the correct order - sorted from parent to child
+			if depth == 0 {
+				res.Status = response.Fail
+				res.Message = "the orders must be sorted by plan depth, i.e. parents must be before children"
+				return nil
 			}
 		}
 
@@ -611,10 +622,10 @@ func (service *PlanService) UpdatePlan(ctx context.Context, req *protoPlan.Updat
 	now := string(pq.FormatTimestamp(time.Now().UTC()))
 	newOrders := make([]*protoOrder.Order, 0, len(req.Orders))
 	exchange := ""
+	depth := pln.LastExecutedPlanDepth
 
 	for _, or := range req.Orders {
 		orderStatus := status.Inactive
-		depth := pln.LastExecutedPlanDepth + 1
 
 		if or.MarketName == "" || or.KeyID == "" {
 			res.Status = response.Fail
@@ -638,12 +649,22 @@ func (service *PlanService) UpdatePlan(ctx context.Context, req *protoPlan.Updat
 		}
 
 		// compute the depth for the order
-		if or.ParentOrderID != none {
+		if or.ParentOrderID == pln.LastExecutedOrderID {
+			depth++
+		} else {
 			for _, o := range newOrders {
 				if o.OrderID == or.ParentOrderID {
 					depth = o.PlanDepth + 1
 					break
 				}
+			}
+
+			// this will happen if the parent order for this order cannot be found
+			// the depth would not change
+			if depth == pln.LastExecutedPlanDepth {
+				res.Status = response.Fail
+				res.Message = "the orders must be sorted by plan depth, i.e. parents must be before children"
+				return nil
 			}
 		}
 
