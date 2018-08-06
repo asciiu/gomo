@@ -755,8 +755,6 @@ func (service *PlanService) UpdatePlan(ctx context.Context, req *protoPlan.Updat
 		newOrders = append(newOrders, &order)
 	}
 
-	pln.Orders = newOrders
-
 	txn, err := service.DB.Begin()
 	if err != nil {
 		return err
@@ -871,6 +869,7 @@ func (service *PlanService) UpdatePlan(ctx context.Context, req *protoPlan.Updat
 		}
 	}
 
+	pln.Orders = newOrders
 	res.Status = response.Success
 	res.Data = &protoPlan.PlanData{Plan: pln}
 

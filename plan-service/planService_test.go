@@ -236,6 +236,46 @@ func TestOrderUpdatePlan(t *testing.T) {
 				},
 			},
 		},
+		&protoOrder.NewOrderRequest{
+			OrderID:         "966fabac-8cad-11e8-9eb6-529269fb1459",
+			KeyID:           key.KeyID,
+			OrderType:       "paper",
+			OrderTemplateID: "mokie",
+			ParentOrderID:   "4d671984-d7dd-4dce-a20f-23f25d6daf7f",
+			MarketName:      "EOS-BTC",
+			Side:            "buy",
+			Triggers: []*protoOrder.TriggerRequest{
+				&protoOrder.TriggerRequest{
+					TriggerID:         "ab4734f7-5ab7-46eb-9972-ed632ac75290",
+					Code:              "test",
+					Index:             0,
+					Name:              "test_trigger",
+					Title:             "Testing",
+					TriggerTemplateID: "testtemplate",
+					Actions:           []string{"placeOrder"},
+				},
+			},
+		},
+		&protoOrder.NewOrderRequest{
+			OrderID:         "3c960c68-8cb0-11e8-9eb6-529269fb1459",
+			KeyID:           key.KeyID,
+			OrderType:       "paper",
+			OrderTemplateID: "mokie",
+			ParentOrderID:   "4d671984-d7dd-4dce-a20f-23f25d6daf7f",
+			MarketName:      "BTC-USDT",
+			Side:            "sell",
+			Triggers: []*protoOrder.TriggerRequest{
+				&protoOrder.TriggerRequest{
+					TriggerID:         "ab4734f7-5ab7-46eb-9972-ed632ac75290",
+					Code:              "test",
+					Index:             0,
+					Name:              "test_trigger",
+					Title:             "Testing",
+					TriggerTemplateID: "testtemplate",
+					Actions:           []string{"placeOrder"},
+				},
+			},
+		},
 	}
 	req := protoPlan.NewPlanRequest{
 		UserID:          user.ID,
