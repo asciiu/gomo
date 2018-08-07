@@ -2,27 +2,20 @@ package test
 
 import (
 	"context"
+	"database/sql"
 
-	constKey "github.com/asciiu/gomo/common/constants/key"
+	repoKey "github.com/asciiu/gomo/key-service/db/sql"
 	protoKey "github.com/asciiu/gomo/key-service/proto/key"
 	"github.com/micro/go-micro/client"
 )
 
 // Test clients of the Key service should use this client interface.
 type mockKeyService struct {
+	db *sql.DB
 }
 
 func (m *mockKeyService) GetKeys(ctx context.Context, req *protoKey.GetKeysRequest, opts ...client.CallOption) (*protoKey.KeyListResponse, error) {
-	keys := make([]*protoKey.Key, 0)
-	keys = append(keys, &protoKey.Key{
-		KeyID:       "examplekey",
-		UserID:      "testuser",
-		Exchange:    "testex",
-		Key:         "test_key",
-		Secret:      "test_secret",
-		Status:      constKey.Verified,
-		Description: "Test me!",
-	})
+	keys, _ := repoKey.FindKeys(m.db, req)
 
 	return &protoKey.KeyListResponse{
 		Status: "success",
@@ -48,6 +41,6 @@ func (m *mockKeyService) UpdateKeyDescription(ctx context.Context, in *protoKey.
 	return &protoKey.KeyResponse{}, nil
 }
 
-func MockKeyServiceClient() protoKey.KeyServiceClient {
-	return new(mockKeyService)
+func MockKeyServiceClient(db *sql.DB) protoKey.KeyServiceClient {
+	return &mockKeyService{db}
 }
