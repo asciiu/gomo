@@ -50,25 +50,24 @@ message CandleDataRequest {
   string interval = 3; 
 }
 
-message ActiveOrderEvent {
-  string exchange = 1;
-  string orderID = 2;
+message NewPlanEvent {
   string planID = 3;
   string userID = 4;
-  string nextOrderID = 5;
-  double baseBalance = 6;
-  double currencyBalance = 7;
-  double balancePercent = 8;
-  string keyID = 9;
-  string key = 10;
-  string secret = 11;
-  string marketName = 12;
-  string side = 13;
-  string orderType = 14;
-  double price = 15;
-  bool revision = 16;      // this means that this order event should replace an active order in the system
-  string orderStatus = 17; 
-  repeated Trigger triggers = 18;
+  repeated Order orders = 5;
+}
+
+message Order {
+  string orderID = 1;
+  string exchange = 2;
+  string marketName = 3;
+  string side = 4;
+  double limitPrice = 5;
+  string orderType = 6;
+  string orderStatus = 7; 
+  string keyID = 8;
+  string keyPublic = 9;
+  string keySecret = 10; 
+  repeated Trigger triggers = 11;
 }
 
 message Trigger {
