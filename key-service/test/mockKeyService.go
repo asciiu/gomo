@@ -3,6 +3,7 @@ package test
 import (
 	"context"
 
+	constKey "github.com/asciiu/gomo/common/constants/key"
 	protoKey "github.com/asciiu/gomo/key-service/proto/key"
 	"github.com/micro/go-micro/client"
 )
@@ -14,9 +15,13 @@ type mockKeyService struct {
 func (m *mockKeyService) GetKeys(ctx context.Context, req *protoKey.GetKeysRequest, opts ...client.CallOption) (*protoKey.KeyListResponse, error) {
 	keys := make([]*protoKey.Key, 0)
 	keys = append(keys, &protoKey.Key{
-		KeyID:    "examplekey",
-		UserID:   "testuser",
-		Exchange: "testex",
+		KeyID:       "examplekey",
+		UserID:      "testuser",
+		Exchange:    "testex",
+		Key:         "test_key",
+		Secret:      "test_secret",
+		Status:      constKey.Verified,
+		Description: "Test me!",
 	})
 
 	return &protoKey.KeyListResponse{
