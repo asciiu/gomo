@@ -16,7 +16,7 @@ import (
 	"github.com/asciiu/gomo/common/constants/response"
 	"github.com/asciiu/gomo/common/constants/side"
 	"github.com/asciiu/gomo/common/constants/status"
-	evt "github.com/asciiu/gomo/common/proto/events"
+	protoEvent "github.com/asciiu/gomo/common/proto/events"
 	keys "github.com/asciiu/gomo/key-service/proto/key"
 	planRepo "github.com/asciiu/gomo/plan-service/db/sql"
 	protoOrder "github.com/asciiu/gomo/plan-service/proto/order"
@@ -39,58 +39,56 @@ type PlanService struct {
 // published the first order of the plan will be emmitted as an ActiveOrderEvent to the
 // system.
 //
-// VERY IMPORTANT: Only send Plans where the first order plan's orders is the next order to active.
-// That is to say. DO NOT load a plan where the first order in the orders array has been filled. Fuck
-// it, I'm going to implement a check here to ensure this never happens.
+// VERY IMPORTANT: In theory, this should never be used to republish filled orders.
 func (service *PlanService) publishPlan(ctx context.Context, plan *protoPlan.Plan, isRevision bool) error {
-	// the first plan order will always be the active one
-	planOrder := plan.Orders[0]
+	newOrders := make([]*protoEvent.Order, 0)
 
-	// only pub plan if the next plan order is active or inactive
-	// we do not pub plan orders that have been filled, failed, or aborted
-	// reexecuting those plan orders would be very bad!
-	if planOrder.Status != status.Active && planOrder.Status != status.Inactive {
-		return nil
-	}
-	triggers := make([]*evt.Trigger, 0)
-	for _, t := range planOrder.Triggers {
-		trig := evt.Trigger{
-			TriggerID: t.TriggerID,
-			OrderID:   t.OrderID,
-			Name:      t.Name,
-			Code:      t.Code,
-			Triggered: t.Triggered,
-			Actions:   t.Actions,
+	for _, order := range plan.Orders {
+
+		triggers := make([]*protoEvent.Trigger, 0)
+		for _, t := range order.Triggers {
+			trig := protoEvent.Trigger{
+				TriggerID: t.TriggerID,
+				OrderID:   t.OrderID,
+				Name:      t.Name,
+				Code:      t.Code,
+				Triggered: t.Triggered,
+				Actions:   t.Actions,
+			}
+			triggers = append(triggers, &trig)
 		}
-		triggers = append(triggers, &trig)
+
+		// convert order to order event
+		newOrderEvt := protoEvent.Order{
+			OrderID:     order.OrderID,
+			Exchange:    order.Exchange,
+			MarketName:  order.MarketName,
+			Side:        order.Side,
+			LimitPrice:  order.LimitPrice,
+			OrderType:   order.OrderType,
+			OrderStatus: order.Status,
+			KeyID:       order.KeyID,
+			KeyPublic:   order.KeyPublic,
+			KeySecret:   order.KeySecret,
+			Triggers:    triggers,
+		}
+
+		newOrders = append(newOrders, &newOrderEvt)
 	}
 
-	// convert order to order event
-	// activeOrder := evt.ActiveOrderEvent{
-	// 	//Exchange:        plan.Exchange,
-	// 	OrderID: planOrder.OrderID,
-	// 	PlanID:  plan.PlanID,
-	// 	UserID:  plan.UserID,
-	// 	//BaseBalance:     plan.BaseBalance,
-	// 	//CurrencyBalance: plan.CurrencyBalance,
-	// 	BalancePercent: planOrder.PercentBalance,
-	// 	KeyID:          plan.KeyID,
-	// 	Key:            plan.Key,
-	// 	Secret:         plan.KeySecret,
-	// 	//MarketName:      plan.MarketName,
-	// 	Side:      planOrder.Side,
-	// 	OrderType: planOrder.OrderType,
-	// 	Price:     planOrder.LimitPrice,
-	// 	//NextOrderID:     planOrder.NextOrderID,
-	// 	Revision:    isRevision,
-	// 	OrderStatus: planOrder.Status,
-	// 	Triggers:    triggers,
-	// }
+	newPlanEvent := protoEvent.NewPlanEvent{
+		PlanID: plan.PlanID,
+		UserID: plan.UserID,
+		Orders: newOrders,
+	}
+
+	fmt.Printf("%+v\n", newPlanEvent)
 
 	// if err := service.OrderPub.Publish(context.Background(), &activeOrder); err != nil {
 	// 	return fmt.Errorf("publish error: %s -- ActiveOrderEvent %+v", err, &activeOrder)
 	// }
 	//log.Printf("publish active order -- %+v\n", &activeOrder)
+
 	return nil
 }
 
@@ -394,12 +392,19 @@ func (service *PlanService) NewPlan(ctx context.Context, req *protoPlan.NewPlanR
 
 	// activate first plan order if plan is active
 	if pln.Status == plan.Active {
-		// send key and secret with plan
-		//pln.Key = ky.Key
-		//pln.KeySecret = ky.Secret
+		p := pln
+		p.Orders = []*protoOrder.Order{pln.Orders[0]}
 
-		// this is a new plan
-		if err := service.publishPlan(ctx, &pln, false); err != nil {
+		// assign exchange name from key
+		for _, ky := range kys {
+			if ky.KeyID == p.Orders[0].KeyID {
+				p.Orders[0].KeyPublic = ky.Key
+				p.Orders[0].KeySecret = ky.Secret
+			}
+		}
+
+		// publish this plan to the engine
+		if err := service.publishPlan(ctx, &p, false); err != nil {
 			// TODO return a warning here
 			res.Status = response.Error
 			res.Message = "could not publish first order: " + err.Error()

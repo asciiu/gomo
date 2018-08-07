@@ -2,9 +2,11 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"log"
 	"testing"
 
+	constKey "github.com/asciiu/gomo/common/constants/key"
 	constStatus "github.com/asciiu/gomo/common/constants/status"
 	"github.com/asciiu/gomo/common/db"
 	repoKey "github.com/asciiu/gomo/key-service/db/sql"
@@ -31,19 +33,24 @@ func setupService() (*PlanService, *user.User, *protoKey.Key) {
 
 	planService := PlanService{
 		DB:        db,
-		KeyClient: testKey.MockKeyServiceClient(),
+		KeyClient: testKey.MockKeyServiceClient(db),
 	}
 
 	user := user.NewUser("first", "last", "test@email", "hash")
 	_, error := repoUser.InsertUser(db, user)
 	keyRequest := protoKey.KeyRequest{
-		KeyID:    "92512e72-b7e8-49f4-bab5-271f4ba450d9",
-		UserID:   user.ID,
-		Exchange: "test",
+		KeyID:       "92512e72-b7e8-49f4-bab5-271f4ba450d9",
+		UserID:      user.ID,
+		Exchange:    "test",
+		Key:         "test_key",
+		Secret:      "test_secret",
+		Description: "testy",
 	}
 
 	key, error := repoKey.InsertKey(db, &keyRequest)
 	checkErr(error)
+	key.Status = constKey.Verified
+	repoKey.UpdateKeyStatus(db, key)
 
 	return &planService, user, key
 }
@@ -109,42 +116,40 @@ func TestSuccessfulOrderPlan(t *testing.T) {
 
 	defer service.DB.Close()
 
-	triggers := make([]*protoOrder.TriggerRequest, 0)
-	trigger := protoOrder.TriggerRequest{
-		TriggerID:         "ab4734f7-5ab7-46eb-9972-ed632ac752f8",
-		Code:              "test",
-		Index:             0,
-		Name:              "test_trigger",
-		Title:             "Testing",
-		TriggerTemplateID: "testtemplate",
-		Actions:           []string{"placeOrder"},
-	}
-	triggers = append(triggers, &trigger)
-
-	orders := make([]*protoOrder.NewOrderRequest, 0)
-	order := protoOrder.NewOrderRequest{
-		OrderID:         "4d671984-d7dd-4dce-a20f-23f25d6daf7f",
-		KeyID:           key.KeyID,
-		OrderType:       "paper",
-		OrderTemplateID: "mokie",
-		ParentOrderID:   "00000000-0000-0000-0000-000000000000",
-		MarketName:      "ADA-BTC",
-		Side:            "buy",
-		ActiveCurrencyBalance: 100,
-		Triggers:              triggers,
-	}
-	orders = append(orders, &order)
 	req := protoPlan.NewPlanRequest{
 		UserID:          user.ID,
 		Status:          "active",
 		CloseOnComplete: false,
-		PlanTemplateID:  "thing",
-		Orders:          orders,
+		PlanTemplateID:  "bloody_test",
+		Orders: []*protoOrder.NewOrderRequest{
+			&protoOrder.NewOrderRequest{
+				OrderID:         "4d671984-d7dd-4dce-a20f-23f25d6daf7f",
+				KeyID:           key.KeyID,
+				OrderType:       "paper",
+				OrderTemplateID: "mokie22",
+				ParentOrderID:   "00000000-0000-0000-0000-000000000000",
+				MarketName:      "BTC-USDT",
+				Side:            "buy",
+				ActiveCurrencyBalance: 70,
+				Triggers: []*protoOrder.TriggerRequest{
+					&protoOrder.TriggerRequest{
+						TriggerID:         "ab4734f7-5ab7-46eb-9972-ed632ac752f8",
+						Code:              "price <= 5",
+						Index:             0,
+						Name:              "price_trigger",
+						Title:             "Testing update",
+						TriggerTemplateID: "testtemplate",
+						Actions:           []string{"placeOrder"},
+					},
+				},
+			},
+		},
 	}
+
 	res := protoPlan.PlanResponse{}
 	service.NewPlan(context.Background(), &req, &res)
 
-	assert.Equal(t, "success", res.Status, "return status of inserting plan should be success")
+	assert.Equal(t, "success", res.Status, fmt.Sprintf("return status of inserting plan should be success got: %s", res.Message))
 
 	repoUser.DeleteUserHard(service.DB, user.ID)
 }
