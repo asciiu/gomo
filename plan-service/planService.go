@@ -95,6 +95,7 @@ func (service *PlanService) publishPlan(ctx context.Context, plan *protoPlan.Pla
 }
 
 // private: validateBalance
+// returns true, nil when the balance can be validated
 func (service *PlanService) validateBalance(ctx context.Context, currency string, balance float64, userID string, apikeyID string) (bool, error) {
 	balRequest := balances.GetUserBalanceRequest{
 		UserID:   userID,
@@ -116,24 +117,24 @@ func (service *PlanService) validateBalance(ctx context.Context, currency string
 // LoadPlanOrder will activate an order (i.e. send a plan order) to the execution engine to process.
 func (service *PlanService) LoadPlanOrder(ctx context.Context, plan *protoPlan.Plan, isRevision bool) error {
 
-	// planOrder := plan.Orders[0]
-	// currencies := strings.Split(plan.MarketName, "-")
-	// // default market currency
-	// currency := currencies[0]
-	// balance := plan.CurrencyBalance
-	// if planOrder.Side == side.Buy {
-	// 	// buy uses base currency
-	// 	currency = currencies[1]
-	// 	balance = plan.BaseBalance
-	// }
+	currency := plan.ActiveCurrencySymbol
+	balance := plan.ActiveCurrencyBalance
+	// assume for now that all orders in the plan use the same Key ID. This may not be true in the future
+	keyID := plan.Orders[0].KeyID
 
-	// if err := service.validateBalance(ctx, currency, balance, plan.UserID, plan.KeyID); err != nil {
-	// 	return err
-	// }
+	if plan.Orders[0].OrderType != orderConstants.PaperOrder {
+		valid, err := service.validateBalance(ctx, currency, balance, plan.UserID, keyID)
+		if err != nil {
+			return err
+		}
+		if !valid {
+			return errors.New("not enough balance")
+		}
+	}
 
-	// if err := service.publishPlan(ctx, plan, isRevision); err != nil {
-	// 	return err
-	// }
+	if err := service.publishPlan(ctx, plan, isRevision); err != nil {
+		return err
+	}
 
 	return nil
 }
