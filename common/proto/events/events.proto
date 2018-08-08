@@ -23,27 +23,6 @@ message Auth {
   string secret = 2;
 }
 
-// this can be removed safely?
-// message OrderEvent {
-//   string exchange = 1;
-//   string orderID = 2;
-//   string userID = 3;
-//   string keyID = 4;
-//   string key = 5;
-//   string secret = 6;
-//   string marketName = 7;
-//   string side = 8;
-//   string orderType = 9;
-//   string currency = 10;
-//   double quantity = 11;
-//   double price = 12;
-//   string condition = 13;
-//   string conditions = 14;
-//   string exchangeOrderID = 15;
-//   string exchangeMarketName = 16;
-//   string status = 17;
-// }
-
 message CandleDataRequest {
   string exchange = 1;
   string marketName = 2;

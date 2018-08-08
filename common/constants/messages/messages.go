@@ -16,7 +16,7 @@ const TopicAggTrade = "ExchangeAggTrade"
 const TopicAbortedOrder = "AbortedOrderSuccess"
 
 // new order event
-const TopicNewOrder = "NewOrder"
+const TopicNewPlan = "NewPlan"
 
 // TopicOrderFilled when order has filled
 const TopicCompletedOrder = "OrderCompleted"
