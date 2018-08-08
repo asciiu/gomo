@@ -32,21 +32,21 @@ func main() {
 	env := vm.NewEnv()
 	core.Import(env)
 
-	orderReceiver := OrderReceiver{
+	planReceiver := PlanReceiver{
 		DB:      gomoDB,
-		Orders:  make([]*Order, 0),
+		Plans:   make([]*Plan, 0),
 		Env:     env,
 		Aborted: micro.NewPublisher(msg.TopicAbortedOrder, srv.Client()),
 	}
 	processor := Processor{
 		DB:        gomoDB,
-		Receiver:  &orderReceiver,
+		Receiver:  &planReceiver,
 		Completed: micro.NewPublisher(msg.TopicCompletedOrder, srv.Client()),
 		Triggered: micro.NewPublisher(msg.TopicTriggeredOrder, srv.Client()),
 	}
 
 	// subscribe to new key topic with a key validator
-	micro.RegisterSubscriber(msg.TopicNewOrder, srv.Server(), &orderReceiver)
+	micro.RegisterSubscriber(msg.TopicNewPlan, srv.Server(), &planReceiver)
 	micro.RegisterSubscriber(msg.TopicAggTrade, srv.Server(), &processor)
 
 	starter := micro.NewPublisher(msg.TopicEngineStart, srv.Client())

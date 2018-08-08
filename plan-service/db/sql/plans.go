@@ -215,7 +215,7 @@ func FindActivePlans(db *sql.DB) ([]*protoPlan.Plan, error) {
 		JOIN orders o on p.id = o.plan_id AND p.last_executed_order_id = o.parent_order_id
 		JOIN triggers t on o.id = t.order_id
 		JOIN user_keys k on o.user_key_id = k.id
-		WHERE p.status = $1 AND k.status = $2 ORDER BY p.id, o.id, t.trigger_number`, plan.Active, key.Verified)
+		WHERE p.status = $1 AND k.status = $2 ORDER BY p.id, o.id, t.index`, plan.Active, key.Verified)
 
 	if err != nil {
 		return nil, err
