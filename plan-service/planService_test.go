@@ -83,24 +83,23 @@ func TestOrdersMustHaveTriggers(t *testing.T) {
 
 	defer service.DB.Close()
 
-	orders := make([]*protoOrder.NewOrderRequest, 0)
-	order := protoOrder.NewOrderRequest{
-		OrderID:         "4d671984-d7dd-4dce-a20f-23f25d6daf7f",
-		KeyID:           key.KeyID,
-		OrderType:       "paper",
-		OrderTemplateID: "mokie",
-		ParentOrderID:   "00000000-0000-0000-0000-000000000000",
-		MarketName:      "ADA-BTC",
-		Side:            "buy",
-		ActiveCurrencyBalance: 100,
-	}
-	orders = append(orders, &order)
 	req := protoPlan.NewPlanRequest{
 		UserID:          user.ID,
 		Status:          "active",
 		CloseOnComplete: false,
-		PlanTemplateID:  "thing",
-		Orders:          orders,
+		PlanTemplateID:  "no_trigger_test",
+		Orders: []*protoOrder.NewOrderRequest{
+			&protoOrder.NewOrderRequest{
+				OrderID:         "4d671984-d7dd-4dce-a20f-23f25d6daf7f",
+				KeyID:           key.KeyID,
+				OrderType:       "paper",
+				OrderTemplateID: "mokie22",
+				ParentOrderID:   "00000000-0000-0000-0000-000000000000",
+				MarketName:      "BTC-USDT",
+				Side:            "buy",
+				ActiveCurrencyBalance: 100,
+			},
+		},
 	}
 	res := protoPlan.PlanResponse{}
 	service.NewPlan(context.Background(), &req, &res)
@@ -160,49 +159,55 @@ func TestUnsortedPlan(t *testing.T) {
 
 	defer service.DB.Close()
 
-	triggers := make([]*protoOrder.TriggerRequest, 0)
-	trigger := protoOrder.TriggerRequest{
-		TriggerID:         "ab4734f7-5ab7-46eb-9972-ed632ac752f8",
-		Code:              "test",
-		Index:             0,
-		Name:              "test_trigger",
-		Title:             "Testing",
-		TriggerTemplateID: "testtemplate",
-		Actions:           []string{"placeOrder"},
-	}
-	triggers = append(triggers, &trigger)
-
-	orders := make([]*protoOrder.NewOrderRequest, 0)
-	order1 := protoOrder.NewOrderRequest{
-		OrderID:         "4d671984-d7dd-4dce-a20f-23f25d6daf7f",
-		KeyID:           key.KeyID,
-		OrderType:       "paper",
-		OrderTemplateID: "mokie22",
-		ParentOrderID:   "4d671984-d7dd-4dce-a20f-23f25d6daf7f",
-		MarketName:      "ADA-BTC",
-		Side:            "buy",
-		ActiveCurrencyBalance: 70,
-		Triggers:              triggers,
-	}
-	order2 := protoOrder.NewOrderRequest{
-		OrderID:         "4d671984-d7dd-4dce-a20f-23f25d6daf76",
-		KeyID:           key.KeyID,
-		OrderType:       "paper",
-		OrderTemplateID: "mokie22",
-		ParentOrderID:   "00000000-0000-0000-0000-000000000000",
-		MarketName:      "BTC-USDT",
-		Side:            "buy",
-		ActiveCurrencyBalance: 70,
-		Triggers:              triggers,
-	}
-	orders = append(orders, &order1, &order2)
-
 	req := protoPlan.NewPlanRequest{
 		UserID:          user.ID,
 		Status:          "active",
 		CloseOnComplete: false,
-		PlanTemplateID:  "thing",
-		Orders:          orders,
+		PlanTemplateID:  "bloody_test",
+		Orders: []*protoOrder.NewOrderRequest{
+			&protoOrder.NewOrderRequest{
+				OrderID:         "da46997b-9d4f-45b2-9d2a-aaa404a213c5",
+				KeyID:           key.KeyID,
+				OrderType:       "paper",
+				OrderTemplateID: "mokie22",
+				ParentOrderID:   "4d671984-d7dd-4dce-a20f-23f25d6daf7f",
+				MarketName:      "BTC-USDT",
+				Side:            "buy",
+				ActiveCurrencyBalance: 70,
+				Triggers: []*protoOrder.TriggerRequest{
+					&protoOrder.TriggerRequest{
+						TriggerID:         "ab4734f7-5ab7-46eb-9972-ed632ac752f8",
+						Code:              "price <= 5500",
+						Index:             0,
+						Name:              "price_trigger",
+						Title:             "Testing update",
+						TriggerTemplateID: "testtemplate",
+						Actions:           []string{"placeOrder"},
+					},
+				},
+			},
+			&protoOrder.NewOrderRequest{
+				OrderID:         "4d671984-d7dd-4dce-a20f-23f25d6daf7f",
+				KeyID:           key.KeyID,
+				OrderType:       "paper",
+				OrderTemplateID: "mokie22",
+				ParentOrderID:   "00000000-0000-0000-0000-000000000000",
+				MarketName:      "BTC-USDT",
+				Side:            "buy",
+				ActiveCurrencyBalance: 70,
+				Triggers: []*protoOrder.TriggerRequest{
+					&protoOrder.TriggerRequest{
+						TriggerID:         "f6aa71b0-8cac-11e8-9eb6-529269fb1450",
+						Code:              "price <= 6000",
+						Index:             0,
+						Name:              "price_trigger",
+						Title:             "Testing update",
+						TriggerTemplateID: "testtemplate",
+						Actions:           []string{"placeOrder"},
+					},
+				},
+			},
+		},
 	}
 	res := protoPlan.PlanResponse{}
 	service.NewPlan(context.Background(), &req, &res)
@@ -219,123 +224,79 @@ func TestOrderUpdatePlan(t *testing.T) {
 	defer service.DB.Close()
 
 	//orders := make([]*protoOrder.NewOrderRequest, 0)
-	orders := []*protoOrder.NewOrderRequest{
-		&protoOrder.NewOrderRequest{
-			OrderID:         "4d671984-d7dd-4dce-a20f-23f25d6daf7f",
-			KeyID:           key.KeyID,
-			OrderType:       "paper",
-			OrderTemplateID: "mokie",
-			ParentOrderID:   "00000000-0000-0000-0000-000000000000",
-			MarketName:      "BTC-USDT",
-			Side:            "buy",
-			ActiveCurrencyBalance: 100,
-			Triggers: []*protoOrder.TriggerRequest{
-				&protoOrder.TriggerRequest{
-					TriggerID:         "ab4734f7-5ab7-46eb-9972-ed632ac752f8",
-					Code:              "test",
-					Index:             0,
-					Name:              "test_trigger",
-					Title:             "Testing",
-					TriggerTemplateID: "testtemplate",
-					Actions:           []string{"placeOrder"},
-				},
-			},
-		},
-		&protoOrder.NewOrderRequest{
-			OrderID:         "966fabac-8cad-11e8-9eb6-529269fb1459",
-			KeyID:           key.KeyID,
-			OrderType:       "paper",
-			OrderTemplateID: "mokie",
-			ParentOrderID:   "4d671984-d7dd-4dce-a20f-23f25d6daf7f",
-			MarketName:      "EOS-BTC",
-			Side:            "buy",
-			Triggers: []*protoOrder.TriggerRequest{
-				&protoOrder.TriggerRequest{
-					TriggerID:         "ab4734f7-5ab7-46eb-9972-ed632ac75290",
-					Code:              "test",
-					Index:             0,
-					Name:              "test_trigger",
-					Title:             "Testing",
-					TriggerTemplateID: "testtemplate",
-					Actions:           []string{"placeOrder"},
-				},
-			},
-		},
-		&protoOrder.NewOrderRequest{
-			OrderID:         "3c960c68-8cb0-11e8-9eb6-529269fb1459",
-			KeyID:           key.KeyID,
-			OrderType:       "paper",
-			OrderTemplateID: "mokie",
-			ParentOrderID:   "4d671984-d7dd-4dce-a20f-23f25d6daf7f",
-			MarketName:      "BTC-USDT",
-			Side:            "sell",
-			Triggers: []*protoOrder.TriggerRequest{
-				&protoOrder.TriggerRequest{
-					TriggerID:         "ab4734f7-5ab7-46eb-9972-ed632ac75290",
-					Code:              "test",
-					Index:             0,
-					Name:              "test_trigger",
-					Title:             "Testing",
-					TriggerTemplateID: "testtemplate",
-					Actions:           []string{"placeOrder"},
-				},
-			},
-		},
-	}
 	req := protoPlan.NewPlanRequest{
 		UserID:          user.ID,
 		Status:          "active",
 		CloseOnComplete: false,
-		PlanTemplateID:  "thing",
-		Orders:          orders,
+		PlanTemplateID:  "update_test",
+		Orders: []*protoOrder.NewOrderRequest{
+			&protoOrder.NewOrderRequest{
+				OrderID:         "4d671984-d7dd-4dce-a20f-23f25d6daf7f",
+				KeyID:           key.KeyID,
+				OrderType:       "paper",
+				OrderTemplateID: "mokie",
+				ParentOrderID:   "00000000-0000-0000-0000-000000000000",
+				MarketName:      "BTC-USDT",
+				Side:            "buy",
+				ActiveCurrencyBalance: 100,
+				Triggers: []*protoOrder.TriggerRequest{
+					&protoOrder.TriggerRequest{
+						TriggerID:         "ab4734f7-5ab7-46eb-9972-ed632ac752f8",
+						Code:              "test",
+						Index:             0,
+						Name:              "test_trigger",
+						Title:             "Testing",
+						TriggerTemplateID: "testtemplate",
+						Actions:           []string{"placeOrder"},
+					},
+				},
+			},
+			&protoOrder.NewOrderRequest{
+				OrderID:         "966fabac-8cad-11e8-9eb6-529269fb1459",
+				KeyID:           key.KeyID,
+				OrderType:       "paper",
+				OrderTemplateID: "mokie",
+				ParentOrderID:   "4d671984-d7dd-4dce-a20f-23f25d6daf7f",
+				MarketName:      "EOS-BTC",
+				Side:            "buy",
+				Triggers: []*protoOrder.TriggerRequest{
+					&protoOrder.TriggerRequest{
+						TriggerID:         "ab4734f7-5ab7-46eb-9972-ed632ac75290",
+						Code:              "test",
+						Index:             0,
+						Name:              "test_trigger",
+						Title:             "Testing",
+						TriggerTemplateID: "testtemplate",
+						Actions:           []string{"placeOrder"},
+					},
+				},
+			},
+			&protoOrder.NewOrderRequest{
+				OrderID:         "3c960c68-8cb0-11e8-9eb6-529269fb1459",
+				KeyID:           key.KeyID,
+				OrderType:       "paper",
+				OrderTemplateID: "mokie",
+				ParentOrderID:   "4d671984-d7dd-4dce-a20f-23f25d6daf7f",
+				MarketName:      "BTC-USDT",
+				Side:            "sell",
+				Triggers: []*protoOrder.TriggerRequest{
+					&protoOrder.TriggerRequest{
+						TriggerID:         "ab4734f7-5ab7-46eb-9972-ed632ac75290",
+						Code:              "test",
+						Index:             0,
+						Name:              "test_trigger",
+						Title:             "Testing",
+						TriggerTemplateID: "testtemplate",
+						Actions:           []string{"placeOrder"},
+					},
+				},
+			},
+		},
 	}
 	res := protoPlan.PlanResponse{}
 	service.NewPlan(context.Background(), &req, &res)
 
 	assert.Equal(t, "success", res.Status, "return status of inserting plan should be success")
-
-	orders = []*protoOrder.NewOrderRequest{
-		&protoOrder.NewOrderRequest{
-			OrderID:         "4d671984-d7dd-4dce-a20f-23f25d6daf7f",
-			KeyID:           key.KeyID,
-			OrderType:       "paper",
-			OrderTemplateID: "mokie22",
-			ParentOrderID:   "00000000-0000-0000-0000-000000000000",
-			MarketName:      "BTC-USDT",
-			Side:            "buy",
-			ActiveCurrencyBalance: 70,
-			Triggers: []*protoOrder.TriggerRequest{
-				&protoOrder.TriggerRequest{
-					TriggerID:         "ab4734f7-5ab7-46eb-9972-ed632ac752f8",
-					Code:              "price <= 5",
-					Index:             0,
-					Name:              "price_trigger",
-					Title:             "Testing update",
-					TriggerTemplateID: "testtemplate",
-					Actions:           []string{"placeOrder"},
-				},
-			},
-		}, &protoOrder.NewOrderRequest{
-			OrderID:         "4d671984-d7dd-4dce-a20f-23f25d6daf76",
-			KeyID:           key.KeyID,
-			OrderType:       "paper",
-			OrderTemplateID: "mokie22",
-			ParentOrderID:   "4d671984-d7dd-4dce-a20f-23f25d6daf7f",
-			MarketName:      "ADA-BTC",
-			Side:            "buy",
-			Triggers: []*protoOrder.TriggerRequest{
-				&protoOrder.TriggerRequest{
-					TriggerID:         "ab4734f7-5ab7-46eb-9972-ed632ac752f8",
-					Code:              "price <= 5",
-					Index:             0,
-					Name:              "price_trigger",
-					Title:             "Testing update",
-					TriggerTemplateID: "testtemplate",
-					Actions:           []string{"placeOrder"},
-				},
-			},
-		},
-	}
 
 	req2 := protoPlan.UpdatePlanRequest{
 		PlanID:          res.Data.Plan.PlanID,
@@ -343,8 +304,50 @@ func TestOrderUpdatePlan(t *testing.T) {
 		Status:          "active",
 		CloseOnComplete: false,
 		PlanTemplateID:  "thing2",
-		Orders:          orders,
+		Orders: []*protoOrder.NewOrderRequest{
+			&protoOrder.NewOrderRequest{
+				OrderID:         "4d671984-d7dd-4dce-a20f-23f25d6daf7f",
+				KeyID:           key.KeyID,
+				OrderType:       "paper",
+				OrderTemplateID: "mokie22",
+				ParentOrderID:   "00000000-0000-0000-0000-000000000000",
+				MarketName:      "BTC-USDT",
+				Side:            "buy",
+				ActiveCurrencyBalance: 70,
+				Triggers: []*protoOrder.TriggerRequest{
+					&protoOrder.TriggerRequest{
+						TriggerID:         "ab4734f7-5ab7-46eb-9972-ed632ac752f8",
+						Code:              "price <= 5",
+						Index:             0,
+						Name:              "price_trigger",
+						Title:             "Testing update",
+						TriggerTemplateID: "testtemplate",
+						Actions:           []string{"placeOrder"},
+					},
+				},
+			}, &protoOrder.NewOrderRequest{
+				OrderID:         "4d671984-d7dd-4dce-a20f-23f25d6daf76",
+				KeyID:           key.KeyID,
+				OrderType:       "paper",
+				OrderTemplateID: "mokie22",
+				ParentOrderID:   "4d671984-d7dd-4dce-a20f-23f25d6daf7f",
+				MarketName:      "ADA-BTC",
+				Side:            "buy",
+				Triggers: []*protoOrder.TriggerRequest{
+					&protoOrder.TriggerRequest{
+						TriggerID:         "ab4734f7-5ab7-46eb-9972-ed632ac752f8",
+						Code:              "price <= 5",
+						Index:             0,
+						Name:              "price_trigger",
+						Title:             "Testing update",
+						TriggerTemplateID: "testtemplate",
+						Actions:           []string{"placeOrder"},
+					},
+				},
+			},
+		},
 	}
+
 	res = protoPlan.PlanResponse{}
 	service.UpdatePlan(context.Background(), &req2, &res)
 	assert.Equal(t, "success", res.Status, "return status of updating an invalid plan should be fail")
@@ -375,37 +378,34 @@ func TestOrderUpdatePlanFailure(t *testing.T) {
 
 	defer service.DB.Close()
 
-	triggers := make([]*protoOrder.TriggerRequest, 0)
-	trigger := protoOrder.TriggerRequest{
-		TriggerID:         "ab4734f7-5ab7-46eb-9972-ed632ac752f8",
-		Code:              "test",
-		Index:             0,
-		Name:              "test_trigger",
-		Title:             "Testing",
-		TriggerTemplateID: "testtemplate",
-		Actions:           []string{"placeOrder"},
-	}
-	triggers = append(triggers, &trigger)
-
-	orders := make([]*protoOrder.NewOrderRequest, 0)
-	order := protoOrder.NewOrderRequest{
-		OrderID:         "4d671984-d7dd-4dce-a20f-23f25d6daf7f",
-		KeyID:           key.KeyID,
-		OrderType:       "paper",
-		OrderTemplateID: "mokie",
-		ParentOrderID:   "00000000-0000-0000-0000-000000000000",
-		MarketName:      "ADA-BTC",
-		Side:            "buy",
-		ActiveCurrencyBalance: 100,
-		Triggers:              triggers,
-	}
-	orders = append(orders, &order)
 	req := protoPlan.NewPlanRequest{
 		UserID:          user.ID,
 		Status:          "active",
 		CloseOnComplete: false,
 		PlanTemplateID:  "thing",
-		Orders:          orders,
+		Orders: []*protoOrder.NewOrderRequest{
+			&protoOrder.NewOrderRequest{
+				OrderID:         "4d671984-d7dd-4dce-a20f-23f25d6daf7f",
+				KeyID:           key.KeyID,
+				OrderType:       "paper",
+				OrderTemplateID: "mokie22",
+				ParentOrderID:   "00000000-0000-0000-0000-000000000000",
+				MarketName:      "BTC-USDT",
+				Side:            "buy",
+				ActiveCurrencyBalance: 100,
+				Triggers: []*protoOrder.TriggerRequest{
+					&protoOrder.TriggerRequest{
+						TriggerID:         "ab4734f7-5ab7-46eb-9972-ed632ac752f8",
+						Code:              "price <= 5",
+						Index:             0,
+						Name:              "price_trigger",
+						Title:             "Testing update",
+						TriggerTemplateID: "testtemplate",
+						Actions:           []string{"placeOrder"},
+					},
+				},
+			},
+		},
 	}
 	res := protoPlan.PlanResponse{}
 	service.NewPlan(context.Background(), &req, &res)
@@ -413,54 +413,59 @@ func TestOrderUpdatePlanFailure(t *testing.T) {
 	assert.Equal(t, "success", res.Status, "return status of inserting plan should be success")
 	planID := res.Data.Plan.PlanID
 
-	_, err := repoOrder.UpdateOrderStatus(service.DB, order.OrderID, constStatus.Filled)
+	_, err := repoOrder.UpdateOrderStatus(service.DB, "4d671984-d7dd-4dce-a20f-23f25d6daf7f", constStatus.Filled)
 	if err != nil {
 		assert.Equal(t, "success", "failed", "update order status failed")
 	}
 
-	triggers = make([]*protoOrder.TriggerRequest, 0)
-	trigger = protoOrder.TriggerRequest{
-		TriggerID:         "ab4734f7-5ab7-46eb-9972-ed632ac752f8",
-		Code:              "price <= 5",
-		Index:             0,
-		Name:              "price_trigger",
-		Title:             "Testing update",
-		TriggerTemplateID: "testtemplate",
-		Actions:           []string{"placeOrder"},
-	}
-	triggers = append(triggers, &trigger)
-
-	orders = make([]*protoOrder.NewOrderRequest, 0)
-	order1 := protoOrder.NewOrderRequest{
-		OrderID:         "4d671984-d7dd-4dce-a20f-23f25d6daf7f",
-		KeyID:           key.KeyID,
-		OrderType:       "paper",
-		OrderTemplateID: "mokie22",
-		ParentOrderID:   "00000000-0000-0000-0000-000000000000",
-		MarketName:      "BTC-USDT",
-		Side:            "buy",
-		ActiveCurrencyBalance: 70,
-		Triggers:              triggers,
-	}
-	order2 := protoOrder.NewOrderRequest{
-		OrderID:         "4d671984-d7dd-4dce-a20f-23f25d6daf76",
-		KeyID:           key.KeyID,
-		OrderType:       "paper",
-		OrderTemplateID: "mokie22",
-		ParentOrderID:   "4d671984-d7dd-4dce-a20f-23f25d6daf7f",
-		MarketName:      "ADA-BTC",
-		Side:            "buy",
-		Triggers:        triggers,
-	}
-
-	orders = append(orders, &order1, &order2)
 	req2 := protoPlan.UpdatePlanRequest{
 		PlanID:          res.Data.Plan.PlanID,
 		UserID:          user.ID,
 		Status:          "active",
 		CloseOnComplete: false,
 		PlanTemplateID:  "thing2",
-		Orders:          orders,
+		Orders: []*protoOrder.NewOrderRequest{
+			&protoOrder.NewOrderRequest{
+				OrderID:         "4d671984-d7dd-4dce-a20f-23f25d6daf7f",
+				KeyID:           key.KeyID,
+				OrderType:       "paper",
+				OrderTemplateID: "mokie22",
+				ParentOrderID:   "00000000-0000-0000-0000-000000000000",
+				MarketName:      "ETH-USDT",
+				Side:            "buy",
+				ActiveCurrencyBalance: 1000,
+				Triggers: []*protoOrder.TriggerRequest{
+					&protoOrder.TriggerRequest{
+						TriggerID:         "ab4734f7-5ab7-46eb-9972-ed632ac752f8",
+						Code:              "price <= 5",
+						Index:             0,
+						Name:              "price_trigger",
+						Title:             "Testing update",
+						TriggerTemplateID: "testtemplate",
+						Actions:           []string{"placeOrder"},
+					},
+				},
+			}, &protoOrder.NewOrderRequest{
+				OrderID:         "4d671984-d7dd-4dce-a20f-23f25d6daf76",
+				KeyID:           key.KeyID,
+				OrderType:       "paper",
+				OrderTemplateID: "mokie22",
+				ParentOrderID:   "4d671984-d7dd-4dce-a20f-23f25d6daf7f",
+				MarketName:      "ADA-ETH",
+				Side:            "buy",
+				Triggers: []*protoOrder.TriggerRequest{
+					&protoOrder.TriggerRequest{
+						TriggerID:         "ab4734f7-5ab7-46eb-9972-ed632ac752f8",
+						Code:              "price <= 5",
+						Index:             0,
+						Name:              "price_trigger",
+						Title:             "Testing update",
+						TriggerTemplateID: "testtemplate",
+						Actions:           []string{"placeOrder"},
+					},
+				},
+			},
+		},
 	}
 	res = protoPlan.PlanResponse{}
 	service.UpdatePlan(context.Background(), &req2, &res)
@@ -478,6 +483,7 @@ func TestOrderUpdatePlanFailure(t *testing.T) {
 	assert.Equal(t, "success", res.Status, "return status for get plan should be success")
 	assert.Equal(t, 1, len(res.Data.Plan.Orders), "update should have yielded a single order")
 	assert.Equal(t, 100.0, res.Data.Plan.Orders[0].ActiveCurrencyBalance, "active currency balance after update order incorrect")
+	assert.Equal(t, "BTC-USDT", res.Data.Plan.Orders[0].MarketName, "market should not have changed")
 	assert.Equal(t, "thing", res.Data.Plan.PlanTemplateID, "the template ID should have changed")
 
 	repoUser.DeleteUserHard(service.DB, user.ID)
