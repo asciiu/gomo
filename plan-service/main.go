@@ -37,7 +37,7 @@ func main() {
 		DB:        gomoDB,
 		Client:    bp.NewBalanceServiceClient("balances", srv.Client()),
 		KeyClient: keys.NewKeyServiceClient("keys", srv.Client()),
-		OrderPub:  micro.NewPublisher(msg.TopicNewOrder, srv.Client()),
+		PlanPub:   micro.NewPublisher(msg.TopicNewPlan, srv.Client()),
 	}
 
 	abortedReceiver := AbortedOrderReceiver{

@@ -31,7 +31,7 @@ type PlanService struct {
 	DB        *sql.DB
 	Client    balances.BalanceServiceClient
 	KeyClient keys.KeyServiceClient
-	OrderPub  micro.Publisher
+	PlanPub   micro.Publisher
 }
 
 // private: This is where the order events are published to the rest of the system
@@ -82,12 +82,14 @@ func (service *PlanService) publishPlan(ctx context.Context, plan *protoPlan.Pla
 		Orders: newOrders,
 	}
 
-	fmt.Printf("%+v\n", newPlanEvent)
+	//fmt.Printf("%+v\n", newPlanEvent)
 
-	// if err := service.OrderPub.Publish(context.Background(), &activeOrder); err != nil {
-	// 	return fmt.Errorf("publish error: %s -- ActiveOrderEvent %+v", err, &activeOrder)
-	// }
-	//log.Printf("publish active order -- %+v\n", &activeOrder)
+	if service.PlanPub != nil {
+		if err := service.PlanPub.Publish(context.Background(), &newPlanEvent); err != nil {
+			return fmt.Errorf("publish error: %s -- planID: %s", err, newPlanEvent.PlanID)
+		}
+		log.Printf("published plan -- %s\n", newPlanEvent.PlanID)
+	}
 
 	return nil
 }

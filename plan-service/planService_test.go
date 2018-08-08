@@ -418,6 +418,7 @@ func TestOrderUpdatePlanFailure(t *testing.T) {
 		assert.Equal(t, "success", "failed", "update order status failed")
 	}
 
+	// this should fail because the order above was filled
 	req2 := protoPlan.UpdatePlanRequest{
 		PlanID:          res.Data.Plan.PlanID,
 		UserID:          user.ID,
