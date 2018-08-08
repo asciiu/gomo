@@ -27,10 +27,11 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
-//const refreshDuration = 720 * time.Hour
-//const jwtDuration = 1440 * time.Minute
-const refreshDuration = 30 * time.Minute
-const jwtDuration = 30 * time.Minute
+const refreshDuration = 720 * time.Hour
+const jwtDuration = 60 * time.Minute
+
+//const refreshDuration = 30 * time.Minute
+//const jwtDuration = 30 * time.Minute
 
 type AuthController struct {
 	DB       *sql.DB
