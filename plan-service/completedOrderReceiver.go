@@ -5,9 +5,11 @@ import (
 	"database/sql"
 	"fmt"
 	"log"
+	"time"
 
 	evt "github.com/asciiu/gomo/common/proto/events"
 	notifications "github.com/asciiu/gomo/notification-service/proto"
+	"github.com/lib/pq"
 	micro "github.com/micro/go-micro"
 )
 
@@ -26,6 +28,7 @@ func (receiver *CompletedOrderReceiver) ProcessEvent(ctx context.Context, comple
 	notification := notifications.Notification{
 		UserID:      completedOrderEvent.UserID,
 		Description: fmt.Sprintf("orderId: %s %s", completedOrderEvent.OrderID, completedOrderEvent.Details),
+		Timestamp:   string(pq.FormatTimestamp(time.Now().UTC())),
 	}
 
 	// notifiy the user of completed order
