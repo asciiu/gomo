@@ -9,7 +9,7 @@
     "common/db",
     "common/proto/events"
   ]
-  revision = "1cb125ad0d040cd746ad66ffd14870ab3bdeffe1"
+  revision = "3e210c2100319455af9969a32e839052db94266c"
 
 [[projects]]
   name = "github.com/go-log/log"

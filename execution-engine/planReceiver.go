@@ -38,7 +38,7 @@ type TriggerEx struct {
 	Name      string
 	Triggered bool
 	Actions   []string
-	Statement Expression
+	Evaluate  Expression
 }
 
 // OrderReceiver will receive and prep an order conditions
@@ -99,7 +99,7 @@ func (receiver *PlanReceiver) AddPlan(ctx context.Context, plan *evt.NewPlanEven
 				Name:      trigger.Name,
 				Triggered: trigger.Triggered,
 				Actions:   trigger.Actions,
-				Statement: expression,
+				Evaluate:  expression,
 			})
 		}
 		orders = append(orders, &Order{

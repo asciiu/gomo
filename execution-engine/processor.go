@@ -21,8 +21,23 @@ type Processor struct {
 
 // ProcessEvent will process ExchangeEvents. These events are published from the exchange sockets.
 func (processor *Processor) ProcessEvent(ctx context.Context, payload *evt.TradeEvents) error {
+	plans := processor.Receiver.Plans
+
+	// TODO this is not very efficient
 	for _, tradeUpdate := range payload.Events {
-		fmt.Println(tradeUpdate)
+		for p, plan := range processor.Receiver.Plans {
+			for _, order := range plan.Orders {
+				if tradeUpdate.MarketName == order.MarketName && tradeUpdate.Exchange == order.Exchange {
+					for _, trigger := range order.TriggerExs {
+						if isTrue, desc := trigger.Evaluate(tradeUpdate.Price); isTrue {
+							// remove this order from the processor
+							processor.Receiver.Plans = append(plans[:p], plans[p+1:]...)
+							fmt.Println(desc)
+						}
+					}
+				}
+			}
+		}
 	}
 
 	//fmt.Println(payload)
