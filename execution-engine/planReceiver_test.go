@@ -50,16 +50,16 @@ func TestAddPlan(t *testing.T) {
 				Exchange:              "testex",
 				MarketName:            "BTC-USDT",
 				Side:                  "buy",
-				LimitPrice:            1.00,
-				OrderType:             "paper",
+				LimitPrice:            4950.00,
+				OrderType:             "limit",
 				OrderStatus:           "active",
 				ActiveCurrencySymbol:  "USDT",
 				ActiveCurrencyBalance: 100.00,
 				Triggers: []*protoEvents.Trigger{
 					&protoEvents.Trigger{
-						TriggerID: "",
+						TriggerID: "76fa5d0c-34c7-4c67-ad64-389f92ce82a5",
 						OrderID:   "4d67dcac-0e46-49f5-9258-234fdba373ae",
-						Name:      "triggex",
+						Name:      "My Price!",
 						Code:      "price <= 5000",
 						Triggered: false,
 						Actions:   []string{"placeOrder"},
@@ -77,5 +77,5 @@ func TestAddPlan(t *testing.T) {
 	result, desc := trigger.Evaluate(4999.00)
 
 	assert.Equal(t, true, result, "the trigger statement should be true")
-	assert.Equal(t, "4999.00000000 <= 5000", desc, "what?")
+	assert.Equal(t, "4999.00000000 <= 5000", desc, "the description for the trigger did not match")
 }

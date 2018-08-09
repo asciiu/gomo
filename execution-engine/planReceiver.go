@@ -14,9 +14,11 @@ import (
 
 // Order has conditions
 type Plan struct {
-	PlanID string
-	UserID string
-	Orders []*Order
+	PlanID                string
+	UserID                string
+	ActiveCurrencySymbol  string
+	ActiveCurrencyBalance float64
+	Orders                []*Order
 }
 
 type Order struct {
@@ -42,10 +44,21 @@ type TriggerEx struct {
 	Evaluate  Expression
 }
 
+// This approach may not be feasible because there may be
+// multiple orders with different market names in a single plan
+type MarketPlans struct {
+	// maps market name to plans for that market
+	// example: ADA-BTC -> plans for ADA-BTC
+	MarketPlans map[string][]*Plan
+}
+
 // OrderReceiver will receive and prep an order conditions
 type PlanReceiver struct {
-	DB      *sql.DB
-	Plans   []*Plan
+	DB    *sql.DB
+	Plans []*Plan
+
+	// example: binance -> (binance only market plans)
+	//ExchangeMarkets map[string]MarketPlans
 	Env     *vm.Env
 	Aborted micro.Publisher
 }
@@ -121,9 +134,11 @@ func (receiver *PlanReceiver) AddPlan(ctx context.Context, plan *evt.NewPlanEven
 	}
 
 	receiver.Plans = append(receiver.Plans, &Plan{
-		PlanID: plan.PlanID,
-		UserID: plan.UserID,
-		Orders: orders,
+		PlanID:                plan.PlanID,
+		UserID:                plan.UserID,
+		ActiveCurrencySymbol:  plan.ActiveCurrencySymbol,
+		ActiveCurrencyBalance: plan.ActiveCurrencyBalance,
+		Orders:                orders,
 	})
 
 	// TODO must replace existing plan if this plan ID already exists

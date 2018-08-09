@@ -4,14 +4,18 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"log"
 
+	constOrder "github.com/asciiu/gomo/common/constants/order"
+	"github.com/asciiu/gomo/common/constants/side"
+	"github.com/asciiu/gomo/common/constants/status"
 	evt "github.com/asciiu/gomo/common/proto/events"
 	"github.com/mattn/anko/vm"
 	micro "github.com/micro/go-micro"
 )
 
 // Processor will process orders
-type Processor struct {
+type PlanProcessor struct {
 	DB        *sql.DB
 	Env       *vm.Env
 	Receiver  *PlanReceiver
@@ -20,19 +24,95 @@ type Processor struct {
 }
 
 // ProcessEvent will process ExchangeEvents. These events are published from the exchange sockets.
-func (processor *Processor) ProcessEvent(ctx context.Context, payload *evt.TradeEvents) error {
+func (processor *PlanProcessor) ProcessTradeEvent(ctx context.Context, payload *evt.TradeEvents) error {
 	plans := processor.Receiver.Plans
 
-	// TODO this is not very efficient
-	for _, tradeUpdate := range payload.Events {
-		for p, plan := range processor.Receiver.Plans {
+	// TODO rewrite this - needs to be more efficient!
+	for _, tradeEvent := range payload.Events {
+		// TODO only look at the plans relevant for this market-exchange
+		for p, plan := range plans {
 			for _, order := range plan.Orders {
-				if tradeUpdate.MarketName == order.MarketName && tradeUpdate.Exchange == order.Exchange {
+				if tradeEvent.MarketName == order.MarketName && tradeEvent.Exchange == order.Exchange {
 					for _, trigger := range order.TriggerExs {
-						if isTrue, desc := trigger.Evaluate(tradeUpdate.Price); isTrue {
+						if isTrue, desc := trigger.Evaluate(tradeEvent.Price); isTrue {
 							// remove this order from the processor
 							processor.Receiver.Plans = append(plans[:p], plans[p+1:]...)
-							fmt.Println(desc)
+
+							if order.OrderType == constOrder.PaperOrder {
+								details := fmt.Sprintf("%s %s -- %s", order.Side, order.MarketName, status.Filled)
+								completedEvent := evt.CompletedOrderEvent{
+									UserID:             plan.UserID,
+									PlanID:             plan.PlanID,
+									OrderID:            order.OrderID,
+									Side:               order.Side,
+									TriggeredPrice:     tradeEvent.Price,
+									TriggeredCondition: desc,
+									ExchangeOrderID:    constOrder.PaperOrder,
+									ExchangeMarketName: constOrder.PaperOrder,
+									Status:             status.Filled,
+									Details:            details,
+								}
+
+								// adjust balances for buy
+								// if order.EventOrigin.Side == side.Buy {
+								// 	currencyQuantity := order.EventOrigin.BaseBalance * order.EventOrigin.BalancePercent / event.Price
+								// 	spent := currencyQuantity * event.Price
+								// 	completedEvent.BaseBalance = order.EventOrigin.BaseBalance - spent
+								// 	completedEvent.CurrencyBalance = order.EventOrigin.CurrencyBalance + currencyQuantity
+								// }
+
+								// // adjust balances for sell
+								// if order.EventOrigin.Side == side.Sell {
+								// 	currencyQuantity := order.EventOrigin.CurrencyBalance * order.EventOrigin.BalancePercent
+								// 	completedEvent.BaseBalance = currencyQuantity*event.Price + order.EventOrigin.BaseBalance
+								// 	completedEvent.CurrencyBalance = order.EventOrigin.CurrencyBalance - currencyQuantity
+								// }
+
+								// Never log the secrets contained in the event
+								log.Printf("virtual order processed -- orderID: %s, market: %s\n", order.OrderID, order.MarketName)
+
+								if err := processor.Completed.Publish(ctx, &completedEvent); err != nil {
+									log.Println("publish warning: ", err, completedEvent)
+								}
+							} else {
+								quantity := 0.0
+								switch {
+								case order.Side == side.Buy && order.OrderType == constOrder.LimitOrder:
+									quantity = plan.ActiveCurrencyBalance / order.LimitPrice
+
+								case order.Side == side.Buy && order.OrderType == constOrder.MarketOrder:
+									quantity = plan.ActiveCurrencyBalance / tradeEvent.Price
+
+								default:
+									// sell entire active balance
+									quantity = plan.ActiveCurrencyBalance
+								}
+
+								// convert this active order event to a triggered order event
+								triggeredEvent := evt.TriggeredOrderEvent{
+									Exchange:           order.Exchange,
+									OrderID:            order.OrderID,
+									PlanID:             plan.PlanID,
+									UserID:             plan.UserID,
+									KeyID:              order.KeyID,
+									Key:                order.KeyPublic,
+									Secret:             order.KeySecret,
+									MarketName:         order.MarketName,
+									Side:               order.Side,
+									OrderType:          order.OrderType,
+									Price:              order.LimitPrice,
+									Quantity:           quantity,
+									TriggeredPrice:     tradeEvent.Price,
+									TriggeredCondition: desc,
+								}
+
+								// Never log the secrets contained in the event
+								log.Printf("triggered order -- orderID: %s, market: %s\n", order.OrderID, order.MarketName)
+								// if non simulated trigger buy event - exchange service subscribes to these events
+								if err := processor.Triggered.Publish(ctx, &triggeredEvent); err != nil {
+									log.Println("publish warning: ", err)
+								}
+							}
 						}
 					}
 				}

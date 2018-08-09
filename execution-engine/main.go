@@ -38,7 +38,7 @@ func main() {
 		Env:     env,
 		Aborted: micro.NewPublisher(msg.TopicAbortedOrder, srv.Client()),
 	}
-	processor := Processor{
+	planProcessor := PlanProcessor{
 		DB:        gomoDB,
 		Receiver:  &planReceiver,
 		Completed: micro.NewPublisher(msg.TopicCompletedOrder, srv.Client()),
@@ -47,7 +47,7 @@ func main() {
 
 	// subscribe to new key topic with a key validator
 	micro.RegisterSubscriber(msg.TopicNewPlan, srv.Server(), &planReceiver)
-	micro.RegisterSubscriber(msg.TopicAggTrade, srv.Server(), &processor)
+	micro.RegisterSubscriber(msg.TopicAggTrade, srv.Server(), &planProcessor)
 
 	starter := micro.NewPublisher(msg.TopicEngineStart, srv.Client())
 	starter.Publish(context.Background(), &evt.EngineStartEvent{"replaceIDHERE"})
