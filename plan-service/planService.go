@@ -60,17 +60,19 @@ func (service *PlanService) publishPlan(ctx context.Context, plan *protoPlan.Pla
 
 		// convert order to order event
 		newOrderEvt := protoEvent.Order{
-			OrderID:     order.OrderID,
-			Exchange:    order.Exchange,
-			MarketName:  order.MarketName,
-			Side:        order.Side,
-			LimitPrice:  order.LimitPrice,
-			OrderType:   order.OrderType,
-			OrderStatus: order.Status,
-			KeyID:       order.KeyID,
-			KeyPublic:   order.KeyPublic,
-			KeySecret:   order.KeySecret,
-			Triggers:    triggers,
+			OrderID:               order.OrderID,
+			Exchange:              order.Exchange,
+			MarketName:            order.MarketName,
+			Side:                  order.Side,
+			LimitPrice:            order.LimitPrice,
+			OrderType:             order.OrderType,
+			OrderStatus:           order.Status,
+			KeyID:                 order.KeyID,
+			KeyPublic:             order.KeyPublic,
+			KeySecret:             order.KeySecret,
+			ActiveCurrencyBalance: plan.ActiveCurrencyBalance,
+			ActiveCurrencySymbol:  plan.ActiveCurrencySymbol,
+			Triggers:              triggers,
 		}
 
 		newOrders = append(newOrders, &newOrderEvt)

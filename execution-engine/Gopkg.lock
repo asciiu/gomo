@@ -9,7 +9,13 @@
     "common/db",
     "common/proto/events"
   ]
-  revision = "3e210c2100319455af9969a32e839052db94266c"
+  revision = "eb871fb1c5ca878de29138883bf1a96ce67e8d7c"
+
+[[projects]]
+  name = "github.com/davecgh/go-spew"
+  packages = ["spew"]
+  revision = "346938d642f2ec3594ed81d874461961cd0faa76"
+  version = "v1.1.0"
 
 [[projects]]
   name = "github.com/go-log/log"
@@ -209,6 +215,18 @@
   version = "v0.8.0"
 
 [[projects]]
+  name = "github.com/pmezard/go-difflib"
+  packages = ["difflib"]
+  revision = "792786c7400a136282c1664665ae0a8db921c6c2"
+  version = "v1.0.0"
+
+[[projects]]
+  name = "github.com/stretchr/testify"
+  packages = ["assert"]
+  revision = "f35b8ab0b5a2cef36673838d662e249dd9c94686"
+  version = "v1.2.2"
+
+[[projects]]
   branch = "master"
   name = "golang.org/x/crypto"
   packages = [
@@ -298,6 +316,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "b3c51ff463a0137dd76d2ca65f141e69ebe642619d40752e954603878de65200"
+  inputs-digest = "be9465d27f287b3b7e10bb523fb4d5d97de10ea144ee57d411832b515e666b8f"
   solver-name = "gps-cdcl"
   solver-version = 1
