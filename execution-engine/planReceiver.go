@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"database/sql"
+	"log"
 	"regexp"
 	"strconv"
 
@@ -51,6 +52,8 @@ type PlanReceiver struct {
 
 // ProcessEvent handles ActiveOrderEvents. These events are published by the plan service.
 func (receiver *PlanReceiver) AddPlan(ctx context.Context, plan *evt.NewPlanEvent) error {
+	log.Printf("received plan orders for plan id: %s", plan.PlanID)
+
 	// convert plan orders to have trigger expressions
 	orders := make([]*Order, 0)
 
