@@ -52,7 +52,7 @@ type PlanReceiver struct {
 
 // ProcessEvent handles ActiveOrderEvents. These events are published by the plan service.
 func (receiver *PlanReceiver) AddPlan(ctx context.Context, plan *evt.NewPlanEvent) error {
-	log.Printf("received plan orders for plan id: %s", plan.PlanID)
+	log.Printf("received new plan event for plan ID: %s", plan.PlanID)
 
 	// convert plan orders to have trigger expressions
 	orders := make([]*Order, 0)

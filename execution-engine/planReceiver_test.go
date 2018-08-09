@@ -46,13 +46,15 @@ func TestAddPlan(t *testing.T) {
 		UserID: "30c30397-066c-4a48-9b9a-b778ef11f291",
 		Orders: []*protoEvents.Order{
 			&protoEvents.Order{
-				OrderID:     "4d67dcac-0e46-49f5-9258-234fdba373ae",
-				Exchange:    "testex",
-				MarketName:  "BTC-USDT",
-				Side:        "buy",
-				LimitPrice:  1.00,
-				OrderType:   "paper",
-				OrderStatus: "active",
+				OrderID:               "4d67dcac-0e46-49f5-9258-234fdba373ae",
+				Exchange:              "testex",
+				MarketName:            "BTC-USDT",
+				Side:                  "buy",
+				LimitPrice:            1.00,
+				OrderType:             "paper",
+				OrderStatus:           "active",
+				ActiveCurrencySymbol:  "USDT",
+				ActiveCurrencyBalance: 100.00,
 				Triggers: []*protoEvents.Trigger{
 					&protoEvents.Trigger{
 						TriggerID: "",
@@ -67,5 +69,13 @@ func TestAddPlan(t *testing.T) {
 		},
 	}
 	receiver.AddPlan(context.Background(), &newPlanEvt)
+
 	assert.Equal(t, 1, len(receiver.Plans), "the receiver should have a single plan")
+	plan := receiver.Plans[0]
+	order := plan.Orders[0]
+	trigger := order.TriggerExs[0]
+	result, desc := trigger.Evaluate(4999.00)
+
+	assert.Equal(t, true, result, "the trigger statement should be true")
+	assert.Equal(t, "4999.00000000 <= 5000", desc, "what?")
 }
