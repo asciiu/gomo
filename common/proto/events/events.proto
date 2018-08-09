@@ -30,8 +30,10 @@ message CandleDataRequest {
 }
 
 message NewPlanEvent {
-  string planID = 3;
-  string userID = 4;
+  string planID = 1;
+  string userID = 2;
+  string activeCurrencySymbol = 3;
+  double activeCurrencyBalance = 4;
   repeated Order orders = 5;
 }
 
@@ -46,9 +48,7 @@ message Order {
   string keyID = 8;
   string keyPublic = 9;
   string keySecret = 10; 
-  double activeCurrencyBalance = 11;
-  string activeCurrencySymbol = 12;
-  repeated Trigger triggers = 13;
+  repeated Trigger triggers = 11;
 }
 
 message Trigger {
