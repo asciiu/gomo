@@ -46,7 +46,9 @@ message Order {
   string keyID = 8;
   string keyPublic = 9;
   string keySecret = 10; 
-  repeated Trigger triggers = 11;
+  double activeCurrencyBalance = 11;
+  string activeCurrencySymbol = 12;
+  repeated Trigger triggers = 13;
 }
 
 message Trigger {
