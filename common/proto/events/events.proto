@@ -87,13 +87,14 @@ message CompletedOrderEvent {
   string nextOrderID = 4;
   string marketName = 5;
   string side = 6;
-  double quantity = 7; 
-  double triggeredPrice = 8; 
-  string triggeredCondition = 9;
-  string exchangeOrderID = 10;
-  string exchangeMarketName = 11;
-  string status = 12;
-  string details = 13; 
+  string currencyOutcomeSymbol = 7;
+  double currencyOutcomeBalance = 8; 
+  double triggeredPrice = 9; 
+  string triggeredCondition = 10;
+  string exchangeOrderID = 11;
+  string exchangeMarketName = 12;
+  string status = 13;
+  string details = 14; 
 }
 
 message AbortedOrderEvent {
