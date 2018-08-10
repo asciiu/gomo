@@ -637,7 +637,7 @@ func FindUserPlansWithStatus(db *sql.DB, userID, status string, page, pageSize u
 			created_on,
 			updated_on
 		FROM plans 
-		WHERE user_id = $1 AND status = $2 OFFSET $3 LIMIT $4`
+		WHERE user_id = $1 AND status = $2 ORDER BY created_on OFFSET $3 LIMIT $4`
 
 	rows, err := db.Query(query, userID, status, page, pageSize)
 	if err != nil {
@@ -709,7 +709,7 @@ func FindUserExchangePlansWithStatus(db *sql.DB, userID, status, exchange string
 			created_on,
 			updated_on
 		FROM plans 
-		WHERE user_id = $1 AND status = $2 AND exchange_name = $3 OFFSET $4 LIMIT $5`
+		WHERE user_id = $1 AND status = $2 AND exchange_name = $3 ORDER BY created_on OFFSET $4 LIMIT $5`
 
 	rows, err := db.Query(query, userID, status, exchange, page, pageSize)
 	if err != nil {
