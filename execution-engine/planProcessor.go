@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"fmt"
 	"log"
+	"strings"
 
 	constOrder "github.com/asciiu/gomo/common/constants/order"
 	"github.com/asciiu/gomo/common/constants/side"
@@ -39,34 +40,33 @@ func (processor *PlanProcessor) ProcessTradeEvent(ctx context.Context, payload *
 							processor.Receiver.Plans = append(plans[:p], plans[p+1:]...)
 
 							if order.OrderType == constOrder.PaperOrder {
-								details := fmt.Sprintf("%s %s -- %s", order.Side, order.MarketName, status.Filled)
 								completedEvent := evt.CompletedOrderEvent{
 									UserID:             plan.UserID,
 									PlanID:             plan.PlanID,
 									OrderID:            order.OrderID,
+									MarketName:         order.MarketName,
 									Side:               order.Side,
 									TriggeredPrice:     tradeEvent.Price,
 									TriggeredCondition: desc,
 									ExchangeOrderID:    constOrder.PaperOrder,
 									ExchangeMarketName: constOrder.PaperOrder,
 									Status:             status.Filled,
-									Details:            details,
 								}
 
+								symbols := strings.Split(order.MarketName, "-")
 								// adjust balances for buy
-								// if order.EventOrigin.Side == side.Buy {
-								// 	currencyQuantity := order.EventOrigin.BaseBalance * order.EventOrigin.BalancePercent / event.Price
-								// 	spent := currencyQuantity * event.Price
-								// 	completedEvent.BaseBalance = order.EventOrigin.BaseBalance - spent
-								// 	completedEvent.CurrencyBalance = order.EventOrigin.CurrencyBalance + currencyQuantity
-								// }
+								if order.Side == side.Buy {
+									completedEvent.CurrencyOutcomeSymbol = symbols[0]
+									completedEvent.CurrencyOutcomeBalance = plan.ActiveCurrencyBalance / tradeEvent.Price
+									completedEvent.Details = fmt.Sprintf("bought %.8f %s with %.8f %s", completedEvent.CurrencyOutcomeBalance, symbols[0], plan.ActiveCurrencyBalance, symbols[1])
+								}
 
-								// // adjust balances for sell
-								// if order.EventOrigin.Side == side.Sell {
-								// 	currencyQuantity := order.EventOrigin.CurrencyBalance * order.EventOrigin.BalancePercent
-								// 	completedEvent.BaseBalance = currencyQuantity*event.Price + order.EventOrigin.BaseBalance
-								// 	completedEvent.CurrencyBalance = order.EventOrigin.CurrencyBalance - currencyQuantity
-								// }
+								// adjust balances for sell
+								if order.Side == side.Sell {
+									completedEvent.CurrencyOutcomeSymbol = symbols[1]
+									completedEvent.CurrencyOutcomeBalance = plan.ActiveCurrencyBalance * tradeEvent.Price
+									completedEvent.Details = fmt.Sprintf("sold %.8f %s for %.8f %s", plan.ActiveCurrencyBalance, symbols[0], completedEvent.CurrencyOutcomeBalance, symbols[1])
+								}
 
 								// Never log the secrets contained in the event
 								log.Printf("virtual order processed -- orderID: %s, market: %s\n", order.OrderID, order.MarketName)

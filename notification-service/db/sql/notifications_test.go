@@ -38,7 +38,6 @@ func TestInsertDevice(t *testing.T) {
 	db, user := setupService()
 
 	n := protoNote.Notification{
-		NotificationID:   uuid.New().String(),
 		NotificationType: "test",
 		UserID:           user.ID,
 		ObjectID:         uuid.New().String(),

@@ -23,18 +23,18 @@ type CompletedOrderReceiver struct {
 // ProcessEvent handles OrderEvents. These events are published by when an order was filled.
 func (receiver *CompletedOrderReceiver) ProcessEvent(ctx context.Context, completedOrderEvent *evt.CompletedOrderEvent) error {
 
-	log.Printf("order completed -- %+v\n", completedOrderEvent)
-
 	notification := notifications.Notification{
 		UserID:           completedOrderEvent.UserID,
-		Description:      fmt.Sprintf("orderId: %s %s", completedOrderEvent.OrderID, completedOrderEvent.Details),
-		Timestamp:        string(pq.FormatTimestamp(time.Now().UTC())),
 		ObjectID:         completedOrderEvent.OrderID,
 		NotificationType: "order",
-		//Title: fmt.Sprintf("%s filled %s", completedOrderEvent.MarketName, completedOrderEvent.Details),
+		Timestamp:        string(pq.FormatTimestamp(time.Now().UTC())),
+		Title:            fmt.Sprintf("%s", completedOrderEvent.MarketName),
+		Description:      completedOrderEvent.Details,
 	}
 
-	// notifiy the user of completed order
+	log.Printf("%+v\n", notification)
+
+	// notify the user of completed order
 	if err := receiver.NotifyPub.Publish(context.Background(), &notification); err != nil {
 		log.Println("could not publish notification: ", err)
 	}
