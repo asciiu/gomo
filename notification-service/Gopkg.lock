@@ -11,10 +11,11 @@
   branch = "master"
   name = "github.com/asciiu/gomo"
   packages = [
+    "common/constants/messages",
     "common/db",
-    "common/messages"
+    "device-service/proto/device"
   ]
-  revision = "0b8f17b07353edb93fb6bd7e9e1656a052df3676"
+  revision = "e41fbf09635dad69f7fc0d3174d3186b654aac0a"
 
 [[projects]]
   name = "github.com/go-log/log"
@@ -36,6 +37,12 @@
   ]
   revision = "b4deda0973fb4c70b50d226b1af49f3da59f5265"
   version = "v1.1.0"
+
+[[projects]]
+  name = "github.com/google/uuid"
+  packages = ["."]
+  revision = "064e2069ce9c359c118179501254f67d7d37ba24"
+  version = "0.2"
 
 [[projects]]
   name = "github.com/hashicorp/consul"
@@ -80,6 +87,12 @@
   revision = "3d2263bb092286dde294a31049c92665f8373820"
 
 [[projects]]
+  name = "github.com/micro/go-grpc"
+  packages = ["."]
+  revision = "52024085c07e420ed8795c95006255a75feb500e"
+  version = "v0.3.0"
+
+[[projects]]
   branch = "master"
   name = "github.com/micro/go-log"
   packages = ["."]
@@ -113,13 +126,34 @@
     "transport/http"
   ]
   revision = "8fb5e20a224d73d24a73c54f961cdba32b9da2ff"
-  version = "v0.8.0"
+  version = "v0.9.0"
+
+[[projects]]
+  name = "github.com/micro/go-plugins"
+  packages = [
+    "client/grpc",
+    "registry/kubernetes",
+    "registry/kubernetes/client",
+    "registry/kubernetes/client/api",
+    "registry/kubernetes/client/watch",
+    "selector/cache",
+    "selector/static",
+    "server/grpc"
+  ]
+  revision = "de4c86f62c9300f10f4cd2e846618db9e92ae5f2"
+  version = "v0.11.0"
 
 [[projects]]
   branch = "master"
   name = "github.com/micro/go-rcache"
   packages = ["."]
   revision = "a581a57b513351792b9f21fc8b95d87b1c5a95da"
+
+[[projects]]
+  name = "github.com/micro/kubernetes"
+  packages = ["go/micro"]
+  revision = "1b3cb85ccc7a367049117e263edc1a26a98b20b5"
+  version = "v0.1.0"
 
 [[projects]]
   branch = "master"
@@ -132,6 +166,7 @@
   name = "github.com/micro/util"
   packages = [
     "go/lib/addr",
+    "go/lib/grpc",
     "go/lib/net",
     "go/lib/tls"
   ]
@@ -262,6 +297,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "9bee2ee893847936730ae73f02bacbf19514309e330ebd5fe08253241cc688d7"
+  inputs-digest = "773fc84ae8fb1deb880a4b05227c9cccb8ce56d258e75b85290b08ea7be8ce75"
   solver-name = "gps-cdcl"
   solver-version = 1

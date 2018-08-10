@@ -68,19 +68,34 @@ func FindNotificationsByType(db *sql.DB, req *notification.GetNotifcationsByType
 }
 
 func InsertNotification(db *sql.DB, note *notification.Notification) (*notification.Notification, error) {
-	newID := uuid.New()
+	newID := uuid.New().String()
 
-	sqlStatement := `insert into notifications (id, user_id, title, subtitle, description, 
-		timestamp, notification_type, object_id) values ($1, $2, $3, $4, $5, $6, $7, $8)`
+	sqlStatement := `insert into notifications (
+		id, 
+		user_id, 
+		title, 
+		subtitle, 
+		description, 
+		timestamp, 
+		notification_type, 
+		object_id) 
+		values ($1, $2, $3, $4, $5, $6, $7, $8)`
 
-	_, err := db.Exec(sqlStatement, newID, note.UserID, note.Title, note.Subtitle,
-		note.Description, note.Timestamp, note.NotificationType, note.ObjectID)
+	_, err := db.Exec(sqlStatement,
+		newID,
+		note.UserID,
+		note.Title,
+		note.Subtitle,
+		note.Description,
+		note.Timestamp,
+		note.NotificationType,
+		note.ObjectID)
 
 	if err != nil {
 		return nil, err
 	}
 	n := &notification.Notification{
-		NotificationID:   newID.String(),
+		NotificationID:   newID,
 		NotificationType: note.NotificationType,
 		UserID:           note.UserID,
 		ObjectID:         note.ObjectID,

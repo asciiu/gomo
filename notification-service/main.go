@@ -5,8 +5,8 @@ import (
 	"log"
 	"os"
 
+	constMessage "github.com/asciiu/gomo/common/constants/messages"
 	"github.com/asciiu/gomo/common/db"
-	msg "github.com/asciiu/gomo/common/messages"
 	notification "github.com/asciiu/gomo/notification-service/proto"
 	micro "github.com/micro/go-micro"
 	"github.com/micro/go-micro/server"
@@ -34,7 +34,7 @@ func main() {
 	listener1 := NewNotificationListener(gomoDB, srv)
 
 	// handles key verified events
-	micro.RegisterSubscriber(msg.TopicNotification, srv.Server(), listener1.ProcessNotification, server.SubscriberQueue("queue.pubsub"))
+	micro.RegisterSubscriber(constMessage.TopicNotification, srv.Server(), listener1.ProcessNotification, server.SubscriberQueue("queue.pubsub"))
 
 	if err := srv.Run(); err != nil {
 		log.Fatal(err)
