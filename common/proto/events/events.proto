@@ -85,17 +85,15 @@ message CompletedOrderEvent {
   string planID = 2;
   string userID = 3;
   string nextOrderID = 4;
-  double baseBalance = 5;
-  double currencyBalance = 6;
-  string currency = 7; 
-  string side = 8;
-  double quantity = 9; 
-  double triggeredPrice = 10; 
-  string triggeredCondition = 11;
-  string exchangeOrderID = 12;
-  string exchangeMarketName = 13;
-  string status = 14;
-  string details = 15;
+  string marketName = 5;
+  string side = 6;
+  double quantity = 7; 
+  double triggeredPrice = 8; 
+  string triggeredCondition = 9;
+  string exchangeOrderID = 10;
+  string exchangeMarketName = 11;
+  string status = 12;
+  string details = 13; 
 }
 
 message AbortedOrderEvent {
