@@ -26,9 +26,12 @@ func (receiver *CompletedOrderReceiver) ProcessEvent(ctx context.Context, comple
 	log.Printf("order completed -- %+v\n", completedOrderEvent)
 
 	notification := notifications.Notification{
-		UserID:      completedOrderEvent.UserID,
-		Description: fmt.Sprintf("orderId: %s %s", completedOrderEvent.OrderID, completedOrderEvent.Details),
-		Timestamp:   string(pq.FormatTimestamp(time.Now().UTC())),
+		UserID:           completedOrderEvent.UserID,
+		Description:      fmt.Sprintf("orderId: %s %s", completedOrderEvent.OrderID, completedOrderEvent.Details),
+		Timestamp:        string(pq.FormatTimestamp(time.Now().UTC())),
+		ObjectID:         completedOrderEvent.OrderID,
+		NotificationType: "order",
+		//Title: fmt.Sprintf("%s filled %s", completedOrderEvent.MarketName, completedOrderEvent.Details),
 	}
 
 	// notifiy the user of completed order
