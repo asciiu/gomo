@@ -34,7 +34,8 @@ message NewPlanEvent {
   string userID = 2;
   string activeCurrencySymbol = 3;
   double activeCurrencyBalance = 4;
-  repeated Order orders = 5;
+  bool closeOnComplete = 5;
+  repeated Order orders = 6;
 }
 
 message Order {
