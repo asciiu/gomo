@@ -8,7 +8,6 @@ import (
 	"strings"
 
 	asql "github.com/asciiu/gomo/api/db/sql"
-	"github.com/asciiu/gomo/common/constants/plan"
 	"github.com/asciiu/gomo/common/constants/response"
 	keys "github.com/asciiu/gomo/key-service/proto/key"
 	orders "github.com/asciiu/gomo/plan-service/proto/order"
@@ -414,11 +413,6 @@ func (controller *PlanController) HandleListPlans(c echo.Context) error {
 	pageSize, _ := strconv.ParseUint(pageSizeStr, 10, 32)
 	if pageSize == 0 {
 		pageSize = 50
-	}
-
-	// default status should be active plans
-	if status == "" {
-		status = plan.Active
 	}
 
 	getRequest := plans.GetUserPlansRequest{

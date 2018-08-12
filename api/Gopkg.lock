@@ -7,7 +7,6 @@
   packages = [
     "balance-service/proto/balance",
     "common/constants/messages",
-    "common/constants/plan",
     "common/constants/response",
     "common/db",
     "common/proto/events",
@@ -369,6 +368,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "ad2e70192925ad78fe983ff68fc4dbe0b3eb5c670306ec1132cabac937f42eed"
+  inputs-digest = "10e4911ab2855ecd5ae845f4d67f6c4e15f6198b17ba9376c343073b4e9d4b1c"
   solver-name = "gps-cdcl"
   solver-version = 1

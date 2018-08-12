@@ -469,9 +469,12 @@ func (service *PlanService) GetUserPlans(ctx context.Context, req *protoPlan.Get
 	case req.MarketName != "" && req.Exchange != "":
 		// search by userID, exchange, marketName, status
 		page, err = planRepo.FindUserExchangePlansWithStatus(service.DB, req.UserID, req.Status, req.Exchange, req.Page, req.PageSize)
-	default:
+	case req.Status != "":
 		// search by userID and status
 		page, err = planRepo.FindUserPlansWithStatus(service.DB, req.UserID, req.Status, req.Page, req.PageSize)
+	default:
+		// all plans
+		page, err = planRepo.FindUserPlans(service.DB, req.UserID, req.Page, req.PageSize)
 	}
 
 	switch {

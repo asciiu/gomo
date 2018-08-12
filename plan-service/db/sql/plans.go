@@ -616,6 +616,77 @@ func FindChildOrders(db *sql.DB, planID, parentOrderID string) (*protoPlan.Plan,
 	return &plan, nil
 }
 
+func FindUserPlans(db *sql.DB, userID string, page, pageSize uint32) (*protoPlan.PlansPage, error) {
+
+	var count uint32
+	queryCount := `SELECT count(*) FROM plans WHERE user_id = $1`
+	err := db.QueryRow(queryCount, userID).Scan(&count)
+
+	plans := make([]*protoPlan.Plan, 0)
+	query := `SELECT 
+			id,
+			exchange_name,
+			market_name,
+			active_currency_symbol,
+			active_currency_balance,
+			last_executed_plan_depth,
+			last_executed_order_id,
+			plan_template_id,
+			close_on_complete,
+			status,
+			created_on,
+			updated_on
+		FROM plans 
+		WHERE user_id = $1 ORDER BY created_on OFFSET $2 LIMIT $3`
+
+	rows, err := db.Query(query, userID, page, pageSize)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	for rows.Next() {
+		var plan protoPlan.Plan
+		var planTemplateID sql.NullString
+
+		err := rows.Scan(
+			&plan.PlanID,
+			&plan.Exchange,
+			&plan.MarketName,
+			&plan.ActiveCurrencySymbol,
+			&plan.ActiveCurrencyBalance,
+			&plan.LastExecutedPlanDepth,
+			&plan.LastExecutedOrderID,
+			&planTemplateID,
+			&plan.CloseOnComplete,
+			&plan.Status,
+			&plan.CreatedOn,
+			&plan.UpdatedOn)
+
+		if err != nil {
+			return nil, err
+		}
+		if planTemplateID.Valid {
+			plan.PlanTemplateID = planTemplateID.String
+		}
+
+		plans = append(plans, &plan)
+	}
+	err = rows.Err()
+	if err != nil {
+		log.Fatal(err)
+		return nil, err
+	}
+
+	result := protoPlan.PlansPage{
+		Page:     page,
+		PageSize: pageSize,
+		Total:    count,
+		Plans:    plans,
+	}
+
+	return &result, nil
+}
+
 func FindUserPlansWithStatus(db *sql.DB, userID, status string, page, pageSize uint32) (*protoPlan.PlansPage, error) {
 
 	var count uint32
