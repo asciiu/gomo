@@ -97,6 +97,7 @@ message CompletedOrderEvent {
   string exchangeMarketName = 13;
   string status = 14;
   string details = 15; 
+  bool closeOnComplete = 16;
 }
 
 message AbortedOrderEvent {
