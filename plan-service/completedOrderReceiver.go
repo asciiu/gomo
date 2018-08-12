@@ -7,6 +7,7 @@ import (
 	"log"
 	"time"
 
+	constPlan "github.com/asciiu/gomo/common/constants/plan"
 	"github.com/asciiu/gomo/common/constants/status"
 	evt "github.com/asciiu/gomo/common/proto/events"
 	notifications "github.com/asciiu/gomo/notification-service/proto"
@@ -63,7 +64,10 @@ func (receiver *CompletedOrderReceiver) ProcessEvent(ctx context.Context, comple
 
 		switch {
 		case err == sql.ErrNoRows:
-			// close on complete here
+			if completedOrderEvent.CloseOnComplete {
+				repoPlan.UpdatePlanStatus(receiver.DB, planID, constPlan.Closed)
+
+			}
 
 		case err != nil:
 			log.Println("completed order error on find plan -- ", err.Error())

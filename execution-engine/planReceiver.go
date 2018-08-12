@@ -18,6 +18,7 @@ type Plan struct {
 	UserID                string
 	ActiveCurrencySymbol  string
 	ActiveCurrencyBalance float64
+	CloseOnComplete       bool
 	Orders                []*Order
 }
 
@@ -138,6 +139,7 @@ func (receiver *PlanReceiver) AddPlan(ctx context.Context, plan *evt.NewPlanEven
 		UserID:                plan.UserID,
 		ActiveCurrencySymbol:  plan.ActiveCurrencySymbol,
 		ActiveCurrencyBalance: plan.ActiveCurrencyBalance,
+		CloseOnComplete:       plan.CloseOnComplete,
 		Orders:                orders,
 	})
 

@@ -81,6 +81,7 @@ func (service *PlanService) publishPlan(ctx context.Context, plan *protoPlan.Pla
 		UserID:                plan.UserID,
 		ActiveCurrencyBalance: plan.ActiveCurrencyBalance,
 		ActiveCurrencySymbol:  plan.ActiveCurrencySymbol,
+		CloseOnComplete:       plan.CloseOnComplete,
 		Orders:                newOrders,
 	}
 

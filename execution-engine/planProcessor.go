@@ -52,6 +52,7 @@ func (processor *PlanProcessor) ProcessTradeEvent(ctx context.Context, payload *
 									ExchangeOrderID:    constOrder.PaperOrder,
 									ExchangeMarketName: constOrder.PaperOrder,
 									Status:             status.Filled,
+									CloseOnComplete:    plan.CloseOnComplete,
 								}
 
 								symbols := strings.Split(order.MarketName, "-")
