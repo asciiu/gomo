@@ -44,6 +44,7 @@ func (processor *PlanProcessor) ProcessTradeEvent(ctx context.Context, payload *
 									UserID:             plan.UserID,
 									PlanID:             plan.PlanID,
 									OrderID:            order.OrderID,
+									Exchange:           order.Exchange,
 									MarketName:         order.MarketName,
 									Side:               order.Side,
 									TriggeredPrice:     tradeEvent.Price,

@@ -93,6 +93,12 @@ func (service *PlanService) publishPlan(ctx context.Context, plan *protoPlan.Pla
 		log.Printf("published plan -- %s\n", newPlanEvent.PlanID)
 	}
 
+	for _, o := range newOrders {
+		if _, err := planRepo.UpdateOrderStatus(service.DB, o.OrderID, status.Active); err != nil {
+			log.Println("could not update order status to active -- ", err.Error())
+		}
+	}
+
 	return nil
 }
 
@@ -278,6 +284,7 @@ func (service *PlanService) NewPlan(ctx context.Context, req *protoPlan.NewPlanR
 			}
 		}
 
+		// root order status should be active
 		if or.ParentOrderID == none && req.Status == plan.Active {
 			orderStatus = status.Active
 		}

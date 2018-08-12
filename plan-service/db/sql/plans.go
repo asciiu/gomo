@@ -477,7 +477,7 @@ func FindPlanOrders(db *sql.DB, req *protoPlan.GetUserPlanRequest) (*protoPlan.P
 	return &plan, nil
 }
 
-// Returns plan with specific order that has a verified key.
+// Returns child orders from parentOrderID with plan deets.
 func FindChildOrders(db *sql.DB, planID, parentOrderID string) (*protoPlan.Plan, error) {
 	rows, err := db.Query(`SELECT 
 		p.id as plan_id,
@@ -924,11 +924,8 @@ func UpdatePlanStatus(db *sql.DB, planID, status string) error {
 		id = $2`
 
 	_, err := db.Exec(stmt, status, planID)
-	if err != nil {
-		return err
-	}
 
-	return nil
+	return err
 }
 
 // func UpdatePlanBalances(db *sql.DB, planID string, base, currency float64) error {
@@ -937,6 +934,22 @@ func UpdatePlanStatus(db *sql.DB, planID, status string) error {
 // 	_, error := db.Exec(sqlStatement, base, currency, planID)
 // 	return error
 // }
+
+func UpdatePlanContext(db *sql.DB, planID, symbol, exchange, marketName string, activeBalance float64) error {
+	stmt := `
+		UPDATE plans 
+		SET 
+			active_currency_symbol = $1,
+			active_currency_balance = $2,
+			market_name = $3,
+			exchange_name = $4 
+		WHERE
+			id = $5`
+
+	_, err := db.Exec(stmt, symbol, activeBalance, marketName, exchange, planID)
+
+	return err
+}
 
 func UpdatePlanContextTxn(txn *sql.Tx, ctx context.Context, planID, symbol, exchange, marketName string, activeBalance float64) error {
 	_, err := txn.ExecContext(ctx, `

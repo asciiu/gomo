@@ -12,7 +12,7 @@
     "common/db",
     "common/proto/events"
   ]
-  revision = "ace2340d73950bb2836740453392208a7efb4dba"
+  revision = "c7c2df95943f15c8201b27052ca5087beca266b1"
 
 [[projects]]
   name = "github.com/davecgh/go-spew"
