@@ -52,9 +52,9 @@ func (receiver *CompletedOrderReceiver) ProcessEvent(ctx context.Context, comple
 		if err := repoPlan.UpdatePlanContext(receiver.DB,
 			planID,
 			completedOrderEvent.OrderID,
-			completedOrderEvent.CurrencyOutcomeSymbol,
 			completedOrderEvent.Exchange,
 			completedOrderEvent.MarketName,
+			completedOrderEvent.CurrencyOutcomeSymbol,
 			completedOrderEvent.CurrencyOutcomeBalance,
 			depth); err != nil {
 			log.Println("completed order error trying to update the plan context -- ", err.Error())
