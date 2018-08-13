@@ -124,7 +124,7 @@ func InsertOrders(txn *sql.Tx, orders []*protoOrder.Order) error {
 // returns (planID, depth, err)
 func UpdateOrderStatus(db *sql.DB, orderID, status string) (string, int32, error) {
 	updatePlanOrderSql := `UPDATE orders SET status = $1 WHERE id = $2 
-	RETURNING plan_id, depth`
+	RETURNING plan_id, plan_depth`
 
 	var planID string
 	var depth int32
