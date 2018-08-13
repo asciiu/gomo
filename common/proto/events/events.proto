@@ -89,16 +89,19 @@ message CompletedOrderEvent {
   string exchange = 5;
   string marketName = 6;
   string side = 7;
-  string currencyOutcomeSymbol = 8;
-  double currencyOutcomeBalance = 9; 
-  string triggerID = 10;
-  double triggeredPrice = 11; 
-  string triggeredCondition = 12;
-  string exchangeOrderID = 13;
-  string exchangeMarketName = 14;
-  string status = 15;
-  string details = 16; 
-  bool closeOnComplete = 17;
+  string initialCurrencySymbol = 8;
+  double initialCurrencyBalance = 9; 
+  double initialCurrencyRemainder = 10; 
+  string finalCurrencySymbol = 11;
+  double finalCurrencyBalance = 12; 
+  string triggerID = 13;
+  double triggeredPrice = 14; 
+  string triggeredCondition = 15;
+  string exchangeOrderID = 16;
+  string exchangeMarketName = 17;
+  string status = 18;
+  string details = 19; 
+  bool closeOnComplete = 20;
 }
 
 message AbortedOrderEvent {
