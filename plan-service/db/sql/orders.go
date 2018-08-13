@@ -121,18 +121,19 @@ func InsertOrders(txn *sql.Tx, orders []*protoOrder.Order) error {
 	return nil
 }
 
-// returns (planID, err)
-func UpdateOrderStatus(db *sql.DB, orderID, status string) (string, error) {
+// returns (planID, depth, err)
+func UpdateOrderStatus(db *sql.DB, orderID, status string) (string, int32, error) {
 	updatePlanOrderSql := `UPDATE orders SET status = $1 WHERE id = $2 
-	RETURNING plan_id`
+	RETURNING plan_id, depth`
 
 	var planID string
+	var depth int32
 	err := db.QueryRow(updatePlanOrderSql, status, orderID).
-		Scan(&planID)
+		Scan(&planID, &depth)
 
 	if err != nil {
-		return "", err
+		return "", 0, err
 	}
 
-	return planID, nil
+	return planID, depth, nil
 }

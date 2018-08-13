@@ -525,7 +525,7 @@ func FindChildOrders(db *sql.DB, planID, parentOrderID string) (*protoPlan.Plan,
 		JOIN triggers t on o.id = t.order_id
 		JOIN user_keys k on o.user_key_id = k.id
 		WHERE p.id = $1 AND o.parent_order_id = $2 AND k.status = $3 
-		ORDER BY o.id, t.trigger_number`, planID, parentOrderID, key.Verified)
+		ORDER BY o.id, t.index`, planID, parentOrderID, key.Verified)
 
 	if err != nil {
 		return nil, err
@@ -1006,18 +1006,20 @@ func UpdatePlanStatus(db *sql.DB, planID, status string) error {
 // 	return error
 // }
 
-func UpdatePlanContext(db *sql.DB, planID, symbol, exchange, marketName string, activeBalance float64) error {
+func UpdatePlanContext(db *sql.DB, planID, executedOrderID, symbol, exchange, marketName string, activeBalance float64, planDepth int32) error {
 	stmt := `
 		UPDATE plans 
 		SET 
-			active_currency_symbol = $1,
-			active_currency_balance = $2,
-			market_name = $3,
-			exchange_name = $4 
+			last_executed_order_id = $1,
+			last_executed_plan_depth = $2,
+			active_currency_symbol = $3,
+			active_currency_balance = $4,
+			market_name = $5,
+			exchange_name = $6 
 		WHERE
-			id = $5`
+			id = $7`
 
-	_, err := db.Exec(stmt, symbol, activeBalance, marketName, exchange, planID)
+	_, err := db.Exec(stmt, symbol, executedOrderID, planDepth, activeBalance, marketName, exchange, planID)
 
 	return err
 }

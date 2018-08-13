@@ -94,8 +94,9 @@ func (service *PlanService) publishPlan(ctx context.Context, plan *protoPlan.Pla
 		log.Printf("published plan -- %s\n", newPlanEvent.PlanID)
 	}
 
+	// update the order status
 	for _, o := range newOrders {
-		if _, err := planRepo.UpdateOrderStatus(service.DB, o.OrderID, status.Active); err != nil {
+		if _, _, err := planRepo.UpdateOrderStatus(service.DB, o.OrderID, status.Active); err != nil {
 			log.Println("could not update order status to active -- ", err.Error())
 		}
 	}

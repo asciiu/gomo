@@ -42,7 +42,7 @@ func (receiver *CompletedOrderReceiver) ProcessEvent(ctx context.Context, comple
 		log.Println("could not publish notification: ", err)
 	}
 
-	planID, err := repoPlan.UpdateOrderStatus(receiver.DB, completedOrderEvent.OrderID, completedOrderEvent.Status)
+	planID, depth, err := repoPlan.UpdateOrderStatus(receiver.DB, completedOrderEvent.OrderID, completedOrderEvent.Status)
 	if err != nil {
 		log.Println("could not update order status -- ", err.Error())
 		return nil
@@ -51,10 +51,12 @@ func (receiver *CompletedOrderReceiver) ProcessEvent(ctx context.Context, comple
 	if completedOrderEvent.Status == status.Filled {
 		if err := repoPlan.UpdatePlanContext(receiver.DB,
 			planID,
+			completedOrderEvent.OrderID,
 			completedOrderEvent.CurrencyOutcomeSymbol,
 			completedOrderEvent.Exchange,
 			completedOrderEvent.MarketName,
-			completedOrderEvent.CurrencyOutcomeBalance); err != nil {
+			completedOrderEvent.CurrencyOutcomeBalance,
+			depth); err != nil {
 			log.Println("completed order error trying to update the plan context -- ", err.Error())
 			return nil
 		}
