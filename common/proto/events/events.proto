@@ -91,13 +91,14 @@ message CompletedOrderEvent {
   string side = 7;
   string currencyOutcomeSymbol = 8;
   double currencyOutcomeBalance = 9; 
-  double triggeredPrice = 10; 
-  string triggeredCondition = 11;
-  string exchangeOrderID = 12;
-  string exchangeMarketName = 13;
-  string status = 14;
-  string details = 15; 
-  bool closeOnComplete = 16;
+  string triggerID = 10;
+  double triggeredPrice = 11; 
+  string triggeredCondition = 12;
+  string exchangeOrderID = 13;
+  string exchangeMarketName = 14;
+  string status = 15;
+  string details = 16; 
+  bool closeOnComplete = 17;
 }
 
 message AbortedOrderEvent {
