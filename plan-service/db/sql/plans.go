@@ -515,7 +515,6 @@ func FindChildOrders(db *sql.DB, planID, parentOrderID string) (*protoPlan.Plan,
 		t.name,
 		t.code,
 		array_to_json(t.actions),
-		t.trigger_number,
 		t.triggered,
 		t.trigger_template_id,
 		t.created_on,
@@ -611,6 +610,11 @@ func FindChildOrders(db *sql.DB, planID, parentOrderID string) (*protoPlan.Plan,
 			order.Triggers = append(order.Triggers, &trigger)
 			plan.Orders = append(plan.Orders, &order)
 		}
+	}
+
+	// no child orders
+	if plan.PlanID == "" {
+		return nil, sql.ErrNoRows
 	}
 
 	return &plan, nil

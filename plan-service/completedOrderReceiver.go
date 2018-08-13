@@ -68,7 +68,7 @@ func (receiver *CompletedOrderReceiver) ProcessEvent(ctx context.Context, comple
 		case err == sql.ErrNoRows:
 			if completedOrderEvent.CloseOnComplete {
 				repoPlan.UpdatePlanStatus(receiver.DB, planID, constPlan.Closed)
-
+				log.Printf("plan %s closed\n", planID)
 			}
 
 		case err != nil:
