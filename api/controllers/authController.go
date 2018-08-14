@@ -27,11 +27,12 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
-const refreshDuration = 720 * time.Hour
-const jwtDuration = 60 * time.Minute
+// refresh is set to 15 days
+const refreshDuration = 360 * time.Hour
+const jwtDuration = 20 * time.Minute
 
 //const refreshDuration = 30 * time.Minute
-//const jwtDuration = 30 * time.Minute
+//const jwtDuration = 30 * time.Second
 
 type AuthController struct {
 	DB       *sql.DB
