@@ -91,17 +91,18 @@ message CompletedOrderEvent {
   string side = 7;
   string initialCurrencySymbol = 8;
   double initialCurrencyBalance = 9; 
-  double initialCurrencyRemainder = 10; 
-  string finalCurrencySymbol = 11;
-  double finalCurrencyBalance = 12; 
-  string triggerID = 13;
-  double triggeredPrice = 14; 
-  string triggeredCondition = 15;
-  string exchangeOrderID = 16;
-  string exchangeMarketName = 17;
-  string status = 18;
-  string details = 19; 
-  bool closeOnComplete = 20;
+  double initialCurrencyTraded = 10;
+  double initialCurrencyRemainder = 11; 
+  string finalCurrencySymbol = 12;
+  double finalCurrencyBalance = 13; 
+  string triggerID = 14;
+  double triggeredPrice = 15; 
+  string triggeredCondition = 16;
+  string exchangeOrderID = 17;
+  string exchangeMarketName = 18;
+  string status = 19;
+  string details = 20; 
+  bool closeOnComplete = 21;
 }
 
 message AbortedOrderEvent {
