@@ -64,7 +64,8 @@ func (processor *PlanProcessor) ProcessTradeEvent(ctx context.Context, payload *
 									completedEvent.FinalCurrencySymbol = symbols[0]
 									completedEvent.FinalCurrencyBalance = plan.ActiveCurrencyBalance / tradeEvent.Price
 									completedEvent.InitialCurrencyRemainder = plan.ActiveCurrencyBalance - (completedEvent.FinalCurrencyBalance * tradeEvent.Price)
-									completedEvent.Details = fmt.Sprintf("bought %.8f %s with %.8f %s", completedEvent.CurrencyOutcomeBalance, symbols[0], plan.ActiveCurrencyBalance, symbols[1])
+									completedEvent.InitialCurrencyTraded = plan.ActiveCurrencyBalance - completedEvent.InitialCurrencyRemainder
+									completedEvent.Details = fmt.Sprintf("bought %.8f %s with %.8f %s", completedEvent.FinalCurrencyBalance, symbols[0], completedEvent.InitialCurrencyTraded, symbols[1])
 								}
 
 								// adjust balances for sell
@@ -72,7 +73,8 @@ func (processor *PlanProcessor) ProcessTradeEvent(ctx context.Context, payload *
 									completedEvent.FinalCurrencySymbol = symbols[1]
 									completedEvent.FinalCurrencyBalance = plan.ActiveCurrencyBalance * tradeEvent.Price
 									completedEvent.InitialCurrencyRemainder = 0
-									completedEvent.Details = fmt.Sprintf("sold %.8f %s for %.8f %s", plan.ActiveCurrencyBalance, symbols[0], completedEvent.CurrencyOutcomeBalance, symbols[1])
+									completedEvent.InitialCurrencyTraded = plan.ActiveCurrencyBalance
+									completedEvent.Details = fmt.Sprintf("sold %.8f %s for %.8f %s", plan.ActiveCurrencyBalance, symbols[0], completedEvent.FinalCurrencyBalance, symbols[1])
 								}
 
 								// Never log the secrets contained in the event

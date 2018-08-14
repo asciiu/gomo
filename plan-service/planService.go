@@ -85,19 +85,17 @@ func (service *PlanService) publishPlan(ctx context.Context, plan *protoPlan.Pla
 		Orders:                newOrders,
 	}
 
-	//fmt.Printf("%+v\n", newPlanEvent)
-
 	if service.PlanPub != nil {
 		if err := service.PlanPub.Publish(context.Background(), &newPlanEvent); err != nil {
 			return fmt.Errorf("publish error: %s -- planID: %s", err, newPlanEvent.PlanID)
 		}
 		log.Printf("published plan -- %s\n", newPlanEvent.PlanID)
-	}
 
-	// update the order status
-	for _, o := range newOrders {
-		if _, _, err := planRepo.UpdateOrderStatus(service.DB, o.OrderID, status.Active); err != nil {
-			log.Println("could not update order status to active -- ", err.Error())
+		// update the order status
+		for _, o := range newOrders {
+			if _, _, err := planRepo.UpdateOrderStatus(service.DB, o.OrderID, status.Active); err != nil {
+				log.Println("could not update order status to active -- ", err.Error())
+			}
 		}
 	}
 

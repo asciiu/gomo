@@ -97,7 +97,7 @@ func TestOrdersMustHaveTriggers(t *testing.T) {
 				ParentOrderID:   "00000000-0000-0000-0000-000000000000",
 				MarketName:      "BTC-USDT",
 				Side:            "buy",
-				ActiveCurrencyBalance: 100,
+				InitialCurrencyBalance: 100,
 			},
 		},
 	}
@@ -129,7 +129,7 @@ func TestSuccessfulOrderPlan(t *testing.T) {
 				ParentOrderID:   "00000000-0000-0000-0000-000000000000",
 				MarketName:      "BTC-USDT",
 				Side:            "buy",
-				ActiveCurrencyBalance: 70,
+				InitialCurrencyBalance: 70,
 				Triggers: []*protoOrder.TriggerRequest{
 					&protoOrder.TriggerRequest{
 						TriggerID:         "ab4734f7-5ab7-46eb-9972-ed632ac752f8",
@@ -173,7 +173,7 @@ func TestUnsortedPlan(t *testing.T) {
 				ParentOrderID:   "4d671984-d7dd-4dce-a20f-23f25d6daf7f",
 				MarketName:      "BTC-USDT",
 				Side:            "buy",
-				ActiveCurrencyBalance: 70,
+				InitialCurrencyBalance: 70,
 				Triggers: []*protoOrder.TriggerRequest{
 					&protoOrder.TriggerRequest{
 						TriggerID:         "ab4734f7-5ab7-46eb-9972-ed632ac752f8",
@@ -194,7 +194,7 @@ func TestUnsortedPlan(t *testing.T) {
 				ParentOrderID:   "00000000-0000-0000-0000-000000000000",
 				MarketName:      "BTC-USDT",
 				Side:            "buy",
-				ActiveCurrencyBalance: 70,
+				InitialCurrencyBalance: 70,
 				Triggers: []*protoOrder.TriggerRequest{
 					&protoOrder.TriggerRequest{
 						TriggerID:         "f6aa71b0-8cac-11e8-9eb6-529269fb1450",
@@ -238,7 +238,7 @@ func TestOrderUpdatePlan(t *testing.T) {
 				ParentOrderID:   "00000000-0000-0000-0000-000000000000",
 				MarketName:      "BTC-USDT",
 				Side:            "buy",
-				ActiveCurrencyBalance: 100,
+				InitialCurrencyBalance: 100,
 				Triggers: []*protoOrder.TriggerRequest{
 					&protoOrder.TriggerRequest{
 						TriggerID:         "ab4734f7-5ab7-46eb-9972-ed632ac752f8",
@@ -313,7 +313,7 @@ func TestOrderUpdatePlan(t *testing.T) {
 				ParentOrderID:   "00000000-0000-0000-0000-000000000000",
 				MarketName:      "BTC-USDT",
 				Side:            "buy",
-				ActiveCurrencyBalance: 70,
+				InitialCurrencyBalance: 70,
 				Triggers: []*protoOrder.TriggerRequest{
 					&protoOrder.TriggerRequest{
 						TriggerID:         "ab4734f7-5ab7-46eb-9972-ed632ac752f8",
@@ -352,7 +352,7 @@ func TestOrderUpdatePlan(t *testing.T) {
 	service.UpdatePlan(context.Background(), &req2, &res)
 	assert.Equal(t, "success", res.Status, "return status of updating an invalid plan should be fail")
 	assert.Equal(t, 2, len(res.Data.Plan.Orders), "update should have yielded a single order")
-	assert.Equal(t, 70.0, res.Data.Plan.Orders[0].ActiveCurrencyBalance, "active currency balance after update order incorrect")
+	assert.Equal(t, 70.0, res.Data.Plan.Orders[0].InitialCurrencyBalance, "active currency balance after update order incorrect")
 	assert.Equal(t, "thing2", res.Data.Plan.PlanTemplateID, "the template ID should have changed")
 
 	// Next verify that when we read the plan again that things indeed change
@@ -366,7 +366,7 @@ func TestOrderUpdatePlan(t *testing.T) {
 	service.GetUserPlan(context.Background(), &req3, &res)
 	assert.Equal(t, "success", res.Status, "return status for get plan should be success")
 	assert.Equal(t, 2, len(res.Data.Plan.Orders), "update should have yielded a single order")
-	assert.Equal(t, 70.0, res.Data.Plan.Orders[0].ActiveCurrencyBalance, "active currency balance after update order incorrect")
+	assert.Equal(t, 70.0, res.Data.Plan.Orders[0].InitialCurrencyBalance, "active currency balance after update order incorrect")
 	assert.Equal(t, "thing2", res.Data.Plan.PlanTemplateID, "the template ID should have changed")
 
 	repoUser.DeleteUserHard(service.DB, user.ID)
@@ -392,7 +392,7 @@ func TestOrderUpdatePlanFailure(t *testing.T) {
 				ParentOrderID:   "00000000-0000-0000-0000-000000000000",
 				MarketName:      "BTC-USDT",
 				Side:            "buy",
-				ActiveCurrencyBalance: 100,
+				InitialCurrencyBalance: 100,
 				Triggers: []*protoOrder.TriggerRequest{
 					&protoOrder.TriggerRequest{
 						TriggerID:         "ab4734f7-5ab7-46eb-9972-ed632ac752f8",
@@ -413,7 +413,7 @@ func TestOrderUpdatePlanFailure(t *testing.T) {
 	assert.Equal(t, "success", res.Status, "return status of inserting plan should be success")
 	planID := res.Data.Plan.PlanID
 
-	_, err := repoOrder.UpdateOrderStatus(service.DB, "4d671984-d7dd-4dce-a20f-23f25d6daf7f", constStatus.Filled)
+	_, _, err := repoOrder.UpdateOrderStatus(service.DB, "4d671984-d7dd-4dce-a20f-23f25d6daf7f", constStatus.Filled)
 	if err != nil {
 		assert.Equal(t, "success", "failed", "update order status failed")
 	}
@@ -434,7 +434,7 @@ func TestOrderUpdatePlanFailure(t *testing.T) {
 				ParentOrderID:   "00000000-0000-0000-0000-000000000000",
 				MarketName:      "ETH-USDT",
 				Side:            "buy",
-				ActiveCurrencyBalance: 1000,
+				InitialCurrencyBalance: 1000,
 				Triggers: []*protoOrder.TriggerRequest{
 					&protoOrder.TriggerRequest{
 						TriggerID:         "ab4734f7-5ab7-46eb-9972-ed632ac752f8",
@@ -483,7 +483,7 @@ func TestOrderUpdatePlanFailure(t *testing.T) {
 	service.GetUserPlan(context.Background(), &req3, &res)
 	assert.Equal(t, "success", res.Status, "return status for get plan should be success")
 	assert.Equal(t, 1, len(res.Data.Plan.Orders), "update should have yielded a single order")
-	assert.Equal(t, 100.0, res.Data.Plan.Orders[0].ActiveCurrencyBalance, "active currency balance after update order incorrect")
+	assert.Equal(t, 100.0, res.Data.Plan.Orders[0].InitialCurrencyBalance, "active currency balance after update order incorrect")
 	assert.Equal(t, "BTC-USDT", res.Data.Plan.Orders[0].MarketName, "market should not have changed")
 	assert.Equal(t, "thing", res.Data.Plan.PlanTemplateID, "the template ID should have changed")
 

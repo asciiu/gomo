@@ -89,6 +89,10 @@ func FindPlanWithUnexecutedOrders(db *sql.DB, planID string) (*protoPlan.Plan, e
 	for rows.Next() {
 		var trigger protoOrder.Trigger
 		var triggerTemplateID sql.NullString
+		var finalCurrencySymbol sql.NullString
+		var triggeredPrice sql.NullFloat64
+		var triggeredCondition sql.NullString
+		var triggeredTimestamp sql.NullString
 		var actionsStr string
 		var order protoOrder.Order
 
@@ -117,7 +121,7 @@ func FindPlanWithUnexecutedOrders(db *sql.DB, planID string) (*protoPlan.Plan, e
 			&order.InitialCurrencyBalance,
 			&order.InitialCurrencyTraded,
 			&order.InitialCurrencyRemainder,
-			&order.FinalCurrencySymbol,
+			&finalCurrencySymbol,
 			&order.FinalCurrencyBalance,
 			&order.OrderPriority,
 			&order.OrderTemplateID,
@@ -135,9 +139,9 @@ func FindPlanWithUnexecutedOrders(db *sql.DB, planID string) (*protoPlan.Plan, e
 			&trigger.Index,
 			&trigger.Title,
 			&trigger.Triggered,
-			&trigger.TriggeredPrice,
-			&trigger.TriggeredCondition,
-			&trigger.TriggeredTimestamp,
+			&triggeredPrice,
+			&triggeredCondition,
+			&triggeredTimestamp,
 			&triggerTemplateID,
 			&trigger.CreatedOn,
 			&trigger.UpdatedOn)
@@ -148,9 +152,20 @@ func FindPlanWithUnexecutedOrders(db *sql.DB, planID string) (*protoPlan.Plan, e
 		if price.Valid {
 			order.LimitPrice = price.Float64
 		}
-
+		if finalCurrencySymbol.Valid {
+			order.FinalCurrencySymbol = finalCurrencySymbol.String
+		}
 		if triggerTemplateID.Valid {
 			trigger.TriggerTemplateID = triggerTemplateID.String
+		}
+		if triggeredPrice.Valid {
+			trigger.TriggeredPrice = triggeredPrice.Float64
+		}
+		if triggeredCondition.Valid {
+			trigger.TriggeredCondition = triggeredCondition.String
+		}
+		if triggeredTimestamp.Valid {
+			trigger.TriggeredTimestamp = triggeredTimestamp.String
 		}
 		if err := json.Unmarshal([]byte(actionsStr), &trigger.Actions); err != nil {
 			return nil, err
@@ -412,6 +427,10 @@ func FindPlanOrders(db *sql.DB, req *protoPlan.GetUserPlanRequest) (*protoPlan.P
 	for rows.Next() {
 		var trigger protoOrder.Trigger
 		var triggerTemplateID sql.NullString
+		var triggeredPrice sql.NullFloat64
+		var triggeredCondition sql.NullString
+		var triggeredTimestamp sql.NullString
+		var finalCurrencySymbol sql.NullString
 		var actionsStr string
 		var order protoOrder.Order
 
@@ -441,7 +460,7 @@ func FindPlanOrders(db *sql.DB, req *protoPlan.GetUserPlanRequest) (*protoPlan.P
 			&order.InitialCurrencyBalance,
 			&order.InitialCurrencyTraded,
 			&order.InitialCurrencyRemainder,
-			&order.FinalCurrencySymbol,
+			&finalCurrencySymbol,
 			&order.FinalCurrencyBalance,
 			&order.OrderPriority,
 			&order.OrderTemplateID,
@@ -459,9 +478,9 @@ func FindPlanOrders(db *sql.DB, req *protoPlan.GetUserPlanRequest) (*protoPlan.P
 			&trigger.Code,
 			&actionsStr,
 			&trigger.Triggered,
-			&trigger.TriggeredPrice,
-			&trigger.TriggeredCondition,
-			&trigger.TriggeredTimestamp,
+			&triggeredPrice,
+			&triggeredCondition,
+			&triggeredTimestamp,
 			&triggerTemplateID,
 			&trigger.CreatedOn,
 			&trigger.UpdatedOn)
@@ -472,7 +491,18 @@ func FindPlanOrders(db *sql.DB, req *protoPlan.GetUserPlanRequest) (*protoPlan.P
 		if price.Valid {
 			order.LimitPrice = price.Float64
 		}
-
+		if finalCurrencySymbol.Valid {
+			order.FinalCurrencySymbol = finalCurrencySymbol.String
+		}
+		if triggeredPrice.Valid {
+			trigger.TriggeredPrice = triggeredPrice.Float64
+		}
+		if triggeredCondition.Valid {
+			trigger.TriggeredCondition = triggeredCondition.String
+		}
+		if triggeredTimestamp.Valid {
+			trigger.TriggeredTimestamp = triggeredTimestamp.String
+		}
 		if triggerTemplateID.Valid {
 			trigger.TriggerTemplateID = triggerTemplateID.String
 		}
@@ -571,6 +601,10 @@ func FindChildOrders(db *sql.DB, planID, parentOrderID string) (*protoPlan.Plan,
 	for rows.Next() {
 		var trigger protoOrder.Trigger
 		var triggerTemplateID sql.NullString
+		var triggeredPrice sql.NullFloat64
+		var triggeredCondition sql.NullString
+		var triggeredTimestamp sql.NullString
+		var finalCurrencySymbol sql.NullString
 		var actionsStr string
 		var order protoOrder.Order
 
@@ -598,7 +632,7 @@ func FindChildOrders(db *sql.DB, planID, parentOrderID string) (*protoPlan.Plan,
 			&order.InitialCurrencyBalance,
 			&order.InitialCurrencyTraded,
 			&order.InitialCurrencyRemainder,
-			&order.FinalCurrencySymbol,
+			&finalCurrencySymbol,
 			&order.FinalCurrencyBalance,
 			&order.OrderTemplateID,
 			&order.OrderType,
@@ -615,9 +649,9 @@ func FindChildOrders(db *sql.DB, planID, parentOrderID string) (*protoPlan.Plan,
 			&trigger.Code,
 			&actionsStr,
 			&trigger.Triggered,
-			&trigger.TriggeredPrice,
-			&trigger.TriggeredCondition,
-			&trigger.TriggeredTimestamp,
+			&triggeredPrice,
+			&triggeredCondition,
+			&triggeredTimestamp,
 			&triggerTemplateID,
 			&trigger.CreatedOn,
 			&trigger.UpdatedOn)
@@ -628,7 +662,18 @@ func FindChildOrders(db *sql.DB, planID, parentOrderID string) (*protoPlan.Plan,
 		if price.Valid {
 			order.LimitPrice = price.Float64
 		}
-
+		if finalCurrencySymbol.Valid {
+			order.FinalCurrencySymbol = finalCurrencySymbol.String
+		}
+		if triggeredPrice.Valid {
+			trigger.TriggeredPrice = triggeredPrice.Float64
+		}
+		if triggeredCondition.Valid {
+			trigger.TriggeredCondition = triggeredCondition.String
+		}
+		if triggeredTimestamp.Valid {
+			trigger.TriggeredTimestamp = triggeredTimestamp.String
+		}
 		if triggerTemplateID.Valid {
 			trigger.TriggerTemplateID = triggerTemplateID.String
 		}

@@ -42,19 +42,19 @@ func TestAddPlan(t *testing.T) {
 	defer receiver.DB.Close()
 
 	newPlanEvt := protoEvents.NewPlanEvent{
-		PlanID: "1aa6ae7f-76bc-49ba-a58b-5cf431e0337c",
-		UserID: "30c30397-066c-4a48-9b9a-b778ef11f291",
+		PlanID:                "1aa6ae7f-76bc-49ba-a58b-5cf431e0337c",
+		UserID:                "30c30397-066c-4a48-9b9a-b778ef11f291",
+		ActiveCurrencySymbol:  "USDT",
+		ActiveCurrencyBalance: 100.00,
 		Orders: []*protoEvents.Order{
 			&protoEvents.Order{
-				OrderID:               "4d67dcac-0e46-49f5-9258-234fdba373ae",
-				Exchange:              "testex",
-				MarketName:            "BTC-USDT",
-				Side:                  "buy",
-				LimitPrice:            4950.00,
-				OrderType:             "limit",
-				OrderStatus:           "active",
-				ActiveCurrencySymbol:  "USDT",
-				ActiveCurrencyBalance: 100.00,
+				OrderID:     "4d67dcac-0e46-49f5-9258-234fdba373ae",
+				Exchange:    "testex",
+				MarketName:  "BTC-USDT",
+				Side:        "buy",
+				LimitPrice:  4950.00,
+				OrderType:   "limit",
+				OrderStatus: "active",
 				Triggers: []*protoEvents.Trigger{
 					&protoEvents.Trigger{
 						TriggerID: "76fa5d0c-34c7-4c67-ad64-389f92ce82a5",
