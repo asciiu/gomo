@@ -49,6 +49,26 @@ func (receiver *CompletedOrderReceiver) ProcessEvent(ctx context.Context, comple
 	}
 
 	if completedOrderEvent.Status == status.Filled {
+		now := string(pq.FormatTimestamp(time.Now().UTC()))
+		if err := repoPlan.UpdateTriggerResults(receiver.DB,
+			completedOrderEvent.TriggerID,
+			completedOrderEvent.TriggeredPrice,
+			completedOrderEvent.TriggeredCondition,
+			now); err != nil {
+			log.Println("completed order error trying to update the trigger -- ", err.Error())
+			return nil
+		}
+
+		if err := repoPlan.UpdateOrderResults(receiver.DB,
+			completedOrderEvent.OrderID,
+			completedOrderEvent.InitialCurrencyTraded,
+			completedOrderEvent.InitialCurrencyRemainder,
+			completedOrderEvent.FinalCurrencyBalance,
+			completedOrderEvent.FinalCurrencySymbol); err != nil {
+			log.Println("completed order error trying to update the order -- ", err.Error())
+			return nil
+		}
+
 		if err := repoPlan.UpdatePlanContext(receiver.DB,
 			planID,
 			completedOrderEvent.OrderID,

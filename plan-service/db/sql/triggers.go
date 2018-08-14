@@ -62,8 +62,23 @@ func InsertTriggers(txn *sql.Tx, triggers []*protoOrder.Trigger) error {
 	}
 
 	err = stmt.Close()
-	if err != nil {
-		return err
-	}
-	return nil
+	return err
+}
+
+func UpdateTriggerResults(db *sql.DB, triggerID string, triggeredPrice float64, triggeredCondition, triggeredTimestamp string) error {
+	updatePlanOrderSql := `
+	UPDATE triggers 
+	SET 
+		triggered_price = $1,
+		triggered_condition = $2,
+		triggered_timestamp = $3,
+	WHERE id = $4`
+
+	_, err := db.Exec(updatePlanOrderSql,
+		triggeredPrice,
+		triggeredCondition,
+		triggeredTimestamp,
+		triggerID)
+
+	return err
 }

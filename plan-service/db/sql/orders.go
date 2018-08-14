@@ -100,3 +100,23 @@ func UpdateOrderStatus(db *sql.DB, orderID, status string) (string, int32, error
 
 	return planID, depth, nil
 }
+
+func UpdateOrderResults(db *sql.DB, orderID string, traded, remainder, finalBalance float64, finalSymbol string) error {
+	updatePlanOrderSql := `
+	UPDATE orders 
+	SET 
+		initial_currency_traded = $1,
+		initial_currency_remainder = $2,
+		final_currency_symbol = $3,
+		final_currency_balance = $4
+	WHERE id = $5`
+
+	_, err := db.Exec(updatePlanOrderSql,
+		traded,
+		remainder,
+		finalSymbol,
+		finalBalance,
+		orderID)
+
+	return err
+}
