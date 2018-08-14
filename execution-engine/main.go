@@ -33,17 +33,20 @@ func main() {
 	core.Import(env)
 
 	planReceiver := PlanReceiver{
-		DB:      gomoDB,
-		Plans:   make([]*Plan, 0),
-		Env:     env,
-		Aborted: micro.NewPublisher(msg.TopicAbortedOrder, srv.Client()),
+		DB:        gomoDB,
+		Plans:     make([]*Plan, 0),
+		Env:       env,
+		Aborted:   micro.NewPublisher(msg.TopicAbortedOrder, srv.Client()),
+		Completed: micro.NewPublisher(msg.TopicCompletedOrder, srv.Client()),
 	}
 	planProcessor := PlanProcessor{
 		DB:        gomoDB,
 		Receiver:  &planReceiver,
 		Completed: micro.NewPublisher(msg.TopicCompletedOrder, srv.Client()),
 		Triggered: micro.NewPublisher(msg.TopicTriggeredOrder, srv.Client()),
+		PriceLine: make(map[string]float64),
 	}
+	planReceiver.Processor = &planProcessor
 
 	// subscribe to new key topic with a key validator
 	micro.RegisterSubscriber(msg.TopicNewPlan, srv.Server(), &planReceiver)

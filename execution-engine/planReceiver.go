@@ -3,11 +3,17 @@ package main
 import (
 	"context"
 	"database/sql"
+	"fmt"
 	"log"
 	"regexp"
 	"strconv"
+	"strings"
 
+	constOrder "github.com/asciiu/gomo/common/constants/order"
+	"github.com/asciiu/gomo/common/constants/side"
+	"github.com/asciiu/gomo/common/constants/status"
 	evt "github.com/asciiu/gomo/common/proto/events"
+	"github.com/asciiu/gomo/common/util"
 	"github.com/mattn/anko/vm"
 	micro "github.com/micro/go-micro"
 )
@@ -60,8 +66,11 @@ type PlanReceiver struct {
 
 	// example: binance -> (binance only market plans)
 	//ExchangeMarkets map[string]MarketPlans
-	Env     *vm.Env
-	Aborted micro.Publisher
+	Env       *vm.Env
+	Aborted   micro.Publisher
+	Completed micro.Publisher
+
+	Processor *PlanProcessor
 }
 
 // ProcessEvent handles ActiveOrderEvents. These events are published by the plan service.
@@ -102,12 +111,69 @@ func (receiver *PlanReceiver) AddPlan(ctx context.Context, plan *evt.NewPlanEven
 					Percent: percent,
 				}
 				expression = (&ts).evaluate
-			default:
+
+			case str == "immediateMarketPrice":
+				lastPrice := receiver.Processor.PriceLine[order.MarketName]
+				// execute this order right NOW! It's FOMO TIME!
+				if order.OrderType == constOrder.PaperOrder {
+					completedEvent := evt.CompletedOrderEvent{
+						UserID:     plan.UserID,
+						PlanID:     plan.PlanID,
+						OrderID:    order.OrderID,
+						Exchange:   order.Exchange,
+						MarketName: order.MarketName,
+						Side:       order.Side,
+						InitialCurrencyBalance: plan.ActiveCurrencyBalance,
+						InitialCurrencySymbol:  plan.ActiveCurrencySymbol,
+						TriggerID:              trigger.TriggerID,
+						TriggeredPrice:         lastPrice,
+						TriggeredCondition:     "Jordan!",
+						ExchangeOrderID:        constOrder.PaperOrder,
+						ExchangeMarketName:     constOrder.PaperOrder,
+						Status:                 status.Filled,
+						CloseOnComplete:        plan.CloseOnComplete,
+					}
+
+					symbols := strings.Split(order.MarketName, "-")
+					// adjust balances for buy
+					if order.Side == side.Buy {
+						qty := util.ToFixed(plan.ActiveCurrencyBalance/lastPrice, precision)
+
+						completedEvent.FinalCurrencySymbol = symbols[0]
+						completedEvent.FinalCurrencyBalance = qty
+						completedEvent.InitialCurrencyTraded = util.ToFixed(completedEvent.FinalCurrencyBalance*lastPrice, precision)
+						completedEvent.InitialCurrencyRemainder = util.ToFixed(plan.ActiveCurrencyBalance-completedEvent.InitialCurrencyTraded, precision)
+						completedEvent.Details = fmt.Sprintf("bought %.8f %s with %.8f %s", completedEvent.FinalCurrencyBalance, symbols[0], completedEvent.InitialCurrencyTraded, symbols[1])
+					}
+
+					// adjust balances for sell
+					if order.Side == side.Sell {
+						completedEvent.FinalCurrencySymbol = symbols[1]
+						completedEvent.FinalCurrencyBalance = util.ToFixed(plan.ActiveCurrencyBalance*lastPrice, precision)
+						completedEvent.InitialCurrencyRemainder = 0
+						completedEvent.InitialCurrencyTraded = util.ToFixed(plan.ActiveCurrencyBalance, precision)
+						completedEvent.Details = fmt.Sprintf("sold %.8f %s for %.8f %s", plan.ActiveCurrencyBalance, symbols[0], completedEvent.FinalCurrencyBalance, symbols[1])
+					}
+
+					// Never log the secrets contained in the event
+					log.Printf("virtual order processed -- orderID: %s, market: %s\n", order.OrderID, order.MarketName)
+
+					if err := receiver.Completed.Publish(ctx, &completedEvent); err != nil {
+						log.Println("publish warning: ", err, completedEvent)
+					}
+				}
+				// no need to add this plan just return
+				return nil
+
+			case strings.Contains(str, "price"):
 				priceCond := PriceCondition{
 					Env:       receiver.Env,
 					Statement: str,
 				}
 				expression = (&priceCond).evaluate
+			default:
+				// skip this trigger because it is invalid
+				continue
 			}
 
 			expressions = append(expressions, &TriggerEx{
@@ -119,19 +185,23 @@ func (receiver *PlanReceiver) AddPlan(ctx context.Context, plan *evt.NewPlanEven
 				Evaluate:  expression,
 			})
 		}
-		orders = append(orders, &Order{
-			OrderID:     order.OrderID,
-			Exchange:    order.Exchange,
-			MarketName:  order.MarketName,
-			Side:        order.Side,
-			LimitPrice:  order.LimitPrice,
-			OrderType:   order.OrderType,
-			OrderStatus: order.OrderStatus,
-			KeyID:       order.KeyID,
-			KeyPublic:   order.KeyPublic,
-			KeySecret:   order.KeySecret,
-			TriggerExs:  expressions,
-		})
+
+		// only add an order if there are valid expressions
+		if len(expressions) > 0 {
+			orders = append(orders, &Order{
+				OrderID:     order.OrderID,
+				Exchange:    order.Exchange,
+				MarketName:  order.MarketName,
+				Side:        order.Side,
+				LimitPrice:  order.LimitPrice,
+				OrderType:   order.OrderType,
+				OrderStatus: order.OrderStatus,
+				KeyID:       order.KeyID,
+				KeyPublic:   order.KeyPublic,
+				KeySecret:   order.KeySecret,
+				TriggerExs:  expressions,
+			})
+		}
 	}
 
 	receiver.Plans = append(receiver.Plans, &Plan{

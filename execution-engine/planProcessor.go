@@ -11,9 +11,12 @@ import (
 	"github.com/asciiu/gomo/common/constants/side"
 	"github.com/asciiu/gomo/common/constants/status"
 	evt "github.com/asciiu/gomo/common/proto/events"
+	"github.com/asciiu/gomo/common/util"
 	"github.com/mattn/anko/vm"
 	micro "github.com/micro/go-micro"
 )
+
+const precision = 8
 
 // Processor will process orders
 type PlanProcessor struct {
@@ -22,6 +25,7 @@ type PlanProcessor struct {
 	Receiver  *PlanReceiver
 	Completed micro.Publisher
 	Triggered micro.Publisher
+	PriceLine map[string]float64
 }
 
 // ProcessEvent will process ExchangeEvents. These events are published from the exchange sockets.
@@ -30,6 +34,9 @@ func (processor *PlanProcessor) ProcessTradeEvent(ctx context.Context, payload *
 
 	// TODO rewrite this - needs to be more efficient!
 	for _, tradeEvent := range payload.Events {
+		// update the last price for this market
+		processor.PriceLine[tradeEvent.MarketName] = tradeEvent.Price
+
 		// TODO only look at the plans relevant for this market-exchange
 		for p, plan := range plans {
 			for _, order := range plan.Orders {
@@ -61,19 +68,21 @@ func (processor *PlanProcessor) ProcessTradeEvent(ctx context.Context, payload *
 								symbols := strings.Split(order.MarketName, "-")
 								// adjust balances for buy
 								if order.Side == side.Buy {
+									qty := util.ToFixed(plan.ActiveCurrencyBalance/tradeEvent.Price, precision)
+
 									completedEvent.FinalCurrencySymbol = symbols[0]
-									completedEvent.FinalCurrencyBalance = plan.ActiveCurrencyBalance / tradeEvent.Price
-									completedEvent.InitialCurrencyRemainder = plan.ActiveCurrencyBalance - (completedEvent.FinalCurrencyBalance * tradeEvent.Price)
-									completedEvent.InitialCurrencyTraded = plan.ActiveCurrencyBalance - completedEvent.InitialCurrencyRemainder
+									completedEvent.FinalCurrencyBalance = qty
+									completedEvent.InitialCurrencyTraded = util.ToFixed(completedEvent.FinalCurrencyBalance*tradeEvent.Price, precision)
+									completedEvent.InitialCurrencyRemainder = util.ToFixed(plan.ActiveCurrencyBalance-completedEvent.InitialCurrencyTraded, precision)
 									completedEvent.Details = fmt.Sprintf("bought %.8f %s with %.8f %s", completedEvent.FinalCurrencyBalance, symbols[0], completedEvent.InitialCurrencyTraded, symbols[1])
 								}
 
 								// adjust balances for sell
 								if order.Side == side.Sell {
 									completedEvent.FinalCurrencySymbol = symbols[1]
-									completedEvent.FinalCurrencyBalance = plan.ActiveCurrencyBalance * tradeEvent.Price
+									completedEvent.FinalCurrencyBalance = util.ToFixed(plan.ActiveCurrencyBalance*tradeEvent.Price, precision)
 									completedEvent.InitialCurrencyRemainder = 0
-									completedEvent.InitialCurrencyTraded = plan.ActiveCurrencyBalance
+									completedEvent.InitialCurrencyTraded = util.ToFixed(plan.ActiveCurrencyBalance, precision)
 									completedEvent.Details = fmt.Sprintf("sold %.8f %s for %.8f %s", plan.ActiveCurrencyBalance, symbols[0], completedEvent.FinalCurrencyBalance, symbols[1])
 								}
 

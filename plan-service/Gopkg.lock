@@ -15,6 +15,7 @@
     "common/constants/status",
     "common/db",
     "common/proto/events",
+    "common/util",
     "key-service/db/sql",
     "key-service/proto/key",
     "key-service/test",
@@ -22,7 +23,7 @@
     "user-service/db/sql",
     "user-service/models"
   ]
-  revision = "0a6f24a545718f6b724f30bf749098870ddcc75b"
+  revision = "3153b108118c1fde9d8150a751a23281cd3a0d20"
 
 [[projects]]
   name = "github.com/davecgh/go-spew"
@@ -331,6 +332,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "7288be1018e1972645ea430e7c912d6296f3e4de947b53825e63e8dc1e2dd719"
+  inputs-digest = "f8615cf04e34249ae3edc03cebb144fde18d236bd2d3ceff2794a355004e33f7"
   solver-name = "gps-cdcl"
   solver-version = 1

@@ -17,6 +17,7 @@ import (
 	"github.com/asciiu/gomo/common/constants/side"
 	"github.com/asciiu/gomo/common/constants/status"
 	protoEvent "github.com/asciiu/gomo/common/proto/events"
+	"github.com/asciiu/gomo/common/util"
 	keys "github.com/asciiu/gomo/key-service/proto/key"
 	planRepo "github.com/asciiu/gomo/plan-service/db/sql"
 	protoOrder "github.com/asciiu/gomo/plan-service/proto/order"
@@ -25,6 +26,8 @@ import (
 	"github.com/lib/pq"
 	micro "github.com/micro/go-micro"
 )
+
+const precision = 8
 
 // PlanService ...
 type PlanService struct {
@@ -340,11 +343,11 @@ func (service *PlanService) NewPlan(ctx context.Context, req *protoPlan.NewPlanR
 			PlanID:                 planID.String(),
 			PlanDepth:              depth,
 			Side:                   or.Side,
-			LimitPrice:             or.LimitPrice,
+			LimitPrice:             util.ToFixed(or.LimitPrice, precision),
 			Exchange:               exchange,
 			MarketName:             or.MarketName,
 			InitialCurrencySymbol:  symbol,
-			InitialCurrencyBalance: or.InitialCurrencyBalance,
+			InitialCurrencyBalance: util.ToFixed(or.InitialCurrencyBalance, precision),
 			Status:                 orderStatus,
 			Grupo:                  or.Grupo,
 			Triggers:               triggers,
@@ -761,11 +764,11 @@ func (service *PlanService) UpdatePlan(ctx context.Context, req *protoPlan.Updat
 			PlanID:                 req.PlanID,
 			PlanDepth:              depth,
 			Side:                   or.Side,
-			LimitPrice:             or.LimitPrice,
+			LimitPrice:             util.ToFixed(or.LimitPrice, precision),
 			Exchange:               exchange,
 			MarketName:             or.MarketName,
 			InitialCurrencySymbol:  currencySymbol,
-			InitialCurrencyBalance: or.InitialCurrencyBalance,
+			InitialCurrencyBalance: util.ToFixed(or.InitialCurrencyBalance, precision),
 			Grupo:     or.Grupo,
 			Status:    orderStatus,
 			Triggers:  triggers,

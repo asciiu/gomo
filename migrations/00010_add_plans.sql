@@ -6,6 +6,7 @@ DROP TABLE IF EXISTS orders;
 CREATE TABLE plans (
   id UUID PRIMARY KEY NOT NULL,
   user_id UUID NOT NULL REFERENCES users (id) ON DELETE CASCADE,
+  title text,                      
   exchange_name text NOT NULL,
   market_name text NOT NULL,
   active_currency_symbol text NOT NULL,
