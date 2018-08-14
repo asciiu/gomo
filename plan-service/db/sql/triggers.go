@@ -71,7 +71,7 @@ func UpdateTriggerResults(db *sql.DB, triggerID string, triggeredPrice float64, 
 	SET 
 		triggered_price = $1,
 		triggered_condition = $2,
-		triggered_timestamp = $3,
+		triggered_timestamp = $3
 	WHERE id = $4`
 
 	_, err := db.Exec(updatePlanOrderSql,
