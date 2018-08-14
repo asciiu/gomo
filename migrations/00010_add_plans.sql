@@ -38,7 +38,7 @@ CREATE TABLE orders (
   initial_currency_traded decimal DEFAULT 0,
   initial_currency_remainder decimal DEFAULT 0,
   final_currency_symbol text,         -- they may be nullable 
-  final_currency_balance decimal,     -- 
+  final_currency_balance decimal DEFAULT 0,   
   grupo text,                         -- leo will use el grupo to pull grouped orders (e.g. "scale-in" and scale-out orders)
   order_priority integer NOT NULL,    -- when two orders are at the same depth this can be used to indicate what your order preference is in terms of what get's executed first
   order_template_id text,             -- optional frontend template used for this order 
