@@ -201,7 +201,7 @@ func (service *PlanService) NewPlan(ctx context.Context, req *protoPlan.NewPlanR
 		return nil
 	case !ValidateNoneZeroBalance(req.Orders):
 		res.Status = response.Fail
-		res.Message = "non zero activeCurrencyBalance required for root order!"
+		res.Message = "non zero initialCurrencyBalance required for root order!"
 		return nil
 	case req.Orders[0].OrderType == orderConstants.PaperOrder && !ValidatePaperOrders(req.Orders):
 		res.Status = response.Fail
@@ -596,7 +596,7 @@ func (service *PlanService) UpdatePlan(ctx context.Context, req *protoPlan.Updat
 	case pln.LastExecutedPlanDepth == 0 && !ValidateNoneZeroBalance(req.Orders):
 		// you must commit a balance for the plan in the first order
 		res.Status = response.Fail
-		res.Message = "the activeCurrencyBalance must be set for the root order"
+		res.Message = "the initialCurrencyBalance must be set for the root order"
 		return nil
 	case pln.LastExecutedPlanDepth == 0 && !ValidateSingleRootNode(req.Orders):
 		// you can't start a plan without a root order
