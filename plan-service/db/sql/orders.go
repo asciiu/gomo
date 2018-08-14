@@ -22,43 +22,6 @@ func DeleteOrders(txn *sql.Tx, ctx context.Context, orderIDs []string) error {
 	return nil
 }
 
-func UpdateOrder(txn *sql.Tx, ctx context.Context, order *protoOrder.Order) error {
-	_, err := txn.ExecContext(ctx, `
-		UPDATE orders 
-		SET 
-			user_key_id = @keyid,
-			parent_order_id = @parentid,
-			plan_depth = @depth,
-			exchange_name = @ex,
-			market_name = @market,
-			active_currency_symbol = @sym,
-			active_currency_balance = @bal,
-			grupo = @group,
-			order_priority = @priority,
-			order_template_id = @templateid,
-			side = @side,
-			limit_price = @price,
-			status = @status
-		WHERE
-			id = @orderid`,
-		sql.Named("orderid", order.OrderID),
-		sql.Named("keyid", order.KeyID),
-		sql.Named("parentid", order.ParentOrderID),
-		sql.Named("depth", order.PlanDepth),
-		sql.Named("ex", order.Exchange),
-		sql.Named("market", order.MarketName),
-		sql.Named("sym", order.ActiveCurrencySymbol),
-		sql.Named("bal", order.ActiveCurrencyBalance),
-		sql.Named("priority", order.OrderPriority),
-		sql.Named("templateid", order.OrderTemplateID),
-		sql.Named("side", order.Side),
-		sql.Named("price", order.LimitPrice),
-		sql.Named("group", order.Grupo),
-		sql.Named("status", order.Status))
-
-	return err
-}
-
 func InsertOrders(txn *sql.Tx, orders []*protoOrder.Order) error {
 	stmt, err := txn.Prepare(pq.CopyIn("orders",
 		"id",
@@ -68,8 +31,8 @@ func InsertOrders(txn *sql.Tx, orders []*protoOrder.Order) error {
 		"plan_depth",
 		"exchange_name",
 		"market_name",
-		"active_currency_symbol",
-		"active_currency_balance",
+		"initial_currency_symbol",
+		"initial_currency_balance",
 		"grupo",
 		"order_priority",
 		"order_template_id",
@@ -92,8 +55,8 @@ func InsertOrders(txn *sql.Tx, orders []*protoOrder.Order) error {
 			order.PlanDepth,
 			order.Exchange,
 			order.MarketName,
-			order.ActiveCurrencySymbol,
-			order.ActiveCurrencyBalance,
+			order.InitialCurrencySymbol,
+			order.InitialCurrencyBalance,
 			order.Grupo,
 			order.OrderPriority,
 			order.OrderTemplateID,

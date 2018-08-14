@@ -54,8 +54,8 @@ func (receiver *CompletedOrderReceiver) ProcessEvent(ctx context.Context, comple
 			completedOrderEvent.OrderID,
 			completedOrderEvent.Exchange,
 			completedOrderEvent.MarketName,
-			completedOrderEvent.CurrencyOutcomeSymbol,
-			completedOrderEvent.CurrencyOutcomeBalance,
+			completedOrderEvent.FinalCurrencySymbol,
+			completedOrderEvent.FinalCurrencyBalance,
 			depth); err != nil {
 			log.Println("completed order error trying to update the plan context -- ", err.Error())
 			return nil

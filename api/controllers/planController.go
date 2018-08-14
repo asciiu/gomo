@@ -108,33 +108,36 @@ type Plan struct {
 }
 
 type Order struct {
-	OrderID               string            `json:"orderID,omitempty"`
-	ParentOrderID         string            `json:"parentOrderID,omitempty"`
-	PlanDepth             uint32            `json:"planDepth,omitempty"`
-	OrderTemplateID       string            `json:"orderTemplateID,omitempty"`
-	KeyID                 string            `json:"keyID,omitempty"`
-	KeyPublic             string            `json:"keyPublic,omitempty"`
-	KeyDescription        string            `json:"keyDescription,omitempty"`
-	OrderPriority         uint32            `json:"orderPriority,omitempty"`
-	OrderType             string            `json:"orderType,omitempty"`
-	Side                  string            `json:"side,omitempty"`
-	LimitPrice            float64           `json:"limitPrice,omitempty"`
-	Exchange              string            `json:"exchange,omitempty"`
-	ExchangeMarketName    string            `json:"exchangeMarketName,omitempty"`
-	MarketName            string            `json:"marketName,omitempty"`
-	BaseCurrencySymbol    string            `json:"baseCurrencySymbol"`
-	BaseCurrencyName      string            `json:"baseCurrencyName"`
-	MarketCurrencySymbol  string            `json:"marketCurrencySymbol"`
-	MarketCurrencyName    string            `json:"marketCurrencyName"`
-	ActiveCurrencySymbol  string            `json:"activeCurrencySymbol"`
-	ActiveCurrencyName    string            `json:"activeCurrencyName"`
-	ActiveCurrencyBalance float64           `json:"activeCurrencyBalance"`
-	ActiveCurrencyTraded  float64           `json:"activeCurrencyTraded"`
-	Grupo                 string            `json:"grupo"`
-	Status                string            `json:"status,omitempty"`
-	CreatedOn             string            `json:"createdOn,omitempty"`
-	UpdatedOn             string            `json:"updatedOn,omitempty"`
-	Triggers              []*orders.Trigger `json:"triggers,omitempty"`
+	OrderID                  string            `json:"orderID,omitempty"`
+	ParentOrderID            string            `json:"parentOrderID,omitempty"`
+	PlanDepth                uint32            `json:"planDepth,omitempty"`
+	OrderTemplateID          string            `json:"orderTemplateID,omitempty"`
+	KeyID                    string            `json:"keyID,omitempty"`
+	KeyPublic                string            `json:"keyPublic,omitempty"`
+	KeyDescription           string            `json:"keyDescription,omitempty"`
+	OrderPriority            uint32            `json:"orderPriority,omitempty"`
+	OrderType                string            `json:"orderType,omitempty"`
+	Side                     string            `json:"side,omitempty"`
+	LimitPrice               float64           `json:"limitPrice,omitempty"`
+	Exchange                 string            `json:"exchange,omitempty"`
+	ExchangeMarketName       string            `json:"exchangeMarketName,omitempty"`
+	MarketName               string            `json:"marketName,omitempty"`
+	BaseCurrencySymbol       string            `json:"baseCurrencySymbol"`
+	BaseCurrencyName         string            `json:"baseCurrencyName"`
+	MarketCurrencySymbol     string            `json:"marketCurrencySymbol"`
+	MarketCurrencyName       string            `json:"marketCurrencyName"`
+	InitialCurrencySymbol    string            `json:"initialCurrencySymbol"`
+	InitialCurrencyName      string            `json:"initialCurrencyName"`
+	InitialCurrencyBalance   float64           `json:"initialCurrencyBalance"`
+	InitialCurrencyTraded    float64           `json:"initialCurrencyTraded"`
+	InitialCurrencyRemainder float64           `json:"initialCurrencyRemainder"`
+	FinalCurrencySymbol      string            `json:"FinalCurrencySymbol"`
+	FinalCurrencyName        string            `json:"FinalCurrencyName"`
+	Grupo                    string            `json:"grupo"`
+	Status                   string            `json:"status,omitempty"`
+	CreatedOn                string            `json:"createdOn,omitempty"`
+	UpdatedOn                string            `json:"updatedOn,omitempty"`
+	Triggers                 []*orders.Trigger `json:"triggers,omitempty"`
 }
 
 func fail(c echo.Context, msg string) error {
@@ -306,33 +309,37 @@ func (controller *PlanController) HandleGetPlan(c echo.Context) error {
 		marketCurrencySymbol := names[0]
 		marketCurrencyName := controller.currencies[marketCurrencySymbol]
 		newo := Order{
-			OrderID:               o.OrderID,
-			ParentOrderID:         o.ParentOrderID,
-			PlanDepth:             o.PlanDepth,
-			OrderTemplateID:       o.OrderTemplateID,
-			KeyID:                 o.KeyID,
-			KeyPublic:             o.KeyPublic,
-			KeyDescription:        o.KeyDescription,
-			OrderPriority:         o.OrderPriority,
-			OrderType:             o.OrderType,
-			Side:                  o.Side,
-			LimitPrice:            o.LimitPrice,
-			Exchange:              o.Exchange,
-			ExchangeMarketName:    o.ExchangeMarketName,
-			MarketName:            o.MarketName,
-			BaseCurrencySymbol:    baseCurrencySymbol,
-			BaseCurrencyName:      baseCurrencyName,
-			MarketCurrencySymbol:  marketCurrencySymbol,
-			MarketCurrencyName:    marketCurrencyName,
-			ActiveCurrencySymbol:  o.ActiveCurrencySymbol,
-			ActiveCurrencyName:    controller.currencies[o.ActiveCurrencySymbol],
-			ActiveCurrencyBalance: o.ActiveCurrencyBalance,
-			ActiveCurrencyTraded:  o.ActiveCurrencyTraded,
-			Grupo:                 o.Grupo,
-			Status:                o.Status,
-			CreatedOn:             o.CreatedOn,
-			UpdatedOn:             o.UpdatedOn,
-			Triggers:              o.Triggers,
+			OrderID:                  o.OrderID,
+			ParentOrderID:            o.ParentOrderID,
+			PlanDepth:                o.PlanDepth,
+			OrderTemplateID:          o.OrderTemplateID,
+			KeyID:                    o.KeyID,
+			KeyPublic:                o.KeyPublic,
+			KeyDescription:           o.KeyDescription,
+			OrderPriority:            o.OrderPriority,
+			OrderType:                o.OrderType,
+			Side:                     o.Side,
+			LimitPrice:               o.LimitPrice,
+			Exchange:                 o.Exchange,
+			ExchangeMarketName:       o.ExchangeMarketName,
+			MarketName:               o.MarketName,
+			BaseCurrencySymbol:       baseCurrencySymbol,
+			BaseCurrencyName:         baseCurrencyName,
+			MarketCurrencySymbol:     marketCurrencySymbol,
+			MarketCurrencyName:       marketCurrencyName,
+			InitialCurrencySymbol:    o.InitialCurrencySymbol,
+			InitialCurrencyName:      controller.currencies[o.InitialCurrencySymbol],
+			InitialCurrencyBalance:   o.InitialCurrencyBalance,
+			InitialCurrencyTraded:    o.InitialCurrencyTraded,
+			InitialCurrencyRemainder: o.InitialCurrencyRemainder,
+			FinalCurrencySymbol:      o.FinalCurrencySymbol,
+			FinalCurrencyName:        controller.currencies[o.FinalCurrencySymbol],
+			FinalCurrencyBalance:     o.FinalCurrencyBalance,
+			Grupo:                    o.Grupo,
+			Status:                   o.Status,
+			CreatedOn:                o.CreatedOn,
+			UpdatedOn:                o.UpdatedOn,
+			Triggers:                 o.Triggers,
 		}
 		newOrders = append(newOrders, &newo)
 	}
@@ -528,7 +535,7 @@ type NewOrderReq struct {
 	LimitPrice float64 `json:"limitPrice"`
 	// Required for the root order of the tree. Child orders for tree may or may not have a currencyBalance.
 	// in: body
-	ActiveCurrencyBalance float64 `json:"activeCurrencyBalance"`
+	InitialCurrencyBalance float64 `json:"initialCurrencyBalance"`
 	// Required these are the conditions that trigger the order to execute: ???
 	// in: body
 	Triggers []*TriggerReq `json:"triggers"`
@@ -577,17 +584,17 @@ func (controller *PlanController) HandlePostPlan(c echo.Context) error {
 	for _, order := range newPlan.Orders {
 
 		or := orders.NewOrderRequest{
-			OrderID:               order.OrderID,
-			OrderPriority:         order.OrderPriority,
-			OrderType:             order.OrderType,
-			OrderTemplateID:       order.OrderTemplateID,
-			KeyID:                 order.KeyID,
-			ParentOrderID:         order.ParentOrderID,
-			MarketName:            order.MarketName,
-			Grupo:                 order.Grupo,
-			Side:                  order.Side,
-			LimitPrice:            order.LimitPrice,
-			ActiveCurrencyBalance: order.ActiveCurrencyBalance}
+			OrderID:                order.OrderID,
+			OrderPriority:          order.OrderPriority,
+			OrderType:              order.OrderType,
+			OrderTemplateID:        order.OrderTemplateID,
+			KeyID:                  order.KeyID,
+			ParentOrderID:          order.ParentOrderID,
+			MarketName:             order.MarketName,
+			Grupo:                  order.Grupo,
+			Side:                   order.Side,
+			LimitPrice:             order.LimitPrice,
+			InitialCurrencyBalance: order.InitialCurrencyBalance}
 
 		for _, cond := range order.Triggers {
 			trigger := orders.TriggerRequest{
@@ -636,33 +643,37 @@ func (controller *PlanController) HandlePostPlan(c echo.Context) error {
 		marketCurrencySymbol := names[0]
 		marketCurrencyName := controller.currencies[marketCurrencySymbol]
 		newo := Order{
-			OrderID:               o.OrderID,
-			ParentOrderID:         o.ParentOrderID,
-			PlanDepth:             o.PlanDepth,
-			OrderTemplateID:       o.OrderTemplateID,
-			KeyID:                 o.KeyID,
-			KeyPublic:             o.KeyPublic,
-			KeyDescription:        o.KeyDescription,
-			OrderPriority:         o.OrderPriority,
-			OrderType:             o.OrderType,
-			Side:                  o.Side,
-			LimitPrice:            o.LimitPrice,
-			Exchange:              o.Exchange,
-			ExchangeMarketName:    o.ExchangeMarketName,
-			MarketName:            o.MarketName,
-			BaseCurrencySymbol:    baseCurrencySymbol,
-			BaseCurrencyName:      baseCurrencyName,
-			MarketCurrencySymbol:  marketCurrencySymbol,
-			MarketCurrencyName:    marketCurrencyName,
-			ActiveCurrencySymbol:  o.ActiveCurrencySymbol,
-			ActiveCurrencyName:    controller.currencies[o.ActiveCurrencySymbol],
-			ActiveCurrencyBalance: o.ActiveCurrencyBalance,
-			ActiveCurrencyTraded:  o.ActiveCurrencyTraded,
-			Grupo:                 o.Grupo,
-			Status:                o.Status,
-			CreatedOn:             o.CreatedOn,
-			UpdatedOn:             o.UpdatedOn,
-			Triggers:              o.Triggers,
+			OrderID:                  o.OrderID,
+			ParentOrderID:            o.ParentOrderID,
+			PlanDepth:                o.PlanDepth,
+			OrderTemplateID:          o.OrderTemplateID,
+			KeyID:                    o.KeyID,
+			KeyPublic:                o.KeyPublic,
+			KeyDescription:           o.KeyDescription,
+			OrderPriority:            o.OrderPriority,
+			OrderType:                o.OrderType,
+			Side:                     o.Side,
+			LimitPrice:               o.LimitPrice,
+			Exchange:                 o.Exchange,
+			ExchangeMarketName:       o.ExchangeMarketName,
+			MarketName:               o.MarketName,
+			BaseCurrencySymbol:       baseCurrencySymbol,
+			BaseCurrencyName:         baseCurrencyName,
+			MarketCurrencySymbol:     marketCurrencySymbol,
+			MarketCurrencyName:       marketCurrencyName,
+			InitialCurrencySymbol:    o.InitialCurrencySymbol,
+			InitialCurrencyName:      controller.currencies[o.InitialCurrencySymbol],
+			InitialCurrencyBalance:   o.InitialCurrencyBalance,
+			InitialCurrencyTraded:    o.InitialCurrencyTraded,
+			InitialCurrencyRemainder: o.InitialCurrencyRemainder,
+			FinalCurrencySymbol:      o.FinalCurrencySymbol,
+			FinalCurrencyName:        controller.currencies[o.FinalCurrencySymbol],
+			FinalCurrencyBalance:     o.FinalCurrencyBalance,
+			Grupo:                    o.Grupo,
+			Status:                   o.Status,
+			CreatedOn:                o.CreatedOn,
+			UpdatedOn:                o.UpdatedOn,
+			Triggers:                 o.Triggers,
 		}
 		newOrders = append(newOrders, &newo)
 	}

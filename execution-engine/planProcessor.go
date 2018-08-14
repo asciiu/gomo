@@ -41,32 +41,37 @@ func (processor *PlanProcessor) ProcessTradeEvent(ctx context.Context, payload *
 
 							if order.OrderType == constOrder.PaperOrder {
 								completedEvent := evt.CompletedOrderEvent{
-									UserID:             plan.UserID,
-									PlanID:             plan.PlanID,
-									OrderID:            order.OrderID,
-									Exchange:           order.Exchange,
-									MarketName:         order.MarketName,
-									Side:               order.Side,
-									TriggeredPrice:     tradeEvent.Price,
-									TriggeredCondition: desc,
-									ExchangeOrderID:    constOrder.PaperOrder,
-									ExchangeMarketName: constOrder.PaperOrder,
-									Status:             status.Filled,
-									CloseOnComplete:    plan.CloseOnComplete,
+									UserID:     plan.UserID,
+									PlanID:     plan.PlanID,
+									OrderID:    order.OrderID,
+									Exchange:   order.Exchange,
+									MarketName: order.MarketName,
+									Side:       order.Side,
+									InitialCurrencyBalance: plan.ActiveCurrencyBalance,
+									InitialCurrencySymbol:  plan.ActiveCurrencySymbol,
+									TriggerID:              trigger.TriggerID,
+									TriggeredPrice:         tradeEvent.Price,
+									TriggeredCondition:     desc,
+									ExchangeOrderID:        constOrder.PaperOrder,
+									ExchangeMarketName:     constOrder.PaperOrder,
+									Status:                 status.Filled,
+									CloseOnComplete:        plan.CloseOnComplete,
 								}
 
 								symbols := strings.Split(order.MarketName, "-")
 								// adjust balances for buy
 								if order.Side == side.Buy {
-									completedEvent.CurrencyOutcomeSymbol = symbols[0]
-									completedEvent.CurrencyOutcomeBalance = plan.ActiveCurrencyBalance / tradeEvent.Price
+									completedEvent.FinalCurrencySymbol = symbols[0]
+									completedEvent.FinalCurrencyBalance = plan.ActiveCurrencyBalance / tradeEvent.Price
+									completedEvent.InitialCurrencyRemainder = plan.ActiveCurrencyBalance - (completedEvent.FinalCurrencyBalance * tradeEvent.Price)
 									completedEvent.Details = fmt.Sprintf("bought %.8f %s with %.8f %s", completedEvent.CurrencyOutcomeBalance, symbols[0], plan.ActiveCurrencyBalance, symbols[1])
 								}
 
 								// adjust balances for sell
 								if order.Side == side.Sell {
-									completedEvent.CurrencyOutcomeSymbol = symbols[1]
-									completedEvent.CurrencyOutcomeBalance = plan.ActiveCurrencyBalance * tradeEvent.Price
+									completedEvent.FinalCurrencySymbol = symbols[1]
+									completedEvent.FinalCurrencyBalance = plan.ActiveCurrencyBalance * tradeEvent.Price
+									completedEvent.InitialCurrencyRemainder = 0
 									completedEvent.Details = fmt.Sprintf("sold %.8f %s for %.8f %s", plan.ActiveCurrencyBalance, symbols[0], completedEvent.CurrencyOutcomeBalance, symbols[1])
 								}
 

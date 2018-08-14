@@ -33,9 +33,12 @@ CREATE TABLE orders (
   plan_depth integer NOT NULL,
   exchange_name text NOT NULL,
   market_name text NOT NULL,
-  active_currency_symbol text NOT NULL,
-  active_currency_balance decimal DEFAULT 0,
-  active_currency_traded decimal DEFAULT 0,
+  initial_currency_symbol text NOT NULL,
+  initial_currency_balance decimal DEFAULT 0,
+  initial_currency_traded decimal DEFAULT 0,
+  initial_currency_remainder decimal DEFAULT 0,
+  final_currency_symbol text,         -- they may be nullable 
+  final_currency_balance decimal,     -- 
   grupo text,                         -- leo will use el grupo to pull grouped orders (e.g. "scale-in" and scale-out orders)
   order_priority integer NOT NULL,    -- when two orders are at the same depth this can be used to indicate what your order preference is in terms of what get's executed first
   order_template_id text,             -- optional frontend template used for this order 
@@ -57,6 +60,9 @@ CREATE TABLE triggers (
   code text NOT NULL,
   actions text[] NOT NULL,
   triggered BOOLEAN NOT NULL DEFAULT false,
+  triggered_price decimal,     -- only if triggered is true 
+  triggered_condition text,    -- e.g. "6056.11 <= 6400"
+  triggered_timestamp TIMESTAMP,  
   created_on TIMESTAMP DEFAULT now(),
   updated_on TIMESTAMP DEFAULT current_timestamp
 );

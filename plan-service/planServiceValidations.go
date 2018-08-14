@@ -80,7 +80,7 @@ func ValidateNodeCount(orderRequests []*protoOrder.NewOrderRequest) bool {
 // validate non zero currency balance
 func ValidateNoneZeroBalance(orderRequests []*protoOrder.NewOrderRequest) bool {
 	for _, o := range orderRequests {
-		if o.ParentOrderID == uuid.Nil.String() && o.ActiveCurrencyBalance > 0 {
+		if o.ParentOrderID == uuid.Nil.String() && o.InitialCurrencyBalance > 0 {
 			return true
 		}
 	}

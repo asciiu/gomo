@@ -333,31 +333,31 @@ func (service *PlanService) NewPlan(ctx context.Context, req *protoPlan.NewPlanR
 		}
 
 		order := protoOrder.Order{
-			KeyID:                 or.KeyID,
-			OrderID:               or.OrderID,
-			OrderPriority:         or.OrderPriority,
-			OrderType:             or.OrderType,
-			OrderTemplateID:       or.OrderTemplateID,
-			ParentOrderID:         or.ParentOrderID,
-			PlanID:                planID.String(),
-			PlanDepth:             depth,
-			Side:                  or.Side,
-			LimitPrice:            or.LimitPrice,
-			Exchange:              exchange,
-			MarketName:            or.MarketName,
-			ActiveCurrencySymbol:  symbol,
-			ActiveCurrencyBalance: or.ActiveCurrencyBalance,
-			Status:                orderStatus,
-			Grupo:                 or.Grupo,
-			Triggers:              triggers,
-			CreatedOn:             now,
-			UpdatedOn:             now,
+			KeyID:                  or.KeyID,
+			OrderID:                or.OrderID,
+			OrderPriority:          or.OrderPriority,
+			OrderType:              or.OrderType,
+			OrderTemplateID:        or.OrderTemplateID,
+			ParentOrderID:          or.ParentOrderID,
+			PlanID:                 planID.String(),
+			PlanDepth:              depth,
+			Side:                   or.Side,
+			LimitPrice:             or.LimitPrice,
+			Exchange:               exchange,
+			MarketName:             or.MarketName,
+			InitialCurrencySymbol:  symbol,
+			InitialCurrencyBalance: or.InitialCurrencyBalance,
+			Status:                 orderStatus,
+			Grupo:                  or.Grupo,
+			Triggers:               triggers,
+			CreatedOn:              now,
+			UpdatedOn:              now,
 		}
 		newOrders = append(newOrders, &order)
 	}
 
-	currencySymbol := newOrders[0].ActiveCurrencySymbol
-	currencyBalance := newOrders[0].ActiveCurrencyBalance
+	currencySymbol := newOrders[0].InitialCurrencySymbol
+	currencyBalance := newOrders[0].InitialCurrencyBalance
 	keyID := newOrders[0].KeyID
 
 	if newOrders[0].OrderType != orderConstants.PaperOrder {
@@ -381,8 +381,8 @@ func (service *PlanService) NewPlan(ctx context.Context, req *protoPlan.NewPlanR
 		PlanID:                planID.String(),
 		PlanTemplateID:        req.PlanTemplateID,
 		UserID:                req.UserID,
-		ActiveCurrencySymbol:  newOrders[0].ActiveCurrencySymbol,
-		ActiveCurrencyBalance: newOrders[0].ActiveCurrencyBalance,
+		ActiveCurrencySymbol:  newOrders[0].InitialCurrencySymbol,
+		ActiveCurrencyBalance: newOrders[0].InitialCurrencyBalance,
 		Exchange:              newOrders[0].Exchange,
 		MarketName:            newOrders[0].MarketName,
 		LastExecutedPlanDepth: 0,
@@ -463,6 +463,7 @@ func (service *PlanService) GetUserPlans(ctx context.Context, req *protoPlan.Get
 
 	var page *protoPlan.PlansPage
 	var err error
+	log.Println(req)
 
 	switch {
 	case req.MarketName == "" && req.Exchange != "":
@@ -479,11 +480,10 @@ func (service *PlanService) GetUserPlans(ctx context.Context, req *protoPlan.Get
 		page, err = planRepo.FindUserPlans(service.DB, req.UserID, req.Page, req.PageSize)
 	}
 
-	switch {
-	case err == nil:
+	if err == nil {
 		res.Status = response.Success
 		res.Data = page
-	default:
+	} else {
 		res.Status = response.Error
 		res.Message = err.Error()
 	}
@@ -739,8 +739,8 @@ func (service *PlanService) UpdatePlan(ctx context.Context, req *protoPlan.Updat
 		}
 
 		// validate the balance for non paper orders that are set to use a predefined balance
-		if or.OrderType != orderConstants.PaperOrder && or.ActiveCurrencyBalance > 0 {
-			validBalance, err := service.validateBalance(ctx, currencySymbol, or.ActiveCurrencyBalance, req.UserID, or.KeyID)
+		if or.OrderType != orderConstants.PaperOrder && or.InitialCurrencyBalance > 0 {
+			validBalance, err := service.validateBalance(ctx, currencySymbol, or.InitialCurrencyBalance, req.UserID, or.KeyID)
 			if err != nil {
 				res.Status = response.Error
 				res.Message = fmt.Sprintf("failed to validate the currency balance for %s: %s", currencySymbol, err.Error())
@@ -748,26 +748,26 @@ func (service *PlanService) UpdatePlan(ctx context.Context, req *protoPlan.Updat
 			}
 			if !validBalance {
 				res.Status = response.Fail
-				res.Message = fmt.Sprintf("insufficient %s balance, %.8f requested in orderID: %s", currencySymbol, or.ActiveCurrencyBalance, or.OrderID)
+				res.Message = fmt.Sprintf("insufficient %s balance, %.8f requested in orderID: %s", currencySymbol, or.InitialCurrencyBalance, or.OrderID)
 				return nil
 			}
 		}
 
 		order := protoOrder.Order{
-			KeyID:                 or.KeyID,
-			OrderID:               or.OrderID,
-			OrderPriority:         or.OrderPriority,
-			OrderType:             or.OrderType,
-			OrderTemplateID:       or.OrderTemplateID,
-			ParentOrderID:         or.ParentOrderID,
-			PlanID:                req.PlanID,
-			PlanDepth:             depth,
-			Side:                  or.Side,
-			LimitPrice:            or.LimitPrice,
-			Exchange:              exchange,
-			MarketName:            or.MarketName,
-			ActiveCurrencySymbol:  currencySymbol,
-			ActiveCurrencyBalance: or.ActiveCurrencyBalance,
+			KeyID:                  or.KeyID,
+			OrderID:                or.OrderID,
+			OrderPriority:          or.OrderPriority,
+			OrderType:              or.OrderType,
+			OrderTemplateID:        or.OrderTemplateID,
+			ParentOrderID:          or.ParentOrderID,
+			PlanID:                 req.PlanID,
+			PlanDepth:              depth,
+			Side:                   or.Side,
+			LimitPrice:             or.LimitPrice,
+			Exchange:               exchange,
+			MarketName:             or.MarketName,
+			InitialCurrencySymbol:  currencySymbol,
+			InitialCurrencyBalance: or.InitialCurrencyBalance,
 			Grupo:     or.Grupo,
 			Status:    orderStatus,
 			Triggers:  triggers,
@@ -791,9 +791,10 @@ func (service *PlanService) UpdatePlan(ctx context.Context, req *protoPlan.Updat
 		}
 	}
 
+	// if root as not executed yet and we have new orders
 	if pln.LastExecutedPlanDepth == 0 && len(newOrders) > 0 {
-		pln.ActiveCurrencySymbol = newOrders[0].ActiveCurrencySymbol
-		pln.ActiveCurrencyBalance = newOrders[0].ActiveCurrencyBalance
+		pln.ActiveCurrencySymbol = newOrders[0].InitialCurrencySymbol
+		pln.ActiveCurrencyBalance = newOrders[0].InitialCurrencyBalance
 		pln.Exchange = newOrders[0].Exchange
 		pln.MarketName = newOrders[0].MarketName
 		if err := planRepo.UpdatePlanContextTxn(txn, ctx, pln.PlanID, pln.ActiveCurrencySymbol, pln.Exchange, pln.MarketName, pln.ActiveCurrencyBalance); err != nil {
