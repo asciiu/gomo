@@ -12,9 +12,17 @@
   packages = [
     "common/constants/messages",
     "common/db",
-    "device-service/proto/device"
+    "device-service/proto/device",
+    "user-service/db/sql",
+    "user-service/models"
   ]
-  revision = "9869643f6faeb2281cddc70cc44ceb820e82fc93"
+  revision = "8fef941455729389df725333242bb0c167a86391"
+
+[[projects]]
+  name = "github.com/davecgh/go-spew"
+  packages = ["spew"]
+  revision = "346938d642f2ec3594ed81d874461961cd0faa76"
+  version = "v1.1.0"
 
 [[projects]]
   name = "github.com/go-log/log"
@@ -208,9 +216,23 @@
   version = "v0.8.0"
 
 [[projects]]
+  name = "github.com/pmezard/go-difflib"
+  packages = ["difflib"]
+  revision = "792786c7400a136282c1664665ae0a8db921c6c2"
+  version = "v1.0.0"
+
+[[projects]]
+  name = "github.com/stretchr/testify"
+  packages = ["assert"]
+  revision = "f35b8ab0b5a2cef36673838d662e249dd9c94686"
+  version = "v1.2.2"
+
+[[projects]]
   branch = "master"
   name = "golang.org/x/crypto"
   packages = [
+    "bcrypt",
+    "blowfish",
     "ed25519",
     "ed25519/internal/edwards25519"
   ]
@@ -297,6 +319,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "a94af8887445407ca9164101f1539618ed733f946bb6166762f3198151ab1228"
+  inputs-digest = "68459b56ba636aa80f3d7db9e6c4d289588b5bbbd263fe96c8719612f6785fe4"
   solver-name = "gps-cdcl"
   solver-version = 1

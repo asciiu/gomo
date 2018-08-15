@@ -5,7 +5,7 @@ import (
 	"database/sql"
 
 	repo "github.com/asciiu/gomo/notification-service/db/sql"
-	notifications "github.com/asciiu/gomo/notification-service/proto"
+	protoNotification "github.com/asciiu/gomo/notification-service/proto"
 )
 
 type NotificationService struct {
@@ -15,16 +15,23 @@ type NotificationService struct {
 // GetUserNotifications returns error to conform to protobuf def, but the error will always be returned as nil.
 // Can't return an error with a response object - response object is returned as nil when error is non nil.
 // Therefore, return error in response object.
-func (service *NotificationService) GetUserNotificationsByType(ctx context.Context, req *notifications.GetNotifcationsByType, res *notifications.NotificationPagedResponse) error {
-	pagedResult, error := repo.FindNotificationsByType(service.DB, req)
+func (service *NotificationService) GetUserNotificationsByType(ctx context.Context, req *protoNotification.GetNotifcationsByType, res *protoNotification.NotificationPagedResponse) error {
+
+	var pagedResult *protoNotification.UserNotificationsPage
+	var err error
+	if req.NotificationType == "" {
+		pagedResult, err = repo.FindNotifications(service.DB, req)
+	} else {
+		pagedResult, err = repo.FindNotificationsByType(service.DB, req)
+	}
 
 	switch {
-	case error == nil:
+	case err == nil:
 		res.Status = "success"
 		res.Data = pagedResult
 	default:
 		res.Status = "error"
-		res.Message = error.Error()
+		res.Message = err.Error()
 	}
 	return nil
 }
