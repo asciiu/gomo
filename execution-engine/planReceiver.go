@@ -51,14 +51,6 @@ type TriggerEx struct {
 	Evaluate  Expression
 }
 
-// This approach may not be feasible because there may be
-// multiple orders with different market names in a single plan
-type MarketPlans struct {
-	// maps market name to plans for that market
-	// example: ADA-BTC -> plans for ADA-BTC
-	MarketPlans map[string][]*Plan
-}
-
 // OrderReceiver will receive and prep an order conditions
 type PlanReceiver struct {
 	DB    *sql.DB
@@ -70,7 +62,7 @@ type PlanReceiver struct {
 	Aborted   micro.Publisher
 	Completed micro.Publisher
 
-	Processor *PlanProcessor
+	Processor *Engine
 }
 
 // ProcessEvent handles ActiveOrderEvents. These events are published by the plan service.

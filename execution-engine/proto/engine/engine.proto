@@ -1,0 +1,72 @@
+syntax = "proto3";
+
+package engine;
+
+service ExecutionEngine {
+  rpc AddPlan(NewPlanRequest) returns (PlanResponse) {}
+  rpc GetActivePlans(ActiveRequest) returns (PlanResponse) {}
+  rpc KillPlan(KillRequest) returns (PlanResponse) {}
+  rpc KillUserPlans(KillUserRequest) returns (PlanResponse) {}
+}
+
+// Requests
+message ActiveRequest {
+  string exchange = 1;
+  string marketName = 2;
+}
+
+message KillRequest {
+  string planID = 1;
+}
+
+message KillUserRequest {
+  string userID = 1;
+}
+
+message NewPlanRequest {
+  string planID = 1;
+  string userID = 2;
+  string activeCurrencySymbol = 3;
+  double activeCurrencyBalance = 4;
+  bool closeOnComplete = 5;
+  repeated Order orders = 6;
+}
+
+message Order {
+  string orderID = 1;
+  string exchange = 2;
+  string marketName = 3;
+  string side = 4;
+  double limitPrice = 5;
+  string orderType = 6;
+  string orderStatus = 7; 
+  string keyID = 8;
+  string keyPublic = 9;
+  string keySecret = 10; 
+  repeated Trigger triggers = 11;
+}
+
+message Trigger {
+  string triggerID = 1;
+  string orderID = 2;
+  string name = 5;
+  string code = 6;
+  bool triggered = 7;
+  repeated string actions = 8;
+}
+
+
+// Responses
+message Plan {
+  string planID = 1;
+}
+
+message PlanList {
+  repeated Plan plan = 1;
+}
+
+message PlanResponse {
+  string status = 1;
+  string message = 2;
+  PlanList data = 3;
+}
