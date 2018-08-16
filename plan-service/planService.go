@@ -47,8 +47,14 @@ type PlanService struct {
 // VERY IMPORTANT: In theory, this should never be used to republish filled orders.
 func (service *PlanService) publishPlan(ctx context.Context, plan *protoPlan.Plan, isRevision bool) error {
 	newOrders := make([]*protoEngine.Order, 0)
+	activeDepth := plan.LastExecutedPlanDepth + 1
 
 	for _, order := range plan.Orders {
+
+		// only add orders that are at the active plan depth
+		if order.PlanDepth != activeDepth {
+			continue
+		}
 
 		triggers := make([]*protoEngine.Trigger, 0)
 		for _, t := range order.Triggers {
@@ -81,31 +87,33 @@ func (service *PlanService) publishPlan(ctx context.Context, plan *protoPlan.Pla
 		newOrders = append(newOrders, &newOrderEvt)
 	}
 
-	newPlan := protoEngine.NewPlanRequest{
-		PlanID:                plan.PlanID,
-		UserID:                plan.UserID,
-		ActiveCurrencyBalance: plan.ActiveCurrencyBalance,
-		ActiveCurrencySymbol:  plan.ActiveCurrencySymbol,
-		CloseOnComplete:       plan.CloseOnComplete,
-		Orders:                newOrders,
-	}
-
-	if service.PlanPub != nil {
-
-		//if err := service.PlanPub.Publish(context.Background(), &newPlanEvent); err != nil {
-		//	return fmt.Errorf("publish error: %s -- planID: %s", err, newPlanEvent.PlanID)
-		//}
-		response, err := service.EngineClient.AddPlan(ctx, &newPlan)
-		if err != nil {
-			return fmt.Errorf("publish error: %s -- planID: %s", err, newPlan.PlanID)
-		} else {
-			log.Printf("published plan -- %s\n", response.Data.Plans[0].PlanID)
+	// only proceed if there are new orders to publish
+	if len(newOrders) > 0 {
+		newPlan := protoEngine.NewPlanRequest{
+			PlanID:                plan.PlanID,
+			UserID:                plan.UserID,
+			ActiveCurrencyBalance: plan.ActiveCurrencyBalance,
+			ActiveCurrencySymbol:  plan.ActiveCurrencySymbol,
+			CloseOnComplete:       plan.CloseOnComplete,
+			Orders:                newOrders,
 		}
 
-		// update the order status
-		for _, o := range newOrders {
-			if _, _, err := planRepo.UpdateOrderStatus(service.DB, o.OrderID, status.Active); err != nil {
-				log.Println("could not update order status to active -- ", err.Error())
+		// this check is needed so this step does not execute
+		// in the test. In reality the tests should probably use a mock service for engine
+		if service.PlanPub != nil {
+
+			response, err := service.EngineClient.AddPlan(ctx, &newPlan)
+			if err != nil {
+				return fmt.Errorf("could not publish the plan %s %s", newPlan.PlanID, err.Error())
+			} else {
+				log.Printf("published plan -- %s\n", response.Data.Plans[0].PlanID)
+			}
+
+			// update the order status
+			for _, o := range newOrders {
+				if _, _, err := planRepo.UpdateOrderStatus(service.DB, o.OrderID, status.Active); err != nil {
+					log.Println("could not update order status to active -- ", err.Error())
+				}
 			}
 		}
 	}
@@ -786,6 +794,17 @@ func (service *PlanService) UpdatePlan(ctx context.Context, req *protoPlan.Updat
 		newOrders = append(newOrders, &order)
 	}
 
+	// if the plan is currently active we need to kill the plan by its ID in the engine
+	if pln.Status == status.Active {
+		req := protoEngine.KillRequest{PlanID: pln.PlanID}
+		_, err := service.EngineClient.KillPlan(ctx, &req)
+		if err != nil {
+			res.Status = response.Fail
+			res.Message = "you cannot update your order because an order has been updated"
+			return nil
+		}
+	}
+
 	txn, err := service.DB.Begin()
 	if err != nil {
 		return err
@@ -888,15 +907,12 @@ func (service *PlanService) UpdatePlan(ctx context.Context, req *protoPlan.Updat
 
 	// activate first plan order if plan is active
 	if pln.Status == plan.Active {
-		// send key and secret with plan
-		//pln.Key = ky.Key
-		//pln.KeySecret = ky.Secret
+		// TODO send the keys with the orders so they can execute the live orders against the exchanges
 
 		// this is a new plan
 		if err := service.publishPlan(ctx, pln, false); err != nil {
-			// TODO return a warning here
 			res.Status = response.Error
-			res.Message = "could not publish first order: " + err.Error()
+			res.Message = "could not republish this plan: " + err.Error()
 			return nil
 		}
 	}

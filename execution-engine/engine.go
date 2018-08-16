@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"database/sql"
+	"errors"
 	"fmt"
 	"log"
 	"regexp"
@@ -70,6 +71,7 @@ type Engine struct {
 }
 
 // ProcessEvent will process TradeEvents. These events are published from the exchange sockets.
+// Whether or not a trigger for an order will execute will be deteremined here.
 func (engine *Engine) ProcessTradeEvents(ctx context.Context, payload *evt.TradeEvents) error {
 	plans := engine.Plans
 
@@ -343,12 +345,69 @@ func (engine *Engine) AddPlan(ctx context.Context, req *protoEngine.NewPlanReque
 	return nil
 }
 
+// Get active plans
 func (engine *Engine) GetActivePlans(ctx context.Context, req *protoEngine.ActiveRequest, res *protoEngine.PlanResponse) error {
+	plans := engine.Plans
+	livePlans := make([]*protoEngine.Plan, 0)
+
+	for _, plan := range plans {
+		livePlans = append(livePlans, &protoEngine.Plan{
+			PlanID: plan.PlanID,
+		})
+	}
+
+	res.Status = response.Success
+	res.Data = &protoEngine.PlanList{
+		Plans: livePlans,
+	}
 	return nil
 }
+
+// kills a single plan. If the plan was not found returns error.
 func (engine *Engine) KillPlan(ctx context.Context, req *protoEngine.KillRequest, res *protoEngine.PlanResponse) error {
-	return nil
+
+	plans := engine.Plans
+
+	for i, plan := range plans {
+		if plan.PlanID == req.PlanID {
+			// remove this plan by appending the slice up until i (:i excludes i)
+			// with all elements after i
+			engine.Plans = append(plans[:i], plans[i+1:]...)
+			res.Status = response.Success
+			res.Data = &protoEngine.PlanList{
+				Plans: []*protoEngine.Plan{
+					&protoEngine.Plan{
+						PlanID: req.PlanID,
+					},
+				},
+			}
+			return nil
+		}
+	}
+
+	return errors.New(fmt.Sprintf("plan %s not found", req.PlanID))
 }
+
+// Kill all plans belonging to a user.
 func (engine *Engine) KillUserPlans(ctx context.Context, req *protoEngine.KillUserRequest, res *protoEngine.PlanResponse) error {
+	plans := engine.Plans
+	killedPlans := make([]*protoEngine.Plan, 0)
+
+	for i, plan := range plans {
+		if plan.UserID == req.UserID {
+			// remove this plan by appending the slice up until i (:i excludes i)
+			// with all elements after i
+			engine.Plans = append(plans[:i], plans[i+1:]...)
+
+			killedPlans = append(killedPlans, &protoEngine.Plan{
+				PlanID: plan.PlanID,
+			})
+		}
+	}
+
+	res.Status = response.Success
+	res.Data = &protoEngine.PlanList{
+		Plans: killedPlans,
+	}
 	return nil
 }
