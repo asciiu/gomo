@@ -912,7 +912,7 @@ func (service *PlanService) UpdatePlan(ctx context.Context, req *protoPlan.Updat
 		// this is a new plan
 		if err := service.publishPlan(ctx, pln, false); err != nil {
 			res.Status = response.Error
-			res.Message = "could not republish this plan: " + err.Error()
+			res.Message = "could not fully set this plan active, error was: " + err.Error()
 			return nil
 		}
 	}
