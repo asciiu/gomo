@@ -83,7 +83,7 @@ func (listener *NotificationListener) ProcessNotification(ctx context.Context, n
 		Message:  "test message",
 		Badge:    1,
 		Category: "test",
-		Sound:    "test",
+		Sound:    "0",
 		Topic:    listener.topic,
 		Alert: &proto.Alert{
 			Title:    note.Title,

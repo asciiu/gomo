@@ -795,7 +795,9 @@ func (service *PlanService) UpdatePlan(ctx context.Context, req *protoPlan.Updat
 	}
 
 	// if the plan is currently active we need to kill the plan by its ID in the engine
-	if pln.Status == status.Active {
+	// the length of orders in the existing plan should include the last executed if any
+	// more orders than that means there are active orders currency running
+	if pln.Status == status.Active && len(pln.Orders) > 1 {
 		req := protoEngine.KillRequest{PlanID: pln.PlanID}
 		_, err := service.EngineClient.KillPlan(ctx, &req)
 		if err != nil {
