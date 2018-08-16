@@ -16,9 +16,10 @@ import (
 	"github.com/asciiu/gomo/common/constants/response"
 	"github.com/asciiu/gomo/common/constants/side"
 	"github.com/asciiu/gomo/common/constants/status"
-	protoEvent "github.com/asciiu/gomo/common/proto/events"
 	"github.com/asciiu/gomo/common/util"
 	keys "github.com/asciiu/gomo/key-service/proto/key"
+
+	protoEngine "github.com/asciiu/gomo/execution-engine/proto/engine"
 	planRepo "github.com/asciiu/gomo/plan-service/db/sql"
 	protoOrder "github.com/asciiu/gomo/plan-service/proto/order"
 	protoPlan "github.com/asciiu/gomo/plan-service/proto/plan"
@@ -31,10 +32,11 @@ const precision = 8
 
 // PlanService ...
 type PlanService struct {
-	DB        *sql.DB
-	Client    balances.BalanceServiceClient
-	KeyClient keys.KeyServiceClient
-	PlanPub   micro.Publisher
+	DB           *sql.DB
+	Client       balances.BalanceServiceClient
+	KeyClient    keys.KeyServiceClient
+	EngineClient protoEngine.ExecutionEngineClient
+	PlanPub      micro.Publisher
 }
 
 // private: This is where the order events are published to the rest of the system
@@ -44,13 +46,13 @@ type PlanService struct {
 //
 // VERY IMPORTANT: In theory, this should never be used to republish filled orders.
 func (service *PlanService) publishPlan(ctx context.Context, plan *protoPlan.Plan, isRevision bool) error {
-	newOrders := make([]*protoEvent.Order, 0)
+	newOrders := make([]*protoEngine.Order, 0)
 
 	for _, order := range plan.Orders {
 
-		triggers := make([]*protoEvent.Trigger, 0)
+		triggers := make([]*protoEngine.Trigger, 0)
 		for _, t := range order.Triggers {
-			trig := protoEvent.Trigger{
+			trig := protoEngine.Trigger{
 				TriggerID: t.TriggerID,
 				OrderID:   t.OrderID,
 				Name:      t.Name,
@@ -62,7 +64,7 @@ func (service *PlanService) publishPlan(ctx context.Context, plan *protoPlan.Pla
 		}
 
 		// convert order to order event
-		newOrderEvt := protoEvent.Order{
+		newOrderEvt := protoEngine.Order{
 			OrderID:     order.OrderID,
 			Exchange:    order.Exchange,
 			MarketName:  order.MarketName,
@@ -79,7 +81,7 @@ func (service *PlanService) publishPlan(ctx context.Context, plan *protoPlan.Pla
 		newOrders = append(newOrders, &newOrderEvt)
 	}
 
-	newPlanEvent := protoEvent.NewPlanEvent{
+	newPlan := protoEngine.NewPlanRequest{
 		PlanID:                plan.PlanID,
 		UserID:                plan.UserID,
 		ActiveCurrencyBalance: plan.ActiveCurrencyBalance,
@@ -89,10 +91,16 @@ func (service *PlanService) publishPlan(ctx context.Context, plan *protoPlan.Pla
 	}
 
 	if service.PlanPub != nil {
-		if err := service.PlanPub.Publish(context.Background(), &newPlanEvent); err != nil {
-			return fmt.Errorf("publish error: %s -- planID: %s", err, newPlanEvent.PlanID)
+
+		//if err := service.PlanPub.Publish(context.Background(), &newPlanEvent); err != nil {
+		//	return fmt.Errorf("publish error: %s -- planID: %s", err, newPlanEvent.PlanID)
+		//}
+		response, err := service.EngineClient.AddPlan(ctx, &newPlan)
+		if err != nil {
+			return fmt.Errorf("publish error: %s -- planID: %s", err, newPlan.PlanID)
+		} else {
+			log.Printf("published plan -- %s\n", response.Data.Plans[0].PlanID)
 		}
-		log.Printf("published plan -- %s\n", newPlanEvent.PlanID)
 
 		// update the order status
 		for _, o := range newOrders {

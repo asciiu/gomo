@@ -62,7 +62,7 @@ message Plan {
 }
 
 message PlanList {
-  repeated Plan plan = 1;
+  repeated Plan plans = 1;
 }
 
 message PlanResponse {

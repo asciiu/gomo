@@ -9,6 +9,8 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/asciiu/gomo/common/constants/response"
+
 	constOrder "github.com/asciiu/gomo/common/constants/order"
 	"github.com/asciiu/gomo/common/constants/side"
 	"github.com/asciiu/gomo/common/constants/status"
@@ -147,6 +149,8 @@ func (engine *Engine) ProcessTradeEvents(ctx context.Context, payload *evt.Trade
 	return nil
 }
 
+// Clients of the execution engine should use this to add plans to the engine. The processing of plans
+// will be handled in the ProcessTradeEvents function.
 func (engine *Engine) AddPlan(ctx context.Context, req *protoEngine.NewPlanRequest, res *protoEngine.PlanResponse) error {
 	log.Printf("received new plan event for plan ID: %s", req.PlanID)
 
@@ -236,6 +240,14 @@ func (engine *Engine) AddPlan(ctx context.Context, req *protoEngine.NewPlanReque
 					}
 				}
 				// no need to add this plan just return
+				res.Status = response.Success
+				res.Data = &protoEngine.PlanList{
+					Plans: []*protoEngine.Plan{
+						&protoEngine.Plan{
+							PlanID: req.PlanID,
+						},
+					},
+				}
 				return nil
 
 			case strings.Contains(str, "price"):
@@ -285,6 +297,16 @@ func (engine *Engine) AddPlan(ctx context.Context, req *protoEngine.NewPlanReque
 		CloseOnComplete:       req.CloseOnComplete,
 		Orders:                orders,
 	})
+
+	res.Status = response.Success
+	res.Data = &protoEngine.PlanList{
+		Plans: []*protoEngine.Plan{
+			&protoEngine.Plan{
+				PlanID: req.PlanID,
+			},
+		},
+	}
+
 	return nil
 }
 

@@ -8,7 +8,8 @@ import (
 	bp "github.com/asciiu/gomo/balance-service/proto/balance"
 	msg "github.com/asciiu/gomo/common/constants/messages"
 	"github.com/asciiu/gomo/common/db"
-	keys "github.com/asciiu/gomo/key-service/proto/key"
+	protoEngine "github.com/asciiu/gomo/execution-engine/proto/engine"
+	protoKey "github.com/asciiu/gomo/key-service/proto/key"
 	protoPlan "github.com/asciiu/gomo/plan-service/proto/plan"
 	micro "github.com/micro/go-micro"
 	k8s "github.com/micro/kubernetes/go/micro"
@@ -34,10 +35,11 @@ func main() {
 	}
 
 	planService := PlanService{
-		DB:        gomoDB,
-		Client:    bp.NewBalanceServiceClient("balances", srv.Client()),
-		KeyClient: keys.NewKeyServiceClient("keys", srv.Client()),
-		PlanPub:   micro.NewPublisher(msg.TopicNewPlan, srv.Client()),
+		DB:           gomoDB,
+		Client:       bp.NewBalanceServiceClient("balances", srv.Client()),
+		KeyClient:    protoKey.NewKeyServiceClient("keys", srv.Client()),
+		EngineClient: protoEngine.NewExecutionEngineClient("engine", srv.Client()),
+		PlanPub:      micro.NewPublisher(msg.TopicNewPlan, srv.Client()),
 	}
 
 	abortedReceiver := AbortedOrderReceiver{
