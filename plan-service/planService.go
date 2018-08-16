@@ -105,8 +105,12 @@ func (service *PlanService) publishPlan(ctx context.Context, plan *protoPlan.Pla
 			response, err := service.EngineClient.AddPlan(ctx, &newPlan)
 			if err != nil {
 				return fmt.Errorf("could not publish the plan %s %s", newPlan.PlanID, err.Error())
+			}
+
+			if isRevision {
+				log.Printf("published updated plan -- %s\n", response.Data.Plans[0].PlanID)
 			} else {
-				log.Printf("published plan -- %s\n", response.Data.Plans[0].PlanID)
+				log.Printf("published new plan -- %s\n", response.Data.Plans[0].PlanID)
 			}
 
 			// update the order status
@@ -912,7 +916,7 @@ func (service *PlanService) UpdatePlan(ctx context.Context, req *protoPlan.Updat
 		// TODO send the keys with the orders so they can execute the live orders against the exchanges
 
 		// this is a new plan
-		if err := service.publishPlan(ctx, pln, false); err != nil {
+		if err := service.publishPlan(ctx, pln, true); err != nil {
 			res.Status = response.Error
 			res.Message = "could not fully set this plan active, error was: " + err.Error()
 			return nil
