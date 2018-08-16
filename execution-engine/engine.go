@@ -23,6 +23,39 @@ import (
 
 const precision = 8
 
+// Order has conditions
+type Plan struct {
+	PlanID                string
+	UserID                string
+	ActiveCurrencySymbol  string
+	ActiveCurrencyBalance float64
+	CloseOnComplete       bool
+	Orders                []*Order
+}
+
+type Order struct {
+	OrderID     string
+	Exchange    string
+	MarketName  string
+	Side        string
+	LimitPrice  float64
+	OrderType   string
+	OrderStatus string
+	KeyID       string
+	KeyPublic   string
+	KeySecret   string
+	TriggerExs  []*TriggerEx
+}
+
+type TriggerEx struct {
+	TriggerID string
+	OrderID   string
+	Name      string
+	Triggered bool
+	Actions   []string
+	Evaluate  Expression
+}
+
 // Processor will process orders
 type Engine struct {
 	DB  *sql.DB

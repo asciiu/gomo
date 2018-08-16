@@ -6,7 +6,7 @@ import (
 	"testing"
 
 	"github.com/asciiu/gomo/common/db"
-	protoEvents "github.com/asciiu/gomo/common/proto/events"
+	protoEngine "github.com/asciiu/gomo/execution-engine/proto/engine"
 	"github.com/mattn/anko/core"
 	"github.com/mattn/anko/vm"
 	"github.com/stretchr/testify/assert"
@@ -19,35 +19,35 @@ func checkErr(err error) {
 	}
 }
 
-func setupReceiver() *PlanReceiver {
+func setupEngine() *Engine {
 	dbUrl := "postgres://postgres@localhost:5432/gomo_test?&sslmode=disable"
 	db, _ := db.NewDB(dbUrl)
 
 	env := vm.NewEnv()
 	core.Import(env)
 
-	planReceiver := PlanReceiver{
+	engine := Engine{
 		DB:    db,
 		Plans: make([]*Plan, 0),
 		Env:   env,
 	}
 
-	return &planReceiver
+	return &engine
 }
 
 // You shouldn't be able to insert a plan with no orders. A new plan requires at least a single order.
 func TestAddPlan(t *testing.T) {
-	receiver := setupReceiver()
+	engine := setupEngine()
 
-	defer receiver.DB.Close()
+	defer engine.DB.Close()
 
-	newPlanEvt := protoEvents.NewPlanEvent{
+	req := protoEngine.NewPlanRequest{
 		PlanID:                "1aa6ae7f-76bc-49ba-a58b-5cf431e0337c",
 		UserID:                "30c30397-066c-4a48-9b9a-b778ef11f291",
 		ActiveCurrencySymbol:  "USDT",
 		ActiveCurrencyBalance: 100.00,
-		Orders: []*protoEvents.Order{
-			&protoEvents.Order{
+		Orders: []*protoEngine.Order{
+			&protoEngine.Order{
 				OrderID:     "4d67dcac-0e46-49f5-9258-234fdba373ae",
 				Exchange:    "testex",
 				MarketName:  "BTC-USDT",
@@ -55,8 +55,8 @@ func TestAddPlan(t *testing.T) {
 				LimitPrice:  4950.00,
 				OrderType:   "limit",
 				OrderStatus: "active",
-				Triggers: []*protoEvents.Trigger{
-					&protoEvents.Trigger{
+				Triggers: []*protoEngine.Trigger{
+					&protoEngine.Trigger{
 						TriggerID: "76fa5d0c-34c7-4c67-ad64-389f92ce82a5",
 						OrderID:   "4d67dcac-0e46-49f5-9258-234fdba373ae",
 						Name:      "My Price!",
@@ -68,10 +68,11 @@ func TestAddPlan(t *testing.T) {
 			},
 		},
 	}
-	receiver.AddPlan(context.Background(), &newPlanEvt)
+	res := protoEngine.PlanResponse{}
+	engine.AddPlan(context.Background(), &req, &res)
 
-	assert.Equal(t, 1, len(receiver.Plans), "the receiver should have a single plan")
-	plan := receiver.Plans[0]
+	assert.Equal(t, 1, len(engine.Plans), "the engine should have a single plan")
+	plan := engine.Plans[0]
 	order := plan.Orders[0]
 	trigger := order.TriggerExs[0]
 	result, desc := trigger.Evaluate(4999.00)
