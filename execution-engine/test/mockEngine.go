@@ -1,0 +1,59 @@
+package test
+
+import (
+	"context"
+	"database/sql"
+
+	protoEngine "github.com/asciiu/gomo/execution-engine/proto/engine"
+	"github.com/micro/go-micro/client"
+)
+
+// Test clients of the Key service should use this client interface.
+type mockEngine struct {
+	db *sql.DB
+}
+
+func (m *mockEngine) AddPlan(ctx context.Context, in *protoEngine.NewPlanRequest, opts ...client.CallOption) (*protoEngine.PlanResponse, error) {
+	plans := make([]*protoEngine.Plan, 0)
+	return &protoEngine.PlanResponse{
+		Status: "success",
+		Data: &protoEngine.PlanList{
+			Plans: plans,
+		},
+	}, nil
+}
+
+func (m *mockEngine) GetActivePlans(ctx context.Context, in *protoEngine.ActiveRequest, opts ...client.CallOption) (*protoEngine.PlanResponse, error) {
+	plans := make([]*protoEngine.Plan, 0)
+	return &protoEngine.PlanResponse{
+		Status: "success",
+		Data: &protoEngine.PlanList{
+			Plans: plans,
+		},
+	}, nil
+}
+
+func (m *mockEngine) KillPlan(ctx context.Context, in *protoEngine.KillRequest, opts ...client.CallOption) (*protoEngine.PlanResponse, error) {
+	plans := make([]*protoEngine.Plan, 0)
+	return &protoEngine.PlanResponse{
+		Status: "success",
+		Data: &protoEngine.PlanList{
+			Plans: plans,
+		},
+	}, nil
+	return &protoEngine.PlanResponse{}, nil
+}
+
+func (m *mockEngine) KillUserPlans(ctx context.Context, in *protoEngine.KillUserRequest, opts ...client.CallOption) (*protoEngine.PlanResponse, error) {
+	plans := make([]*protoEngine.Plan, 0)
+	return &protoEngine.PlanResponse{
+		Status: "success",
+		Data: &protoEngine.PlanList{
+			Plans: plans,
+		},
+	}, nil
+}
+
+func MockEngineClient(db *sql.DB) protoEngine.ExecutionEngineClient {
+	return &mockEngine{db}
+}
