@@ -638,3 +638,108 @@ func TestOrderUpdatePlanFailureBecauseOfExecution(t *testing.T) {
 
 	repoUser.DeleteUserHard(service.DB, user.ID)
 }
+
+// Test delete plan
+func TestDeletePlan(t *testing.T) {
+	service, user, key := setupService()
+
+	defer service.DB.Close()
+
+	//orders := make([]*protoOrder.NewOrderRequest, 0)
+	req := protoPlan.NewPlanRequest{
+		UserID:          user.ID,
+		Status:          "active",
+		CloseOnComplete: false,
+		PlanTemplateID:  "update_test",
+		Orders: []*protoOrder.NewOrderRequest{
+			&protoOrder.NewOrderRequest{
+				OrderID:         "4d671984-d7dd-4dce-a20f-23f25d6daf7f",
+				KeyID:           key.KeyID,
+				OrderType:       "paper",
+				OrderTemplateID: "mokie",
+				ParentOrderID:   "00000000-0000-0000-0000-000000000000",
+				MarketName:      "BTC-USDT",
+				Side:            "buy",
+				InitialCurrencyBalance: 100,
+				Triggers: []*protoOrder.TriggerRequest{
+					&protoOrder.TriggerRequest{
+						TriggerID:         "ab4734f7-5ab7-46eb-9972-ed632ac752f8",
+						Code:              "test",
+						Index:             0,
+						Name:              "test_trigger",
+						Title:             "Testing",
+						TriggerTemplateID: "testtemplate",
+						Actions:           []string{"placeOrder"},
+					},
+				},
+			},
+			&protoOrder.NewOrderRequest{
+				OrderID:         "966fabac-8cad-11e8-9eb6-529269fb1459",
+				KeyID:           key.KeyID,
+				OrderType:       "paper",
+				OrderTemplateID: "mokie",
+				ParentOrderID:   "4d671984-d7dd-4dce-a20f-23f25d6daf7f",
+				MarketName:      "EOS-BTC",
+				Side:            "buy",
+				Triggers: []*protoOrder.TriggerRequest{
+					&protoOrder.TriggerRequest{
+						TriggerID:         "ab4734f7-5ab7-46eb-9972-ed632ac75290",
+						Code:              "test",
+						Index:             0,
+						Name:              "test_trigger",
+						Title:             "Testing",
+						TriggerTemplateID: "testtemplate",
+						Actions:           []string{"placeOrder"},
+					},
+				},
+			},
+			&protoOrder.NewOrderRequest{
+				OrderID:         "3c960c68-8cb0-11e8-9eb6-529269fb1459",
+				KeyID:           key.KeyID,
+				OrderType:       "paper",
+				OrderTemplateID: "mokie",
+				ParentOrderID:   "4d671984-d7dd-4dce-a20f-23f25d6daf7f",
+				MarketName:      "BTC-USDT",
+				Side:            "sell",
+				Triggers: []*protoOrder.TriggerRequest{
+					&protoOrder.TriggerRequest{
+						TriggerID:         "ab4734f7-5ab7-46eb-9972-ed632ac75290",
+						Code:              "test",
+						Index:             0,
+						Name:              "test_trigger",
+						Title:             "Testing",
+						TriggerTemplateID: "testtemplate",
+						Actions:           []string{"placeOrder"},
+					},
+				},
+			},
+		},
+	}
+	res := protoPlan.PlanResponse{}
+	service.NewPlan(context.Background(), &req, &res)
+
+	assert.Equal(t, "success", res.Status, "return status of inserting plan should be success")
+
+	req2 := protoPlan.DeletePlanRequest{
+		PlanID: res.Data.Plan.PlanID,
+		UserID: user.ID,
+	}
+
+	res = protoPlan.PlanResponse{}
+	service.DeletePlan(context.Background(), &req2, &res)
+	assert.Equal(t, "success", res.Status, "return status of delete should be success")
+
+	// Next verify that when we read the plan again that things indeed change
+	req3 := protoPlan.GetUserPlanRequest{
+		PlanID:     res.Data.Plan.PlanID,
+		UserID:     user.ID,
+		PlanDepth:  0,
+		PlanLength: 10,
+	}
+	res = protoPlan.PlanResponse{}
+	service.GetUserPlan(context.Background(), &req3, &res)
+	assert.Equal(t, "success", res.Status, "return status for get plan should be success")
+	assert.Equal(t, "deleted", res.Data.Plan.Status, "status of plan should be deleted")
+
+	repoUser.DeleteUserHard(service.DB, user.ID)
+}

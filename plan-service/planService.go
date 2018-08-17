@@ -524,45 +524,24 @@ func (service *PlanService) DeletePlan(ctx context.Context, req *protoPlan.Delet
 		return nil
 
 	case pln.Status == plan.Active:
-		pln.Status = plan.PendingAbort
-		err = planRepo.UpdatePlanStatus(service.DB, req.PlanID, pln.Status)
 
-		if err != nil {
-			res.Status = response.Error
-			res.Message = err.Error()
-			return nil
-		}
-
-		// 		// set the plan order status to aborted we are going to use
-		// 		// this status in the execution engine to remove order from memory
-		// 		pln.Orders[0].Status = status.Aborted
-		// 		// publish this revision to the system so the plan order can be removed from execution
-		// 		if err := service.publishPlan(ctx, pln, true); err != nil {
-		// 			res.Status = response.Error
-		// 			res.Message = fmt.Sprintf("failed to remove active plan order from execution: %s", err.Error())
-		// 			return nil
-		// 		}
-
-		res.Status = response.Success
-		res.Data = &protoPlan.PlanData{
-			Plan: pln,
-		}
-
-	case pln.LastExecutedPlanDepth == 0 && pln.Status != plan.Active:
-		// we can safely delete this plan from the system because the plan is not in memory
-		// (i.e. not active) and the first order of the plan has not been executed
-		err = planRepo.DeletePlan(service.DB, req.PlanID)
-		if err != nil {
-			res.Status = response.Error
-			res.Message = err.Error()
-		} else {
-			pln.Status = plan.Deleted
-			res.Status = response.Success
-			res.Data = &protoPlan.PlanData{
-				Plan: pln,
-			}
-		}
+		req := protoEngine.KillRequest{PlanID: pln.PlanID}
+		service.EngineClient.KillPlan(ctx, &req)
 	}
+
+	pln.Status = plan.Deleted
+	err = planRepo.UpdatePlanStatus(service.DB, req.PlanID, pln.Status)
+
+	if err != nil {
+		res.Status = response.Error
+		res.Message = err.Error()
+	}
+
+	res.Status = response.Success
+	res.Data = &protoPlan.PlanData{
+		Plan: pln,
+	}
+
 	return nil
 }
 

@@ -222,9 +222,8 @@ func (controller *PlanController) HandleDeletePlan(c echo.Context) error {
 	res := &ResponsePlanWithOrderPageSuccess{
 		Status: response.Success,
 		Data: &PlanWithOrderPage{
-			PlanID:         r.Data.Plan.PlanID,
-			PlanTemplateID: r.Data.Plan.PlanTemplateID,
-			//KeyID:              r.Data.Plan.KeyID,
+			PlanID:             r.Data.Plan.PlanID,
+			PlanTemplateID:     r.Data.Plan.PlanTemplateID,
 			Exchange:           r.Data.Plan.Exchange,
 			MarketName:         r.Data.Plan.MarketName,
 			BaseCurrencySymbol: baseCurrencySymbol,
