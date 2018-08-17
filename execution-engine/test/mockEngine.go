@@ -3,6 +3,7 @@ package test
 import (
 	"context"
 	"database/sql"
+	"errors"
 
 	protoEngine "github.com/asciiu/gomo/execution-engine/proto/engine"
 	"github.com/micro/go-micro/client"
@@ -39,24 +40,24 @@ func (m *mockEngine) GetActivePlans(ctx context.Context, in *protoEngine.ActiveR
 }
 
 func (m *mockEngine) KillPlan(ctx context.Context, in *protoEngine.KillRequest, opts ...client.CallOption) (*protoEngine.PlanResponse, error) {
-	plans := make([]*protoEngine.Plan, 0)
 	for i, p := range m.Plans {
 		if p.PlanID == in.PlanID {
-			plans = append(plans,
-				&protoEngine.Plan{
-					PlanID: in.PlanID,
-				},
-			)
 			m.Plans = append(m.Plans[:i], m.Plans[i+1:]...)
+
+			return &protoEngine.PlanResponse{
+				Status: "success",
+				Data: &protoEngine.PlanList{
+					Plans: []*protoEngine.Plan{
+						&protoEngine.Plan{
+							PlanID: in.PlanID,
+						},
+					},
+				},
+			}, nil
 		}
 	}
 
-	return &protoEngine.PlanResponse{
-		Status: "success",
-		Data: &protoEngine.PlanList{
-			Plans: plans,
-		},
-	}, nil
+	return nil, errors.New("not found")
 }
 
 func (m *mockEngine) KillUserPlans(ctx context.Context, in *protoEngine.KillUserRequest, opts ...client.CallOption) (*protoEngine.PlanResponse, error) {
