@@ -13,6 +13,7 @@ import (
 	"github.com/mattn/anko/core"
 	"github.com/mattn/anko/vm"
 	micro "github.com/micro/go-micro"
+	"github.com/micro/go-micro/server"
 	k8s "github.com/micro/kubernetes/go/micro"
 )
 
@@ -45,7 +46,7 @@ func main() {
 	protoEngine.RegisterExecutionEngineHandler(srv.Server(), &engine)
 
 	// subscribe to trade events from the exchanges
-	micro.RegisterSubscriber(msg.TopicAggTrade, srv.Server(), &engine)
+	micro.RegisterSubscriber(msg.TopicAggTrade, srv.Server(), engine.ProcessTradeEvents, server.SubscriberQueue("trade.event"))
 
 	// fire this event on startup to tell the plan service to feed the engine active plans
 	starter := micro.NewPublisher(msg.TopicEngineStart, srv.Client())
