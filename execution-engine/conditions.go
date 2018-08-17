@@ -85,3 +85,11 @@ func (cond *TrailingStopPercent) evaluate(price float64) (bool, string) {
 
 	return false, "evaluated as false"
 }
+
+// This trigger will execute on the next price
+type Immediate struct {
+}
+
+func (cond *Immediate) evaluate(price float64) (bool, string) {
+	return true, fmt.Sprintf("%.8f", price)
+}

@@ -14,7 +14,7 @@
     "common/proto/events",
     "common/util"
   ]
-  revision = "363f35acb02151d305f71300855b3fae80c7ab7a"
+  revision = "eeef5b1ac197bd0cacceede8efd49c1b393ace0b"
 
 [[projects]]
   name = "github.com/davecgh/go-spew"

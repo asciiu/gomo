@@ -226,8 +226,10 @@ func (engine *Engine) AddPlan(ctx context.Context, req *protoEngine.NewPlanReque
 
 			case str == "immediateMarketPrice":
 				lastPrice := engine.PriceLine[order.MarketName]
-				// execute this order right NOW! It's FOMO TIME!
-				if order.OrderType == constOrder.PaperOrder {
+
+				// execute this order right NOW! It's FOMO TIME! but only when we have the last price
+				// for the market in question
+				if order.OrderType == constOrder.PaperOrder && lastPrice != 0 {
 					completedEvent := evt.CompletedOrderEvent{
 						UserID:     req.UserID,
 						PlanID:     req.PlanID,
@@ -273,17 +275,20 @@ func (engine *Engine) AddPlan(ctx context.Context, req *protoEngine.NewPlanReque
 					if err := engine.Completed.Publish(ctx, &completedEvent); err != nil {
 						log.Println("publish warning: ", err, completedEvent)
 					}
-				}
-				// no need to add this plan just return
-				res.Status = response.Success
-				res.Data = &protoEngine.PlanList{
-					Plans: []*protoEngine.Plan{
-						&protoEngine.Plan{
-							PlanID: req.PlanID,
+					// no need to add this plan just return
+					res.Status = response.Success
+					res.Data = &protoEngine.PlanList{
+						Plans: []*protoEngine.Plan{
+							&protoEngine.Plan{
+								PlanID: req.PlanID,
+							},
 						},
-					},
+					}
+					return nil
 				}
-				return nil
+
+				immediate := new(Immediate)
+				expression = immediate.evaluate
 
 			case strings.Contains(str, "price"):
 				priceCond := PriceCondition{
