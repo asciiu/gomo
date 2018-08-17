@@ -391,6 +391,8 @@ func (service *PlanService) NewPlan(ctx context.Context, req *protoPlan.NewPlanR
 		}
 	}
 
+	count := planRepo.FindUserPlanCount(service.DB, req.UserID)
+
 	pln := protoPlan.Plan{
 		PlanID:                planID.String(),
 		PlanTemplateID:        req.PlanTemplateID,
@@ -402,6 +404,7 @@ func (service *PlanService) NewPlan(ctx context.Context, req *protoPlan.NewPlanR
 		LastExecutedPlanDepth: 0,
 		LastExecutedOrderID:   none,
 		Orders:                newOrders,
+		UserPlanNumber:        count + 1,
 		Status:                req.Status,
 		CloseOnComplete:       req.CloseOnComplete,
 		CreatedOn:             now,

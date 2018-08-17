@@ -63,11 +63,12 @@ message Plan {
   string marketName = 11;
   string activeCurrencySymbol = 12;
   double activeCurrencyBalance = 13;
-  string status = 14;
-  bool closeOnComplete = 15;
-  string createdOn = 16;
-  string updatedOn = 17;
-  repeated order.Order orders = 18; 
+  uint64 userPlanNumber = 14;
+  string status = 15;
+  bool closeOnComplete = 16;
+  string createdOn = 17;
+  string updatedOn = 18;
+  repeated order.Order orders = 20; 
 }
 
 message PlanData {

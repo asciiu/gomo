@@ -152,6 +152,7 @@ func TestSuccessfulOrderPlan(t *testing.T) {
 	service.NewPlan(context.Background(), &req, &res)
 
 	assert.Equal(t, "success", res.Status, fmt.Sprintf("return status of inserting plan should be success got: %s", res.Message))
+	assert.Equal(t, uint64(1), res.Data.Plan.UserPlanNumber, "the plan number should be 1")
 
 	repoUser.DeleteUserHard(service.DB, user.ID)
 }

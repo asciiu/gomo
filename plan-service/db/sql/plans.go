@@ -30,6 +30,7 @@ func FindPlanWithUnexecutedOrders(db *sql.DB, planID string) (*protoPlan.Plan, e
 		p.active_currency_balance,
 		p.last_executed_plan_depth,
 		p.last_executed_order_id,
+		p.user_plan_number,
 		p.status,
 		p.created_on,
 		p.updated_on,
@@ -105,6 +106,7 @@ func FindPlanWithUnexecutedOrders(db *sql.DB, planID string) (*protoPlan.Plan, e
 			&plan.ActiveCurrencyBalance,
 			&plan.LastExecutedPlanDepth,
 			&plan.LastExecutedOrderID,
+			&plan.UserPlanNumber,
 			&plan.Status,
 			&plan.CreatedOn,
 			&plan.UpdatedOn,
@@ -207,6 +209,7 @@ func FindActivePlans(db *sql.DB) ([]*protoPlan.Plan, error) {
 		p.last_executed_plan_depth,
 		p.last_executed_order_id,
 		p.close_on_complete,
+		p.user_plan_number,
 		p.status,
 		k.api_key,
 		k.secret,
@@ -271,6 +274,7 @@ func FindActivePlans(db *sql.DB) ([]*protoPlan.Plan, error) {
 			&plan.LastExecutedPlanDepth,
 			&plan.LastExecutedOrderID,
 			&plan.CloseOnComplete,
+			&plan.UserPlanNumber,
 			&plan.Status,
 			&order.KeyPublic,
 			&order.KeySecret,
@@ -368,6 +372,7 @@ func FindPlanOrders(db *sql.DB, req *protoPlan.GetUserPlanRequest) (*protoPlan.P
 		p.last_executed_plan_depth,
 		p.last_executed_order_id,
 		p.plan_template_id,
+		p.user_plan_number,
 		p.status,
 		p.created_on,
 		p.updated_on,
@@ -444,6 +449,7 @@ func FindPlanOrders(db *sql.DB, req *protoPlan.GetUserPlanRequest) (*protoPlan.P
 			&plan.LastExecutedPlanDepth,
 			&plan.LastExecutedOrderID,
 			&plan.PlanTemplateID,
+			&plan.UserPlanNumber,
 			&plan.Status,
 			&plan.CreatedOn,
 			&plan.UpdatedOn,
@@ -545,6 +551,7 @@ func FindChildOrders(db *sql.DB, planID, parentOrderID string) (*protoPlan.Plan,
 		p.last_executed_plan_depth,
 		p.last_executed_order_id,
 		p.close_on_complete,
+		p.user_plan_number,
 		p.status,
 		k.api_key,
 		k.secret,
@@ -618,6 +625,7 @@ func FindChildOrders(db *sql.DB, planID, parentOrderID string) (*protoPlan.Plan,
 			&plan.LastExecutedPlanDepth,
 			&plan.LastExecutedOrderID,
 			&plan.CloseOnComplete,
+			&plan.UserPlanNumber,
 			&plan.Status,
 			&order.KeyPublic,
 			&order.KeySecret,
@@ -722,6 +730,7 @@ func FindUserPlans(db *sql.DB, userID string, page, pageSize uint32) (*protoPlan
 			last_executed_order_id,
 			plan_template_id,
 			close_on_complete,
+			user_plan_number,
 			status,
 			created_on,
 			updated_on
@@ -747,6 +756,7 @@ func FindUserPlans(db *sql.DB, userID string, page, pageSize uint32) (*protoPlan
 			&plan.LastExecutedOrderID,
 			&planTemplateID,
 			&plan.CloseOnComplete,
+			&plan.UserPlanNumber,
 			&plan.Status,
 			&plan.CreatedOn,
 			&plan.UpdatedOn)
@@ -793,6 +803,7 @@ func FindUserPlansWithStatus(db *sql.DB, userID, status string, page, pageSize u
 			last_executed_order_id,
 			plan_template_id,
 			close_on_complete,
+			user_plan_number,
 			status,
 			created_on,
 			updated_on
@@ -818,6 +829,7 @@ func FindUserPlansWithStatus(db *sql.DB, userID, status string, page, pageSize u
 			&plan.LastExecutedOrderID,
 			&planTemplateID,
 			&plan.CloseOnComplete,
+			&plan.UserPlanNumber,
 			&plan.Status,
 			&plan.CreatedOn,
 			&plan.UpdatedOn)
@@ -865,6 +877,7 @@ func FindUserExchangePlansWithStatus(db *sql.DB, userID, status, exchange string
 			last_executed_order_id,
 			plan_template_id,
 			close_on_complete,
+			user_plan_number,
 			status,
 			created_on,
 			updated_on
@@ -890,6 +903,7 @@ func FindUserExchangePlansWithStatus(db *sql.DB, userID, status, exchange string
 			&plan.LastExecutedOrderID,
 			&planTemplateID,
 			&plan.CloseOnComplete,
+			&plan.UserPlanNumber,
 			&plan.Status,
 			&plan.CreatedOn,
 			&plan.UpdatedOn)
@@ -936,6 +950,7 @@ func FindUserMarketPlansWithStatus(db *sql.DB, userID, status, exchange, marketN
 			last_executed_order_id,
 			plan_template_id,
 			close_on_complete,
+			user_plan_number,
 			status,
 			created_on,
 			updated_on
@@ -961,6 +976,7 @@ func FindUserMarketPlansWithStatus(db *sql.DB, userID, status, exchange, marketN
 			&plan.LastExecutedOrderID,
 			&planTemplateID,
 			&plan.CloseOnComplete,
+			&plan.UserPlanNumber,
 			&plan.Status,
 			&plan.CreatedOn,
 			&plan.UpdatedOn)
@@ -1008,10 +1024,11 @@ func InsertPlan(db *sql.DB, newPlan *protoPlan.Plan) error {
 		last_executed_order_id,
 		plan_template_id,
 		close_on_complete,
+		user_plan_number,
 		status, 
 		created_on,
 		updated_on) 
-		values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)`)
+		values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)`)
 
 	if err != nil {
 		txn.Rollback()
@@ -1028,6 +1045,7 @@ func InsertPlan(db *sql.DB, newPlan *protoPlan.Plan) error {
 		newPlan.LastExecutedOrderID,
 		newPlan.PlanTemplateID,
 		newPlan.CloseOnComplete,
+		newPlan.UserPlanNumber,
 		newPlan.Status,
 		newPlan.CreatedOn,
 		newPlan.UpdatedOn)
@@ -1201,4 +1219,14 @@ func UpdatePlanTxn(txn *sql.Tx, ctx context.Context, plan *protoPlan.Plan) error
 		plan.PlanID)
 
 	return err
+}
+
+func FindUserPlanCount(db *sql.DB, userID string) uint64 {
+	var count uint64
+	queryCount := `SELECT count(*) FROM plans WHERE user_id = $1`
+	err := db.QueryRow(queryCount, userID).Scan(&count)
+	if err != nil {
+		return 0
+	}
+	return count
 }
