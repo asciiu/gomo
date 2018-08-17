@@ -19,7 +19,7 @@
     "user-service/models",
     "user-service/proto/user"
   ]
-  revision = "87d05c95be2e33b46543f61ace269f45b6973dbc"
+  revision = "d05db2cef23a29989dd6f0e7102d10b28a29b73e"
 
 [[projects]]
   name = "github.com/dgrijalva/jwt-go"
@@ -86,6 +86,12 @@
   packages = ["coordinate"]
   revision = "d6574a5bb1226678d7010325fb6c985db20ee458"
   version = "v0.8.1"
+
+[[projects]]
+  name = "github.com/json-iterator/go"
+  packages = ["."]
+  revision = "1624edc4454b8682399def8740d46db5e4362ba4"
+  version = "1.1.5"
 
 [[projects]]
   name = "github.com/labstack/echo"
@@ -177,6 +183,7 @@
   version = "v0.9.0"
 
 [[projects]]
+  branch = "master"
   name = "github.com/micro/go-plugins"
   packages = [
     "client/grpc",
@@ -188,14 +195,45 @@
     "selector/static",
     "server/grpc"
   ]
-  revision = "de4c86f62c9300f10f4cd2e846618db9e92ae5f2"
-  version = "v0.11.0"
+  revision = "1f325a7aa0822b70dedf480ffb2c2655ffb98087"
 
 [[projects]]
   branch = "master"
   name = "github.com/micro/go-rcache"
   packages = ["."]
   revision = "a581a57b513351792b9f21fc8b95d87b1c5a95da"
+
+[[projects]]
+  branch = "master"
+  name = "github.com/micro/grpc-go"
+  packages = [
+    ".",
+    "balancer",
+    "balancer/base",
+    "balancer/roundrobin",
+    "codes",
+    "connectivity",
+    "credentials",
+    "encoding",
+    "encoding/proto",
+    "internal",
+    "internal/backoff",
+    "internal/channelz",
+    "internal/envconfig",
+    "internal/grpcrand",
+    "keepalive",
+    "logger",
+    "metadata",
+    "naming",
+    "peer",
+    "resolver",
+    "resolver/dns",
+    "resolver/passthrough",
+    "stats",
+    "status",
+    "transport"
+  ]
+  revision = "c1c2ada0ee9baa897393f1c03baeb28a9515d4a7"
 
 [[projects]]
   name = "github.com/micro/kubernetes"
@@ -243,6 +281,18 @@
   name = "github.com/mitchellh/mapstructure"
   packages = ["."]
   revision = "f15292f7a699fcc1a38a80977f80a046874ba8ac"
+
+[[projects]]
+  name = "github.com/modern-go/concurrent"
+  packages = ["."]
+  revision = "bacd9c7ef1dd9b15be4a9909b8ac7a4e313eec94"
+  version = "1.0.3"
+
+[[projects]]
+  name = "github.com/modern-go/reflect2"
+  packages = ["."]
+  revision = "4b7aa43c6742a2c18fdef89dd197aaae7dac7ccd"
+  version = "1.0.1"
 
 [[projects]]
   name = "github.com/pborman/uuid"
@@ -332,38 +382,6 @@
   name = "google.golang.org/genproto"
   packages = ["googleapis/rpc/status"]
   revision = "2a72893556e4d1f6c795a4c039314c9fa751eedb"
-
-[[projects]]
-  name = "google.golang.org/grpc"
-  packages = [
-    ".",
-    "balancer",
-    "balancer/base",
-    "balancer/roundrobin",
-    "codes",
-    "connectivity",
-    "credentials",
-    "encoding",
-    "encoding/proto",
-    "grpclog",
-    "internal",
-    "internal/backoff",
-    "internal/channelz",
-    "internal/grpcrand",
-    "keepalive",
-    "metadata",
-    "naming",
-    "peer",
-    "resolver",
-    "resolver/dns",
-    "resolver/passthrough",
-    "stats",
-    "status",
-    "tap",
-    "transport"
-  ]
-  revision = "168a6198bcb0ef175f7dacec0b8691fc141dc9b8"
-  version = "v1.13.0"
 
 [solve-meta]
   analyzer-name = "dep"

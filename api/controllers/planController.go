@@ -88,6 +88,7 @@ type UserPlansData struct {
 type Plan struct {
 	PlanID                string   `json:"planID"`
 	PlanTemplateID        string   `json:"planTemplateID"`
+	PlanNumber            uint64   `json:"planNumber"`
 	Exchange              string   `json:"exchange"`
 	ExchangeMarketName    string   `json:"exchangeMarketName"`
 	MarketName            string   `json:"marketName"`
@@ -458,6 +459,7 @@ func (controller *PlanController) HandleListPlans(c echo.Context) error {
 		pln := Plan{
 			PlanID:                plan.PlanID,
 			PlanTemplateID:        plan.PlanTemplateID,
+			PlanNumber:            plan.UserPlanNumber,
 			Exchange:              plan.Exchange,
 			MarketName:            plan.MarketName,
 			ActiveCurrencySymbol:  plan.ActiveCurrencySymbol,
@@ -689,6 +691,7 @@ func (controller *PlanController) HandlePostPlan(c echo.Context) error {
 		Data: &Plan{
 			PlanID:                r.Data.Plan.PlanID,
 			PlanTemplateID:        r.Data.Plan.PlanTemplateID,
+			PlanNumber:            r.Data.Plan.UserPlanNumber,
 			Exchange:              r.Data.Plan.Exchange,
 			MarketName:            r.Data.Plan.MarketName,
 			ActiveCurrencySymbol:  r.Data.Plan.ActiveCurrencySymbol,
@@ -860,6 +863,7 @@ func (controller *PlanController) HandleUpdatePlan(c echo.Context) error {
 		Data: &Plan{
 			PlanID:                r.Data.Plan.PlanID,
 			PlanTemplateID:        r.Data.Plan.PlanTemplateID,
+			PlanNumber:            r.Data.Plan.UserPlanNumber,
 			Exchange:              r.Data.Plan.Exchange,
 			MarketName:            r.Data.Plan.MarketName,
 			ActiveCurrencySymbol:  r.Data.Plan.ActiveCurrencySymbol,
