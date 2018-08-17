@@ -10,15 +10,20 @@ import (
 
 // Test clients of the Key service should use this client interface.
 type mockEngine struct {
-	db *sql.DB
+	db    *sql.DB
+	Plans []*protoEngine.Plan
 }
 
 func (m *mockEngine) AddPlan(ctx context.Context, in *protoEngine.NewPlanRequest, opts ...client.CallOption) (*protoEngine.PlanResponse, error) {
-	plans := make([]*protoEngine.Plan, 0)
+	plan := protoEngine.Plan{
+		PlanID: in.PlanID,
+	}
+	m.Plans = append(m.Plans, &plan)
+
 	return &protoEngine.PlanResponse{
 		Status: "success",
 		Data: &protoEngine.PlanList{
-			Plans: plans,
+			Plans: []*protoEngine.Plan{&plan},
 		},
 	}, nil
 }
