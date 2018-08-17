@@ -62,5 +62,8 @@ func (m *mockEngine) KillUserPlans(ctx context.Context, in *protoEngine.KillUser
 }
 
 func MockEngineClient(db *sql.DB) protoEngine.ExecutionEngineClient {
-	return &mockEngine{db}
+	return &mockEngine{
+		db:    db,
+		Plans: make([]*protoEngine.Plan, 0),
+	}
 }
