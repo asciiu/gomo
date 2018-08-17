@@ -9,6 +9,7 @@ import (
 	constKey "github.com/asciiu/gomo/common/constants/key"
 	constStatus "github.com/asciiu/gomo/common/constants/status"
 	"github.com/asciiu/gomo/common/db"
+	testEngine "github.com/asciiu/gomo/execution-engine/test"
 	repoKey "github.com/asciiu/gomo/key-service/db/sql"
 	protoKey "github.com/asciiu/gomo/key-service/proto/key"
 	testKey "github.com/asciiu/gomo/key-service/test"
@@ -32,8 +33,9 @@ func setupService() (*PlanService, *user.User, *protoKey.Key) {
 	db, _ := db.NewDB(dbUrl)
 
 	planService := PlanService{
-		DB:        db,
-		KeyClient: testKey.MockKeyServiceClient(db),
+		DB:           db,
+		KeyClient:    testKey.MockKeyServiceClient(db),
+		EngineClient: testEngine.MockEngineClient(db),
 	}
 
 	user := user.NewUser("first", "last", "test@email", "hash")

@@ -34,14 +34,16 @@ func (m *mockEngine) GetActivePlans(ctx context.Context, in *protoEngine.ActiveR
 }
 
 func (m *mockEngine) KillPlan(ctx context.Context, in *protoEngine.KillRequest, opts ...client.CallOption) (*protoEngine.PlanResponse, error) {
-	plans := make([]*protoEngine.Plan, 0)
+	plan := protoEngine.Plan{
+		PlanID: in.PlanID,
+	}
+
 	return &protoEngine.PlanResponse{
 		Status: "success",
 		Data: &protoEngine.PlanList{
-			Plans: plans,
+			Plans: []*protoEngine.Plan{&plan},
 		},
 	}, nil
-	return &protoEngine.PlanResponse{}, nil
 }
 
 func (m *mockEngine) KillUserPlans(ctx context.Context, in *protoEngine.KillUserRequest, opts ...client.CallOption) (*protoEngine.PlanResponse, error) {

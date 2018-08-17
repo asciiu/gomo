@@ -802,7 +802,7 @@ func (service *PlanService) UpdatePlan(ctx context.Context, req *protoPlan.Updat
 	// the length of orders in the existing plan should include the last executed if any
 	// more orders than that means there are active orders currency running
 	// TODO use a mock objet in the test for EngineClient
-	if service.EngineClient != nil && pln.Status == status.Active && len(pln.Orders) > 1 {
+	if pln.Status == status.Active && len(pln.Orders) > 1 {
 		req := protoEngine.KillRequest{PlanID: pln.PlanID}
 		_, err := service.EngineClient.KillPlan(ctx, &req)
 		if err != nil {
