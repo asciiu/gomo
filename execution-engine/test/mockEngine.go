@@ -40,13 +40,14 @@ func (m *mockEngine) GetActivePlans(ctx context.Context, in *protoEngine.ActiveR
 
 func (m *mockEngine) KillPlan(ctx context.Context, in *protoEngine.KillRequest, opts ...client.CallOption) (*protoEngine.PlanResponse, error) {
 	plans := make([]*protoEngine.Plan, 0)
-	for _, p := range m.Plans {
+	for i, p := range m.Plans {
 		if p.PlanID == in.PlanID {
 			plans = append(plans,
 				&protoEngine.Plan{
 					PlanID: in.PlanID,
 				},
 			)
+			m.Plans = append(m.Plans[:i], m.Plans[i+1:]...)
 		}
 	}
 
