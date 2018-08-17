@@ -39,14 +39,21 @@ func (m *mockEngine) GetActivePlans(ctx context.Context, in *protoEngine.ActiveR
 }
 
 func (m *mockEngine) KillPlan(ctx context.Context, in *protoEngine.KillRequest, opts ...client.CallOption) (*protoEngine.PlanResponse, error) {
-	plan := protoEngine.Plan{
-		PlanID: in.PlanID,
+	plans := make([]*protoEngine.Plan, 0)
+	for _, p := range m.Plans {
+		if p.PlanID == in.PlanID {
+			plans = append(plans,
+				&protoEngine.Plan{
+					PlanID: in.PlanID,
+				},
+			)
+		}
 	}
 
 	return &protoEngine.PlanResponse{
 		Status: "success",
 		Data: &protoEngine.PlanList{
-			Plans: []*protoEngine.Plan{&plan},
+			Plans: plans,
 		},
 	}, nil
 }
