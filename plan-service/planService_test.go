@@ -9,6 +9,7 @@ import (
 	constKey "github.com/asciiu/gomo/common/constants/key"
 	constStatus "github.com/asciiu/gomo/common/constants/status"
 	"github.com/asciiu/gomo/common/db"
+	protoEngine "github.com/asciiu/gomo/execution-engine/proto/engine"
 	testEngine "github.com/asciiu/gomo/execution-engine/test"
 	repoKey "github.com/asciiu/gomo/key-service/db/sql"
 	protoKey "github.com/asciiu/gomo/key-service/proto/key"
@@ -488,6 +489,151 @@ func TestOrderUpdatePlanFailure(t *testing.T) {
 	assert.Equal(t, 100.0, res.Data.Plan.Orders[0].InitialCurrencyBalance, "active currency balance after update order incorrect")
 	assert.Equal(t, "BTC-USDT", res.Data.Plan.Orders[0].MarketName, "market should not have changed")
 	assert.Equal(t, "thing", res.Data.Plan.PlanTemplateID, "the template ID should have changed")
+
+	repoUser.DeleteUserHard(service.DB, user.ID)
+}
+
+// This should test an update when a plan order has executed
+func TestOrderUpdatePlanFailureBecauseOfExecution(t *testing.T) {
+	service, user, key := setupService()
+
+	defer service.DB.Close()
+
+	//orders := make([]*protoOrder.NewOrderRequest, 0)
+	req := protoPlan.NewPlanRequest{
+		UserID:          user.ID,
+		Status:          "active",
+		CloseOnComplete: false,
+		PlanTemplateID:  "update_test",
+		Orders: []*protoOrder.NewOrderRequest{
+			&protoOrder.NewOrderRequest{
+				OrderID:         "4d671984-d7dd-4dce-a20f-23f25d6daf7f",
+				KeyID:           key.KeyID,
+				OrderType:       "paper",
+				OrderTemplateID: "mokie",
+				ParentOrderID:   "00000000-0000-0000-0000-000000000000",
+				MarketName:      "BTC-USDT",
+				Side:            "buy",
+				InitialCurrencyBalance: 100,
+				Triggers: []*protoOrder.TriggerRequest{
+					&protoOrder.TriggerRequest{
+						TriggerID:         "ab4734f7-5ab7-46eb-9972-ed632ac752f8",
+						Code:              "test",
+						Index:             0,
+						Name:              "test_trigger",
+						Title:             "Testing",
+						TriggerTemplateID: "testtemplate",
+						Actions:           []string{"placeOrder"},
+					},
+				},
+			},
+			&protoOrder.NewOrderRequest{
+				OrderID:         "966fabac-8cad-11e8-9eb6-529269fb1459",
+				KeyID:           key.KeyID,
+				OrderType:       "paper",
+				OrderTemplateID: "mokie",
+				ParentOrderID:   "4d671984-d7dd-4dce-a20f-23f25d6daf7f",
+				MarketName:      "EOS-BTC",
+				Side:            "buy",
+				Triggers: []*protoOrder.TriggerRequest{
+					&protoOrder.TriggerRequest{
+						TriggerID:         "ab4734f7-5ab7-46eb-9972-ed632ac75290",
+						Code:              "test",
+						Index:             0,
+						Name:              "test_trigger",
+						Title:             "Testing",
+						TriggerTemplateID: "testtemplate",
+						Actions:           []string{"placeOrder"},
+					},
+				},
+			},
+			&protoOrder.NewOrderRequest{
+				OrderID:         "3c960c68-8cb0-11e8-9eb6-529269fb1459",
+				KeyID:           key.KeyID,
+				OrderType:       "paper",
+				OrderTemplateID: "mokie",
+				ParentOrderID:   "4d671984-d7dd-4dce-a20f-23f25d6daf7f",
+				MarketName:      "BTC-USDT",
+				Side:            "sell",
+				Triggers: []*protoOrder.TriggerRequest{
+					&protoOrder.TriggerRequest{
+						TriggerID:         "ab4734f7-5ab7-46eb-9972-ed632ac75290",
+						Code:              "test",
+						Index:             0,
+						Name:              "test_trigger",
+						Title:             "Testing",
+						TriggerTemplateID: "testtemplate",
+						Actions:           []string{"placeOrder"},
+					},
+				},
+			},
+		},
+	}
+	res := protoPlan.PlanResponse{}
+	service.NewPlan(context.Background(), &req, &res)
+
+	assert.Equal(t, "success", res.Status, "return status of inserting plan should be success")
+
+	// next suppose the plan order executed already
+	// simulate this by kill the plan in the mock
+	killRequest := protoEngine.KillRequest{
+		PlanID: res.Data.Plan.PlanID,
+	}
+	service.EngineClient.KillPlan(context.Background(), &killRequest)
+
+	req2 := protoPlan.UpdatePlanRequest{
+		PlanID:          res.Data.Plan.PlanID,
+		UserID:          user.ID,
+		Status:          "active",
+		CloseOnComplete: false,
+		PlanTemplateID:  "thing2",
+		Orders: []*protoOrder.NewOrderRequest{
+			&protoOrder.NewOrderRequest{
+				OrderID:         "4d671984-d7dd-4dce-a20f-23f25d6daf7f",
+				KeyID:           key.KeyID,
+				OrderType:       "paper",
+				OrderTemplateID: "mokie22",
+				ParentOrderID:   "00000000-0000-0000-0000-000000000000",
+				MarketName:      "BTC-USDT",
+				Side:            "buy",
+				InitialCurrencyBalance: 70,
+				Triggers: []*protoOrder.TriggerRequest{
+					&protoOrder.TriggerRequest{
+						TriggerID:         "ab4734f7-5ab7-46eb-9972-ed632ac752f8",
+						Code:              "price <= 5",
+						Index:             0,
+						Name:              "price_trigger",
+						Title:             "Testing update",
+						TriggerTemplateID: "testtemplate",
+						Actions:           []string{"placeOrder"},
+					},
+				},
+			}, &protoOrder.NewOrderRequest{
+				OrderID:         "4d671984-d7dd-4dce-a20f-23f25d6daf76",
+				KeyID:           key.KeyID,
+				OrderType:       "paper",
+				OrderTemplateID: "mokie22",
+				ParentOrderID:   "4d671984-d7dd-4dce-a20f-23f25d6daf7f",
+				MarketName:      "ADA-BTC",
+				Side:            "buy",
+				Triggers: []*protoOrder.TriggerRequest{
+					&protoOrder.TriggerRequest{
+						TriggerID:         "ab4734f7-5ab7-46eb-9972-ed632ac752f8",
+						Code:              "price <= 5",
+						Index:             0,
+						Name:              "price_trigger",
+						Title:             "Testing update",
+						TriggerTemplateID: "testtemplate",
+						Actions:           []string{"placeOrder"},
+					},
+				},
+			},
+		},
+	}
+
+	res = protoPlan.PlanResponse{}
+	service.UpdatePlan(context.Background(), &req2, &res)
+	assert.Equal(t, "fail", res.Status, "return status of updating an executed plan should be fail")
 
 	repoUser.DeleteUserHard(service.DB, user.ID)
 }

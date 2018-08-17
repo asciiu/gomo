@@ -799,7 +799,7 @@ func (service *PlanService) UpdatePlan(ctx context.Context, req *protoPlan.Updat
 		_, err := service.EngineClient.KillPlan(ctx, &req)
 		if err != nil {
 			res.Status = response.Fail
-			res.Message = "you cannot update your order because an order has been updated"
+			res.Message = "you cannot update this plan because an order for this plan has updated. To avoid seeing this message again try pausing your plan before you update it."
 			return nil
 		}
 	}
