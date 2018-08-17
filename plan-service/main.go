@@ -39,7 +39,6 @@ func main() {
 		Client:       bp.NewBalanceServiceClient("balances", srv.Client()),
 		KeyClient:    protoKey.NewKeyServiceClient("keys", srv.Client()),
 		EngineClient: protoEngine.NewExecutionEngineClient("engine", srv.Client()),
-		PlanPub:      micro.NewPublisher(msg.TopicNewPlan, srv.Client()),
 	}
 
 	abortedReceiver := AbortedOrderReceiver{

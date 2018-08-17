@@ -25,7 +25,6 @@ import (
 	protoPlan "github.com/asciiu/gomo/plan-service/proto/plan"
 	"github.com/google/uuid"
 	"github.com/lib/pq"
-	micro "github.com/micro/go-micro"
 )
 
 const precision = 8
@@ -36,7 +35,6 @@ type PlanService struct {
 	Client       balances.BalanceServiceClient
 	KeyClient    keys.KeyServiceClient
 	EngineClient protoEngine.ExecutionEngineClient
-	PlanPub      micro.Publisher
 }
 
 // private: This is where the order events are published to the rest of the system
@@ -98,26 +96,21 @@ func (service *PlanService) publishPlan(ctx context.Context, plan *protoPlan.Pla
 			Orders:                newOrders,
 		}
 
-		// this check is needed so this step does not execute
-		// in the test. In reality the tests should probably use a mock service for engine
-		if service.PlanPub != nil {
+		response, err := service.EngineClient.AddPlan(ctx, &newPlan)
+		if err != nil {
+			return fmt.Errorf("could not publish the plan %s %s", newPlan.PlanID, err.Error())
+		}
 
-			response, err := service.EngineClient.AddPlan(ctx, &newPlan)
-			if err != nil {
-				return fmt.Errorf("could not publish the plan %s %s", newPlan.PlanID, err.Error())
-			}
+		if isRevision {
+			log.Printf("published updated plan -- %s\n", response.Data.Plans[0].PlanID)
+		} else {
+			log.Printf("published new plan -- %s\n", response.Data.Plans[0].PlanID)
+		}
 
-			if isRevision {
-				log.Printf("published updated plan -- %s\n", response.Data.Plans[0].PlanID)
-			} else {
-				log.Printf("published new plan -- %s\n", response.Data.Plans[0].PlanID)
-			}
-
-			// update the order status
-			for _, o := range newOrders {
-				if _, _, err := planRepo.UpdateOrderStatus(service.DB, o.OrderID, status.Active); err != nil {
-					log.Println("could not update order status to active -- ", err.Error())
-				}
+		// update the order status
+		for _, o := range newOrders {
+			if _, _, err := planRepo.UpdateOrderStatus(service.DB, o.OrderID, status.Active); err != nil {
+				log.Println("could not update order status to active -- ", err.Error())
 			}
 		}
 	}
@@ -801,7 +794,6 @@ func (service *PlanService) UpdatePlan(ctx context.Context, req *protoPlan.Updat
 	// if the plan is currently active we need to kill the plan by its ID in the engine
 	// the length of orders in the existing plan should include the last executed if any
 	// more orders than that means there are active orders currency running
-	// TODO use a mock objet in the test for EngineClient
 	if pln.Status == status.Active && len(pln.Orders) > 1 {
 		req := protoEngine.KillRequest{PlanID: pln.PlanID}
 		_, err := service.EngineClient.KillPlan(ctx, &req)
