@@ -12,7 +12,6 @@ import (
 	protoDevice "github.com/asciiu/gomo/device-service/proto/device"
 	repoHistory "github.com/asciiu/gomo/history-service/db/sql"
 	protoHistory "github.com/asciiu/gomo/history-service/proto"
-	notification "github.com/asciiu/gomo/notification-service/proto"
 	micro "github.com/micro/go-micro"
 	"google.golang.org/grpc"
 )
@@ -45,17 +44,17 @@ func NewHistoryService(db *sql.DB, service micro.Service) *HistoryService {
 	return &hs
 }
 
-func (service *HistoryService) Archive(ctx context.Context, note *notification.Notification) error {
+func (service *HistoryService) Archive(ctx context.Context, history *protoHistory.History) error {
 
-	_, error := repoHistory.InsertNotification(service.db, note)
+	_, error := repoHistory.InsertHistory(service.db, history)
 	if error != nil {
 		log.Println("could not insert new notification ", error)
 	}
 
-	log.Println("notification ", note.Description)
+	log.Println("notification ", history.Description)
 
 	getRequest := protoDevice.GetUserDevicesRequest{
-		UserID: note.UserID,
+		UserID: history.UserID,
 	}
 
 	// get device tokens from DB for user ID
@@ -87,9 +86,9 @@ func (service *HistoryService) Archive(ctx context.Context, note *notification.N
 		Sound:    "1",
 		Topic:    service.topic,
 		Alert: &protoGorush.Alert{
-			Title:    note.Title,
-			Body:     note.Description,
-			Subtitle: note.Subtitle,
+			Title:    history.Title,
+			Body:     history.Description,
+			Subtitle: history.Subtitle,
 			LocKey:   "Test loc key",
 			LocArgs:  []string{"test", "test"},
 		},
@@ -104,25 +103,25 @@ func (service *HistoryService) Archive(ctx context.Context, note *notification.N
 }
 
 func (service *HistoryService) FindUserHistory(ctx context.Context, req *protoHistory.HistoryRequest, res *protoHistory.HistoryPagedResponse) error {
+	var pagedResult *protoHistory.UserHistoryPage
+	var err error
 
-	// var pagedResult *protoHistory.UserNotificationsPage
-	// var err error
-	// if req.NotificationType == "" {
-	// 	pagedResult, err = repoHistory.FindNotifications(service.DB, req)
-	// } else {
-	// 	pagedResult, err = repoHistory.FindNotificationsByType(service.DB, req)
-	// }
+	switch {
+	case req.ObjectID != "":
+		pagedResult, err = repoHistory.FindObjectHistory(service.db, req)
+	default:
+		pagedResult, err = repoHistory.FindUserHistory(service.db, req.UserID, req.Page, req.PageSize)
+	}
 
-	// switch {
-	// case err == nil:
-	// 	res.Status = "success"
-	// 	res.Data = pagedResult
-	// default:
-	// 	res.Status = "error"
-	// 	res.Message = err.Error()
-	// }
+	switch {
+	case err == nil:
+		res.Status = "success"
+		res.Data = pagedResult
+	default:
+		res.Status = "error"
+		res.Message = err.Error()
+	}
 	return nil
-
 }
 
 func (service *HistoryService) FindMostRecentHistory(ctx context.Context, req *protoHistory.RecentHistoryRequest, res *protoHistory.HistoryListResponse) error {

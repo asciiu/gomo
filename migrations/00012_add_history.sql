@@ -9,7 +9,7 @@ CREATE TABLE history (
   title text,
   subtitle text,
   description text, 
-  click_at TIMESTAMP,           -- nullable timestamps of when user clicked and saw
+  clicked_at TIMESTAMP,           -- nullable timestamps of when user clicked and saw
   seen_at TIMESTAMP,            
   timestamp TIMESTAMP DEFAULT now(),
   created_on TIMESTAMP DEFAULT now(),
