@@ -80,7 +80,7 @@ func (service *HistoryService) Archive(ctx context.Context, history *protoHistor
 	r, err := service.client.Send(context.Background(), &protoGorush.NotificationRequest{
 		Platform: 1,
 		Tokens:   iosTokens,
-		Message:  "test message",
+		Message:  "fomo",
 		Badge:    1,
 		Category: "test",
 		Sound:    "1",
@@ -93,11 +93,12 @@ func (service *HistoryService) Archive(ctx context.Context, history *protoHistor
 			LocArgs:  []string{"test", "test"},
 		},
 	})
+
 	if err != nil {
 		log.Printf("could not send: %v\n", err)
+	} else {
+		log.Printf("Success: %t\n", r.Success)
 	}
-	log.Printf("Success: %t\n", r.Success)
-	log.Printf("Count: %d\n", r.Counts)
 
 	return nil
 }
@@ -125,6 +126,16 @@ func (service *HistoryService) FindUserHistory(ctx context.Context, req *protoHi
 }
 
 func (service *HistoryService) FindMostRecentHistory(ctx context.Context, req *protoHistory.RecentHistoryRequest, res *protoHistory.HistoryListResponse) error {
+	history, err := repoHistory.FindRecentObjectHistory(service.db, req)
+	if err == nil {
+		res.Status = "success"
+		res.Data = &protoHistory.HistoryList{
+			History: history,
+		}
+	} else {
+		res.Status = "error"
+		res.Message = err.Error()
+	}
 	return nil
 }
 

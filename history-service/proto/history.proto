@@ -19,7 +19,7 @@ message HistoryRequest {
 
 message RecentHistoryRequest {
     string objectID = 1;
-    string count = 2;
+    uint32 count = 2;
 }
 
 message HistoryCountRequest {
