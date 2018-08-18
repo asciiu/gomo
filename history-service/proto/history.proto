@@ -13,9 +13,8 @@ service HistoryService {
 message HistoryRequest {
     string userID = 1;
     string objectID = 2;
-    string type = 3;
-    uint32 page = 4;
-    uint32 pageSize = 5;
+    uint32 page = 3;
+    uint32 pageSize = 4;
 }
 
 message RecentHistoryRequest {

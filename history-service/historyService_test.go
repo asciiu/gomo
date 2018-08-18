@@ -57,7 +57,6 @@ func TestHistory(t *testing.T) {
 
 	req := protoHistory.HistoryRequest{
 		UserID:   user.ID,
-		Type:     "order",
 		ObjectID: "bf24b117-1c0f-4c4f-82bc-7586c99b8d40",
 		Page:     0,
 		PageSize: 10,

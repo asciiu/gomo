@@ -106,18 +106,18 @@ func (service *HistoryService) FindUserHistory(ctx context.Context, req *protoHi
 	var pagedResult *protoHistory.UserHistoryPage
 	var err error
 
-	switch {
-	case req.ObjectID != "":
+	if req.ObjectID != "" {
+		// history associated with object ID only
 		pagedResult, err = repoHistory.FindObjectHistory(service.db, req)
-	default:
+	} else {
+		// all user history
 		pagedResult, err = repoHistory.FindUserHistory(service.db, req.UserID, req.Page, req.PageSize)
 	}
 
-	switch {
-	case err == nil:
+	if err == nil {
 		res.Status = "success"
 		res.Data = pagedResult
-	default:
+	} else {
 		res.Status = "error"
 		res.Message = err.Error()
 	}
