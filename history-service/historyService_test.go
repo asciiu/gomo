@@ -123,3 +123,72 @@ func TestRecentHistory(t *testing.T) {
 
 	repoUser.DeleteUserHard(service.db, user.ID)
 }
+
+func TestHistoryCount(t *testing.T) {
+	service, user := setupService()
+
+	defer service.db.Close()
+
+	note1 := protoHistory.History{
+		UserID:      user.ID,
+		Type:        "order",
+		ObjectID:    "bf24b117-1c0f-4c4f-82bc-7586c99b8d40",
+		Title:       "Test",
+		Subtitle:    "test",
+		Description: "this is a test",
+		Timestamp:   "2018-08-18 05:34:27.462218561Z",
+	}
+	repoHistory.InsertHistory(service.db, &note1)
+	note2 := protoHistory.History{
+		UserID:      user.ID,
+		Type:        "order",
+		ObjectID:    "bf24b117-1c0f-4c4f-82bc-7586c99b8d40",
+		Title:       "Test",
+		Subtitle:    "test",
+		Description: "this is a test",
+		Timestamp:   "2018-08-18 05:44:00.000000000Z",
+	}
+	repoHistory.InsertHistory(service.db, &note2)
+
+	req := protoHistory.HistoryCountRequest{
+		ObjectID: "bf24b117-1c0f-4c4f-82bc-7586c99b8d40",
+	}
+	res := protoHistory.HistoryCountResponse{}
+	service.FindHistoryCount(context.Background(), &req, &res)
+
+	assert.Equal(t, "success", res.Status, fmt.Sprintf("%s", res.Message))
+	assert.Equal(t, uint32(2), res.Data.Count, "must be 2 history")
+
+	repoUser.DeleteUserHard(service.db, user.ID)
+}
+
+func TestUpdateHistory(t *testing.T) {
+	service, user := setupService()
+
+	defer service.db.Close()
+
+	note1 := protoHistory.History{
+		UserID:      user.ID,
+		Type:        "order",
+		ObjectID:    "bf24b117-1c0f-4c4f-82bc-7586c99b8d40",
+		Title:       "Test",
+		Subtitle:    "test",
+		Description: "this is a test",
+		Timestamp:   "2018-08-18 05:34:27.462218561Z",
+	}
+	history, _ := repoHistory.InsertHistory(service.db, &note1)
+
+	req := protoHistory.UpdateHistoryRequest{
+		HistoryID: history.HistoryID,
+		SeenAt:    "2018-08-18T05:34:00Z",
+		ClickedAt: "2018-08-18T05:54:00Z",
+	}
+	res := protoHistory.HistoryResponse{}
+	service.UpdateHistory(context.Background(), &req, &res)
+
+	assert.Equal(t, "success", res.Status, fmt.Sprintf("%s", res.Message))
+	assert.Equal(t, "2018-08-18T05:34:00Z", res.Data.History.SeenAt, "clicked did not match")
+	assert.Equal(t, "2018-08-18T05:54:00Z", res.Data.History.ClickedAt, "seen did not match")
+
+	repoUser.DeleteUserHard(service.db, user.ID)
+}

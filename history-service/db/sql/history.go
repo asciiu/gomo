@@ -10,7 +10,11 @@ import (
 // Sql functions here:
 // FindUserHistory
 // FindObjectHistory
+// FindRecentObjectHistory
+// FindObjectHistoryCount
 // InsertHistory
+// UpdateHistoryClickedAt
+// UpdateHistorySeenAt
 
 func FindUserHistory(db *sql.DB, userID string, page, pageSize uint32) (*protoHistory.UserHistoryPage, error) {
 	history := make([]*protoHistory.History, 0)
@@ -209,6 +213,16 @@ func FindRecentObjectHistory(db *sql.DB, req *protoHistory.RecentHistoryRequest)
 	return history, nil
 }
 
+func FindObjectHistoryCount(db *sql.DB, objectID string) uint32 {
+	var count uint32
+	queryCount := `SELECT count(*) FROM history WHERE object_id = $1`
+	err := db.QueryRow(queryCount, objectID).Scan(&count)
+	if err != nil {
+		return 0
+	}
+	return count
+}
+
 func InsertHistory(db *sql.DB, history *protoHistory.History) (*protoHistory.History, error) {
 	newID := uuid.New().String()
 
@@ -247,4 +261,102 @@ func InsertHistory(db *sql.DB, history *protoHistory.History) (*protoHistory.His
 		Timestamp:   history.Timestamp,
 	}
 	return n, nil
+}
+
+func UpdateHistoryClickedAt(db *sql.DB, historyID, timestamp string) (*protoHistory.History, error) {
+	stmt := `
+		UPDATE history 
+		SET 
+			clicked_at = $1
+		WHERE
+			id = $2
+		RETURNING id, 
+		user_id, 
+		title, 
+		subtitle, 
+		description, 
+		timestamp, 
+		type, 
+		object_id,
+		clicked_at,
+		seen_at
+		`
+
+	var h protoHistory.History
+	var clickedAt sql.NullString
+	var seenAt sql.NullString
+
+	err := db.QueryRow(stmt, timestamp, historyID).Scan(
+		&h.HistoryID,
+		&h.UserID,
+		&h.Title,
+		&h.Subtitle,
+		&h.Description,
+		&h.Timestamp,
+		&h.Type,
+		&h.ObjectID,
+		&clickedAt,
+		&seenAt)
+
+	if err != nil {
+		return nil, err
+	}
+	if clickedAt.Valid {
+		h.ClickedAt = clickedAt.String
+	}
+	if seenAt.Valid {
+		h.SeenAt = seenAt.String
+	}
+
+	return &h, nil
+}
+
+func UpdateHistorySeenAt(db *sql.DB, historyID, timestamp string) (*protoHistory.History, error) {
+	stmt := `
+		UPDATE history 
+		SET 
+			seen_at = $1
+		WHERE
+			id = $2
+		RETURNING id, 
+		user_id, 
+		title, 
+		subtitle, 
+		description, 
+		timestamp, 
+		type, 
+		object_id,
+		clicked_at,
+		seen_at
+			`
+
+	var h protoHistory.History
+	var clickedAt sql.NullString
+	var seenAt sql.NullString
+
+	err := db.QueryRow(stmt, timestamp, historyID).Scan(
+		&h.HistoryID,
+		&h.UserID,
+		&h.Title,
+		&h.Subtitle,
+		&h.Description,
+		&h.Timestamp,
+		&h.Type,
+		&h.ObjectID,
+		&clickedAt,
+		&seenAt)
+
+	if err != nil {
+		return nil, err
+	}
+	if clickedAt.Valid {
+		h.ClickedAt = clickedAt.String
+	}
+	if seenAt.Valid {
+		h.SeenAt = seenAt.String
+	}
+
+	return &h, nil
+
+	return nil, err
 }

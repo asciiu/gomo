@@ -63,14 +63,14 @@ message HistoryData {
   History history = 1;
 }
 
-message HistoryList {
-  repeated History history = 1;
-}
-
 message HistoryResponse {
   string status = 1;
   string message = 2;
   HistoryData data = 3;
+}
+
+message HistoryList {
+  repeated History history = 1;
 }
 
 message HistoryListResponse {
@@ -79,8 +79,12 @@ message HistoryListResponse {
   HistoryList data = 3;
 }
 
+message HistoryCount {
+  uint32 count = 1;
+}
+
 message HistoryCountResponse {
   string status = 1;
   string message = 2;
-  uint32 data = 3;
+  HistoryCount data = 3;
 }

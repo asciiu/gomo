@@ -9,6 +9,7 @@ import (
 	"os"
 
 	protoGorush "github.com/appleboy/gorush/rpc/proto"
+	constResponse "github.com/asciiu/gomo/common/constants/response"
 	protoDevice "github.com/asciiu/gomo/device-service/proto/device"
 	repoHistory "github.com/asciiu/gomo/history-service/db/sql"
 	protoHistory "github.com/asciiu/gomo/history-service/proto"
@@ -116,10 +117,10 @@ func (service *HistoryService) FindUserHistory(ctx context.Context, req *protoHi
 	}
 
 	if err == nil {
-		res.Status = "success"
+		res.Status = constResponse.Success
 		res.Data = pagedResult
 	} else {
-		res.Status = "error"
+		res.Status = constResponse.Error
 		res.Message = err.Error()
 	}
 	return nil
@@ -128,21 +129,52 @@ func (service *HistoryService) FindUserHistory(ctx context.Context, req *protoHi
 func (service *HistoryService) FindMostRecentHistory(ctx context.Context, req *protoHistory.RecentHistoryRequest, res *protoHistory.HistoryListResponse) error {
 	history, err := repoHistory.FindRecentObjectHistory(service.db, req)
 	if err == nil {
-		res.Status = "success"
+		res.Status = constResponse.Success
 		res.Data = &protoHistory.HistoryList{
 			History: history,
 		}
 	} else {
-		res.Status = "error"
+		res.Status = constResponse.Error
 		res.Message = err.Error()
 	}
 	return nil
 }
 
 func (service *HistoryService) FindHistoryCount(ctx context.Context, req *protoHistory.HistoryCountRequest, res *protoHistory.HistoryCountResponse) error {
+	count := repoHistory.FindObjectHistoryCount(service.db, req.ObjectID)
+	res.Status = constResponse.Success
+	res.Data = &protoHistory.HistoryCount{
+		Count: count,
+	}
 	return nil
 }
 
 func (service *HistoryService) UpdateHistory(ctx context.Context, req *protoHistory.UpdateHistoryRequest, res *protoHistory.HistoryResponse) error {
+
+	var history *protoHistory.History
+	var err error
+
+	if req.ClickedAt != "" {
+		history, err = repoHistory.UpdateHistoryClickedAt(service.db, req.HistoryID, req.ClickedAt)
+		if err != nil {
+			res.Status = constResponse.Error
+			res.Message = err.Error()
+			return nil
+		}
+	}
+	if req.SeenAt != "" {
+		history, err = repoHistory.UpdateHistorySeenAt(service.db, req.HistoryID, req.SeenAt)
+		if err != nil {
+			res.Status = constResponse.Error
+			res.Message = err.Error()
+			return nil
+		}
+	}
+
+	res.Status = constResponse.Success
+	res.Data = &protoHistory.HistoryData{
+		History: history,
+	}
+
 	return nil
 }
