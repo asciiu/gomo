@@ -1,0 +1,87 @@
+syntax = "proto3";
+
+package activity; 
+
+service HistoryService {
+  rpc FindUserHistory(HistoryRequest) returns (HistoryPagedResponse) {}
+  rpc FindMostRecentHistory(RecentHistoryRequest) returns (HistoryListResponse) {}
+  rpc FindHistoryCount(HistoryCountRequest) returns (HistoryCountResponse) {}
+  rpc UpdateHistory(UpdateHistoryRequest) returns (HistoryResponse) {}
+}
+
+// Requests
+message HistoryRequest {
+    string userID = 1;
+    string objectID = 2;
+    string type = 3;
+    uint32 page = 4;
+    uint32 pageSize = 5;
+}
+
+message RecentHistoryRequest {
+    string objectID = 1;
+    string count = 2;
+}
+
+message HistoryCountRequest {
+    string objectID = 1;
+}
+
+message UpdateHistoryRequest {
+    string historyID = 1;
+    string seenAt = 2;
+    string clickedAt = 3;
+}
+
+// Responses
+message History {
+  string historyID = 1;
+  string userID = 3;
+  string type = 2;
+  string objectID = 4;
+  string title = 5;
+  string subtitle = 6;
+  string description = 7;
+  string timestamp = 8;
+  string clickedAt = 9;
+  string seenAt = 10;
+}
+
+message UserHistoryPage {
+  uint32 page = 1;
+  uint32 pageSize = 2; 
+  uint32 total = 3;
+  repeated History history = 4; 
+}
+
+message HistoryPagedResponse {
+  string status = 1;
+  string message = 2;
+  UserHistoryPage data = 3;
+}
+
+message HistoryData {
+  History history = 1;
+}
+
+message HistoryList {
+  repeated History history = 1;
+}
+
+message HistoryResponse {
+  string status = 1;
+  string message = 2;
+  HistoryData data = 3;
+}
+
+message HistoryListResponse {
+  string status = 1;
+  string message = 2;
+  HistoryList data = 3;
+}
+
+message HistoryCountResponse {
+  string status = 1;
+  string message = 2;
+  uint32 data = 3;
+}

@@ -24,7 +24,7 @@ import (
 // 	return &k, nil
 // }
 
-func FindNotificationsByType(db *sql.DB, req *notification.GetNotifcationsByType) (*notification.UserNotificationsPage, error) {
+func FindHistoryByType(db *sql.DB, req *notification.GetNotifcationsByType) (*notification.UserNotificationsPage, error) {
 	notifications := make([]*notification.Notification, 0)
 
 	var total uint32

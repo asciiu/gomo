@@ -7,7 +7,7 @@ import (
 
 	constMessage "github.com/asciiu/gomo/common/constants/messages"
 	"github.com/asciiu/gomo/common/db"
-	notification "github.com/asciiu/gomo/notification-service/proto"
+	protoHistory "github.com/asciiu/gomo/history-service/proto"
 	micro "github.com/micro/go-micro"
 	"github.com/micro/go-micro/server"
 	k8s "github.com/micro/kubernetes/go/micro"
@@ -27,14 +27,12 @@ func main() {
 		log.Fatalf(err.Error())
 	}
 
-	notificationService := NotificationService{gomoDB}
+	historyService := NewHistoryService(gomoDB, srv)
 
-	notification.RegisterNotificationServiceHandler(srv.Server(), &notificationService)
-
-	listener1 := NewNotificationListener(gomoDB, srv)
+	protoHistory.RegisterHistoryServiceHandler(srv.Server(), historyService)
 
 	// handles key verified events
-	micro.RegisterSubscriber(constMessage.TopicNotification, srv.Server(), listener1.ProcessNotification, server.SubscriberQueue("queue.pubsub"))
+	micro.RegisterSubscriber(constMessage.TopicNotification, srv.Server(), historyService.Archive, server.SubscriberQueue("archive"))
 
 	if err := srv.Run(); err != nil {
 		log.Fatal(err)

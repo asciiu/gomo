@@ -34,27 +34,29 @@
   name = "github.com/asciiu/gomo"
 
 [[constraint]]
-  name = "github.com/golang/protobuf"
-  version = "1.1.0"
+  name = "github.com/google/uuid"
+  version = "0.2.0"
+
+[[constraint]]
+  branch = "master"
+  name = "github.com/lib/pq"
 
 [[constraint]]
   name = "github.com/micro/go-micro"
   version = "0.9.0"
 
 [[constraint]]
-  branch = "master"
-  name = "golang.org/x/net"
+  name = "github.com/micro/kubernetes"
+  version = "0.1.0"
+
+[[constraint]]
+  name = "github.com/stretchr/testify"
+  version = "1.2.2"
 
 [[constraint]]
   name = "google.golang.org/grpc"
   version = "1.12.0"
 
-[[override]]
-  name = "github.com/micro/go-plugins"
-  version = "0.10.1"
-  
-
 [prune]
   go-tests = true
   unused-packages = true
-
