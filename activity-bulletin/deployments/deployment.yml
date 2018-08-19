@@ -1,23 +1,23 @@
 apiVersion: apps/v1beta1
 kind: Deployment
 metadata:
-  name: notifications
+  name: bulletin
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: notifications 
+      app: bulletin 
   template:
     metadata:
       labels:
-        app: notifications 
+        app: bulletin 
     spec:
         containers:
-        - name: notification-service 
-          image: us.gcr.io/fomo-204904/notification-service:dev
+        - name: activity-bulletin 
+          image: us.gcr.io/fomo-204904/activity-bulletin:dev
           imagePullPolicy: Always 
           command: [
-            "./notification-service",
+            "./activity-bulletin",
             "--selector=static",
             "--server_address=:8080"
           ]

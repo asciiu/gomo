@@ -8,7 +8,7 @@ update:
 	dep ensure -update github.com/asciiu/gomo
 
 stage:
-	docker push us.gcr.io/fomo-204904/history-service:dev 
+	docker push us.gcr.io/fomo-204904/activity-bulletin:dev 
 
 run:
 	sed "s/{{ UPDATED_AT }}/$(shell date)/g" ./deployments/deployment.tmpl > ./deployments/deployment.yml

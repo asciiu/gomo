@@ -15,7 +15,7 @@ import (
 
 func main() {
 	srv := k8s.NewService(
-		micro.Name("fomo.notifications"),
+		micro.Name("activity.bulletin"),
 	)
 
 	// Init will parse the command line flags.
