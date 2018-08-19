@@ -1,8 +1,8 @@
 build:
 	dep ensure -update github.com/asciiu/gomo
-	protoc -I. --go_out=plugins=micro:$(GOPATH)/src/github.com/asciiu/gomo/history-service proto/history.proto
-	find . -name 'history.pb.go' | xargs -n1 -IX bash -c 'sed s/,omitempty// X > X.tmp && mv X{.tmp,}'
-	docker build -t us.gcr.io/fomo-204904/history-service:dev .
+	protoc -I. --go_out=plugins=micro:$(GOPATH)/src/github.com/asciiu/gomo/activity-bulletin proto/activity.proto
+	find . -name 'activity.pb.go' | xargs -n1 -IX bash -c 'sed s/,omitempty// X > X.tmp && mv X{.tmp,}'
+	docker build -t us.gcr.io/fomo-204904/activity-bulletin:dev .
 
 update:
 	dep ensure -update github.com/asciiu/gomo

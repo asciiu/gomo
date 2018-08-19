@@ -7,9 +7,9 @@ import (
 	"testing"
 	"time"
 
+	repoActivity "github.com/asciiu/gomo/activity-bulletin/db/sql"
+	protoActivity "github.com/asciiu/gomo/activity-bulletin/proto"
 	"github.com/asciiu/gomo/common/db"
-	repoHistory "github.com/asciiu/gomo/history-service/db/sql"
-	protoHistory "github.com/asciiu/gomo/history-service/proto"
 	repoUser "github.com/asciiu/gomo/user-service/db/sql"
 	user "github.com/asciiu/gomo/user-service/models"
 	"github.com/lib/pq"
@@ -23,11 +23,11 @@ func checkErr(err error) {
 	}
 }
 
-func setupService() (*HistoryService, *user.User) {
+func setupService() (*Bulletin, *user.User) {
 	dbUrl := "postgres://postgres@localhost:5432/gomo_test?&sslmode=disable"
 	db, _ := db.NewDB(dbUrl)
 
-	hs := HistoryService{
+	hs := Bulletin{
 		db: db,
 		//devices: protoDevice.NewDeviceServiceClient("devices", service.Client()),
 	}
@@ -42,12 +42,12 @@ func setupService() (*HistoryService, *user.User) {
 }
 
 // You shouldn't be able to insert a plan with no orders. A new plan requires at least a single order.
-func TestHistory(t *testing.T) {
+func TestActivity(t *testing.T) {
 	service, user := setupService()
 
 	defer service.db.Close()
 
-	note := protoHistory.History{
+	note := protoActivity.Activity{
 		UserID:      user.ID,
 		Type:        "order",
 		ObjectID:    "bf24b117-1c0f-4c4f-82bc-7586c99b8d40",
@@ -56,16 +56,16 @@ func TestHistory(t *testing.T) {
 		Description: "this is a test",
 		Timestamp:   string(pq.FormatTimestamp(time.Now().UTC())),
 	}
-	repoHistory.InsertHistory(service.db, &note)
+	repoActivity.InsertActivity(service.db, &note)
 
-	req := protoHistory.HistoryRequest{
+	req := protoActivity.ActivityRequest{
 		UserID:   user.ID,
 		ObjectID: "bf24b117-1c0f-4c4f-82bc-7586c99b8d40",
 		Page:     0,
 		PageSize: 10,
 	}
-	res := protoHistory.HistoryPagedResponse{}
-	service.FindUserHistory(context.Background(), &req, &res)
+	res := protoActivity.ActivityPagedResponse{}
+	service.FindUserActivity(context.Background(), &req, &res)
 
 	assert.Equal(t, "success", res.Status, fmt.Sprintf("%s", res.Message))
 	assert.Equal(t, uint32(1), res.Data.Total, "must be 1 history entry")
@@ -73,12 +73,12 @@ func TestHistory(t *testing.T) {
 	repoUser.DeleteUserHard(service.db, user.ID)
 }
 
-func TestRecentHistory(t *testing.T) {
+func TestRecentActivity(t *testing.T) {
 	service, user := setupService()
 
 	defer service.db.Close()
 
-	note1 := protoHistory.History{
+	note1 := protoActivity.Activity{
 		UserID:      user.ID,
 		Type:        "order",
 		ObjectID:    "bf24b117-1c0f-4c4f-82bc-7586c99b8d40",
@@ -87,8 +87,8 @@ func TestRecentHistory(t *testing.T) {
 		Description: "this is a test",
 		Timestamp:   "2018-08-18 05:34:27.462218561Z",
 	}
-	repoHistory.InsertHistory(service.db, &note1)
-	note2 := protoHistory.History{
+	repoActivity.InsertActivity(service.db, &note1)
+	note2 := protoActivity.Activity{
 		UserID:      user.ID,
 		Type:        "order",
 		ObjectID:    "bf24b117-1c0f-4c4f-82bc-7586c99b8d40",
@@ -97,8 +97,8 @@ func TestRecentHistory(t *testing.T) {
 		Description: "this is a test",
 		Timestamp:   "2018-08-18 05:44:00.000000000Z",
 	}
-	repoHistory.InsertHistory(service.db, &note2)
-	note3 := protoHistory.History{
+	repoActivity.InsertActivity(service.db, &note2)
+	note3 := protoActivity.Activity{
 		UserID:      user.ID,
 		Type:        "order",
 		ObjectID:    "bf24b117-1c0f-4c4f-82bc-7586c99b8d40",
@@ -107,29 +107,29 @@ func TestRecentHistory(t *testing.T) {
 		Description: "this is a test",
 		Timestamp:   "2018-08-18 05:54:00.000000000Z",
 	}
-	repoHistory.InsertHistory(service.db, &note3)
+	repoActivity.InsertActivity(service.db, &note3)
 
-	req := protoHistory.RecentHistoryRequest{
+	req := protoActivity.RecentActivityRequest{
 		ObjectID: "bf24b117-1c0f-4c4f-82bc-7586c99b8d40",
 		Count:    2,
 	}
-	res := protoHistory.HistoryListResponse{}
-	service.FindMostRecentHistory(context.Background(), &req, &res)
+	res := protoActivity.ActivityListResponse{}
+	service.FindMostRecentActivity(context.Background(), &req, &res)
 
 	assert.Equal(t, "success", res.Status, fmt.Sprintf("%s", res.Message))
-	assert.Equal(t, 2, len(res.Data.History), "must be 2 history")
-	assert.Equal(t, "2018-08-18T05:54:00Z", res.Data.History[0].Timestamp, "first timestamp should be most recent")
-	assert.Equal(t, "2018-08-18T05:44:00Z", res.Data.History[1].Timestamp, "second timestamp incorrect")
+	assert.Equal(t, 2, len(res.Data.Activity), "must be 2 history")
+	assert.Equal(t, "2018-08-18T05:54:00Z", res.Data.Activity[0].Timestamp, "first timestamp should be most recent")
+	assert.Equal(t, "2018-08-18T05:44:00Z", res.Data.Activity[1].Timestamp, "second timestamp incorrect")
 
 	repoUser.DeleteUserHard(service.db, user.ID)
 }
 
-func TestHistoryCount(t *testing.T) {
+func TestActivityCount(t *testing.T) {
 	service, user := setupService()
 
 	defer service.db.Close()
 
-	note1 := protoHistory.History{
+	note1 := protoActivity.Activity{
 		UserID:      user.ID,
 		Type:        "order",
 		ObjectID:    "bf24b117-1c0f-4c4f-82bc-7586c99b8d40",
@@ -138,8 +138,8 @@ func TestHistoryCount(t *testing.T) {
 		Description: "this is a test",
 		Timestamp:   "2018-08-18 05:34:27.462218561Z",
 	}
-	repoHistory.InsertHistory(service.db, &note1)
-	note2 := protoHistory.History{
+	repoActivity.InsertActivity(service.db, &note1)
+	note2 := protoActivity.Activity{
 		UserID:      user.ID,
 		Type:        "order",
 		ObjectID:    "bf24b117-1c0f-4c4f-82bc-7586c99b8d40",
@@ -148,13 +148,13 @@ func TestHistoryCount(t *testing.T) {
 		Description: "this is a test",
 		Timestamp:   "2018-08-18 05:44:00.000000000Z",
 	}
-	repoHistory.InsertHistory(service.db, &note2)
+	repoActivity.InsertActivity(service.db, &note2)
 
-	req := protoHistory.HistoryCountRequest{
+	req := protoActivity.ActivityCountRequest{
 		ObjectID: "bf24b117-1c0f-4c4f-82bc-7586c99b8d40",
 	}
-	res := protoHistory.HistoryCountResponse{}
-	service.FindHistoryCount(context.Background(), &req, &res)
+	res := protoActivity.ActivityCountResponse{}
+	service.FindActivityCount(context.Background(), &req, &res)
 
 	assert.Equal(t, "success", res.Status, fmt.Sprintf("%s", res.Message))
 	assert.Equal(t, uint32(2), res.Data.Count, "must be 2 history")
@@ -162,12 +162,12 @@ func TestHistoryCount(t *testing.T) {
 	repoUser.DeleteUserHard(service.db, user.ID)
 }
 
-func TestUpdateHistory(t *testing.T) {
+func TestUpdateActivity(t *testing.T) {
 	service, user := setupService()
 
 	defer service.db.Close()
 
-	note1 := protoHistory.History{
+	note1 := protoActivity.Activity{
 		UserID:      user.ID,
 		Type:        "order",
 		ObjectID:    "bf24b117-1c0f-4c4f-82bc-7586c99b8d40",
@@ -176,19 +176,19 @@ func TestUpdateHistory(t *testing.T) {
 		Description: "this is a test",
 		Timestamp:   "2018-08-18 05:34:27.462218561Z",
 	}
-	history, _ := repoHistory.InsertHistory(service.db, &note1)
+	history, _ := repoActivity.InsertActivity(service.db, &note1)
 
-	req := protoHistory.UpdateHistoryRequest{
-		HistoryID: history.HistoryID,
-		SeenAt:    "2018-08-18T05:34:00Z",
-		ClickedAt: "2018-08-18T05:54:00Z",
+	req := protoActivity.UpdateActivityRequest{
+		ActivityID: history.ActivityID,
+		SeenAt:     "2018-08-18T05:34:00Z",
+		ClickedAt:  "2018-08-18T05:54:00Z",
 	}
-	res := protoHistory.HistoryResponse{}
-	service.UpdateHistory(context.Background(), &req, &res)
+	res := protoActivity.ActivityResponse{}
+	service.UpdateActivity(context.Background(), &req, &res)
 
 	assert.Equal(t, "success", res.Status, fmt.Sprintf("%s", res.Message))
-	assert.Equal(t, "2018-08-18T05:34:00Z", res.Data.History.SeenAt, "clicked did not match")
-	assert.Equal(t, "2018-08-18T05:54:00Z", res.Data.History.ClickedAt, "seen did not match")
+	assert.Equal(t, "2018-08-18T05:34:00Z", res.Data.Activity.SeenAt, "clicked did not match")
+	assert.Equal(t, "2018-08-18T05:54:00Z", res.Data.Activity.ClickedAt, "seen did not match")
 
 	repoUser.DeleteUserHard(service.db, user.ID)
 }

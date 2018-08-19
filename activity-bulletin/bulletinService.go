@@ -9,22 +9,22 @@ import (
 	"os"
 
 	protoGorush "github.com/appleboy/gorush/rpc/proto"
+	repoActivity "github.com/asciiu/gomo/activity-bulletin/db/sql"
+	protoActivity "github.com/asciiu/gomo/activity-bulletin/proto"
 	constResponse "github.com/asciiu/gomo/common/constants/response"
 	protoDevice "github.com/asciiu/gomo/device-service/proto/device"
-	repoHistory "github.com/asciiu/gomo/history-service/db/sql"
-	protoHistory "github.com/asciiu/gomo/history-service/proto"
 	micro "github.com/micro/go-micro"
 	"google.golang.org/grpc"
 )
 
-type HistoryService struct {
+type Bulletin struct {
 	db      *sql.DB
 	devices protoDevice.DeviceServiceClient
 	client  protoGorush.GorushClient
 	topic   string
 }
 
-func NewHistoryService(db *sql.DB, service micro.Service) *HistoryService {
+func NewBulletin(db *sql.DB, service micro.Service) *Bulletin {
 	address := fmt.Sprintf("%s", os.Getenv("GORUSH_ADDRESS"))
 	topic := fmt.Sprintf("%s", os.Getenv("APNS_TOPIC"))
 
@@ -35,7 +35,7 @@ func NewHistoryService(db *sql.DB, service micro.Service) *HistoryService {
 	}
 	client := protoGorush.NewGorushClient(conn)
 
-	hs := HistoryService{
+	hs := Bulletin{
 		db:      db,
 		client:  client,
 		topic:   topic,
@@ -45,9 +45,9 @@ func NewHistoryService(db *sql.DB, service micro.Service) *HistoryService {
 	return &hs
 }
 
-func (service *HistoryService) Archive(ctx context.Context, history *protoHistory.History) error {
+func (service *Bulletin) LogActivity(ctx context.Context, history *protoActivity.Activity) error {
 
-	_, error := repoHistory.InsertHistory(service.db, history)
+	_, error := repoActivity.InsertActivity(service.db, history)
 	if error != nil {
 		log.Println("could not insert new notification ", error)
 	}
@@ -104,16 +104,16 @@ func (service *HistoryService) Archive(ctx context.Context, history *protoHistor
 	return nil
 }
 
-func (service *HistoryService) FindUserHistory(ctx context.Context, req *protoHistory.HistoryRequest, res *protoHistory.HistoryPagedResponse) error {
-	var pagedResult *protoHistory.UserHistoryPage
+func (service *Bulletin) FindUserActivity(ctx context.Context, req *protoActivity.ActivityRequest, res *protoActivity.ActivityPagedResponse) error {
+	var pagedResult *protoActivity.UserActivityPage
 	var err error
 
 	if req.ObjectID != "" {
 		// history associated with object ID only
-		pagedResult, err = repoHistory.FindObjectHistory(service.db, req)
+		pagedResult, err = repoActivity.FindObjectActivity(service.db, req)
 	} else {
 		// all user history
-		pagedResult, err = repoHistory.FindUserHistory(service.db, req.UserID, req.Page, req.PageSize)
+		pagedResult, err = repoActivity.FindUserActivity(service.db, req.UserID, req.Page, req.PageSize)
 	}
 
 	if err == nil {
@@ -126,12 +126,12 @@ func (service *HistoryService) FindUserHistory(ctx context.Context, req *protoHi
 	return nil
 }
 
-func (service *HistoryService) FindMostRecentHistory(ctx context.Context, req *protoHistory.RecentHistoryRequest, res *protoHistory.HistoryListResponse) error {
-	history, err := repoHistory.FindRecentObjectHistory(service.db, req)
+func (service *Bulletin) FindMostRecentActivity(ctx context.Context, req *protoActivity.RecentActivityRequest, res *protoActivity.ActivityListResponse) error {
+	history, err := repoActivity.FindRecentObjectActivity(service.db, req)
 	if err == nil {
 		res.Status = constResponse.Success
-		res.Data = &protoHistory.HistoryList{
-			History: history,
+		res.Data = &protoActivity.ActivityList{
+			Activity: history,
 		}
 	} else {
 		res.Status = constResponse.Error
@@ -140,22 +140,22 @@ func (service *HistoryService) FindMostRecentHistory(ctx context.Context, req *p
 	return nil
 }
 
-func (service *HistoryService) FindHistoryCount(ctx context.Context, req *protoHistory.HistoryCountRequest, res *protoHistory.HistoryCountResponse) error {
-	count := repoHistory.FindObjectHistoryCount(service.db, req.ObjectID)
+func (service *Bulletin) FindActivityCount(ctx context.Context, req *protoActivity.ActivityCountRequest, res *protoActivity.ActivityCountResponse) error {
+	count := repoActivity.FindObjectActivityCount(service.db, req.ObjectID)
 	res.Status = constResponse.Success
-	res.Data = &protoHistory.HistoryCount{
+	res.Data = &protoActivity.ActivityCount{
 		Count: count,
 	}
 	return nil
 }
 
-func (service *HistoryService) UpdateHistory(ctx context.Context, req *protoHistory.UpdateHistoryRequest, res *protoHistory.HistoryResponse) error {
+func (service *Bulletin) UpdateActivity(ctx context.Context, req *protoActivity.UpdateActivityRequest, res *protoActivity.ActivityResponse) error {
 
-	var history *protoHistory.History
+	var history *protoActivity.Activity
 	var err error
 
 	if req.ClickedAt != "" {
-		history, err = repoHistory.UpdateHistoryClickedAt(service.db, req.HistoryID, req.ClickedAt)
+		history, err = repoActivity.UpdateActivityClickedAt(service.db, req.ActivityID, req.ClickedAt)
 		if err != nil {
 			res.Status = constResponse.Error
 			res.Message = err.Error()
@@ -163,7 +163,7 @@ func (service *HistoryService) UpdateHistory(ctx context.Context, req *protoHist
 		}
 	}
 	if req.SeenAt != "" {
-		history, err = repoHistory.UpdateHistorySeenAt(service.db, req.HistoryID, req.SeenAt)
+		history, err = repoActivity.UpdateActivitySeenAt(service.db, req.ActivityID, req.SeenAt)
 		if err != nil {
 			res.Status = constResponse.Error
 			res.Message = err.Error()
@@ -172,8 +172,8 @@ func (service *HistoryService) UpdateHistory(ctx context.Context, req *protoHist
 	}
 
 	res.Status = constResponse.Success
-	res.Data = &protoHistory.HistoryData{
-		History: history,
+	res.Data = &protoActivity.ActivityData{
+		Activity: history,
 	}
 
 	return nil

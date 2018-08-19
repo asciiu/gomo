@@ -3,24 +3,24 @@ package sql
 import (
 	"database/sql"
 
-	protoHistory "github.com/asciiu/gomo/history-service/proto"
+	protoActivity "github.com/asciiu/gomo/activity-bulletin/proto"
 	"github.com/google/uuid"
 )
 
 // Sql functions here:
-// FindUserHistory
-// FindObjectHistory
-// FindRecentObjectHistory
-// FindObjectHistoryCount
-// InsertHistory
-// UpdateHistoryClickedAt
-// UpdateHistorySeenAt
+// FindUserActivity
+// FindObjectActivity
+// FindRecentObjectActivity
+// FindObjectActivityCount
+// InsertActivity
+// UpdateActivityClickedAt
+// UpdateActivitySeenAt
 
-func FindUserHistory(db *sql.DB, userID string, page, pageSize uint32) (*protoHistory.UserHistoryPage, error) {
-	history := make([]*protoHistory.History, 0)
+func FindUserActivity(db *sql.DB, userID string, page, pageSize uint32) (*protoActivity.UserActivityPage, error) {
+	history := make([]*protoActivity.Activity, 0)
 
 	var total uint32
-	queryTotal := `SELECT count(*) FROM history WHERE user_id = $1`
+	queryTotal := `SELECT count(*) FROM activity_bulletin WHERE user_id = $1`
 	if err := db.QueryRow(queryTotal, userID).Scan(&total); err != nil {
 		return nil, err
 	}
@@ -35,7 +35,7 @@ func FindUserHistory(db *sql.DB, userID string, page, pageSize uint32) (*protoHi
 		object_id,
 		clicked_at,
 		seen_at
-		FROM history WHERE user_id = $1 
+		FROM activity_bulletin WHERE user_id = $1 
 		ORDER BY timestamp OFFSET $2 LIMIT $3`
 
 	rows, err := db.Query(query, userID, page, pageSize)
@@ -44,10 +44,10 @@ func FindUserHistory(db *sql.DB, userID string, page, pageSize uint32) (*protoHi
 	}
 	defer rows.Close()
 	for rows.Next() {
-		var h protoHistory.History
+		var h protoActivity.Activity
 		var clickedAt sql.NullString
 		var seenAt sql.NullString
-		err := rows.Scan(&h.HistoryID,
+		err := rows.Scan(&h.ActivityID,
 			&h.UserID,
 			&h.Title,
 			&h.Subtitle,
@@ -76,21 +76,21 @@ func FindUserHistory(db *sql.DB, userID string, page, pageSize uint32) (*protoHi
 		return nil, err
 	}
 
-	result := protoHistory.UserHistoryPage{
+	result := protoActivity.UserActivityPage{
 		Page:     page,
 		PageSize: pageSize,
 		Total:    total,
-		History:  history,
+		Activity: history,
 	}
 
 	return &result, nil
 }
 
-func FindObjectHistory(db *sql.DB, req *protoHistory.HistoryRequest) (*protoHistory.UserHistoryPage, error) {
-	history := make([]*protoHistory.History, 0)
+func FindObjectActivity(db *sql.DB, req *protoActivity.ActivityRequest) (*protoActivity.UserActivityPage, error) {
+	history := make([]*protoActivity.Activity, 0)
 
 	var total uint32
-	queryTotal := `SELECT count(*) FROM history WHERE object_id = $1`
+	queryTotal := `SELECT count(*) FROM activity_bulletin WHERE object_id = $1`
 	if err := db.QueryRow(queryTotal, req.ObjectID).Scan(&total); err != nil {
 		return nil, err
 	}
@@ -105,7 +105,7 @@ func FindObjectHistory(db *sql.DB, req *protoHistory.HistoryRequest) (*protoHist
 		object_id,
 		clicked_at,
 		seen_at
-		FROM history WHERE object_id = $1 
+		FROM activity_bulletin WHERE object_id = $1 
 		ORDER BY timestamp OFFSET $2 LIMIT $3`
 
 	rows, err := db.Query(query, req.ObjectID, req.Page, req.PageSize)
@@ -114,10 +114,10 @@ func FindObjectHistory(db *sql.DB, req *protoHistory.HistoryRequest) (*protoHist
 	}
 	defer rows.Close()
 	for rows.Next() {
-		var h protoHistory.History
+		var h protoActivity.Activity
 		var clickedAt sql.NullString
 		var seenAt sql.NullString
-		err := rows.Scan(&h.HistoryID,
+		err := rows.Scan(&h.ActivityID,
 			&h.UserID,
 			&h.Title,
 			&h.Subtitle,
@@ -146,18 +146,18 @@ func FindObjectHistory(db *sql.DB, req *protoHistory.HistoryRequest) (*protoHist
 		return nil, err
 	}
 
-	result := protoHistory.UserHistoryPage{
+	result := protoActivity.UserActivityPage{
 		Page:     req.Page,
 		PageSize: req.PageSize,
 		Total:    total,
-		History:  history,
+		Activity: history,
 	}
 
 	return &result, nil
 }
 
-func FindRecentObjectHistory(db *sql.DB, req *protoHistory.RecentHistoryRequest) ([]*protoHistory.History, error) {
-	history := make([]*protoHistory.History, 0)
+func FindRecentObjectActivity(db *sql.DB, req *protoActivity.RecentActivityRequest) ([]*protoActivity.Activity, error) {
+	history := make([]*protoActivity.Activity, 0)
 
 	query := `SELECT id, 
 		user_id, 
@@ -169,7 +169,7 @@ func FindRecentObjectHistory(db *sql.DB, req *protoHistory.RecentHistoryRequest)
 		object_id,
 		clicked_at,
 		seen_at
-		FROM history WHERE object_id = $1 
+		FROM activity_bulletin WHERE object_id = $1 
 		ORDER BY timestamp DESC LIMIT $2`
 
 	rows, err := db.Query(query, req.ObjectID, req.Count)
@@ -178,10 +178,10 @@ func FindRecentObjectHistory(db *sql.DB, req *protoHistory.RecentHistoryRequest)
 	}
 	defer rows.Close()
 	for rows.Next() {
-		var h protoHistory.History
+		var h protoActivity.Activity
 		var clickedAt sql.NullString
 		var seenAt sql.NullString
-		err := rows.Scan(&h.HistoryID,
+		err := rows.Scan(&h.ActivityID,
 			&h.UserID,
 			&h.Title,
 			&h.Subtitle,
@@ -213,9 +213,9 @@ func FindRecentObjectHistory(db *sql.DB, req *protoHistory.RecentHistoryRequest)
 	return history, nil
 }
 
-func FindObjectHistoryCount(db *sql.DB, objectID string) uint32 {
+func FindObjectActivityCount(db *sql.DB, objectID string) uint32 {
 	var count uint32
-	queryCount := `SELECT count(*) FROM history WHERE object_id = $1`
+	queryCount := `SELECT count(*) FROM activity_bulletin WHERE object_id = $1`
 	err := db.QueryRow(queryCount, objectID).Scan(&count)
 	if err != nil {
 		return 0
@@ -223,10 +223,10 @@ func FindObjectHistoryCount(db *sql.DB, objectID string) uint32 {
 	return count
 }
 
-func InsertHistory(db *sql.DB, history *protoHistory.History) (*protoHistory.History, error) {
+func InsertActivity(db *sql.DB, history *protoActivity.Activity) (*protoActivity.Activity, error) {
 	newID := uuid.New().String()
 
-	sqlStatement := `insert into history (
+	sqlStatement := `insert into activity_bulletin (
 		id, 
 		user_id, 
 		title, 
@@ -250,8 +250,8 @@ func InsertHistory(db *sql.DB, history *protoHistory.History) (*protoHistory.His
 	if err != nil {
 		return nil, err
 	}
-	n := &protoHistory.History{
-		HistoryID:   newID,
+	n := &protoActivity.Activity{
+		ActivityID:  newID,
 		Type:        history.Type,
 		UserID:      history.UserID,
 		ObjectID:    history.ObjectID,
@@ -263,9 +263,9 @@ func InsertHistory(db *sql.DB, history *protoHistory.History) (*protoHistory.His
 	return n, nil
 }
 
-func UpdateHistoryClickedAt(db *sql.DB, historyID, timestamp string) (*protoHistory.History, error) {
+func UpdateActivityClickedAt(db *sql.DB, historyID, timestamp string) (*protoActivity.Activity, error) {
 	stmt := `
-		UPDATE history 
+		UPDATE activity_bulletin 
 		SET 
 			clicked_at = $1
 		WHERE
@@ -282,12 +282,12 @@ func UpdateHistoryClickedAt(db *sql.DB, historyID, timestamp string) (*protoHist
 		seen_at
 		`
 
-	var h protoHistory.History
+	var h protoActivity.Activity
 	var clickedAt sql.NullString
 	var seenAt sql.NullString
 
 	err := db.QueryRow(stmt, timestamp, historyID).Scan(
-		&h.HistoryID,
+		&h.ActivityID,
 		&h.UserID,
 		&h.Title,
 		&h.Subtitle,
@@ -311,9 +311,9 @@ func UpdateHistoryClickedAt(db *sql.DB, historyID, timestamp string) (*protoHist
 	return &h, nil
 }
 
-func UpdateHistorySeenAt(db *sql.DB, historyID, timestamp string) (*protoHistory.History, error) {
+func UpdateActivitySeenAt(db *sql.DB, historyID, timestamp string) (*protoActivity.Activity, error) {
 	stmt := `
-		UPDATE history 
+		UPDATE activity_bulletin 
 		SET 
 			seen_at = $1
 		WHERE
@@ -330,12 +330,12 @@ func UpdateHistorySeenAt(db *sql.DB, historyID, timestamp string) (*protoHistory
 		seen_at
 			`
 
-	var h protoHistory.History
+	var h protoActivity.Activity
 	var clickedAt sql.NullString
 	var seenAt sql.NullString
 
 	err := db.QueryRow(stmt, timestamp, historyID).Scan(
-		&h.HistoryID,
+		&h.ActivityID,
 		&h.UserID,
 		&h.Title,
 		&h.Subtitle,

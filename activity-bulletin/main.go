@@ -5,9 +5,9 @@ import (
 	"log"
 	"os"
 
+	protoActivity "github.com/asciiu/gomo/activity-bulletin/proto"
 	constMessage "github.com/asciiu/gomo/common/constants/messages"
 	"github.com/asciiu/gomo/common/db"
-	protoHistory "github.com/asciiu/gomo/history-service/proto"
 	micro "github.com/micro/go-micro"
 	"github.com/micro/go-micro/server"
 	k8s "github.com/micro/kubernetes/go/micro"
@@ -27,12 +27,12 @@ func main() {
 		log.Fatalf(err.Error())
 	}
 
-	historyService := NewHistoryService(gomoDB, srv)
+	bulletin := NewBulletin(gomoDB, srv)
 
-	protoHistory.RegisterHistoryServiceHandler(srv.Server(), historyService)
+	protoActivity.RegisterActivityBulletinHandler(srv.Server(), bulletin)
 
 	// handles key verified events
-	micro.RegisterSubscriber(constMessage.TopicNotification, srv.Server(), historyService.Archive, server.SubscriberQueue("archive"))
+	micro.RegisterSubscriber(constMessage.TopicNotification, srv.Server(), bulletin.LogActivity, server.SubscriberQueue("archive"))
 
 	if err := srv.Run(); err != nil {
 		log.Fatal(err)

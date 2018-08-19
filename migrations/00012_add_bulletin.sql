@@ -1,7 +1,7 @@
 -- +goose Up
 DROP TABLE notifications;
 
-CREATE TABLE history (
+CREATE TABLE activity_bulletin (
   id UUID PRIMARY KEY NOT NULL,
   "type" text NOT NULL,
   user_id UUID NOT NULL REFERENCES users (id) ON DELETE CASCADE,
@@ -30,5 +30,5 @@ CREATE TABLE notifications (
   updated_on TIMESTAMP DEFAULT current_timestamp
 );
 
-DROP TABLE history;
+DROP TABLE activity_bulletin;
 
