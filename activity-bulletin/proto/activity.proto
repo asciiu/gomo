@@ -41,9 +41,10 @@ message Activity {
   string title = 5;
   string subtitle = 6;
   string description = 7;
-  string timestamp = 8;
-  string clickedAt = 9;
-  string seenAt = 10;
+  string details = 8;
+  string timestamp = 9;
+  string clickedAt = 10;
+  string seenAt = 11;
 }
 
 message UserActivityPage {

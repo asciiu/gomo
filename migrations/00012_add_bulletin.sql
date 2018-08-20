@@ -9,6 +9,7 @@ CREATE TABLE activity_bulletin (
   title text,
   subtitle text,
   description text, 
+  details jsonb,
   clicked_at TIMESTAMP,           -- nullable timestamps of when user clicked and saw
   seen_at TIMESTAMP,            
   timestamp TIMESTAMP DEFAULT now(),

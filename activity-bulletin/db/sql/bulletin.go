@@ -2,6 +2,7 @@ package sql
 
 import (
 	"database/sql"
+	"encoding/json"
 
 	protoActivity "github.com/asciiu/gomo/activity-bulletin/proto"
 	"github.com/google/uuid"
@@ -232,17 +233,24 @@ func InsertActivity(db *sql.DB, history *protoActivity.Activity) (*protoActivity
 		title, 
 		subtitle, 
 		description, 
+		details,
 		timestamp, 
 		type, 
 		object_id) 
-		values ($1, $2, $3, $4, $5, $6, $7, $8)`
+		values ($1, $2, $3, $4, $5, $6, $7, $8, $9)`
 
-	_, err := db.Exec(sqlStatement,
+	str, err := json.Marshal(history.Details)
+	if err != nil {
+		return nil, err
+	}
+
+	_, err = db.Exec(sqlStatement,
 		newID,
 		history.UserID,
 		history.Title,
 		history.Subtitle,
 		history.Description,
+		str,
 		history.Timestamp,
 		history.Type,
 		history.ObjectID)
@@ -258,6 +266,7 @@ func InsertActivity(db *sql.DB, history *protoActivity.Activity) (*protoActivity
 		Title:       history.Title,
 		Subtitle:    history.Subtitle,
 		Description: history.Description,
+		Details:     history.Details,
 		Timestamp:   history.Timestamp,
 	}
 	return n, nil

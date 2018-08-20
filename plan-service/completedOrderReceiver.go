@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"database/sql"
+	"fmt"
 	"log"
 	"time"
 
@@ -33,6 +34,7 @@ func (receiver *CompletedOrderReceiver) ProcessEvent(ctx context.Context, comple
 		Title:       completedOrderEvent.MarketName,
 		Subtitle:    completedOrderEvent.Side,
 		Description: completedOrderEvent.Details,
+		Details:     fmt.Sprintf("{orderID: %s}", completedOrderEvent.OrderID),
 	}
 
 	log.Printf("%+v\n", notification)
