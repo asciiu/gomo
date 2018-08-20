@@ -13,6 +13,7 @@ import (
 	protoActivity "github.com/asciiu/gomo/activity-bulletin/proto"
 	constResponse "github.com/asciiu/gomo/common/constants/response"
 	protoDevice "github.com/asciiu/gomo/device-service/proto/device"
+	"github.com/google/uuid"
 	micro "github.com/micro/go-micro"
 	"google.golang.org/grpc"
 )
@@ -109,6 +110,11 @@ func (service *Bulletin) FindUserActivity(ctx context.Context, req *protoActivit
 	var err error
 
 	if req.ObjectID != "" {
+		if _, err := uuid.Parse(req.ObjectID); err != nil {
+			res.Status = constResponse.Fail
+			res.Message = fmt.Sprintf("object %s not found", req.ObjectID)
+			return nil
+		}
 		// history associated with object ID only
 		pagedResult, err = repoActivity.FindObjectActivity(service.db, req)
 	} else {

@@ -491,44 +491,6 @@
         }
       }
     },
-    "/notifications": {
-      "get": {
-        "description": "Returns a list of notifications.",
-        "tags": [
-          "notifications"
-        ],
-        "summary": "get notifications (protected)",
-        "operationId": "searchNotifications",
-        "parameters": [
-          {
-            "type": "string",
-            "x-go-name": "Type",
-            "name": "type",
-            "in": "query"
-          },
-          {
-            "type": "string",
-            "x-go-name": "Page",
-            "name": "page",
-            "in": "query"
-          },
-          {
-            "type": "string",
-            "x-go-name": "PageSize",
-            "name": "pageSize",
-            "in": "query"
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "\"data\" will contain array of notifications with \"status\": \"success\"",
-            "schema": {
-              "$ref": "#/definitions/responseNotificationSuccess"
-            }
-          }
-        }
-      }
-    },
     "/plans": {
       "get": {
         "description": "Returns a summary of plans. The plan orders will not be returned and will be null.\nQuery Params: status, marketName, exchange, page, pageSize\n\nThe defaults for the params are:\nstatus - active\npage - 0\npageSize - 50\n\nexample: /plans?exchange=binance",
@@ -773,6 +735,44 @@
             "description": "the message will state what the internal server error was with \"status\": \"error\"",
             "schema": {
               "$ref": "#/definitions/responseError"
+            }
+          }
+        }
+      }
+    },
+    "/protoActivity": {
+      "get": {
+        "description": "Returns a list of protoActivity.",
+        "tags": [
+          "protoActivity"
+        ],
+        "summary": "get protoActivity (protected)",
+        "operationId": "searchActivity",
+        "parameters": [
+          {
+            "type": "string",
+            "x-go-name": "ObjectID",
+            "name": "objectID",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "x-go-name": "Page",
+            "name": "page",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "x-go-name": "PageSize",
+            "name": "pageSize",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "\"data\" will contain array of protoActivity with \"status\": \"success\"",
+            "schema": {
+              "$ref": "#/definitions/responseActivitySuccess"
             }
           }
         }
@@ -1046,6 +1046,66 @@
             "$ref": "#/definitions/Balance"
           },
           "x-go-name": "Balances"
+        }
+      },
+      "x-go-package": "github.com/asciiu/gomo/api/controllers"
+    },
+    "Activity": {
+      "description": "Responses",
+      "type": "object",
+      "properties": {
+        "activityID": {
+          "type": "string",
+          "x-go-name": "ActivityID"
+        },
+        "clickedAt": {
+          "type": "string",
+          "x-go-name": "ClickedAt"
+        },
+        "description": {
+          "type": "string",
+          "x-go-name": "Description"
+        },
+        "objectID": {
+          "type": "string",
+          "x-go-name": "ObjectID"
+        },
+        "seenAt": {
+          "type": "string",
+          "x-go-name": "SeenAt"
+        },
+        "subtitle": {
+          "type": "string",
+          "x-go-name": "Subtitle"
+        },
+        "timestamp": {
+          "type": "string",
+          "x-go-name": "Timestamp"
+        },
+        "title": {
+          "type": "string",
+          "x-go-name": "Title"
+        },
+        "type": {
+          "type": "string",
+          "x-go-name": "Type"
+        },
+        "userID": {
+          "type": "string",
+          "x-go-name": "UserID"
+        }
+      },
+      "x-go-package": "github.com/asciiu/gomo/api/vendor/github.com/asciiu/gomo/activity-bulletin/proto"
+    },
+    "ActivityBulletinClient": {
+      "type": "object",
+      "x-go-package": "github.com/asciiu/gomo/api/vendor/github.com/asciiu/gomo/activity-bulletin/proto"
+    },
+    "ActivityController": {
+      "type": "object",
+      "properties": {
+        "Bulletin": {
+          "$ref": "#/definitions/ActivityBulletinClient"
         }
       },
       "x-go-package": "github.com/asciiu/gomo/api/controllers"
@@ -1494,16 +1554,16 @@
     "NewOrderReq": {
       "type": "object",
       "properties": {
-        "activeCurrencyBalance": {
-          "description": "Required for the root order of the tree. Child orders for tree may or may not have a currencyBalance.\nin: body",
-          "type": "number",
-          "format": "double",
-          "x-go-name": "ActiveCurrencyBalance"
-        },
         "grupo": {
           "description": "Optional group of order\nin: body",
           "type": "string",
           "x-go-name": "Grupo"
+        },
+        "initialCurrencyBalance": {
+          "description": "Required for the root order of the tree. Child orders for tree may or may not have a currencyBalance.\nin: body",
+          "type": "number",
+          "format": "double",
+          "x-go-name": "InitialCurrencyBalance"
         },
         "keyID": {
           "description": "Required this is our api key ID (string uuid) assigned to the user's exchange key and secret.\nin: body",
@@ -1563,79 +1623,9 @@
       },
       "x-go-package": "github.com/asciiu/gomo/api/controllers"
     },
-    "Notification": {
-      "description": "Responses",
-      "type": "object",
-      "properties": {
-        "description": {
-          "type": "string",
-          "x-go-name": "Description"
-        },
-        "notificationID": {
-          "type": "string",
-          "x-go-name": "NotificationID"
-        },
-        "notificationType": {
-          "type": "string",
-          "x-go-name": "NotificationType"
-        },
-        "objectID": {
-          "type": "string",
-          "x-go-name": "ObjectID"
-        },
-        "subtitle": {
-          "type": "string",
-          "x-go-name": "Subtitle"
-        },
-        "timestamp": {
-          "type": "string",
-          "x-go-name": "Timestamp"
-        },
-        "title": {
-          "type": "string",
-          "x-go-name": "Title"
-        },
-        "userID": {
-          "type": "string",
-          "x-go-name": "UserID"
-        }
-      },
-      "x-go-package": "github.com/asciiu/gomo/api/vendor/github.com/asciiu/gomo/notification-service/proto"
-    },
-    "NotificationController": {
-      "type": "object",
-      "properties": {
-        "Notifications": {
-          "$ref": "#/definitions/NotificationServiceClient"
-        }
-      },
-      "x-go-package": "github.com/asciiu/gomo/api/controllers"
-    },
-    "NotificationServiceClient": {
-      "type": "object",
-      "x-go-package": "github.com/asciiu/gomo/api/vendor/github.com/asciiu/gomo/notification-service/proto"
-    },
     "Order": {
       "type": "object",
       "properties": {
-        "activeCurrencyBalance": {
-          "type": "number",
-          "format": "double",
-          "x-go-name": "ActiveCurrencyBalance"
-        },
-        "activeCurrencyName": {
-          "type": "string",
-          "x-go-name": "ActiveCurrencyName"
-        },
-        "activeCurrencySymbol": {
-          "type": "string",
-          "x-go-name": "ActiveCurrencySymbol"
-        },
-        "activeCurrencyTraded": {
-          "type": "number",
-          "format": "double",
-          "x-go-name": "ActiveCurrencyTraded"
-        },
         "baseCurrencyName": {
           "type": "string",
           "x-go-name": "BaseCurrencyName"
@@ -1656,9 +1646,45 @@
           "type": "string",
           "x-go-name": "ExchangeMarketName"
         },
+        "finalCurrencyBalance": {
+          "type": "number",
+          "format": "double",
+          "x-go-name": "FinalCurrencyBalance"
+        },
+        "finalCurrencyName": {
+          "type": "string",
+          "x-go-name": "FinalCurrencyName"
+        },
+        "finalCurrencySymbol": {
+          "type": "string",
+          "x-go-name": "FinalCurrencySymbol"
+        },
         "grupo": {
           "type": "string",
           "x-go-name": "Grupo"
+        },
+        "initialCurrencyBalance": {
+          "type": "number",
+          "format": "double",
+          "x-go-name": "InitialCurrencyBalance"
+        },
+        "initialCurrencyName": {
+          "type": "string",
+          "x-go-name": "InitialCurrencyName"
+        },
+        "initialCurrencyRemainder": {
+          "type": "number",
+          "format": "double",
+          "x-go-name": "InitialCurrencyRemainder"
+        },
+        "initialCurrencySymbol": {
+          "type": "string",
+          "x-go-name": "InitialCurrencySymbol"
+        },
+        "initialCurrencyTraded": {
+          "type": "number",
+          "format": "double",
+          "x-go-name": "InitialCurrencyTraded"
         },
         "keyDescription": {
           "type": "string",
@@ -1837,6 +1863,11 @@
         "planID": {
           "type": "string",
           "x-go-name": "PlanID"
+        },
+        "planNumber": {
+          "type": "integer",
+          "format": "uint64",
+          "x-go-name": "PlanNumber"
         },
         "planTemplateID": {
           "type": "string",
@@ -2069,6 +2100,26 @@
       },
       "x-go-package": "github.com/asciiu/gomo/api/controllers"
     },
+    "SearchActivity": {
+      "description": "and it is not used anywhere.",
+      "type": "object",
+      "title": "This struct is used in the generated swagger docs,",
+      "properties": {
+        "objectID": {
+          "type": "string",
+          "x-go-name": "ObjectID"
+        },
+        "page": {
+          "type": "string",
+          "x-go-name": "Page"
+        },
+        "pageSize": {
+          "type": "string",
+          "x-go-name": "PageSize"
+        }
+      },
+      "x-go-package": "github.com/asciiu/gomo/api/controllers"
+    },
     "SearchController": {
       "type": "object",
       "x-go-package": "github.com/asciiu/gomo/api/controllers"
@@ -2093,26 +2144,6 @@
         "term": {
           "type": "string",
           "x-go-name": "Term"
-        }
-      },
-      "x-go-package": "github.com/asciiu/gomo/api/controllers"
-    },
-    "SearchType": {
-      "description": "and it is not used anywhere.",
-      "type": "object",
-      "title": "This struct is used in the generated swagger docs,",
-      "properties": {
-        "page": {
-          "type": "string",
-          "x-go-name": "Page"
-        },
-        "pageSize": {
-          "type": "string",
-          "x-go-name": "PageSize"
-        },
-        "type": {
-          "type": "string",
-          "x-go-name": "Type"
         }
       },
       "x-go-package": "github.com/asciiu/gomo/api/controllers"
@@ -2205,6 +2236,19 @@
           "type": "boolean",
           "x-go-name": "Triggered"
         },
+        "triggeredCondition": {
+          "type": "string",
+          "x-go-name": "TriggeredCondition"
+        },
+        "triggeredPrice": {
+          "type": "number",
+          "format": "double",
+          "x-go-name": "TriggeredPrice"
+        },
+        "triggeredTimestamp": {
+          "type": "string",
+          "x-go-name": "TriggeredTimestamp"
+        },
         "updatedOn": {
           "type": "string",
           "x-go-name": "UpdatedOn"
@@ -2286,6 +2330,34 @@
         }
       },
       "x-go-package": "github.com/asciiu/gomo/api/controllers"
+    },
+    "UserActivityPage": {
+      "type": "object",
+      "properties": {
+        "activity": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/Activity"
+          },
+          "x-go-name": "Activity"
+        },
+        "page": {
+          "type": "integer",
+          "format": "uint32",
+          "x-go-name": "Page"
+        },
+        "pageSize": {
+          "type": "integer",
+          "format": "uint32",
+          "x-go-name": "PageSize"
+        },
+        "total": {
+          "type": "integer",
+          "format": "uint32",
+          "x-go-name": "Total"
+        }
+      },
+      "x-go-package": "github.com/asciiu/gomo/api/vendor/github.com/asciiu/gomo/activity-bulletin/proto"
     },
     "UserData": {
       "type": "object",
@@ -2407,34 +2479,6 @@
       },
       "x-go-package": "github.com/asciiu/gomo/api/controllers"
     },
-    "UserNotificationsPage": {
-      "type": "object",
-      "properties": {
-        "notifications": {
-          "type": "array",
-          "items": {
-            "$ref": "#/definitions/Notification"
-          },
-          "x-go-name": "Notifications"
-        },
-        "page": {
-          "type": "integer",
-          "format": "uint32",
-          "x-go-name": "Page"
-        },
-        "pageSize": {
-          "type": "integer",
-          "format": "uint32",
-          "x-go-name": "PageSize"
-        },
-        "total": {
-          "type": "integer",
-          "format": "uint32",
-          "x-go-name": "Total"
-        }
-      },
-      "x-go-package": "github.com/asciiu/gomo/api/vendor/github.com/asciiu/gomo/notification-service/proto"
-    },
     "UserPlansData": {
       "type": "object",
       "properties": {
@@ -2451,6 +2495,21 @@
     "UserServiceClient": {
       "type": "object",
       "x-go-package": "github.com/asciiu/gomo/api/vendor/github.com/asciiu/gomo/user-service/proto/user"
+    },
+    "responseActivitySuccess": {
+      "type": "object",
+      "title": "A ResponseActivitySuccess will always contain a status of \"successful\".",
+      "properties": {
+        "data": {
+          "$ref": "#/definitions/UserActivityPage"
+        },
+        "status": {
+          "type": "string",
+          "x-go-name": "Status"
+        }
+      },
+      "x-go-name": "ResponseActivitySuccess",
+      "x-go-package": "github.com/asciiu/gomo/api/controllers"
     },
     "responseBalancesSuccess": {
       "type": "object",
@@ -2542,21 +2601,6 @@
         }
       },
       "x-go-name": "ResponseKeysSuccess",
-      "x-go-package": "github.com/asciiu/gomo/api/controllers"
-    },
-    "responseNotificationSuccess": {
-      "type": "object",
-      "title": "A ResponseNotificationSuccess will always contain a status of \"successful\".",
-      "properties": {
-        "data": {
-          "$ref": "#/definitions/UserNotificationsPage"
-        },
-        "status": {
-          "type": "string",
-          "x-go-name": "Status"
-        }
-      },
-      "x-go-name": "ResponseNotificationSuccess",
       "x-go-package": "github.com/asciiu/gomo/api/controllers"
     },
     "responseSearchSuccess": {
