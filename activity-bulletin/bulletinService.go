@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"time"
 
 	protoGorush "github.com/appleboy/gorush/rpc/proto"
 	repoActivity "github.com/asciiu/gomo/activity-bulletin/db/sql"
@@ -115,6 +116,9 @@ func (service *Bulletin) FindUserActivity(ctx context.Context, req *protoActivit
 			res.Message = fmt.Sprintf("object %s not found", req.ObjectID)
 			return nil
 		}
+	}
+
+	if req.ObjectID != "" {
 		// history associated with object ID only
 		pagedResult, err = repoActivity.FindObjectActivity(service.db, req)
 	} else {
@@ -161,6 +165,14 @@ func (service *Bulletin) UpdateActivity(ctx context.Context, req *protoActivity.
 	var err error
 
 	if req.ClickedAt != "" {
+		// time.Parse(time.RFC3339, "2006-01-02T15:04:05Z")
+		_, err = time.Parse(time.RFC3339, req.ClickedAt)
+		if err != nil {
+			res.Status = constResponse.Fail
+			res.Message = "clickedAt must be RFC3339 format"
+			return nil
+		}
+
 		history, err = repoActivity.UpdateActivityClickedAt(service.db, req.ActivityID, req.ClickedAt)
 		if err != nil {
 			res.Status = constResponse.Error
@@ -168,7 +180,15 @@ func (service *Bulletin) UpdateActivity(ctx context.Context, req *protoActivity.
 			return nil
 		}
 	}
+
 	if req.SeenAt != "" {
+		_, err = time.Parse(time.RFC3339, req.ClickedAt)
+		if err != nil {
+			res.Status = constResponse.Fail
+			res.Message = "seenAt must be RFC3339 format"
+			return nil
+		}
+
 		history, err = repoActivity.UpdateActivitySeenAt(service.db, req.ActivityID, req.SeenAt)
 		if err != nil {
 			res.Status = constResponse.Error

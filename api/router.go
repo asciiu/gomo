@@ -107,8 +107,9 @@ func NewRouter(db *sql.DB) *echo.Echo {
 	protectedApi.PUT("/devices/:deviceID", deviceController.HandleUpdateDevice)
 	protectedApi.DELETE("/devices/:deviceID", deviceController.HandleDeleteDevice)
 
-	// notifications
+	// activity bulletin
 	protectedApi.GET("/activity", activityController.HandleListActivity)
+	protectedApi.PUT("/activity/:activity", activityController.HandleUpdateActivity)
 
 	// plan management endpoints
 	protectedApi.GET("/plans", planController.HandleListPlans)
