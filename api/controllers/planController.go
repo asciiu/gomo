@@ -7,6 +7,7 @@ import (
 	"strconv"
 	"strings"
 
+	protoActivity "github.com/asciiu/gomo/activity-bulletin/proto"
 	asql "github.com/asciiu/gomo/api/db/sql"
 	"github.com/asciiu/gomo/common/constants/response"
 	keys "github.com/asciiu/gomo/key-service/proto/key"
@@ -19,9 +20,10 @@ import (
 )
 
 type PlanController struct {
-	DB    *sql.DB
-	Plans plans.PlanServiceClient
-	Keys  keys.KeyServiceClient
+	DB       *sql.DB
+	Plans    plans.PlanServiceClient
+	Keys     keys.KeyServiceClient
+	Bulletin protoActivity.ActivityBulletinClient
 	// map of ticker symbol to full name
 	currencies map[string]string
 }
@@ -86,27 +88,33 @@ type UserPlansData struct {
 
 // This response should never return the key secret
 type Plan struct {
-	PlanID                string   `json:"planID"`
-	PlanTemplateID        string   `json:"planTemplateID"`
-	PlanNumber            uint64   `json:"planNumber"`
-	Title                 string   `json:"title"`
-	Exchange              string   `json:"exchange"`
-	ExchangeMarketName    string   `json:"exchangeMarketName"`
-	MarketName            string   `json:"marketName"`
-	BaseCurrencySymbol    string   `json:"baseCurrencySymbol"`
-	BaseCurrencyName      string   `json:"baseCurrencyName"`
-	MarketCurrencySymbol  string   `json:"marketCurrencySymbol"`
-	MarketCurrencyName    string   `json:"marketCurrencyName"`
-	ActiveCurrencySymbol  string   `json:"activeCurrencySymbol"`
-	ActiveCurrencyName    string   `json:"activeCurrencyName"`
-	ActiveCurrencyBalance float64  `json:"activeCurrencyBalance"`
-	LastExecutedOrderID   string   `json:"lastExecutedOrderID"`
-	LastExecutedPlanDepth uint32   `json:"lastExecutedPlanDepth"`
-	Status                string   `json:"status"`
-	CloseOnComplete       bool     `json:"closeOnComplete"`
-	CreatedOn             string   `json:"createdOn"`
-	UpdatedOn             string   `json:"updatedOn"`
-	Orders                []*Order `json:"orders,omitempty"`
+	PlanID                string              `json:"planID"`
+	PlanTemplateID        string              `json:"planTemplateID"`
+	PlanNumber            uint64              `json:"planNumber"`
+	Title                 string              `json:"title"`
+	Exchange              string              `json:"exchange"`
+	ExchangeMarketName    string              `json:"exchangeMarketName"`
+	MarketName            string              `json:"marketName"`
+	BaseCurrencySymbol    string              `json:"baseCurrencySymbol"`
+	BaseCurrencyName      string              `json:"baseCurrencyName"`
+	MarketCurrencySymbol  string              `json:"marketCurrencySymbol"`
+	MarketCurrencyName    string              `json:"marketCurrencyName"`
+	ActiveCurrencySymbol  string              `json:"activeCurrencySymbol"`
+	ActiveCurrencyName    string              `json:"activeCurrencyName"`
+	ActiveCurrencyBalance float64             `json:"activeCurrencyBalance"`
+	LastExecutedOrderID   string              `json:"lastExecutedOrderID"`
+	LastExecutedPlanDepth uint32              `json:"lastExecutedPlanDepth"`
+	Status                string              `json:"status"`
+	CloseOnComplete       bool                `json:"closeOnComplete"`
+	CreatedOn             string              `json:"createdOn"`
+	UpdatedOn             string              `json:"updatedOn"`
+	Activity              PlanActivitySummary `json:"activity"`
+	Orders                []*Order            `json:"orders,omitempty"`
+}
+
+type PlanActivitySummary struct {
+	Total  uint32                  `json:"total"`
+	Recent *protoActivity.Activity `json:"recent"`
 }
 
 type Order struct {
@@ -157,6 +165,7 @@ func NewPlanController(db *sql.DB, service micro.Service) *PlanController {
 		DB:         db,
 		Plans:      plans.NewPlanServiceClient("plans", service.Client()),
 		Keys:       keys.NewKeyServiceClient("keys", service.Client()),
+		Bulletin:   protoActivity.NewActivityBulletinClient("bulletin", service.Client()),
 		currencies: make(map[string]string),
 	}
 
@@ -351,6 +360,17 @@ func (controller *PlanController) HandleGetPlan(c echo.Context) error {
 	baseCurrencyName := controller.currencies[baseCurrencySymbol]
 	marketCurrencySymbol := names[0]
 	marketCurrencyName := controller.currencies[marketCurrencySymbol]
+
+	getActivity := protoActivity.RecentActivityRequest{
+		ObjectID: planID,
+		Count:    1,
+	}
+	activityData, _ := controller.Bulletin.FindMostRecentActivity(context.Background(), &getActivity)
+	getCount := protoActivity.ActivityCountRequest{
+		ObjectID: planID,
+	}
+	activityCount, _ := controller.Bulletin.FindActivityCount(context.Background(), &getCount)
+
 	res := &ResponsePlanSuccess{
 		Status: response.Success,
 		Data: &Plan{
@@ -373,6 +393,10 @@ func (controller *PlanController) HandleGetPlan(c echo.Context) error {
 			Orders:                newOrders,
 			CreatedOn:             r.Data.Plan.CreatedOn,
 			UpdatedOn:             r.Data.Plan.UpdatedOn,
+			Activity: PlanActivitySummary{
+				Total:  activityCount.Data.Count,
+				Recent: activityData.Data.Activity[0],
+			},
 		},
 	}
 
@@ -496,7 +520,7 @@ func (controller *PlanController) HandleListPlans(c echo.Context) error {
 
 // swagger:parameters PostPlan
 type PlanRequest struct {
-	// Optional plan title
+	// Required plan title
 	// in: body
 	Title string `json:"title"`
 	// Optional plan template ID.

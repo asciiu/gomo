@@ -30,13 +30,13 @@ type ResponseActivitySuccess struct {
 // and it is not used anywhere.
 // swagger:parameters searchActivity
 type SearchActivity struct {
-	// Required: false
+	// Optional activity in relation to objectID
 	// In: query
 	ObjectID string `json:"objectID"`
-	// Required: false
+	// Optional page that starts from 0
 	// In: query
 	Page string `json:"page"`
-	// Required: false
+	// Optional page size that defaults to 20
 	// In: query
 	PageSize string `json:"pageSize"`
 }
@@ -55,9 +55,9 @@ func NewActivityController(service micro.Service) *ActivityController {
 
 // swagger:route GET /activity activity searchActivity
 //
-// get protoActivity (protected)
+// get activity (protected)
 //
-// Returns a list of activity.
+// Returns a list of activity. Response is paginated.
 //
 // responses:
 //  200: ResponseActivityPageSuccess "data" will contain array of protoActivity with "status": "success"

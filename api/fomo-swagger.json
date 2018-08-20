@@ -17,6 +17,78 @@
   "host": "stage.fomo.exchange",
   "basePath": "/api",
   "paths": {
+    "/activity": {
+      "get": {
+        "description": "Returns a list of activity. Response is paginated.",
+        "tags": [
+          "activity"
+        ],
+        "summary": "get activity (protected)",
+        "operationId": "searchActivity",
+        "parameters": [
+          {
+            "type": "string",
+            "x-go-name": "ObjectID",
+            "description": "Optional activity in relation to objectID",
+            "name": "objectID",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "x-go-name": "Page",
+            "description": "Optional page that starts from 0",
+            "name": "page",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "x-go-name": "PageSize",
+            "description": "Optional page size that defaults to 20",
+            "name": "pageSize",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "\"data\" will contain array of protoActivity with \"status\": \"success\"",
+            "schema": {
+              "$ref": "#/definitions/ResponseActivityPageSuccess"
+            }
+          }
+        }
+      }
+    },
+    "/activity/:activityID": {
+      "put": {
+        "description": "Update activity clickedAt or seenAt. Timestamps must be UTC.",
+        "tags": [
+          "activity"
+        ],
+        "summary": "update activity (protected)",
+        "operationId": "UpdateActivity",
+        "parameters": [
+          {
+            "type": "string",
+            "x-go-name": "ClickedAt",
+            "description": "Optional e.g. 2006-01-02T15:04:05Z",
+            "name": "clickedAt",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "x-go-name": "SeenAt",
+            "description": "Optional e.g. 2006-01-02T15:04:05Z",
+            "name": "seenAt",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/responseActivitySuccess"
+          }
+        }
+      }
+    },
     "/balances": {
       "get": {
         "description": "Returns all balances for user. Use optional query param 'symbol' as lowercase ticker symbol - e.g. ada.",
@@ -557,6 +629,15 @@
         "operationId": "PostPlan",
         "parameters": [
           {
+            "x-go-name": "Title",
+            "description": "Required plan title",
+            "name": "title",
+            "in": "body",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
             "x-go-name": "PlanTemplateID",
             "description": "Optional plan template ID.",
             "name": "planTemplateID",
@@ -666,6 +747,15 @@
         "operationId": "UpdatePlanParams",
         "parameters": [
           {
+            "x-go-name": "Title",
+            "description": "Optional plan title",
+            "name": "title",
+            "in": "body",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
             "x-go-name": "PlanTemplateID",
             "description": "Optional plan template ID.",
             "name": "planTemplateID",
@@ -735,44 +825,6 @@
             "description": "the message will state what the internal server error was with \"status\": \"error\"",
             "schema": {
               "$ref": "#/definitions/responseError"
-            }
-          }
-        }
-      }
-    },
-    "/protoActivity": {
-      "get": {
-        "description": "Returns a list of protoActivity.",
-        "tags": [
-          "protoActivity"
-        ],
-        "summary": "get protoActivity (protected)",
-        "operationId": "searchActivity",
-        "parameters": [
-          {
-            "type": "string",
-            "x-go-name": "ObjectID",
-            "name": "objectID",
-            "in": "query"
-          },
-          {
-            "type": "string",
-            "x-go-name": "Page",
-            "name": "page",
-            "in": "query"
-          },
-          {
-            "type": "string",
-            "x-go-name": "PageSize",
-            "name": "pageSize",
-            "in": "query"
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "\"data\" will contain array of protoActivity with \"status\": \"success\"",
-            "schema": {
-              "$ref": "#/definitions/responseActivitySuccess"
             }
           }
         }
@@ -1066,6 +1118,10 @@
           "type": "string",
           "x-go-name": "Description"
         },
+        "details": {
+          "type": "string",
+          "x-go-name": "Details"
+        },
         "objectID": {
           "type": "string",
           "x-go-name": "ObjectID"
@@ -1109,6 +1165,15 @@
         }
       },
       "x-go-package": "github.com/asciiu/gomo/api/controllers"
+    },
+    "ActivityData": {
+      "type": "object",
+      "properties": {
+        "activity": {
+          "$ref": "#/definitions/Activity"
+        }
+      },
+      "x-go-package": "github.com/asciiu/gomo/api/vendor/github.com/asciiu/gomo/activity-bulletin/proto"
     },
     "ApiDevice": {
       "type": "object",
@@ -1808,6 +1873,9 @@
           "type": "string",
           "x-go-name": "ActiveCurrencySymbol"
         },
+        "activity": {
+          "$ref": "#/definitions/PlanActivitySummary"
+        },
         "baseCurrencyName": {
           "type": "string",
           "x-go-name": "BaseCurrencyName"
@@ -1877,6 +1945,10 @@
           "type": "string",
           "x-go-name": "Status"
         },
+        "title": {
+          "type": "string",
+          "x-go-name": "Title"
+        },
         "updatedOn": {
           "type": "string",
           "x-go-name": "UpdatedOn"
@@ -1884,9 +1956,26 @@
       },
       "x-go-package": "github.com/asciiu/gomo/api/controllers"
     },
+    "PlanActivitySummary": {
+      "type": "object",
+      "properties": {
+        "recent": {
+          "$ref": "#/definitions/Activity"
+        },
+        "total": {
+          "type": "integer",
+          "format": "uint32",
+          "x-go-name": "Total"
+        }
+      },
+      "x-go-package": "github.com/asciiu/gomo/api/controllers"
+    },
     "PlanController": {
       "type": "object",
       "properties": {
+        "Bulletin": {
+          "$ref": "#/definitions/ActivityBulletinClient"
+        },
         "DB": {
           "$ref": "#/definitions/DB"
         },
@@ -1924,6 +2013,11 @@
           "description": "Optional defaults to 'active' status. Valid input status is 'active', 'inactive', or 'historic'\nin: body",
           "type": "string",
           "x-go-name": "Status"
+        },
+        "title": {
+          "description": "Required plan title\nin: body",
+          "type": "string",
+          "x-go-name": "Title"
         }
       },
       "x-go-package": "github.com/asciiu/gomo/api/controllers"
@@ -2031,6 +2125,34 @@
       },
       "x-go-package": "github.com/asciiu/gomo/api/controllers"
     },
+    "ResponseActivityPageSuccess": {
+      "type": "object",
+      "title": "A ResponseActivityPageSuccess will always contain a status of \"successful\".",
+      "properties": {
+        "data": {
+          "$ref": "#/definitions/UserActivityPage"
+        },
+        "status": {
+          "type": "string",
+          "x-go-name": "Status"
+        }
+      },
+      "x-go-package": "github.com/asciiu/gomo/api/controllers"
+    },
+    "ResponseActivitySuccess": {
+      "type": "object",
+      "title": "A ResponseActivitySuccess will always contain a status of \"successful\".",
+      "properties": {
+        "data": {
+          "$ref": "#/definitions/ActivityData"
+        },
+        "status": {
+          "type": "string",
+          "x-go-name": "Status"
+        }
+      },
+      "x-go-package": "github.com/asciiu/gomo/api/controllers"
+    },
     "ResponseMarkets": {
       "type": "object",
       "properties": {
@@ -2106,14 +2228,17 @@
       "title": "This struct is used in the generated swagger docs,",
       "properties": {
         "objectID": {
+          "description": "Optional activity in relation to objectID\nIn: query",
           "type": "string",
           "x-go-name": "ObjectID"
         },
         "page": {
+          "description": "Optional page that starts from 0\nIn: query",
           "type": "string",
           "x-go-name": "Page"
         },
         "pageSize": {
+          "description": "Optional page size that defaults to 20\nIn: query",
           "type": "string",
           "x-go-name": "PageSize"
         }
@@ -2291,6 +2416,22 @@
       },
       "x-go-package": "github.com/asciiu/gomo/api/controllers"
     },
+    "UpdateActivity": {
+      "type": "object",
+      "properties": {
+        "clickedAt": {
+          "description": "Optional e.g. 2006-01-02T15:04:05Z\nIn: query",
+          "type": "string",
+          "x-go-name": "ClickedAt"
+        },
+        "seenAt": {
+          "description": "Optional e.g. 2006-01-02T15:04:05Z\nIn: query",
+          "type": "string",
+          "x-go-name": "SeenAt"
+        }
+      },
+      "x-go-package": "github.com/asciiu/gomo/api/controllers"
+    },
     "UpdateKeyRequest": {
       "type": "object",
       "properties": {
@@ -2327,6 +2468,11 @@
           "description": "Optional only needed to update the status of the plan to 'inactive', 'active'\nin: body",
           "type": "string",
           "x-go-name": "Status"
+        },
+        "title": {
+          "description": "Optional plan title\nin: body",
+          "type": "string",
+          "x-go-name": "Title"
         }
       },
       "x-go-package": "github.com/asciiu/gomo/api/controllers"
@@ -2495,21 +2641,6 @@
     "UserServiceClient": {
       "type": "object",
       "x-go-package": "github.com/asciiu/gomo/api/vendor/github.com/asciiu/gomo/user-service/proto/user"
-    },
-    "responseActivitySuccess": {
-      "type": "object",
-      "title": "A ResponseActivitySuccess will always contain a status of \"successful\".",
-      "properties": {
-        "data": {
-          "$ref": "#/definitions/UserActivityPage"
-        },
-        "status": {
-          "type": "string",
-          "x-go-name": "Status"
-        }
-      },
-      "x-go-name": "ResponseActivitySuccess",
-      "x-go-package": "github.com/asciiu/gomo/api/controllers"
     },
     "responseBalancesSuccess": {
       "type": "object",
