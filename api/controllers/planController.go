@@ -356,6 +356,7 @@ func (controller *PlanController) HandleGetPlan(c echo.Context) error {
 		Data: &Plan{
 			PlanID:                r.Data.Plan.PlanID,
 			PlanTemplateID:        r.Data.Plan.PlanTemplateID,
+			Title:                 r.Data.Plan.Title,
 			Exchange:              r.Data.Plan.Exchange,
 			MarketName:            r.Data.Plan.MarketName,
 			ActiveCurrencySymbol:  r.Data.Plan.ActiveCurrencySymbol,
@@ -460,6 +461,7 @@ func (controller *PlanController) HandleListPlans(c echo.Context) error {
 			PlanID:                plan.PlanID,
 			PlanTemplateID:        plan.PlanTemplateID,
 			PlanNumber:            plan.UserPlanNumber,
+			Title:                 plan.Title,
 			Exchange:              plan.Exchange,
 			MarketName:            plan.MarketName,
 			ActiveCurrencySymbol:  plan.ActiveCurrencySymbol,
