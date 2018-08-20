@@ -24,6 +24,7 @@ func FindPlanWithUnexecutedOrders(db *sql.DB, planID string) (*protoPlan.Plan, e
 	rows, err := db.Query(`SELECT 
 		p.id as plan_id,
 		p.user_id,
+		p.title,
 		p.exchange_name,
 		p.market_name,
 		p.active_currency_symbol,
@@ -100,6 +101,7 @@ func FindPlanWithUnexecutedOrders(db *sql.DB, planID string) (*protoPlan.Plan, e
 		err := rows.Scan(
 			&plan.PlanID,
 			&plan.UserID,
+			&plan.Title,
 			&plan.Exchange,
 			&plan.MarketName,
 			&plan.ActiveCurrencySymbol,
@@ -202,6 +204,7 @@ func FindActivePlans(db *sql.DB) ([]*protoPlan.Plan, error) {
 	rows, err := db.Query(`SELECT 
 		p.id as plan_id,
 		p.user_id,
+		p.title,
 		p.exchange_name,
 		p.market_name,
 		p.active_currency_symbol,
@@ -267,6 +270,7 @@ func FindActivePlans(db *sql.DB) ([]*protoPlan.Plan, error) {
 		err := rows.Scan(
 			&plan.PlanID,
 			&plan.UserID,
+			&plan.Title,
 			&plan.Exchange,
 			&plan.MarketName,
 			&plan.ActiveCurrencySymbol,
@@ -365,6 +369,7 @@ func FindPlanOrders(db *sql.DB, req *protoPlan.GetUserPlanRequest) (*protoPlan.P
 	rows, err := db.Query(`SELECT 
 		p.id as plan_id,
 		p.user_id,
+		p.title,
 		p.exchange_name,
 		p.market_name,
 		p.active_currency_symbol,
@@ -442,6 +447,7 @@ func FindPlanOrders(db *sql.DB, req *protoPlan.GetUserPlanRequest) (*protoPlan.P
 		err := rows.Scan(
 			&plan.PlanID,
 			&plan.UserID,
+			&plan.Title,
 			&plan.Exchange,
 			&plan.MarketName,
 			&plan.ActiveCurrencySymbol,
@@ -544,6 +550,7 @@ func FindChildOrders(db *sql.DB, planID, parentOrderID string) (*protoPlan.Plan,
 	rows, err := db.Query(`SELECT 
 		p.id as plan_id,
 		p.user_id,
+		p.title,
 		p.exchange_name,
 		p.market_name,
 		p.active_currency_symbol,
@@ -618,6 +625,7 @@ func FindChildOrders(db *sql.DB, planID, parentOrderID string) (*protoPlan.Plan,
 		err := rows.Scan(
 			&plan.PlanID,
 			&plan.UserID,
+			&plan.Title,
 			&plan.Exchange,
 			&plan.MarketName,
 			&plan.ActiveCurrencySymbol,
@@ -722,6 +730,7 @@ func FindUserPlans(db *sql.DB, userID string, page, pageSize uint32) (*protoPlan
 	plans := make([]*protoPlan.Plan, 0)
 	query := `SELECT 
 			id,
+			title,
 			exchange_name,
 			market_name,
 			active_currency_symbol,
@@ -748,6 +757,7 @@ func FindUserPlans(db *sql.DB, userID string, page, pageSize uint32) (*protoPlan
 
 		err := rows.Scan(
 			&plan.PlanID,
+			&plan.Title,
 			&plan.Exchange,
 			&plan.MarketName,
 			&plan.ActiveCurrencySymbol,
@@ -795,6 +805,7 @@ func FindUserPlansWithStatus(db *sql.DB, userID, status string, page, pageSize u
 	plans := make([]*protoPlan.Plan, 0)
 	query := `SELECT 
 			id,
+			title,
 			exchange_name,
 			market_name,
 			active_currency_symbol,
@@ -821,6 +832,7 @@ func FindUserPlansWithStatus(db *sql.DB, userID, status string, page, pageSize u
 
 		err := rows.Scan(
 			&plan.PlanID,
+			&plan.Title,
 			&plan.Exchange,
 			&plan.MarketName,
 			&plan.ActiveCurrencySymbol,
@@ -869,6 +881,7 @@ func FindUserExchangePlansWithStatus(db *sql.DB, userID, status, exchange string
 	plans := make([]*protoPlan.Plan, 0)
 	query := `SELECT 
 			id,
+			title,
 			exchange_name,
 			market_name,
 			active_currency_symbol,
@@ -895,6 +908,7 @@ func FindUserExchangePlansWithStatus(db *sql.DB, userID, status, exchange string
 
 		err := rows.Scan(
 			&plan.PlanID,
+			&plan.Title,
 			&plan.Exchange,
 			&plan.MarketName,
 			&plan.ActiveCurrencySymbol,
@@ -942,6 +956,7 @@ func FindUserMarketPlansWithStatus(db *sql.DB, userID, status, exchange, marketN
 	plans := make([]*protoPlan.Plan, 0)
 	query := `SELECT 
 			id,
+			title,
 			exchange_name,
 			market_name,
 			active_currency_symbol,
@@ -968,6 +983,7 @@ func FindUserMarketPlansWithStatus(db *sql.DB, userID, status, exchange, marketN
 
 		err := rows.Scan(
 			&plan.PlanID,
+			&plan.Title,
 			&plan.Exchange,
 			&plan.MarketName,
 			&plan.ActiveCurrencySymbol,
@@ -1016,6 +1032,7 @@ func InsertPlan(db *sql.DB, newPlan *protoPlan.Plan) error {
 	sqlStatement, err := txn.Prepare(`insert into plans (
 		id, 
 		user_id, 
+		title,
 		exchange_name,
 		market_name,
 		active_currency_symbol,
@@ -1028,7 +1045,7 @@ func InsertPlan(db *sql.DB, newPlan *protoPlan.Plan) error {
 		status, 
 		created_on,
 		updated_on) 
-		values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)`)
+		values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)`)
 
 	if err != nil {
 		txn.Rollback()
@@ -1037,6 +1054,7 @@ func InsertPlan(db *sql.DB, newPlan *protoPlan.Plan) error {
 	_, err = txn.Stmt(sqlStatement).Exec(
 		newPlan.PlanID,
 		newPlan.UserID,
+		newPlan.Title,
 		newPlan.Exchange,
 		newPlan.MarketName,
 		newPlan.ActiveCurrencySymbol,

@@ -15,19 +15,21 @@ service PlanService {
 // Requests
 message NewPlanRequest {
   string userID = 1;
-  string planTemplateID = 2;
-  string status = 3;
-  bool closeOnComplete = 4;
-  repeated order.NewOrderRequest orders = 5; 
+  string title = 2;
+  string planTemplateID = 3;
+  string status = 4;
+  bool closeOnComplete = 5;
+  repeated order.NewOrderRequest orders = 6; 
 }
 
 message UpdatePlanRequest {
   string planID = 1;
   string userID = 2;
-  string planTemplateID = 3;
-  string status = 4;
-  bool closeOnComplete = 5;
-  repeated order.NewOrderRequest orders = 6; 
+  string title = 3;
+  string planTemplateID = 4;
+  string status = 5;
+  bool closeOnComplete = 6;
+  repeated order.NewOrderRequest orders = 7; 
 }
 
 
@@ -68,6 +70,7 @@ message Plan {
   bool closeOnComplete = 16;
   string createdOn = 17;
   string updatedOn = 18;
+  string title = 19;
   repeated order.Order orders = 20; 
 }
 

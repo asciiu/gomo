@@ -397,6 +397,7 @@ func (service *PlanService) NewPlan(ctx context.Context, req *protoPlan.NewPlanR
 		PlanID:                planID.String(),
 		PlanTemplateID:        req.PlanTemplateID,
 		UserID:                req.UserID,
+		Title:                 req.Title,
 		ActiveCurrencySymbol:  newOrders[0].InitialCurrencySymbol,
 		ActiveCurrencyBalance: newOrders[0].InitialCurrencyBalance,
 		Exchange:              newOrders[0].Exchange,

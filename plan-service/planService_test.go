@@ -121,6 +121,7 @@ func TestSuccessfulOrderPlan(t *testing.T) {
 	req := protoPlan.NewPlanRequest{
 		UserID:          user.ID,
 		Status:          "active",
+		Title:           "Testing 123",
 		CloseOnComplete: false,
 		PlanTemplateID:  "bloody_test",
 		Orders: []*protoOrder.NewOrderRequest{
@@ -153,6 +154,7 @@ func TestSuccessfulOrderPlan(t *testing.T) {
 
 	assert.Equal(t, "success", res.Status, fmt.Sprintf("return status of inserting plan should be success got: %s", res.Message))
 	assert.Equal(t, uint64(1), res.Data.Plan.UserPlanNumber, "the plan number should be 1")
+	assert.Equal(t, "Testing 123", res.Data.Plan.Title, "titles don't match")
 
 	repoUser.DeleteUserHard(service.DB, user.ID)
 }
