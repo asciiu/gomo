@@ -117,7 +117,7 @@ func (engine *Engine) ProcessTradeEvents(ctx context.Context, payload *evt.Trade
 									completedEvent.FinalCurrencyBalance = qty
 									completedEvent.InitialCurrencyTraded = util.ToFixed(completedEvent.FinalCurrencyBalance*tradeEvent.Price, precision)
 									completedEvent.InitialCurrencyRemainder = util.ToFixed(plan.ActiveCurrencyBalance-completedEvent.InitialCurrencyTraded, precision)
-									completedEvent.Details = fmt.Sprintf("bought %.8f %s with %.8f %s", completedEvent.FinalCurrencyBalance, symbols[0], completedEvent.InitialCurrencyTraded, symbols[1])
+									completedEvent.Details = fmt.Sprintf("orderID: %s, bought %.8f %s with %.8f %s", completedEvent.OrderID, completedEvent.FinalCurrencyBalance, symbols[0], completedEvent.InitialCurrencyTraded, symbols[1])
 								}
 
 								// adjust balances for sell
@@ -126,7 +126,7 @@ func (engine *Engine) ProcessTradeEvents(ctx context.Context, payload *evt.Trade
 									completedEvent.FinalCurrencyBalance = util.ToFixed(plan.ActiveCurrencyBalance*tradeEvent.Price, precision)
 									completedEvent.InitialCurrencyRemainder = 0
 									completedEvent.InitialCurrencyTraded = util.ToFixed(plan.ActiveCurrencyBalance, precision)
-									completedEvent.Details = fmt.Sprintf("sold %.8f %s for %.8f %s", plan.ActiveCurrencyBalance, symbols[0], completedEvent.FinalCurrencyBalance, symbols[1])
+									completedEvent.Details = fmt.Sprintf("orderID: %s, sold %.8f %s for %.8f %s", completedEvent.OrderID, plan.ActiveCurrencyBalance, symbols[0], completedEvent.FinalCurrencyBalance, symbols[1])
 								}
 
 								// Never log the secrets contained in the event

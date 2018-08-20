@@ -27,8 +27,8 @@ func (receiver *CompletedOrderReceiver) ProcessEvent(ctx context.Context, comple
 
 	notification := protoActivity.Activity{
 		UserID:      completedOrderEvent.UserID,
-		ObjectID:    completedOrderEvent.OrderID,
-		Type:        "order",
+		ObjectID:    completedOrderEvent.PlanID,
+		Type:        "plan",
 		Timestamp:   string(pq.FormatTimestamp(time.Now().UTC())),
 		Title:       completedOrderEvent.MarketName,
 		Subtitle:    completedOrderEvent.Side,
