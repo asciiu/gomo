@@ -9,6 +9,11 @@ import (
 	"github.com/google/uuid"
 )
 
+// plans must have a title
+func ValidateTitle(title string) bool {
+	return title != ""
+}
+
 // New plans can only have a single order with parent order number == 0.
 func ValidateSingleRootNode(orderRequests []*protoOrder.NewOrderRequest) bool {
 	count := 0

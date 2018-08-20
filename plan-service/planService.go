@@ -189,6 +189,10 @@ func (service *PlanService) fetchKeys(keyIDs []string) ([]*keys.Key, error) {
 func (service *PlanService) NewPlan(ctx context.Context, req *protoPlan.NewPlanRequest, res *protoPlan.PlanResponse) error {
 
 	switch {
+	case !ValidateTitle(req.Title):
+		res.Status = response.Fail
+		res.Message = "plans must have a title"
+		return nil
 	case !ValidatePlanInputStatus(req.Status):
 		res.Status = response.Fail
 		res.Message = "plan status must be active, inactive, or historic"
@@ -821,6 +825,16 @@ func (service *PlanService) UpdatePlan(ctx context.Context, req *protoPlan.Updat
 			txn.Rollback()
 			res.Status = response.Error
 			res.Message = "error encountered while updating the plan status: " + err.Error()
+			return nil
+
+		}
+	}
+	if req.Title != "" {
+		pln.Title = req.Title
+		if err := planRepo.UpdatePlanTitleTxn(txn, ctx, pln.PlanID, pln.Title); err != nil {
+			txn.Rollback()
+			res.Status = response.Error
+			res.Message = "error encountered while updating the plan title: " + err.Error()
 			return nil
 
 		}

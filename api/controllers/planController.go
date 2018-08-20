@@ -89,6 +89,7 @@ type Plan struct {
 	PlanID                string   `json:"planID"`
 	PlanTemplateID        string   `json:"planTemplateID"`
 	PlanNumber            uint64   `json:"planNumber"`
+	Title                 string   `json:"title"`
 	Exchange              string   `json:"exchange"`
 	ExchangeMarketName    string   `json:"exchangeMarketName"`
 	MarketName            string   `json:"marketName"`
@@ -493,6 +494,9 @@ func (controller *PlanController) HandleListPlans(c echo.Context) error {
 
 // swagger:parameters PostPlan
 type PlanRequest struct {
+	// Optional plan title
+	// in: body
+	Title string `json:"title"`
 	// Optional plan template ID.
 	// in: body
 	PlanTemplateID string `json:"planTemplateID"`
@@ -615,6 +619,7 @@ func (controller *PlanController) HandlePostPlan(c echo.Context) error {
 
 	newPlanRequest := plans.NewPlanRequest{
 		UserID:          userID,
+		Title:           newPlan.Title,
 		PlanTemplateID:  newPlan.PlanTemplateID,
 		Status:          newPlan.Status,
 		CloseOnComplete: newPlan.CloseOnComplete,
@@ -691,6 +696,7 @@ func (controller *PlanController) HandlePostPlan(c echo.Context) error {
 			PlanID:                r.Data.Plan.PlanID,
 			PlanTemplateID:        r.Data.Plan.PlanTemplateID,
 			PlanNumber:            r.Data.Plan.UserPlanNumber,
+			Title:                 r.Data.Plan.Title,
 			Exchange:              r.Data.Plan.Exchange,
 			MarketName:            r.Data.Plan.MarketName,
 			ActiveCurrencySymbol:  r.Data.Plan.ActiveCurrencySymbol,
@@ -715,6 +721,9 @@ func (controller *PlanController) HandlePostPlan(c echo.Context) error {
 
 // swagger:parameters UpdatePlanParams
 type UpdatePlanRequest struct {
+	// Optional plan title
+	// in: body
+	Title string `json:"title"`
 	// Optional plan template ID.
 	// in: body
 	PlanTemplateID string `json:"planTemplateID"`
@@ -785,6 +794,7 @@ func (controller *PlanController) HandleUpdatePlan(c echo.Context) error {
 	updatePlanRequest := plans.UpdatePlanRequest{
 		PlanID:          planID,
 		UserID:          userID,
+		Title:           updatePlan.Title,
 		PlanTemplateID:  updatePlan.PlanTemplateID,
 		Status:          updatePlan.Status,
 		CloseOnComplete: updatePlan.CloseOnComplete,
@@ -863,6 +873,7 @@ func (controller *PlanController) HandleUpdatePlan(c echo.Context) error {
 			PlanID:                r.Data.Plan.PlanID,
 			PlanTemplateID:        r.Data.Plan.PlanTemplateID,
 			PlanNumber:            r.Data.Plan.UserPlanNumber,
+			Title:                 r.Data.Plan.Title,
 			Exchange:              r.Data.Plan.Exchange,
 			MarketName:            r.Data.Plan.MarketName,
 			ActiveCurrencySymbol:  r.Data.Plan.ActiveCurrencySymbol,

@@ -1176,6 +1176,18 @@ func UpdatePlanStatusTxn(txn *sql.Tx, ctx context.Context, planID, status string
 	return err
 }
 
+func UpdatePlanTitleTxn(txn *sql.Tx, ctx context.Context, planID, title string) error {
+	_, err := txn.ExecContext(ctx, `
+		UPDATE plans 
+		SET 
+			title = $1 
+		WHERE
+			id = $2`,
+		title, planID)
+
+	return err
+}
+
 func UpdatePlanCloseOnCompleteTxn(txn *sql.Tx, ctx context.Context, planID string, closeOnComplete bool) error {
 	_, err := txn.ExecContext(ctx, `
 		UPDATE plans 
