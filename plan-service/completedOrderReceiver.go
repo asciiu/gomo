@@ -6,10 +6,10 @@ import (
 	"log"
 	"time"
 
+	protoActivity "github.com/asciiu/gomo/activity-bulletin/proto"
 	constPlan "github.com/asciiu/gomo/common/constants/plan"
 	"github.com/asciiu/gomo/common/constants/status"
 	evt "github.com/asciiu/gomo/common/proto/events"
-	notifications "github.com/asciiu/gomo/notification-service/proto"
 	repoPlan "github.com/asciiu/gomo/plan-service/db/sql"
 	"github.com/lib/pq"
 	micro "github.com/micro/go-micro"
@@ -25,14 +25,14 @@ type CompletedOrderReceiver struct {
 // ProcessEvent handles OrderEvents. These events are published by when an order was filled.
 func (receiver *CompletedOrderReceiver) ProcessEvent(ctx context.Context, completedOrderEvent *evt.CompletedOrderEvent) error {
 
-	notification := notifications.Notification{
-		UserID:           completedOrderEvent.UserID,
-		ObjectID:         completedOrderEvent.OrderID,
-		NotificationType: "order",
-		Timestamp:        string(pq.FormatTimestamp(time.Now().UTC())),
-		Title:            completedOrderEvent.MarketName,
-		Subtitle:         completedOrderEvent.Side,
-		Description:      completedOrderEvent.Details,
+	notification := protoActivity.Activity{
+		UserID:      completedOrderEvent.UserID,
+		ObjectID:    completedOrderEvent.OrderID,
+		Type:        "order",
+		Timestamp:   string(pq.FormatTimestamp(time.Now().UTC())),
+		Title:       completedOrderEvent.MarketName,
+		Subtitle:    completedOrderEvent.Side,
+		Description: completedOrderEvent.Details,
 	}
 
 	log.Printf("%+v\n", notification)
