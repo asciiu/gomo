@@ -109,7 +109,7 @@ func NewRouter(db *sql.DB) *echo.Echo {
 
 	// activity bulletin
 	protectedApi.GET("/activity", activityController.HandleListActivity)
-	protectedApi.PUT("/activity/:activity", activityController.HandleUpdateActivity)
+	protectedApi.PUT("/activity/:activityID", activityController.HandleUpdateActivity)
 
 	// plan management endpoints
 	protectedApi.GET("/plans", planController.HandleListPlans)

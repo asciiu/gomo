@@ -161,15 +161,20 @@ func (service *Bulletin) FindActivityCount(ctx context.Context, req *protoActivi
 
 func (service *Bulletin) UpdateActivity(ctx context.Context, req *protoActivity.UpdateActivityRequest, res *protoActivity.ActivityResponse) error {
 
-	var history *protoActivity.Activity
-	var err error
+	history, err := repoActivity.FindActivity(service.db, req.ActivityID)
+
+	if err == sql.ErrNoRows {
+		res.Status = constResponse.Nonentity
+		res.Message = "activity not found"
+		return nil
+	}
 
 	if req.ClickedAt != "" {
 		// time.Parse(time.RFC3339, "2006-01-02T15:04:05Z")
 		_, err = time.Parse(time.RFC3339, req.ClickedAt)
 		if err != nil {
 			res.Status = constResponse.Fail
-			res.Message = "clickedAt must be RFC3339 format"
+			res.Message = "clickedAt must be RFC3339 format: e.g. 2006-01-02T15:04:05Z"
 			return nil
 		}
 
@@ -185,7 +190,7 @@ func (service *Bulletin) UpdateActivity(ctx context.Context, req *protoActivity.
 		_, err = time.Parse(time.RFC3339, req.ClickedAt)
 		if err != nil {
 			res.Status = constResponse.Fail
-			res.Message = "seenAt must be RFC3339 format"
+			res.Message = "seenAt must be RFC3339 format: e.g. 2006-01-02T15:04:05Z"
 			return nil
 		}
 

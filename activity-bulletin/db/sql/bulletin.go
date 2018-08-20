@@ -9,6 +9,7 @@ import (
 )
 
 // Sql functions here:
+// FindActivity
 // FindUserActivity
 // FindObjectActivity
 // FindRecentObjectActivity
@@ -16,6 +17,52 @@ import (
 // InsertActivity
 // UpdateActivityClickedAt
 // UpdateActivitySeenAt
+
+func FindActivity(db *sql.DB, activityID string) (*protoActivity.Activity, error) {
+
+	query := `SELECT 
+		id, 
+		user_id, 
+		title, 
+		subtitle, 
+		description, 
+		details,
+		timestamp,
+		type,
+		object_id,
+		clicked_at,
+		seen_at
+		FROM activity_bulletin WHERE id = $1`
+
+	var h protoActivity.Activity
+	var clickedAt sql.NullString
+	var seenAt sql.NullString
+	err := db.QueryRow(query, activityID).Scan(
+		&h.ActivityID,
+		&h.UserID,
+		&h.Title,
+		&h.Subtitle,
+		&h.Description,
+		&h.Details,
+		&h.Timestamp,
+		&h.Type,
+		&h.ObjectID,
+		&clickedAt,
+		&seenAt,
+	)
+
+	if err != nil {
+		return nil, err
+	}
+	if clickedAt.Valid {
+		h.ClickedAt = clickedAt.String
+	}
+	if seenAt.Valid {
+		h.SeenAt = seenAt.String
+	}
+
+	return &h, nil
+}
 
 func FindUserActivity(db *sql.DB, userID string, page, pageSize uint32) (*protoActivity.UserActivityPage, error) {
 	history := make([]*protoActivity.Activity, 0)
@@ -278,14 +325,15 @@ func InsertActivity(db *sql.DB, history *protoActivity.Activity) (*protoActivity
 	return n, nil
 }
 
-func UpdateActivityClickedAt(db *sql.DB, historyID, timestamp string) (*protoActivity.Activity, error) {
+func UpdateActivityClickedAt(db *sql.DB, activityID, timestamp string) (*protoActivity.Activity, error) {
 	stmt := `
 		UPDATE activity_bulletin 
 		SET 
 			clicked_at = $1
 		WHERE
 			id = $2
-		RETURNING id, 
+		RETURNING 
+		id, 
 		user_id, 
 		title, 
 		subtitle, 
@@ -302,7 +350,7 @@ func UpdateActivityClickedAt(db *sql.DB, historyID, timestamp string) (*protoAct
 	var clickedAt sql.NullString
 	var seenAt sql.NullString
 
-	err := db.QueryRow(stmt, timestamp, historyID).Scan(
+	err := db.QueryRow(stmt, timestamp, activityID).Scan(
 		&h.ActivityID,
 		&h.UserID,
 		&h.Title,
@@ -328,14 +376,15 @@ func UpdateActivityClickedAt(db *sql.DB, historyID, timestamp string) (*protoAct
 	return &h, nil
 }
 
-func UpdateActivitySeenAt(db *sql.DB, historyID, timestamp string) (*protoActivity.Activity, error) {
+func UpdateActivitySeenAt(db *sql.DB, activityID, timestamp string) (*protoActivity.Activity, error) {
 	stmt := `
 		UPDATE activity_bulletin 
 		SET 
 			seen_at = $1
 		WHERE
 			id = $2
-		RETURNING id, 
+		RETURNING 
+		id, 
 		user_id, 
 		title, 
 		subtitle, 
@@ -345,14 +394,13 @@ func UpdateActivitySeenAt(db *sql.DB, historyID, timestamp string) (*protoActivi
 		type, 
 		object_id,
 		clicked_at,
-		seen_at
-			`
+		seen_at`
 
 	var h protoActivity.Activity
 	var clickedAt sql.NullString
 	var seenAt sql.NullString
 
-	err := db.QueryRow(stmt, timestamp, historyID).Scan(
+	err := db.QueryRow(stmt, timestamp, activityID).Scan(
 		&h.ActivityID,
 		&h.UserID,
 		&h.Title,
