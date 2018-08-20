@@ -187,7 +187,7 @@ func (service *Bulletin) UpdateActivity(ctx context.Context, req *protoActivity.
 	}
 
 	if req.SeenAt != "" {
-		_, err = time.Parse(time.RFC3339, req.ClickedAt)
+		_, err = time.Parse(time.RFC3339, req.SeenAt)
 		if err != nil {
 			res.Status = constResponse.Fail
 			res.Message = "seenAt must be RFC3339 format: e.g. 2006-01-02T15:04:05Z"
