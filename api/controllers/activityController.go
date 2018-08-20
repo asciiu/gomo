@@ -32,9 +32,6 @@ type ResponseActivitySuccess struct {
 type SearchActivity struct {
 	// Required: false
 	// In: query
-	ObjectType string `json:"objectType"`
-	// Required: false
-	// In: query
 	ObjectID string `json:"objectID"`
 	// Required: false
 	// In: query
