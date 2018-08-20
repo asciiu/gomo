@@ -92,6 +92,11 @@ func (controller *ActivityController) HandleListActivity(c echo.Context) error {
 		}
 	}
 
+	// in case activity is null do this
+	if r.Data.Activity == nil {
+		r.Data.Activity = make([]*protoActivity.Activity, 0)
+	}
+
 	response := &ResponseActivitySuccess{
 		Status: "success",
 		Data:   r.Data,
