@@ -189,10 +189,6 @@ func (service *PlanService) fetchKeys(keyIDs []string) ([]*keys.Key, error) {
 func (service *PlanService) NewPlan(ctx context.Context, req *protoPlan.NewPlanRequest, res *protoPlan.PlanResponse) error {
 
 	switch {
-	case !ValidateTitle(req.Title):
-		res.Status = response.Fail
-		res.Message = "plans must have a title"
-		return nil
 	case !ValidatePlanInputStatus(req.Status):
 		res.Status = response.Fail
 		res.Message = "plan status must be active, inactive, or historic"
@@ -396,12 +392,16 @@ func (service *PlanService) NewPlan(ctx context.Context, req *protoPlan.NewPlanR
 	}
 
 	count := planRepo.FindUserPlanCount(service.DB, req.UserID)
+	title := req.Title
+	if title == "" {
+		title = fmt.Sprintf("Trade %d", count+1)
+	}
 
 	pln := protoPlan.Plan{
 		PlanID:                planID.String(),
 		PlanTemplateID:        req.PlanTemplateID,
 		UserID:                req.UserID,
-		Title:                 req.Title,
+		Title:                 title,
 		ActiveCurrencySymbol:  newOrders[0].InitialCurrencySymbol,
 		ActiveCurrencyBalance: newOrders[0].InitialCurrencyBalance,
 		Exchange:              newOrders[0].Exchange,
