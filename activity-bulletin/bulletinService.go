@@ -123,7 +123,8 @@ func (service *Bulletin) FindUserActivity(ctx context.Context, req *protoActivit
 		pagedResult, err = repoActivity.FindObjectActivity(service.db, req)
 	} else {
 		// all user history
-		pagedResult, err = repoActivity.FindUserActivity(service.db, req.UserID, req.Page, req.PageSize)
+		//pagedResult, err = repoActivity.FindUserActivity(service.db, req.UserID, req.Page, req.PageSize)
+		pagedResult, err = repoActivity.FindUserPlansActivity(service.db, req.UserID, req.Page, req.PageSize)
 	}
 
 	if err == nil {

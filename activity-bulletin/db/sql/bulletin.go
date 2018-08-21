@@ -136,6 +136,81 @@ func FindUserActivity(db *sql.DB, userID string, page, pageSize uint32) (*protoA
 	return &result, nil
 }
 
+func FindUserPlansActivity(db *sql.DB, userID string, page, pageSize uint32) (*protoActivity.UserActivityPage, error) {
+	history := make([]*protoActivity.Activity, 0)
+
+	var total uint32
+	queryTotal := `SELECT count(*) FROM activity_bulletin WHERE user_id = $1`
+	if err := db.QueryRow(queryTotal, userID).Scan(&total); err != nil {
+		return nil, err
+	}
+
+	query := `SELECT 
+		ab.id, 
+		ab.user_id, 
+		p.title, 
+		ab.subtitle, 
+		ab.description, 
+		ab.details,
+		ab.timestamp,
+		ab.type,
+		ab.object_id,
+		ab.clicked_at,
+		ab.seen_at
+		FROM activity_bulletin ab
+		JOIN plans p ON p.id = ab.object_id 
+		WHERE ab.user_id = $1 
+		ORDER BY timestamp OFFSET $2 LIMIT $3`
+
+	rows, err := db.Query(query, userID, page, pageSize)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	for rows.Next() {
+		var h protoActivity.Activity
+		var clickedAt sql.NullString
+		var seenAt sql.NullString
+		err := rows.Scan(&h.ActivityID,
+			&h.UserID,
+			&h.Title,
+			&h.Subtitle,
+			&h.Description,
+			&h.Details,
+			&h.Timestamp,
+			&h.Type,
+			&h.ObjectID,
+			&clickedAt,
+			&seenAt,
+		)
+
+		if err != nil {
+			return nil, err
+		}
+		if clickedAt.Valid {
+			h.ClickedAt = clickedAt.String
+		}
+		if seenAt.Valid {
+			h.SeenAt = seenAt.String
+		}
+
+		history = append(history, &h)
+	}
+	err = rows.Err()
+	if err != nil {
+		return nil, err
+	}
+
+	result := protoActivity.UserActivityPage{
+		Page:     page,
+		PageSize: pageSize,
+		Total:    total,
+		Activity: history,
+	}
+
+	return &result, nil
+}
+
 func FindObjectActivity(db *sql.DB, req *protoActivity.ActivityRequest) (*protoActivity.UserActivityPage, error) {
 	history := make([]*protoActivity.Activity, 0)
 
@@ -145,18 +220,21 @@ func FindObjectActivity(db *sql.DB, req *protoActivity.ActivityRequest) (*protoA
 		return nil, err
 	}
 
-	query := `SELECT id, 
-		user_id, 
-		title, 
-		subtitle, 
-		description, 
-		details,
-		timestamp,
-		type,
-		object_id,
-		clicked_at,
-		seen_at
-		FROM activity_bulletin WHERE object_id = $1 
+	query := `SELECT 
+		ab.id, 
+		ab.user_id, 
+		p.title, 
+		ab.subtitle, 
+		ab.description, 
+		ab.details,
+		ab.timestamp,
+		ab.type,
+		ab.object_id,
+		ab.clicked_at,
+		ab.seen_at
+		FROM activity_bulletin ab
+		JOIN plans p ON p.id = ab.object_id
+		WHERE object_id = $1 
 		ORDER BY timestamp OFFSET $2 LIMIT $3`
 
 	rows, err := db.Query(query, req.ObjectID, req.Page, req.PageSize)
