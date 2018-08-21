@@ -376,6 +376,7 @@ func (controller *PlanController) HandleGetPlan(c echo.Context) error {
 		Data: &Plan{
 			PlanID:                r.Data.Plan.PlanID,
 			PlanTemplateID:        r.Data.Plan.PlanTemplateID,
+			PlanNumber:            r.Data.Plan.UserPlanNumber,
 			Title:                 r.Data.Plan.Title,
 			Exchange:              r.Data.Plan.Exchange,
 			MarketName:            r.Data.Plan.MarketName,
