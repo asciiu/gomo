@@ -88,28 +88,27 @@ type UserPlansData struct {
 
 // This response should never return the key secret
 type Plan struct {
-	PlanID                string              `json:"planID"`
-	PlanTemplateID        string              `json:"planTemplateID"`
-	PlanNumber            uint64              `json:"planNumber"`
-	Title                 string              `json:"title"`
-	Exchange              string              `json:"exchange"`
-	ExchangeMarketName    string              `json:"exchangeMarketName"`
-	MarketName            string              `json:"marketName"`
-	BaseCurrencySymbol    string              `json:"baseCurrencySymbol"`
-	BaseCurrencyName      string              `json:"baseCurrencyName"`
-	MarketCurrencySymbol  string              `json:"marketCurrencySymbol"`
-	MarketCurrencyName    string              `json:"marketCurrencyName"`
-	ActiveCurrencySymbol  string              `json:"activeCurrencySymbol"`
-	ActiveCurrencyName    string              `json:"activeCurrencyName"`
-	ActiveCurrencyBalance float64             `json:"activeCurrencyBalance"`
-	LastExecutedOrderID   string              `json:"lastExecutedOrderID"`
-	LastExecutedPlanDepth uint32              `json:"lastExecutedPlanDepth"`
-	Status                string              `json:"status"`
-	CloseOnComplete       bool                `json:"closeOnComplete"`
-	CreatedOn             string              `json:"createdOn"`
-	UpdatedOn             string              `json:"updatedOn"`
-	Activity              PlanActivitySummary `json:"activity"`
-	Orders                []*Order            `json:"orders,omitempty"`
+	PlanID                 string              `json:"planID"`
+	PlanTemplateID         string              `json:"planTemplateID"`
+	PlanNumber             uint64              `json:"planNumber"`
+	Title                  string              `json:"title"`
+	TotalDepth             uint32              `json:"totalDepth"`
+	Exchange               string              `json:"exchange"`
+	ExchangeMarketName     string              `json:"exchangeMarketName"`
+	ActiveCurrencySymbol   string              `json:"activeCurrencySymbol"`
+	ActiveCurrencyName     string              `json:"activeCurrencyName"`
+	ActiveCurrencyBalance  float64             `json:"activeCurrencyBalance"`
+	InitialCurrencySymbol  string              `json:"initialCurrencySymbol"`
+	InitialCurrencyName    string              `json:"initialCurrencyName"`
+	InitialCurrencyBalance float64             `json:"initialCurrencyBalance"`
+	LastExecutedOrderID    string              `json:"lastExecutedOrderID"`
+	LastExecutedPlanDepth  uint32              `json:"lastExecutedPlanDepth"`
+	Status                 string              `json:"status"`
+	CloseOnComplete        bool                `json:"closeOnComplete"`
+	CreatedOn              string              `json:"createdOn"`
+	UpdatedOn              string              `json:"updatedOn"`
+	Activity               PlanActivitySummary `json:"activity"`
+	Orders                 []*Order            `json:"orders,omitempty"`
 }
 
 type PlanActivitySummary struct {
@@ -223,28 +222,15 @@ func (controller *PlanController) HandleDeletePlan(c echo.Context) error {
 		}
 	}
 
-	names := strings.Split(r.Data.Plan.MarketName, "-")
-	baseCurrencySymbol := names[1]
-	baseCurrencyName := controller.currencies[baseCurrencySymbol]
-	currencySymbol := names[0]
-	currencyName := controller.currencies[currencySymbol]
-
 	res := &ResponsePlanWithOrderPageSuccess{
 		Status: response.Success,
 		Data: &PlanWithOrderPage{
-			PlanID:             r.Data.Plan.PlanID,
-			PlanTemplateID:     r.Data.Plan.PlanTemplateID,
-			Exchange:           r.Data.Plan.Exchange,
-			MarketName:         r.Data.Plan.MarketName,
-			BaseCurrencySymbol: baseCurrencySymbol,
-			BaseCurrencyName:   baseCurrencyName,
-			//BaseBalance:        r.Data.Plan.BaseBalance,
-			CurrencySymbol: currencySymbol,
-			CurrencyName:   currencyName,
-			//CurrencyBalance: r.Data.Plan.CurrencyBalance,
-			Status:    r.Data.Plan.Status,
-			CreatedOn: r.Data.Plan.CreatedOn,
-			UpdatedOn: r.Data.Plan.UpdatedOn,
+			PlanID:         r.Data.Plan.PlanID,
+			PlanTemplateID: r.Data.Plan.PlanTemplateID,
+			Exchange:       r.Data.Plan.Exchange,
+			Status:         r.Data.Plan.Status,
+			CreatedOn:      r.Data.Plan.CreatedOn,
+			UpdatedOn:      r.Data.Plan.UpdatedOn,
 		},
 	}
 
@@ -355,12 +341,6 @@ func (controller *PlanController) HandleGetPlan(c echo.Context) error {
 		newOrders = append(newOrders, &newo)
 	}
 
-	names := strings.Split(r.Data.Plan.MarketName, "-")
-	baseCurrencySymbol := names[1]
-	baseCurrencyName := controller.currencies[baseCurrencySymbol]
-	marketCurrencySymbol := names[0]
-	marketCurrencyName := controller.currencies[marketCurrencySymbol]
-
 	getActivity := protoActivity.RecentActivityRequest{
 		ObjectID: planID,
 		Count:    1,
@@ -374,26 +354,25 @@ func (controller *PlanController) HandleGetPlan(c echo.Context) error {
 	res := &ResponsePlanSuccess{
 		Status: response.Success,
 		Data: &Plan{
-			PlanID:                r.Data.Plan.PlanID,
-			PlanTemplateID:        r.Data.Plan.PlanTemplateID,
-			PlanNumber:            r.Data.Plan.UserPlanNumber,
-			Title:                 r.Data.Plan.Title,
-			Exchange:              r.Data.Plan.Exchange,
-			MarketName:            r.Data.Plan.MarketName,
-			ActiveCurrencySymbol:  r.Data.Plan.ActiveCurrencySymbol,
-			ActiveCurrencyName:    controller.currencies[r.Data.Plan.ActiveCurrencySymbol],
-			ActiveCurrencyBalance: r.Data.Plan.ActiveCurrencyBalance,
-			BaseCurrencySymbol:    baseCurrencySymbol,
-			BaseCurrencyName:      baseCurrencyName,
-			MarketCurrencySymbol:  marketCurrencySymbol,
-			MarketCurrencyName:    marketCurrencyName,
-			Status:                r.Data.Plan.Status,
-			CloseOnComplete:       r.Data.Plan.CloseOnComplete,
-			LastExecutedOrderID:   r.Data.Plan.LastExecutedOrderID,
-			LastExecutedPlanDepth: r.Data.Plan.LastExecutedPlanDepth,
-			Orders:                newOrders,
-			CreatedOn:             r.Data.Plan.CreatedOn,
-			UpdatedOn:             r.Data.Plan.UpdatedOn,
+			PlanID:                 r.Data.Plan.PlanID,
+			PlanTemplateID:         r.Data.Plan.PlanTemplateID,
+			PlanNumber:             r.Data.Plan.UserPlanNumber,
+			Title:                  r.Data.Plan.Title,
+			TotalDepth:             r.Data.Plan.TotalDepth,
+			Exchange:               r.Data.Plan.Exchange,
+			ActiveCurrencySymbol:   r.Data.Plan.ActiveCurrencySymbol,
+			ActiveCurrencyName:     controller.currencies[r.Data.Plan.ActiveCurrencySymbol],
+			ActiveCurrencyBalance:  r.Data.Plan.ActiveCurrencyBalance,
+			InitialCurrencySymbol:  r.Data.Plan.InitialCurrencySymbol,
+			InitialCurrencyName:    controller.currencies[r.Data.Plan.InitialCurrencySymbol],
+			InitialCurrencyBalance: r.Data.Plan.InitialCurrencyBalance,
+			Status:                 r.Data.Plan.Status,
+			CloseOnComplete:        r.Data.Plan.CloseOnComplete,
+			LastExecutedOrderID:    r.Data.Plan.LastExecutedOrderID,
+			LastExecutedPlanDepth:  r.Data.Plan.LastExecutedPlanDepth,
+			Orders:                 newOrders,
+			CreatedOn:              r.Data.Plan.CreatedOn,
+			UpdatedOn:              r.Data.Plan.UpdatedOn,
 			Activity: PlanActivitySummary{
 				Total:  activityCount.Data.Count,
 				Recent: activityData.Data.Activity[0],
@@ -476,32 +455,25 @@ func (controller *PlanController) HandleListPlans(c echo.Context) error {
 
 	plans := make([]*Plan, 0)
 	for _, plan := range r.Data.Plans {
-		names := strings.Split(plan.MarketName, "-")
-		baseCurrencySymbol := names[1]
-		baseCurrencyName := controller.currencies[baseCurrencySymbol]
-		marketCurrencySymbol := names[0]
-		marketCurrencyName := controller.currencies[marketCurrencySymbol]
-
 		pln := Plan{
-			PlanID:                plan.PlanID,
-			PlanTemplateID:        plan.PlanTemplateID,
-			PlanNumber:            plan.UserPlanNumber,
-			Title:                 plan.Title,
-			Exchange:              plan.Exchange,
-			MarketName:            plan.MarketName,
-			ActiveCurrencySymbol:  plan.ActiveCurrencySymbol,
-			ActiveCurrencyName:    controller.currencies[plan.ActiveCurrencySymbol],
-			ActiveCurrencyBalance: plan.ActiveCurrencyBalance,
-			BaseCurrencySymbol:    baseCurrencySymbol,
-			BaseCurrencyName:      baseCurrencyName,
-			MarketCurrencySymbol:  marketCurrencySymbol,
-			MarketCurrencyName:    marketCurrencyName,
-			Status:                plan.Status,
-			CloseOnComplete:       plan.CloseOnComplete,
-			LastExecutedOrderID:   plan.LastExecutedOrderID,
-			LastExecutedPlanDepth: plan.LastExecutedPlanDepth,
-			CreatedOn:             plan.CreatedOn,
-			UpdatedOn:             plan.UpdatedOn,
+			PlanID:                 plan.PlanID,
+			PlanTemplateID:         plan.PlanTemplateID,
+			PlanNumber:             plan.UserPlanNumber,
+			Title:                  plan.Title,
+			TotalDepth:             plan.TotalDepth,
+			Exchange:               plan.Exchange,
+			ActiveCurrencySymbol:   plan.ActiveCurrencySymbol,
+			ActiveCurrencyName:     controller.currencies[plan.ActiveCurrencySymbol],
+			ActiveCurrencyBalance:  plan.ActiveCurrencyBalance,
+			InitialCurrencySymbol:  plan.InitialCurrencySymbol,
+			InitialCurrencyName:    controller.currencies[plan.InitialCurrencySymbol],
+			InitialCurrencyBalance: plan.InitialCurrencyBalance,
+			Status:                 plan.Status,
+			CloseOnComplete:        plan.CloseOnComplete,
+			LastExecutedOrderID:    plan.LastExecutedOrderID,
+			LastExecutedPlanDepth:  plan.LastExecutedPlanDepth,
+			CreatedOn:              plan.CreatedOn,
+			UpdatedOn:              plan.UpdatedOn,
 		}
 		plans = append(plans, &pln)
 	}
@@ -712,34 +684,28 @@ func (controller *PlanController) HandlePostPlan(c echo.Context) error {
 		newOrders = append(newOrders, &newo)
 	}
 
-	names := strings.Split(r.Data.Plan.MarketName, "-")
-	baseCurrencySymbol := names[1]
-	baseCurrencyName := controller.currencies[baseCurrencySymbol]
-	marketCurrencySymbol := names[0]
-	marketCurrencyName := controller.currencies[marketCurrencySymbol]
 	res := &ResponsePlanSuccess{
 		Status: response.Success,
 		Data: &Plan{
-			PlanID:                r.Data.Plan.PlanID,
-			PlanTemplateID:        r.Data.Plan.PlanTemplateID,
-			PlanNumber:            r.Data.Plan.UserPlanNumber,
-			Title:                 r.Data.Plan.Title,
-			Exchange:              r.Data.Plan.Exchange,
-			MarketName:            r.Data.Plan.MarketName,
-			ActiveCurrencySymbol:  r.Data.Plan.ActiveCurrencySymbol,
-			ActiveCurrencyName:    controller.currencies[r.Data.Plan.ActiveCurrencySymbol],
-			ActiveCurrencyBalance: r.Data.Plan.ActiveCurrencyBalance,
-			BaseCurrencySymbol:    baseCurrencySymbol,
-			BaseCurrencyName:      baseCurrencyName,
-			MarketCurrencySymbol:  marketCurrencySymbol,
-			MarketCurrencyName:    marketCurrencyName,
-			Status:                r.Data.Plan.Status,
-			CloseOnComplete:       r.Data.Plan.CloseOnComplete,
-			LastExecutedOrderID:   r.Data.Plan.LastExecutedOrderID,
-			LastExecutedPlanDepth: r.Data.Plan.LastExecutedPlanDepth,
-			Orders:                newOrders,
-			CreatedOn:             r.Data.Plan.CreatedOn,
-			UpdatedOn:             r.Data.Plan.UpdatedOn,
+			PlanID:                 r.Data.Plan.PlanID,
+			PlanTemplateID:         r.Data.Plan.PlanTemplateID,
+			PlanNumber:             r.Data.Plan.UserPlanNumber,
+			TotalDepth:             r.Data.Plan.TotalDepth,
+			Title:                  r.Data.Plan.Title,
+			Exchange:               r.Data.Plan.Exchange,
+			ActiveCurrencySymbol:   r.Data.Plan.ActiveCurrencySymbol,
+			ActiveCurrencyName:     controller.currencies[r.Data.Plan.ActiveCurrencySymbol],
+			ActiveCurrencyBalance:  r.Data.Plan.ActiveCurrencyBalance,
+			InitialCurrencySymbol:  r.Data.Plan.InitialCurrencySymbol,
+			InitialCurrencyName:    controller.currencies[r.Data.Plan.InitialCurrencySymbol],
+			InitialCurrencyBalance: r.Data.Plan.InitialCurrencyBalance,
+			Status:                 r.Data.Plan.Status,
+			CloseOnComplete:        r.Data.Plan.CloseOnComplete,
+			LastExecutedOrderID:    r.Data.Plan.LastExecutedOrderID,
+			LastExecutedPlanDepth:  r.Data.Plan.LastExecutedPlanDepth,
+			Orders:                 newOrders,
+			CreatedOn:              r.Data.Plan.CreatedOn,
+			UpdatedOn:              r.Data.Plan.UpdatedOn,
 		},
 	}
 
@@ -889,34 +855,28 @@ func (controller *PlanController) HandleUpdatePlan(c echo.Context) error {
 		newOrders = append(newOrders, &newo)
 	}
 
-	names := strings.Split(r.Data.Plan.MarketName, "-")
-	baseCurrencySymbol := names[1]
-	baseCurrencyName := controller.currencies[baseCurrencySymbol]
-	marketCurrencySymbol := names[0]
-	marketCurrencyName := controller.currencies[marketCurrencySymbol]
 	res := &ResponsePlanSuccess{
 		Status: response.Success,
 		Data: &Plan{
-			PlanID:                r.Data.Plan.PlanID,
-			PlanTemplateID:        r.Data.Plan.PlanTemplateID,
-			PlanNumber:            r.Data.Plan.UserPlanNumber,
-			Title:                 r.Data.Plan.Title,
-			Exchange:              r.Data.Plan.Exchange,
-			MarketName:            r.Data.Plan.MarketName,
-			ActiveCurrencySymbol:  r.Data.Plan.ActiveCurrencySymbol,
-			ActiveCurrencyName:    controller.currencies[r.Data.Plan.ActiveCurrencySymbol],
-			ActiveCurrencyBalance: r.Data.Plan.ActiveCurrencyBalance,
-			BaseCurrencySymbol:    baseCurrencySymbol,
-			BaseCurrencyName:      baseCurrencyName,
-			MarketCurrencySymbol:  marketCurrencySymbol,
-			MarketCurrencyName:    marketCurrencyName,
-			Status:                r.Data.Plan.Status,
-			CloseOnComplete:       r.Data.Plan.CloseOnComplete,
-			LastExecutedOrderID:   r.Data.Plan.LastExecutedOrderID,
-			LastExecutedPlanDepth: r.Data.Plan.LastExecutedPlanDepth,
-			Orders:                newOrders,
-			CreatedOn:             r.Data.Plan.CreatedOn,
-			UpdatedOn:             r.Data.Plan.UpdatedOn,
+			PlanID:                 r.Data.Plan.PlanID,
+			PlanTemplateID:         r.Data.Plan.PlanTemplateID,
+			PlanNumber:             r.Data.Plan.UserPlanNumber,
+			Title:                  r.Data.Plan.Title,
+			TotalDepth:             r.Data.Plan.TotalDepth,
+			Exchange:               r.Data.Plan.Exchange,
+			ActiveCurrencySymbol:   r.Data.Plan.ActiveCurrencySymbol,
+			ActiveCurrencyName:     controller.currencies[r.Data.Plan.ActiveCurrencySymbol],
+			ActiveCurrencyBalance:  r.Data.Plan.ActiveCurrencyBalance,
+			InitialCurrencySymbol:  r.Data.Plan.InitialCurrencySymbol,
+			InitialCurrencyName:    controller.currencies[r.Data.Plan.InitialCurrencySymbol],
+			InitialCurrencyBalance: r.Data.Plan.InitialCurrencyBalance,
+			Status:                 r.Data.Plan.Status,
+			CloseOnComplete:        r.Data.Plan.CloseOnComplete,
+			LastExecutedOrderID:    r.Data.Plan.LastExecutedOrderID,
+			LastExecutedPlanDepth:  r.Data.Plan.LastExecutedPlanDepth,
+			Orders:                 newOrders,
+			CreatedOn:              r.Data.Plan.CreatedOn,
+			UpdatedOn:              r.Data.Plan.UpdatedOn,
 		},
 	}
 
