@@ -1167,7 +1167,7 @@ func UpdatePlanStatus(db *sql.DB, planID, status string) error {
 // 	return error
 // }
 
-func UpdatePlanContext(db *sql.DB, planID, executedOrderID, exchange, marketName, symbol string, activeBalance float64, planDepth int32) error {
+func UpdatePlanContext(db *sql.DB, planID, executedOrderID, exchange, symbol string, activeBalance float64, planDepth int32) error {
 	stmt := `
 		UPDATE plans 
 		SET 
@@ -1175,12 +1175,11 @@ func UpdatePlanContext(db *sql.DB, planID, executedOrderID, exchange, marketName
 			last_executed_plan_depth = $2,
 			active_currency_symbol = $3,
 			active_currency_balance = $4,
-			market_name = $5,
-			exchange_name = $6 
+			exchange_name = $5 
 		WHERE
-			id = $7`
+			id = $6`
 
-	_, err := db.Exec(stmt, executedOrderID, planDepth, symbol, activeBalance, marketName, exchange, planID)
+	_, err := db.Exec(stmt, executedOrderID, planDepth, symbol, activeBalance, exchange, planID)
 
 	return err
 }

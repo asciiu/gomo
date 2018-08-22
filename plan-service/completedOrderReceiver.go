@@ -75,7 +75,6 @@ func (receiver *CompletedOrderReceiver) ProcessEvent(ctx context.Context, comple
 			planID,
 			completedOrderEvent.OrderID,
 			completedOrderEvent.Exchange,
-			completedOrderEvent.MarketName,
 			completedOrderEvent.FinalCurrencySymbol,
 			completedOrderEvent.FinalCurrencyBalance,
 			depth); err != nil {
