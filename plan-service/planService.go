@@ -254,6 +254,7 @@ func (service *PlanService) NewPlan(ctx context.Context, req *protoPlan.NewPlanR
 	newOrders := make([]*protoOrder.Order, 0, len(req.Orders))
 	exchange := ""
 	depth := uint32(0)
+	totalDepth := uint32(0)
 
 	for _, or := range req.Orders {
 		orderStatus := status.Inactive
@@ -287,6 +288,9 @@ func (service *PlanService) NewPlan(ctx context.Context, req *protoPlan.NewPlanR
 			for _, o := range newOrders {
 				if o.OrderID == or.ParentOrderID {
 					depth = o.PlanDepth + 1
+					if depth > totalDepth {
+						totalDepth = depth
+					}
 					break
 				}
 			}
@@ -398,22 +402,24 @@ func (service *PlanService) NewPlan(ctx context.Context, req *protoPlan.NewPlanR
 	}
 
 	pln := protoPlan.Plan{
-		PlanID:                planID.String(),
-		PlanTemplateID:        req.PlanTemplateID,
-		UserID:                req.UserID,
-		Title:                 title,
-		ActiveCurrencySymbol:  newOrders[0].InitialCurrencySymbol,
-		ActiveCurrencyBalance: newOrders[0].InitialCurrencyBalance,
-		Exchange:              newOrders[0].Exchange,
-		MarketName:            newOrders[0].MarketName,
-		LastExecutedPlanDepth: 0,
-		LastExecutedOrderID:   none,
-		Orders:                newOrders,
-		UserPlanNumber:        count + 1,
-		Status:                req.Status,
-		CloseOnComplete:       req.CloseOnComplete,
-		CreatedOn:             now,
-		UpdatedOn:             now,
+		PlanID:                 planID.String(),
+		PlanTemplateID:         req.PlanTemplateID,
+		UserID:                 req.UserID,
+		Title:                  title,
+		TotalDepth:             totalDepth,
+		ActiveCurrencySymbol:   newOrders[0].InitialCurrencySymbol,
+		ActiveCurrencyBalance:  newOrders[0].InitialCurrencyBalance,
+		InitialCurrencySymbol:  newOrders[0].InitialCurrencySymbol,
+		InitialCurrencyBalance: newOrders[0].InitialCurrencyBalance,
+		Exchange:               newOrders[0].Exchange,
+		LastExecutedPlanDepth:  0,
+		LastExecutedOrderID:    none,
+		Orders:                 newOrders,
+		UserPlanNumber:         count + 1,
+		Status:                 req.Status,
+		CloseOnComplete:        req.CloseOnComplete,
+		CreatedOn:              now,
+		UpdatedOn:              now,
 	}
 
 	err = planRepo.InsertPlan(service.DB, &pln)
@@ -646,6 +652,7 @@ func (service *PlanService) UpdatePlan(ctx context.Context, req *protoPlan.Updat
 	newOrders := make([]*protoOrder.Order, 0, len(req.Orders))
 	exchange := ""
 	depth := pln.LastExecutedPlanDepth
+	totalDepth := depth
 
 	for _, or := range req.Orders {
 		orderStatus := status.Inactive
@@ -678,6 +685,9 @@ func (service *PlanService) UpdatePlan(ctx context.Context, req *protoPlan.Updat
 			for _, o := range newOrders {
 				if o.OrderID == or.ParentOrderID {
 					depth = o.PlanDepth + 1
+					if depth > totalDepth {
+						totalDepth = depth
+					}
 					break
 				}
 			}
@@ -805,18 +815,18 @@ func (service *PlanService) UpdatePlan(ctx context.Context, req *protoPlan.Updat
 		}
 	}
 
-	// if root as not executed yet and we have new orders
+	// if root has not executed yet and we have new orders
 	if pln.LastExecutedPlanDepth == 0 && len(newOrders) > 0 {
 		pln.ActiveCurrencySymbol = newOrders[0].InitialCurrencySymbol
 		pln.ActiveCurrencyBalance = newOrders[0].InitialCurrencyBalance
+		pln.InitialCurrencySymbol = newOrders[0].InitialCurrencySymbol
+		pln.InitialCurrencyBalance = newOrders[0].InitialCurrencyBalance
 		pln.Exchange = newOrders[0].Exchange
-		pln.MarketName = newOrders[0].MarketName
-		if err := planRepo.UpdatePlanContextTxn(txn, ctx, pln.PlanID, pln.ActiveCurrencySymbol, pln.Exchange, pln.MarketName, pln.ActiveCurrencyBalance); err != nil {
+		if err := planRepo.UpdatePlanContextTxn(txn, ctx, pln.PlanID, pln.ActiveCurrencySymbol, pln.Exchange, pln.ActiveCurrencyBalance); err != nil {
 			txn.Rollback()
 			res.Status = response.Error
 			res.Message = "error encountered while updating the plan context: " + err.Error()
 			return nil
-
 		}
 	}
 	if pln.Status != req.Status {
@@ -826,7 +836,15 @@ func (service *PlanService) UpdatePlan(ctx context.Context, req *protoPlan.Updat
 			res.Status = response.Error
 			res.Message = "error encountered while updating the plan status: " + err.Error()
 			return nil
-
+		}
+	}
+	if pln.TotalDepth != totalDepth {
+		pln.Status = req.Status
+		if err := planRepo.UpdatePlanTotalDepthTxn(txn, ctx, pln.PlanID, pln.TotalDepth); err != nil {
+			txn.Rollback()
+			res.Status = response.Error
+			res.Message = "error encountered while updating the plan total depth: " + err.Error()
+			return nil
 		}
 	}
 	if req.Title != "" {
@@ -836,7 +854,6 @@ func (service *PlanService) UpdatePlan(ctx context.Context, req *protoPlan.Updat
 			res.Status = response.Error
 			res.Message = "error encountered while updating the plan title: " + err.Error()
 			return nil
-
 		}
 	}
 	if pln.CloseOnComplete != req.CloseOnComplete {
@@ -846,7 +863,6 @@ func (service *PlanService) UpdatePlan(ctx context.Context, req *protoPlan.Updat
 			res.Status = response.Error
 			res.Message = "error encountered while updating the plan close on complete option: " + err.Error()
 			return nil
-
 		}
 	}
 	if pln.PlanTemplateID != req.PlanTemplateID {
@@ -856,7 +872,6 @@ func (service *PlanService) UpdatePlan(ctx context.Context, req *protoPlan.Updat
 			res.Status = response.Error
 			res.Message = "error encountered while updating the plan template: " + err.Error()
 			return nil
-
 		}
 	}
 

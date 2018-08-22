@@ -8,9 +8,11 @@ CREATE TABLE plans (
   user_id UUID NOT NULL REFERENCES users (id) ON DELETE CASCADE,
   title text,                      
   exchange_name text NOT NULL,
-  market_name text NOT NULL,
   active_currency_symbol text NOT NULL,
   active_currency_balance decimal NOT NULL,
+  initial_currency_symbol text NOT NULL,
+  initial_currency_balance decimal NOT NULL,
+  total_depth integer NOT NULL,
   last_executed_plan_depth integer NOT NULL,
   last_executed_order_id UUID NOT NULL,
   plan_template_id text,             -- optional frontend plan template used with this plan - (Leo wanted this) 

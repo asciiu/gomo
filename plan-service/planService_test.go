@@ -356,7 +356,7 @@ func TestOrderUpdatePlan(t *testing.T) {
 
 	res = protoPlan.PlanResponse{}
 	service.UpdatePlan(context.Background(), &req2, &res)
-	assert.Equal(t, "success", res.Status, "return status of updating an invalid plan should be fail")
+	assert.Equal(t, "success", res.Status, res.Message)
 	assert.Equal(t, 2, len(res.Data.Plan.Orders), "update should have yielded a single order")
 	assert.Equal(t, 70.0, res.Data.Plan.Orders[0].InitialCurrencyBalance, "active currency balance after update order incorrect")
 	assert.Equal(t, "thing2", res.Data.Plan.PlanTemplateID, "the template ID should have changed")

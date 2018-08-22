@@ -59,19 +59,21 @@ message Plan {
   string planID = 1;
   string planTemplateID = 2;
   string userID = 3;
-  uint32 lastExecutedPlanDepth = 8;
-  string lastExecutedOrderID = 9;
-  string exchange = 10;
-  string marketName = 11;
-  string activeCurrencySymbol = 12;
-  double activeCurrencyBalance = 13;
-  uint64 userPlanNumber = 14;
-  string status = 15;
-  bool closeOnComplete = 16;
-  string createdOn = 17;
-  string updatedOn = 18;
-  string title = 19;
-  repeated order.Order orders = 20; 
+  uint64 userPlanNumber = 4;
+  string exchange = 5;
+  string title = 6;
+  uint32 totalDepth = 7;
+  string activeCurrencySymbol = 8;
+  double activeCurrencyBalance = 9;
+  string initialCurrencySymbol = 10;
+  double initialCurrencyBalance = 11;
+  uint32 lastExecutedPlanDepth = 12;
+  string lastExecutedOrderID = 13;
+  string status = 14;
+  bool closeOnComplete = 15;
+  string createdOn = 16;
+  string updatedOn = 17;
+  repeated order.Order orders = 18; 
 }
 
 message PlanData {
