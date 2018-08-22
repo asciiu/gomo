@@ -1876,14 +1876,6 @@
         "activity": {
           "$ref": "#/definitions/PlanActivitySummary"
         },
-        "baseCurrencyName": {
-          "type": "string",
-          "x-go-name": "BaseCurrencyName"
-        },
-        "baseCurrencySymbol": {
-          "type": "string",
-          "x-go-name": "BaseCurrencySymbol"
-        },
         "closeOnComplete": {
           "type": "boolean",
           "x-go-name": "CloseOnComplete"
@@ -1900,6 +1892,19 @@
           "type": "string",
           "x-go-name": "ExchangeMarketName"
         },
+        "initialCurrencyBalance": {
+          "type": "number",
+          "format": "double",
+          "x-go-name": "InitialCurrencyBalance"
+        },
+        "initialCurrencyName": {
+          "type": "string",
+          "x-go-name": "InitialCurrencyName"
+        },
+        "initialCurrencySymbol": {
+          "type": "string",
+          "x-go-name": "InitialCurrencySymbol"
+        },
         "lastExecutedOrderID": {
           "type": "string",
           "x-go-name": "LastExecutedOrderID"
@@ -1908,18 +1913,6 @@
           "type": "integer",
           "format": "uint32",
           "x-go-name": "LastExecutedPlanDepth"
-        },
-        "marketCurrencyName": {
-          "type": "string",
-          "x-go-name": "MarketCurrencyName"
-        },
-        "marketCurrencySymbol": {
-          "type": "string",
-          "x-go-name": "MarketCurrencySymbol"
-        },
-        "marketName": {
-          "type": "string",
-          "x-go-name": "MarketName"
         },
         "orders": {
           "type": "array",
@@ -1948,6 +1941,11 @@
         "title": {
           "type": "string",
           "x-go-name": "Title"
+        },
+        "totalDepth": {
+          "type": "integer",
+          "format": "uint32",
+          "x-go-name": "TotalDepth"
         },
         "updatedOn": {
           "type": "string",

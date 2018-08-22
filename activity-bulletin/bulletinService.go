@@ -86,7 +86,7 @@ func (service *Bulletin) LogActivity(ctx context.Context, history *protoActivity
 		Message:  "fomo",
 		Badge:    1,
 		Category: "test",
-		Sound:    "0.caf",
+		Sound:    "1.caf",
 		Topic:    service.topic,
 		Alert: &protoGorush.Alert{
 			Title:    history.Title,

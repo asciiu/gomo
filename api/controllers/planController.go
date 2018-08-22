@@ -350,6 +350,10 @@ func (controller *PlanController) HandleGetPlan(c echo.Context) error {
 		ObjectID: planID,
 	}
 	activityCount, _ := controller.Bulletin.FindActivityCount(context.Background(), &getCount)
+	var recent *protoActivity.Activity
+	if activityCount.Data.Count > 0 {
+		recent = activityData.Data.Activity[0]
+	}
 
 	res := &ResponsePlanSuccess{
 		Status: response.Success,
@@ -375,7 +379,7 @@ func (controller *PlanController) HandleGetPlan(c echo.Context) error {
 			UpdatedOn:              r.Data.Plan.UpdatedOn,
 			Activity: PlanActivitySummary{
 				Total:  activityCount.Data.Count,
-				Recent: activityData.Data.Activity[0],
+				Recent: recent,
 			},
 		},
 	}
