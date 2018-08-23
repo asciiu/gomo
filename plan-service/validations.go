@@ -1,10 +1,7 @@
 package main
 
 import (
-	constOrder "github.com/asciiu/gomo/common/constants/order"
-	constPlan "github.com/asciiu/gomo/common/constants/plan"
-	constSide "github.com/asciiu/gomo/common/constants/side"
-	constStatus "github.com/asciiu/gomo/common/constants/status"
+	"github.com/asciiu/gomo/plan-service/constants"
 	protoOrder "github.com/asciiu/gomo/plan-service/proto/order"
 	"github.com/google/uuid"
 )
@@ -12,6 +9,37 @@ import (
 // plans must have a title
 func ValidateTitle(title string) bool {
 	return title != ""
+}
+
+// validates user specified plan status
+func ValidatePlanInputStatus(pstatus string) bool {
+	pistats := [...]string{
+		constants.Active,
+		constants.Inactive,
+		constants.Historic,
+	}
+
+	for _, stat := range pistats {
+		if stat == pstatus {
+			return true
+		}
+	}
+	return false
+}
+
+// defines valid input for plan status when updating an executed plan (a.k.a. plan with a filled order)
+func ValidateUpdatePlanStatus(pstatus string) bool {
+	pistats := [...]string{
+		constants.Active,
+		constants.Inactive,
+	}
+
+	for _, stat := range pistats {
+		if stat == pstatus {
+			return true
+		}
+	}
+	return false
 }
 
 // New plans can only have a single order with parent order number == 0.
@@ -94,7 +122,7 @@ func ValidateNoneZeroBalance(orderRequests []*protoOrder.NewOrderRequest) bool {
 
 func ValidatePaperOrders(orderRequests []*protoOrder.NewOrderRequest) bool {
 	for _, o := range orderRequests {
-		if o.OrderType != constOrder.PaperOrder {
+		if o.OrderType != constants.PaperOrder {
 			return false
 		}
 	}
@@ -103,7 +131,7 @@ func ValidatePaperOrders(orderRequests []*protoOrder.NewOrderRequest) bool {
 
 func ValidateNotPaperOrders(orderRequests []*protoOrder.NewOrderRequest) bool {
 	for _, o := range orderRequests {
-		if o.OrderType == constOrder.PaperOrder {
+		if o.OrderType == constants.PaperOrder {
 			return false
 		}
 	}
@@ -112,9 +140,9 @@ func ValidateNotPaperOrders(orderRequests []*protoOrder.NewOrderRequest) bool {
 
 func ValidateOrderType(ot string) bool {
 	ots := [...]string{
-		constOrder.LimitOrder,
-		constOrder.MarketOrder,
-		constOrder.PaperOrder,
+		constants.LimitOrder,
+		constants.MarketOrder,
+		constants.PaperOrder,
 	}
 
 	for _, ty := range ots {
@@ -127,8 +155,8 @@ func ValidateOrderType(ot string) bool {
 
 func ValidateOrderSide(os string) bool {
 	ots := [...]string{
-		constSide.Buy,
-		constSide.Sell,
+		constants.Buy,
+		constants.Sell,
 	}
 
 	for _, ty := range ots {
@@ -139,42 +167,11 @@ func ValidateOrderSide(os string) bool {
 	return false
 }
 
-// validates user specified plan status
-func ValidatePlanInputStatus(pstatus string) bool {
-	pistats := [...]string{
-		constPlan.Active,
-		constPlan.Inactive,
-		constPlan.Historic,
-	}
-
-	for _, stat := range pistats {
-		if stat == pstatus {
-			return true
-		}
-	}
-	return false
-}
-
-// defines valid input for plan status when updating an executed plan (a.k.a. plan with a filled order)
-func ValidatePlanUpdateStatus(pstatus string) bool {
-	pistats := [...]string{
-		constPlan.Active,
-		constPlan.Inactive,
-	}
-
-	for _, stat := range pistats {
-		if stat == pstatus {
-			return true
-		}
-	}
-	return false
-}
-
 // New order request cannot overwrite a filled order
 func ValidateNonExecutedOrder(porders []*protoOrder.Order, rorders []*protoOrder.NewOrderRequest) bool {
 	for _, nor := range rorders {
 		for _, po := range porders {
-			if nor.OrderID == po.OrderID && po.Status == constStatus.Filled {
+			if nor.OrderID == po.OrderID && po.Status == constants.Filled {
 				return false
 			}
 		}
