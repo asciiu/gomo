@@ -7,8 +7,8 @@ import (
 	"errors"
 	"log"
 
-	"github.com/asciiu/gomo/common/constants/key"
-	"github.com/asciiu/gomo/common/constants/plan"
+	constKey "github.com/asciiu/gomo/key-service/constants"
+	constPlan "github.com/asciiu/gomo/plan-service/constants"
 	protoOrder "github.com/asciiu/gomo/plan-service/proto/order"
 	protoPlan "github.com/asciiu/gomo/plan-service/proto/plan"
 )
@@ -257,7 +257,7 @@ func FindActivePlans(db *sql.DB) ([]*protoPlan.Plan, error) {
 		JOIN orders o on p.id = o.plan_id AND p.last_executed_order_id = o.parent_order_id
 		JOIN triggers t on o.id = t.order_id
 		JOIN user_keys k on o.user_key_id = k.id
-		WHERE p.status = $1 AND k.status = $2 ORDER BY p.id, o.id, t.index`, plan.Active, key.Verified)
+		WHERE p.status = $1 AND k.status = $2 ORDER BY p.id, o.id, t.index`, constPlan.Active, constKey.Verified)
 
 	if err != nil {
 		return nil, err
@@ -624,7 +624,7 @@ func FindChildOrders(db *sql.DB, planID, parentOrderID string) (*protoPlan.Plan,
 		JOIN triggers t on o.id = t.order_id
 		JOIN user_keys k on o.user_key_id = k.id
 		WHERE p.id = $1 AND o.parent_order_id = $2 AND k.status = $3 
-		ORDER BY o.id, t.index`, planID, parentOrderID, key.Verified)
+		ORDER BY o.id, t.index`, planID, parentOrderID, constKey.Verified)
 
 	if err != nil {
 		return nil, err

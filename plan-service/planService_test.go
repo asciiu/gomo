@@ -6,14 +6,14 @@ import (
 	"log"
 	"testing"
 
-	constKey "github.com/asciiu/gomo/common/constants/key"
-	constStatus "github.com/asciiu/gomo/common/constants/status"
 	"github.com/asciiu/gomo/common/db"
 	protoEngine "github.com/asciiu/gomo/execution-engine/proto/engine"
 	testEngine "github.com/asciiu/gomo/execution-engine/test"
+	constKey "github.com/asciiu/gomo/key-service/constants"
 	repoKey "github.com/asciiu/gomo/key-service/db/sql"
 	protoKey "github.com/asciiu/gomo/key-service/proto/key"
 	testKey "github.com/asciiu/gomo/key-service/test"
+	constPlan "github.com/asciiu/gomo/plan-service/constants"
 	repoOrder "github.com/asciiu/gomo/plan-service/db/sql"
 	protoOrder "github.com/asciiu/gomo/plan-service/proto/order"
 	protoPlan "github.com/asciiu/gomo/plan-service/proto/plan"
@@ -419,7 +419,7 @@ func TestOrderUpdatePlanFailure(t *testing.T) {
 	assert.Equal(t, "success", res.Status, "return status of inserting plan should be success")
 	planID := res.Data.Plan.PlanID
 
-	_, _, err := repoOrder.UpdateOrderStatus(service.DB, "4d671984-d7dd-4dce-a20f-23f25d6daf7f", constStatus.Filled)
+	_, _, err := repoOrder.UpdateOrderStatus(service.DB, "4d671984-d7dd-4dce-a20f-23f25d6daf7f", constPlan.Filled)
 	if err != nil {
 		assert.Equal(t, "success", "failed", "update order status failed")
 	}

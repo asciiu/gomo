@@ -5,13 +5,14 @@ import (
 	"log"
 	"os"
 
-	bp "github.com/asciiu/gomo/balance-service/proto/balance"
-	msg "github.com/asciiu/gomo/common/constants/messages"
+	protoBalance "github.com/asciiu/gomo/balance-service/proto/balance"
+	constMessage "github.com/asciiu/gomo/common/constants/message"
 	"github.com/asciiu/gomo/common/db"
 	protoEngine "github.com/asciiu/gomo/execution-engine/proto/engine"
 	protoKey "github.com/asciiu/gomo/key-service/proto/key"
 	protoPlan "github.com/asciiu/gomo/plan-service/proto/plan"
 	micro "github.com/micro/go-micro"
+	"github.com/micro/go-micro/server"
 	k8s "github.com/micro/kubernetes/go/micro"
 )
 
@@ -35,30 +36,15 @@ func main() {
 	}
 
 	planService := PlanService{
-		DB:           gomoDB,
-		Client:       bp.NewBalanceServiceClient("balances", srv.Client()),
-		KeyClient:    protoKey.NewKeyServiceClient("keys", srv.Client()),
-		EngineClient: protoEngine.NewExecutionEngineClient("engine", srv.Client()),
+		DB:            gomoDB,
+		BalanceClient: protoBalance.NewBalanceServiceClient("balances", srv.Client()),
+		KeyClient:     protoKey.NewKeyServiceClient("keys", srv.Client()),
+		EngineClient:  protoEngine.NewExecutionEngineClient("engine", srv.Client()),
+		NotifyPub:     micro.NewPublisher(constMessage.TopicNotification, srv.Client()),
 	}
 
-	abortedReceiver := AbortedOrderReceiver{
-		DB:      gomoDB,
-		Service: &planService,
-	}
-
-	completedReceiver := CompletedOrderReceiver{
-		DB:        gomoDB,
-		Service:   &planService,
-		NotifyPub: micro.NewPublisher(msg.TopicNotification, srv.Client()),
-	}
-
-	engineReceiver := EngineStartReceiver{
-		Service: &planService,
-	}
-
-	micro.RegisterSubscriber(msg.TopicCompletedOrder, srv.Server(), &completedReceiver)
-	micro.RegisterSubscriber(msg.TopicAbortedOrder, srv.Server(), &abortedReceiver)
-	micro.RegisterSubscriber(msg.TopicEngineStart, srv.Server(), &engineReceiver)
+	micro.RegisterSubscriber(constMessage.TopicCompletedOrder, srv.Server(), planService.HandleCompletedOrder, server.SubscriberQueue("complete.order"))
+	micro.RegisterSubscriber(constMessage.TopicEngineStart, srv.Server(), planService.HandleStartEngine, server.SubscriberQueue("pop.engine"))
 
 	// Register our service with the gRPC server, this will tie our
 	// implementation into the auto-generated interface code for our

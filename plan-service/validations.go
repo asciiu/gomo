@@ -1,7 +1,7 @@
 package main
 
 import (
-	"github.com/asciiu/gomo/plan-service/constants"
+	constPlan "github.com/asciiu/gomo/plan-service/constants"
 	protoOrder "github.com/asciiu/gomo/plan-service/proto/order"
 	"github.com/google/uuid"
 )
@@ -14,9 +14,9 @@ func ValidateTitle(title string) bool {
 // validates user specified plan status
 func ValidatePlanInputStatus(pstatus string) bool {
 	pistats := [...]string{
-		constants.Active,
-		constants.Inactive,
-		constants.Historic,
+		constPlan.Active,
+		constPlan.Inactive,
+		constPlan.Historic,
 	}
 
 	for _, stat := range pistats {
@@ -30,8 +30,8 @@ func ValidatePlanInputStatus(pstatus string) bool {
 // defines valid input for plan status when updating an executed plan (a.k.a. plan with a filled order)
 func ValidateUpdatePlanStatus(pstatus string) bool {
 	pistats := [...]string{
-		constants.Active,
-		constants.Inactive,
+		constPlan.Active,
+		constPlan.Inactive,
 	}
 
 	for _, stat := range pistats {
@@ -122,7 +122,7 @@ func ValidateNoneZeroBalance(orderRequests []*protoOrder.NewOrderRequest) bool {
 
 func ValidatePaperOrders(orderRequests []*protoOrder.NewOrderRequest) bool {
 	for _, o := range orderRequests {
-		if o.OrderType != constants.PaperOrder {
+		if o.OrderType != constPlan.PaperOrder {
 			return false
 		}
 	}
@@ -131,7 +131,7 @@ func ValidatePaperOrders(orderRequests []*protoOrder.NewOrderRequest) bool {
 
 func ValidateNotPaperOrders(orderRequests []*protoOrder.NewOrderRequest) bool {
 	for _, o := range orderRequests {
-		if o.OrderType == constants.PaperOrder {
+		if o.OrderType == constPlan.PaperOrder {
 			return false
 		}
 	}
@@ -140,9 +140,9 @@ func ValidateNotPaperOrders(orderRequests []*protoOrder.NewOrderRequest) bool {
 
 func ValidateOrderType(ot string) bool {
 	ots := [...]string{
-		constants.LimitOrder,
-		constants.MarketOrder,
-		constants.PaperOrder,
+		constPlan.LimitOrder,
+		constPlan.MarketOrder,
+		constPlan.PaperOrder,
 	}
 
 	for _, ty := range ots {
@@ -155,8 +155,8 @@ func ValidateOrderType(ot string) bool {
 
 func ValidateOrderSide(os string) bool {
 	ots := [...]string{
-		constants.Buy,
-		constants.Sell,
+		constPlan.Buy,
+		constPlan.Sell,
 	}
 
 	for _, ty := range ots {
@@ -171,7 +171,7 @@ func ValidateOrderSide(os string) bool {
 func ValidateNonExecutedOrder(porders []*protoOrder.Order, rorders []*protoOrder.NewOrderRequest) bool {
 	for _, nor := range rorders {
 		for _, po := range porders {
-			if nor.OrderID == po.OrderID && po.Status == constants.Filled {
+			if nor.OrderID == po.OrderID && po.Status == constPlan.Filled {
 				return false
 			}
 		}

@@ -7,25 +7,21 @@
   packages = [
     "activity-bulletin/proto",
     "balance-service/proto/balance",
-    "common/constants/key",
-    "common/constants/messages",
-    "common/constants/order",
-    "common/constants/plan",
+    "common/constants/message",
     "common/constants/response",
-    "common/constants/side",
-    "common/constants/status",
     "common/db",
     "common/proto/events",
     "common/util",
     "execution-engine/proto/engine",
     "execution-engine/test",
+    "key-service/constants",
     "key-service/db/sql",
     "key-service/proto/key",
     "key-service/test",
     "user-service/db/sql",
     "user-service/models"
   ]
-  revision = "f2e930ecad0ea9b4987a0b23a0cd82fe080da65b"
+  revision = "ee617d467743963496052fbe1564215959d491a9"
 
 [[projects]]
   name = "github.com/davecgh/go-spew"
@@ -358,6 +354,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "03e065d676fe295a016257753c4d3be200159db78cc4ca955db6f4ce31041d8f"
+  inputs-digest = "ec182e1ec5620cc3a78a98f6a92245faea258ffae43805f27f4376b13941712f"
   solver-name = "gps-cdcl"
   solver-version = 1

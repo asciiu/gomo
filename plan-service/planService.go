@@ -9,18 +9,18 @@ import (
 	"strings"
 	"time"
 
-	balances "github.com/asciiu/gomo/balance-service/proto/balance"
-	"github.com/asciiu/gomo/common/constants/key"
-	orderConstants "github.com/asciiu/gomo/common/constants/order"
-	"github.com/asciiu/gomo/common/constants/plan"
-	"github.com/asciiu/gomo/common/constants/response"
-	"github.com/asciiu/gomo/common/constants/side"
-	"github.com/asciiu/gomo/common/constants/status"
-	"github.com/asciiu/gomo/common/util"
-	keys "github.com/asciiu/gomo/key-service/proto/key"
+	protoActivity "github.com/asciiu/gomo/activity-bulletin/proto"
+	constCommon "github.com/asciiu/gomo/common/constants/response"
+	protoEvt "github.com/asciiu/gomo/common/proto/events"
+	commonUtil "github.com/asciiu/gomo/common/util"
+	constKey "github.com/asciiu/gomo/key-service/constants"
+	constPlan "github.com/asciiu/gomo/plan-service/constants"
+	micro "github.com/micro/go-micro"
 
+	protoBalance "github.com/asciiu/gomo/balance-service/proto/balance"
 	protoEngine "github.com/asciiu/gomo/execution-engine/proto/engine"
-	planRepo "github.com/asciiu/gomo/plan-service/db/sql"
+	protoKey "github.com/asciiu/gomo/key-service/proto/key"
+	repoPlan "github.com/asciiu/gomo/plan-service/db/sql"
 	protoOrder "github.com/asciiu/gomo/plan-service/proto/order"
 	protoPlan "github.com/asciiu/gomo/plan-service/proto/plan"
 	"github.com/google/uuid"
@@ -31,10 +31,11 @@ const precision = 8
 
 // PlanService ...
 type PlanService struct {
-	DB           *sql.DB
-	Client       balances.BalanceServiceClient
-	KeyClient    keys.KeyServiceClient
-	EngineClient protoEngine.ExecutionEngineClient
+	DB            *sql.DB
+	BalanceClient protoBalance.BalanceServiceClient
+	KeyClient     protoKey.KeyServiceClient
+	EngineClient  protoEngine.ExecutionEngineClient
+	NotifyPub     micro.Publisher
 }
 
 // private: This is where the order events are published to the rest of the system
@@ -109,7 +110,7 @@ func (service *PlanService) publishPlan(ctx context.Context, plan *protoPlan.Pla
 
 		// update the order status
 		for _, o := range newOrders {
-			if _, _, err := planRepo.UpdateOrderStatus(service.DB, o.OrderID, status.Active); err != nil {
+			if _, _, err := repoPlan.UpdateOrderStatus(service.DB, o.OrderID, constPlan.Active); err != nil {
 				log.Println("could not update order status to active -- ", err.Error())
 			}
 		}
@@ -121,13 +122,13 @@ func (service *PlanService) publishPlan(ctx context.Context, plan *protoPlan.Pla
 // private: validateBalance
 // returns true, nil when the balance can be validated
 func (service *PlanService) validateBalance(ctx context.Context, currency string, balance float64, userID string, apikeyID string) (bool, error) {
-	balRequest := balances.GetUserBalanceRequest{
+	balRequest := protoBalance.GetUserBalanceRequest{
 		UserID:   userID,
 		KeyID:    apikeyID,
 		Currency: currency,
 	}
 
-	balResponse, err := service.Client.GetUserBalance(ctx, &balRequest)
+	balResponse, err := service.BalanceClient.GetUserBalance(ctx, &balRequest)
 	if err != nil {
 		return false, fmt.Errorf("ecountered error from GetUserBalance: %s", err.Error())
 	}
@@ -146,7 +147,7 @@ func (service *PlanService) LoadPlanOrder(ctx context.Context, plan *protoPlan.P
 	// assume for now that all orders in the plan use the same Key ID. This may not be true in the future
 	keyID := plan.Orders[0].KeyID
 
-	if plan.Orders[0].OrderType != orderConstants.PaperOrder {
+	if plan.Orders[0].OrderType != constPlan.PaperOrder {
 		valid, err := service.validateBalance(ctx, currency, balance, plan.UserID, keyID)
 		if err != nil {
 			return err
@@ -163,24 +164,130 @@ func (service *PlanService) LoadPlanOrder(ctx context.Context, plan *protoPlan.P
 	return nil
 }
 
-func (service *PlanService) fetchKeys(keyIDs []string) ([]*keys.Key, error) {
-	request := keys.GetKeysRequest{
+func (service *PlanService) fetchKeys(keyIDs []string) ([]*protoKey.Key, error) {
+	request := protoKey.GetKeysRequest{
 		KeyIDs: keyIDs}
 
 	r, _ := service.KeyClient.GetKeys(context.Background(), &request)
-	if r.Status != response.Success {
-		if r.Status == response.Fail {
+	if r.Status != constCommon.Success {
+		if r.Status == constCommon.Fail {
 			return nil, fmt.Errorf(r.Message)
 		}
-		if r.Status == response.Error {
+		if r.Status == constCommon.Error {
 			return nil, fmt.Errorf(r.Message)
 		}
-		if r.Status == response.Nonentity {
+		if r.Status == constCommon.Nonentity {
 			return nil, fmt.Errorf("invalid keys")
 		}
 	}
 
 	return r.Data.Keys, nil
+}
+
+// Handle a completed order event
+func (service *PlanService) HandleCompletedOrder(ctx context.Context, completedOrderEvent *protoEvt.CompletedOrderEvent) error {
+
+	notification := protoActivity.Activity{
+		UserID:      completedOrderEvent.UserID,
+		ObjectID:    completedOrderEvent.PlanID,
+		Type:        "plan",
+		Timestamp:   string(pq.FormatTimestamp(time.Now().UTC())),
+		Title:       completedOrderEvent.MarketName,
+		Subtitle:    completedOrderEvent.Side,
+		Description: completedOrderEvent.Details,
+		Details:     fmt.Sprintf("{orderID: %s}", completedOrderEvent.OrderID),
+	}
+
+	log.Printf("%+v\n", notification)
+
+	// notify the user of completed order
+	if err := service.NotifyPub.Publish(context.Background(), &notification); err != nil {
+		log.Println("could not publish notification: ", err)
+	}
+
+	planID, depth, err := repoPlan.UpdateOrderStatus(service.DB, completedOrderEvent.OrderID, completedOrderEvent.Status)
+	if err != nil {
+		log.Println("could not update order status -- ", err.Error())
+		return nil
+	}
+
+	if completedOrderEvent.Status == constPlan.Filled {
+		now := string(pq.FormatTimestamp(time.Now().UTC()))
+		if err := repoPlan.UpdateTriggerResults(service.DB,
+			completedOrderEvent.TriggerID,
+			completedOrderEvent.TriggeredPrice,
+			completedOrderEvent.TriggeredCondition,
+			now); err != nil {
+			log.Println("completed order error trying to update the trigger -- ", err.Error())
+			return nil
+		}
+
+		if err := repoPlan.UpdateOrderResults(service.DB,
+			completedOrderEvent.OrderID,
+			completedOrderEvent.InitialCurrencyTraded,
+			completedOrderEvent.InitialCurrencyRemainder,
+			completedOrderEvent.FinalCurrencyBalance,
+			completedOrderEvent.FinalCurrencySymbol); err != nil {
+			log.Println("completed order error trying to update the order -- ", err.Error())
+			return nil
+		}
+
+		if err := repoPlan.UpdatePlanContext(service.DB,
+			planID,
+			completedOrderEvent.OrderID,
+			completedOrderEvent.Exchange,
+			completedOrderEvent.FinalCurrencySymbol,
+			completedOrderEvent.FinalCurrencyBalance,
+			depth); err != nil {
+			log.Println("completed order error trying to update the plan context -- ", err.Error())
+			return nil
+		}
+
+		// load the child orders of this completed order
+		nextPlanOrders, err := repoPlan.FindChildOrders(service.DB, planID, completedOrderEvent.OrderID)
+
+		switch {
+		case err == sql.ErrNoRows:
+			if completedOrderEvent.CloseOnComplete && repoPlan.UpdatePlanStatus(service.DB, planID, constPlan.Closed) != nil {
+				log.Printf("could not close plan -- %s\n", planID)
+			}
+
+		case err != nil:
+			log.Println("completed order error on find plan -- ", err.Error())
+
+		default:
+			// load new plan order with false - it is not a revision of an active order
+			if err := service.LoadPlanOrder(ctx, nextPlanOrders, false); err != nil {
+				log.Println("could not load the plan orders -- ", err.Error())
+			}
+		}
+	}
+
+	return nil
+}
+
+// Used to populate the engine on engine start. The engine will broadcast an EngineStartEvent.
+func (service *PlanService) HandleStartEngine(ctx context.Context, engine *protoEvt.EngineStartEvent) error {
+
+	plans, err := repoPlan.FindActivePlans(service.DB)
+	if err != nil {
+		log.Println("could not find active plans -- ", err)
+	}
+
+	// must sleep before sending off to execution engine
+	// because engine might not have fully started yet
+	time.Sleep(5 * time.Second)
+
+	// TODO we need to explore a different approach here that is more efficient.
+	for _, plan := range plans {
+		// load the active orders - these are not revisions of active orders since it is assumed
+		// the the engine is asking to reload them from the DB
+		if err = service.LoadPlanOrder(ctx, plan, false); err != nil {
+			log.Println("load plan error -- ", err)
+		}
+	}
+
+	return nil
 }
 
 // AddPlans returns error to conform to protobuf def, but the error will always be returned as nil.
@@ -190,39 +297,39 @@ func (service *PlanService) NewPlan(ctx context.Context, req *protoPlan.NewPlanR
 
 	switch {
 	case !ValidatePlanInputStatus(req.Status):
-		res.Status = response.Fail
+		res.Status = constCommon.Fail
 		res.Message = "plan status must be active, inactive, or historic"
 		return nil
 	case !ValidateMinOrder(req.Orders):
-		res.Status = response.Fail
+		res.Status = constCommon.Fail
 		res.Message = "at least one order required for a new plan."
 		return nil
 	case !ValidateOrderTrigger(req.Orders):
-		res.Status = response.Fail
+		res.Status = constCommon.Fail
 		res.Message = "orders must have triggers"
 		return nil
 	case !ValidateSingleRootNode(req.Orders):
-		res.Status = response.Fail
+		res.Status = constCommon.Fail
 		res.Message = "multiple root nodes found, only one is allowed"
 		return nil
 	case !ValidateConnectedRoutesFromParent(uuid.Nil.String(), req.Orders):
-		res.Status = response.Fail
+		res.Status = constCommon.Fail
 		res.Message = "an order does not have a valid parent_order_id in your request"
 		return nil
 	case !ValidateNodeCount(req.Orders):
-		res.Status = response.Fail
+		res.Status = constCommon.Fail
 		res.Message = "you can only post 10 inactive nodes at a time!"
 		return nil
 	case !ValidateNoneZeroBalance(req.Orders):
-		res.Status = response.Fail
+		res.Status = constCommon.Fail
 		res.Message = "non zero initialCurrencyBalance required for root order!"
 		return nil
-	case req.Orders[0].OrderType == orderConstants.PaperOrder && !ValidatePaperOrders(req.Orders):
-		res.Status = response.Fail
+	case req.Orders[0].OrderType == constPlan.PaperOrder && !ValidatePaperOrders(req.Orders):
+		res.Status = constCommon.Fail
 		res.Message = "you cannot add a market/limit order to a plan that will begin with a paper order"
 		return nil
-	case req.Orders[0].OrderType != orderConstants.PaperOrder && !ValidateNotPaperOrders(req.Orders):
-		res.Status = response.Fail
+	case req.Orders[0].OrderType != constPlan.PaperOrder && !ValidateNotPaperOrders(req.Orders):
+		res.Status = constCommon.Fail
 		res.Message = "you cannot add paper orders to a plan that will begin with a market/limit order"
 		return nil
 	}
@@ -235,7 +342,7 @@ func (service *PlanService) NewPlan(ctx context.Context, req *protoPlan.NewPlanR
 	kys, err := service.fetchKeys(keyIDs)
 	if err != nil {
 		if strings.Contains(err.Error(), "invalid input") {
-			res.Status = response.Fail
+			res.Status = constCommon.Fail
 			res.Message = fmt.Sprintf("valid keyID required for each order")
 			return nil
 		}
@@ -243,7 +350,7 @@ func (service *PlanService) NewPlan(ctx context.Context, req *protoPlan.NewPlanR
 		msg := fmt.Sprintf("ecountered error when fetching keys: %s\n", err.Error())
 		log.Println(msg)
 
-		res.Status = response.Error
+		res.Status = constCommon.Error
 		res.Message = msg
 		return nil
 	}
@@ -257,25 +364,25 @@ func (service *PlanService) NewPlan(ctx context.Context, req *protoPlan.NewPlanR
 	totalDepth := uint32(0)
 
 	for _, or := range req.Orders {
-		orderStatus := status.Inactive
+		orderStatus := constPlan.Inactive
 
 		if or.MarketName == "" || or.KeyID == "" {
-			res.Status = response.Fail
+			res.Status = constCommon.Fail
 			res.Message = "missing marketName/keyID for order"
 			return nil
 		}
 		if !strings.Contains(or.MarketName, "-") {
-			res.Status = response.Fail
+			res.Status = constCommon.Fail
 			res.Message = "marketName must be currency-base: e.g. ADA-BTC"
 			return nil
 		}
 		if !ValidateOrderType(or.OrderType) {
-			res.Status = response.Fail
+			res.Status = constCommon.Fail
 			res.Message = "market, limit, or paper required for order type"
 			return nil
 		}
 		if !ValidateOrderSide(or.Side) {
-			res.Status = response.Fail
+			res.Status = constCommon.Fail
 			res.Message = "buy or sell required for order side"
 			return nil
 		}
@@ -298,15 +405,15 @@ func (service *PlanService) NewPlan(ctx context.Context, req *protoPlan.NewPlanR
 			// this will happen if the parent order for this order cannot be found
 			// it essentially means the orders are not in the correct order - sorted from parent to child
 			if depth == 0 {
-				res.Status = response.Fail
+				res.Status = constCommon.Fail
 				res.Message = "the orders must be sorted by plan depth, i.e. parents must be before children"
 				return nil
 			}
 		}
 
 		// root order status should be active
-		if or.ParentOrderID == none && req.Status == plan.Active {
-			orderStatus = status.Active
+		if or.ParentOrderID == none && req.Status == constPlan.Active {
+			orderStatus = constPlan.Active
 		}
 
 		// assign exchange name from key
@@ -314,8 +421,8 @@ func (service *PlanService) NewPlan(ctx context.Context, req *protoPlan.NewPlanR
 			if ky.KeyID == or.KeyID {
 				exchange = ky.Exchange
 
-				if ky.Status != key.Verified {
-					res.Status = response.Fail
+				if ky.Status != constKey.Verified {
+					res.Status = constCommon.Fail
 					res.Message = "using an unverified key!"
 					return nil
 
@@ -346,7 +453,7 @@ func (service *PlanService) NewPlan(ctx context.Context, req *protoPlan.NewPlanR
 		// market name will be Currency-Base: ADA-BTC
 		symbolPair := strings.Split(or.MarketName, "-")
 		symbol := symbolPair[1]
-		if or.Side == side.Sell {
+		if or.Side == constPlan.Sell {
 			symbol = symbolPair[0]
 		}
 
@@ -360,11 +467,11 @@ func (service *PlanService) NewPlan(ctx context.Context, req *protoPlan.NewPlanR
 			PlanID:                 planID.String(),
 			PlanDepth:              depth,
 			Side:                   or.Side,
-			LimitPrice:             util.ToFixed(or.LimitPrice, precision),
+			LimitPrice:             commonUtil.ToFixed(or.LimitPrice, precision),
 			Exchange:               exchange,
 			MarketName:             or.MarketName,
 			InitialCurrencySymbol:  symbol,
-			InitialCurrencyBalance: util.ToFixed(or.InitialCurrencyBalance, precision),
+			InitialCurrencyBalance: commonUtil.ToFixed(or.InitialCurrencyBalance, precision),
 			Status:                 orderStatus,
 			Grupo:                  or.Grupo,
 			Triggers:               triggers,
@@ -378,24 +485,24 @@ func (service *PlanService) NewPlan(ctx context.Context, req *protoPlan.NewPlanR
 	currencyBalance := newOrders[0].InitialCurrencyBalance
 	keyID := newOrders[0].KeyID
 
-	if newOrders[0].OrderType != orderConstants.PaperOrder {
+	if newOrders[0].OrderType != constPlan.PaperOrder {
 		validBalance, err := service.validateBalance(ctx, currencySymbol, currencyBalance, req.UserID, keyID)
 		if err != nil {
 			msg := fmt.Sprintf("failed to validate the currency balance for %s: %s", currencySymbol, err.Error())
 			log.Println(msg)
 
-			res.Status = response.Error
+			res.Status = constCommon.Error
 			res.Message = msg
 			return nil
 		}
 		if !validBalance {
-			res.Status = response.Fail
+			res.Status = constCommon.Fail
 			res.Message = fmt.Sprintf("insufficient %s balance, %.8f requested", currencySymbol, currencyBalance)
 			return nil
 		}
 	}
 
-	count := planRepo.FindUserPlanCount(service.DB, req.UserID)
+	count := repoPlan.FindUserPlanCount(service.DB, req.UserID)
 	title := req.Title
 	if title == "" {
 		title = fmt.Sprintf("Trade %d", count+1)
@@ -422,18 +529,18 @@ func (service *PlanService) NewPlan(ctx context.Context, req *protoPlan.NewPlanR
 		UpdatedOn:              now,
 	}
 
-	err = planRepo.InsertPlan(service.DB, &pln)
+	err = repoPlan.InsertPlan(service.DB, &pln)
 	if err != nil {
 		msg := fmt.Sprintf("insert plan failed %s", err.Error())
 		log.Println(msg)
 
-		res.Status = response.Error
+		res.Status = constCommon.Error
 		res.Message = msg
 		return nil
 	}
 
 	// activate first plan order if plan is active
-	if pln.Status == plan.Active {
+	if pln.Status == constPlan.Active {
 		p := pln
 		p.Orders = []*protoOrder.Order{pln.Orders[0]}
 
@@ -448,13 +555,13 @@ func (service *PlanService) NewPlan(ctx context.Context, req *protoPlan.NewPlanR
 		// publish this plan to the engine
 		if err := service.publishPlan(ctx, &p, false); err != nil {
 			// TODO return a warning here
-			res.Status = response.Error
+			res.Status = constCommon.Error
 			res.Message = "could not publish first order: " + err.Error()
 			return nil
 		}
 	}
 
-	res.Status = response.Success
+	res.Status = constCommon.Success
 	res.Data = &protoPlan.PlanData{Plan: &pln}
 
 	return nil
@@ -464,20 +571,20 @@ func (service *PlanService) NewPlan(ctx context.Context, req *protoPlan.NewPlanR
 // Can't return an error with a response object - response object is returned as nil when error is non nil.
 // Therefore, return error in response object.
 func (service *PlanService) GetUserPlan(ctx context.Context, req *protoPlan.GetUserPlanRequest, res *protoPlan.PlanResponse) error {
-	plan, error := planRepo.FindPlanOrders(service.DB, req)
+	plan, error := repoPlan.FindPlanOrders(service.DB, req)
 
 	switch {
 	case error == sql.ErrNoRows:
-		res.Status = response.Nonentity
+		res.Status = constCommon.Nonentity
 		res.Message = fmt.Sprintf("planID not found %s", req.PlanID)
 	case error != nil:
-		res.Status = response.Error
+		res.Status = constCommon.Error
 		res.Message = error.Error()
 	// case plan.totalDepth < req.PlanDepth:
-	// 	res.Status = response.Nonentity
+	// 	res.Status = constCommon.Nonentity
 	// 	res.Message = "plan depth out of bounds, max depth is %s"
 	case error == nil:
-		res.Status = response.Success
+		res.Status = constCommon.Success
 		res.Data = &protoPlan.PlanData{Plan: plan}
 	}
 
@@ -495,9 +602,9 @@ func (service *PlanService) GetUserPlans(ctx context.Context, req *protoPlan.Get
 	switch {
 	case req.MarketName == "" && req.Exchange != "":
 		// search by userID, exchange, status when no marketName
-		page, err = planRepo.FindUserExchangePlansWithStatus(service.DB, req.UserID, req.Status, req.Exchange, req.Page, req.PageSize)
+		page, err = repoPlan.FindUserExchangePlansWithStatus(service.DB, req.UserID, req.Status, req.Exchange, req.Page, req.PageSize)
 		for i, p := range page.Plans {
-			plan, err := planRepo.FindChildOrders(service.DB, p.PlanID, p.LastExecutedOrderID)
+			plan, err := repoPlan.FindChildOrders(service.DB, p.PlanID, p.LastExecutedOrderID)
 			switch {
 			case err == sql.ErrNoRows:
 				continue
@@ -510,9 +617,9 @@ func (service *PlanService) GetUserPlans(ctx context.Context, req *protoPlan.Get
 
 	case req.MarketName != "" && req.Exchange != "":
 		// search by userID, exchange, marketName, status
-		page, err = planRepo.FindUserExchangePlansWithStatus(service.DB, req.UserID, req.Status, req.Exchange, req.Page, req.PageSize)
+		page, err = repoPlan.FindUserExchangePlansWithStatus(service.DB, req.UserID, req.Status, req.Exchange, req.Page, req.PageSize)
 		for i, p := range page.Plans {
-			plan, err := planRepo.FindChildOrders(service.DB, p.PlanID, p.LastExecutedOrderID)
+			plan, err := repoPlan.FindChildOrders(service.DB, p.PlanID, p.LastExecutedOrderID)
 			switch {
 			case err == sql.ErrNoRows:
 				continue
@@ -524,9 +631,9 @@ func (service *PlanService) GetUserPlans(ctx context.Context, req *protoPlan.Get
 		}
 	case req.Status != "":
 		// search by userID and status
-		page, err = planRepo.FindUserPlansWithStatus(service.DB, req.UserID, req.Status, req.Page, req.PageSize)
+		page, err = repoPlan.FindUserPlansWithStatus(service.DB, req.UserID, req.Status, req.Page, req.PageSize)
 		for i, p := range page.Plans {
-			plan, err := planRepo.FindChildOrders(service.DB, p.PlanID, p.LastExecutedOrderID)
+			plan, err := repoPlan.FindChildOrders(service.DB, p.PlanID, p.LastExecutedOrderID)
 			switch {
 			case err == sql.ErrNoRows:
 				continue
@@ -538,9 +645,9 @@ func (service *PlanService) GetUserPlans(ctx context.Context, req *protoPlan.Get
 		}
 	default:
 		// all plans
-		page, err = planRepo.FindUserPlans(service.DB, req.UserID, req.Page, req.PageSize)
+		page, err = repoPlan.FindUserPlans(service.DB, req.UserID, req.Page, req.PageSize)
 		for i, p := range page.Plans {
-			plan, err := planRepo.FindChildOrders(service.DB, p.PlanID, p.LastExecutedOrderID)
+			plan, err := repoPlan.FindChildOrders(service.DB, p.PlanID, p.LastExecutedOrderID)
 			switch {
 			case err == sql.ErrNoRows:
 				continue
@@ -553,10 +660,10 @@ func (service *PlanService) GetUserPlans(ctx context.Context, req *protoPlan.Get
 	}
 
 	if err == nil {
-		res.Status = response.Success
+		res.Status = constCommon.Success
 		res.Data = page
 	} else {
-		res.Status = response.Error
+		res.Status = constCommon.Error
 		res.Message = err.Error()
 	}
 
@@ -566,33 +673,33 @@ func (service *PlanService) GetUserPlans(ctx context.Context, req *protoPlan.Get
 // We can delete plans that have no filled orders and that are inactive. This becomes an abort plan
 // if the plan status is active.
 func (service *PlanService) DeletePlan(ctx context.Context, req *protoPlan.DeletePlanRequest, res *protoPlan.PlanResponse) error {
-	pln, err := planRepo.FindPlanWithUnexecutedOrders(service.DB, req.PlanID)
+	pln, err := repoPlan.FindPlanWithUnexecutedOrders(service.DB, req.PlanID)
 	switch {
 	case err == sql.ErrNoRows:
-		res.Status = response.Nonentity
+		res.Status = constCommon.Nonentity
 		res.Message = fmt.Sprintf("planID not found %s", req.PlanID)
 		return nil
 
 	case err != nil:
-		res.Status = response.Error
+		res.Status = constCommon.Error
 		res.Message = fmt.Sprintf("unexpected error in DeletePlan: %s", err.Error())
 		return nil
 
-	case pln.Status == plan.Active:
+	case pln.Status == constPlan.Active:
 
 		req := protoEngine.KillRequest{PlanID: pln.PlanID}
 		service.EngineClient.KillPlan(ctx, &req)
 	}
 
-	pln.Status = plan.Deleted
-	err = planRepo.UpdatePlanStatus(service.DB, req.PlanID, pln.Status)
+	pln.Status = constPlan.Deleted
+	err = repoPlan.UpdatePlanStatus(service.DB, req.PlanID, pln.Status)
 
 	if err != nil {
-		res.Status = response.Error
+		res.Status = constCommon.Error
 		res.Message = err.Error()
 	}
 
-	res.Status = response.Success
+	res.Status = constCommon.Success
 	res.Data = &protoPlan.PlanData{
 		Plan: pln,
 	}
@@ -610,67 +717,67 @@ func (service *PlanService) UpdatePlan(ctx context.Context, req *protoPlan.Updat
 	// load current state of plan
 	// the plan should be paused long before UpdatePlan is called
 	// this function assumes that the plan is inactive
-	pln, err := planRepo.FindPlanWithUnexecutedOrders(service.DB, req.PlanID)
+	pln, err := repoPlan.FindPlanWithUnexecutedOrders(service.DB, req.PlanID)
 
 	switch {
 	case err == sql.ErrNoRows:
-		res.Status = response.Nonentity
+		res.Status = constCommon.Nonentity
 		res.Message = fmt.Sprintf("planID not found %s", req.PlanID)
 		return nil
 	case err != nil:
 		msg := fmt.Sprintf("FindPlanWithUnexecutedOrders error: %s", err.Error())
 		log.Println(msg)
-		res.Status = response.Error
+		res.Status = constCommon.Error
 		res.Message = fmt.Sprintf(err.Error())
 		return nil
 	case len(req.Orders) == 0 && pln.LastExecutedPlanDepth == 0:
-		res.Status = response.Fail
+		res.Status = constCommon.Fail
 		res.Message = "to plan or not to plan. That is the question. A plan must have at least 1 order."
 		return nil
 	case !ValidateNonExecutedOrder(pln.Orders, req.Orders):
-		res.Status = response.Fail
+		res.Status = constCommon.Fail
 		res.Message = "an order has executed."
 		return nil
 	case !ValidateOrderTrigger(req.Orders):
-		res.Status = response.Fail
+		res.Status = constCommon.Fail
 		res.Message = "orders must have triggers"
 		return nil
 	case !ValidatePlanInputStatus(req.Status):
-		res.Status = response.Fail
+		res.Status = constCommon.Fail
 		res.Message = "plan status must be active, inactive"
 		return nil
 	case !ValidateConnectedRoutesFromParent(pln.LastExecutedOrderID, req.Orders):
 		// all orders must be connected using parentOrderID
-		res.Status = response.Fail
+		res.Status = constCommon.Fail
 		res.Message = "this ain't no tree! All orders must be connected using the parentOrderID relationship."
 		return nil
 	case pln.LastExecutedPlanDepth == 0 && !ValidateNoneZeroBalance(req.Orders):
 		// you must commit a balance for the plan in the first order
-		res.Status = response.Fail
+		res.Status = constCommon.Fail
 		res.Message = "the initialCurrencyBalance must be set for the root order"
 		return nil
 	case pln.LastExecutedPlanDepth == 0 && !ValidateSingleRootNode(req.Orders):
 		// you can't start a plan without a root order
-		res.Status = response.Fail
+		res.Status = constCommon.Fail
 		res.Message = "multiple root nodes found, only one is allowed"
 		return nil
 	case pln.LastExecutedPlanDepth > 0 && !ValidateChildNodes(req.Orders):
 		// update on an executed tree can only append child orders
-		res.Status = response.Fail
+		res.Status = constCommon.Fail
 		res.Message = fmt.Sprintf("an order's parentOrderID is %s. This plan already has an executed root order.", uuid.Nil.String())
 		return nil
 	case !ValidateNodeCount(req.Orders):
-		res.Status = response.Fail
+		res.Status = constCommon.Fail
 		res.Message = "you can only apply 10 inactive orders at a time!"
 		return nil
-	case pln.LastExecutedPlanDepth == 0 && req.Orders[0].OrderType == orderConstants.PaperOrder && !ValidatePaperOrders(req.Orders):
+	case pln.LastExecutedPlanDepth == 0 && req.Orders[0].OrderType == constPlan.PaperOrder && !ValidatePaperOrders(req.Orders):
 		// can't mix real orders to a paper plan
-		res.Status = response.Fail
+		res.Status = constCommon.Fail
 		res.Message = "you cannot append market or limit orders to a plan that will begin with a paper order"
 		return nil
-	case pln.LastExecutedPlanDepth > 0 && pln.Orders[0].OrderType != orderConstants.PaperOrder && !ValidateNotPaperOrders(req.Orders):
+	case pln.LastExecutedPlanDepth > 0 && pln.Orders[0].OrderType != constPlan.PaperOrder && !ValidateNotPaperOrders(req.Orders):
 		// the executed plan was live - can't add paper orders to this plan
-		res.Status = response.Fail
+		res.Status = constCommon.Fail
 		res.Message = "you cannot add paper orders with a plan that has already executed a live order"
 		return nil
 	}
@@ -680,12 +787,12 @@ func (service *PlanService) UpdatePlan(ctx context.Context, req *protoPlan.Updat
 	for _, or := range req.Orders {
 		keyIDs = append(keyIDs, or.KeyID)
 	}
-	kys := make([]*keys.Key, 0)
+	kys := make([]*protoKey.Key, 0)
 
 	if len(req.Orders) > 0 {
 		kys, err = service.fetchKeys(keyIDs)
 		if err != nil {
-			res.Status = response.Error
+			res.Status = constCommon.Error
 			res.Message = fmt.Sprintf("ecountered error when fetching keys: %s", err.Error())
 			return nil
 		}
@@ -699,25 +806,25 @@ func (service *PlanService) UpdatePlan(ctx context.Context, req *protoPlan.Updat
 	totalDepth := depth
 
 	for _, or := range req.Orders {
-		orderStatus := status.Inactive
+		orderStatus := constPlan.Inactive
 
 		if or.MarketName == "" || or.KeyID == "" {
-			res.Status = response.Fail
+			res.Status = constCommon.Fail
 			res.Message = "missing marketName/keyID for order"
 			return nil
 		}
 		if !strings.Contains(or.MarketName, "-") {
-			res.Status = response.Fail
+			res.Status = constCommon.Fail
 			res.Message = "marketName must be currency-base: e.g. ADA-BTC"
 			return nil
 		}
 		if !ValidateOrderType(or.OrderType) {
-			res.Status = response.Fail
+			res.Status = constCommon.Fail
 			res.Message = "market, limit, or paper required for order type"
 			return nil
 		}
 		if !ValidateOrderSide(or.Side) {
-			res.Status = response.Fail
+			res.Status = constCommon.Fail
 			res.Message = "buy or sell required for order side"
 			return nil
 		}
@@ -739,14 +846,14 @@ func (service *PlanService) UpdatePlan(ctx context.Context, req *protoPlan.Updat
 			// this will happen if the parent order for this order cannot be found
 			// the depth would not change
 			if depth == pln.LastExecutedPlanDepth {
-				res.Status = response.Fail
+				res.Status = constCommon.Fail
 				res.Message = "the orders must be sorted by plan depth, i.e. parents must be before children"
 				return nil
 			}
 		}
 
-		if or.ParentOrderID == none && req.Status == plan.Active {
-			orderStatus = status.Active
+		if or.ParentOrderID == none && req.Status == constPlan.Active {
+			orderStatus = constPlan.Active
 		}
 
 		// assign exchange name from key
@@ -754,8 +861,8 @@ func (service *PlanService) UpdatePlan(ctx context.Context, req *protoPlan.Updat
 			if ky.KeyID == or.KeyID {
 				exchange = ky.Exchange
 
-				if ky.Status != key.Verified {
-					res.Status = response.Fail
+				if ky.Status != constKey.Verified {
+					res.Status = constCommon.Fail
 					res.Message = "using an unverified key!"
 					return nil
 				}
@@ -788,20 +895,20 @@ func (service *PlanService) UpdatePlan(ctx context.Context, req *protoPlan.Updat
 		// you're selling, you're using the currency (ADA).
 		symbolPair := strings.Split(or.MarketName, "-")
 		currencySymbol := symbolPair[1]
-		if or.Side == side.Sell {
+		if or.Side == constPlan.Sell {
 			currencySymbol = symbolPair[0]
 		}
 
 		// validate the balance for non paper orders that are set to use a predefined balance
-		if or.OrderType != orderConstants.PaperOrder && or.InitialCurrencyBalance > 0 {
+		if or.OrderType != constPlan.PaperOrder && or.InitialCurrencyBalance > 0 {
 			validBalance, err := service.validateBalance(ctx, currencySymbol, or.InitialCurrencyBalance, req.UserID, or.KeyID)
 			if err != nil {
-				res.Status = response.Error
+				res.Status = constCommon.Error
 				res.Message = fmt.Sprintf("failed to validate the currency balance for %s: %s", currencySymbol, err.Error())
 				return nil
 			}
 			if !validBalance {
-				res.Status = response.Fail
+				res.Status = constCommon.Fail
 				res.Message = fmt.Sprintf("insufficient %s balance, %.8f requested in orderID: %s", currencySymbol, or.InitialCurrencyBalance, or.OrderID)
 				return nil
 			}
@@ -817,11 +924,11 @@ func (service *PlanService) UpdatePlan(ctx context.Context, req *protoPlan.Updat
 			PlanID:                 req.PlanID,
 			PlanDepth:              depth,
 			Side:                   or.Side,
-			LimitPrice:             util.ToFixed(or.LimitPrice, precision),
+			LimitPrice:             commonUtil.ToFixed(or.LimitPrice, precision),
 			Exchange:               exchange,
 			MarketName:             or.MarketName,
 			InitialCurrencySymbol:  currencySymbol,
-			InitialCurrencyBalance: util.ToFixed(or.InitialCurrencyBalance, precision),
+			InitialCurrencyBalance: commonUtil.ToFixed(or.InitialCurrencyBalance, precision),
 			Grupo:     or.Grupo,
 			Status:    orderStatus,
 			Triggers:  triggers,
@@ -834,11 +941,11 @@ func (service *PlanService) UpdatePlan(ctx context.Context, req *protoPlan.Updat
 	// if the plan is currently active we need to kill the plan by its ID in the engine
 	// the length of orders in the existing plan should include the last executed if any
 	// more orders than that means there are active orders currency running
-	if pln.Status == status.Active && len(pln.Orders) > 1 {
+	if pln.Status == constPlan.Active && len(pln.Orders) > 1 {
 		req := protoEngine.KillRequest{PlanID: pln.PlanID}
 		_, err := service.EngineClient.KillPlan(ctx, &req)
 		if err != nil {
-			res.Status = response.Fail
+			res.Status = constCommon.Fail
 			res.Message = "you cannot update this plan because an order for this plan has updated. To avoid seeing this message again try pausing your plan before you update it."
 			return nil
 		}
@@ -853,7 +960,7 @@ func (service *PlanService) UpdatePlan(ctx context.Context, req *protoPlan.Updat
 	// Gather all previous orderIDs for this plan so we can drop them from the DB.
 	orderIDs := make([]string, 0)
 	for _, o := range pln.Orders {
-		if o.Status != status.Filled {
+		if o.Status != constPlan.Filled {
 			orderIDs = append(orderIDs, o.OrderID)
 		}
 	}
@@ -865,54 +972,54 @@ func (service *PlanService) UpdatePlan(ctx context.Context, req *protoPlan.Updat
 		pln.InitialCurrencySymbol = newOrders[0].InitialCurrencySymbol
 		pln.InitialCurrencyBalance = newOrders[0].InitialCurrencyBalance
 		pln.Exchange = newOrders[0].Exchange
-		if err := planRepo.UpdatePlanContextTxn(txn, ctx, pln.PlanID, pln.ActiveCurrencySymbol, pln.Exchange, pln.ActiveCurrencyBalance); err != nil {
+		if err := repoPlan.UpdatePlanContextTxn(txn, ctx, pln.PlanID, pln.ActiveCurrencySymbol, pln.Exchange, pln.ActiveCurrencyBalance); err != nil {
 			txn.Rollback()
-			res.Status = response.Error
+			res.Status = constCommon.Error
 			res.Message = "error encountered while updating the plan context: " + err.Error()
 			return nil
 		}
 	}
 	if pln.Status != req.Status {
 		pln.Status = req.Status
-		if err := planRepo.UpdatePlanStatusTxn(txn, ctx, pln.PlanID, pln.Status); err != nil {
+		if err := repoPlan.UpdatePlanStatusTxn(txn, ctx, pln.PlanID, pln.Status); err != nil {
 			txn.Rollback()
-			res.Status = response.Error
+			res.Status = constCommon.Error
 			res.Message = "error encountered while updating the plan status: " + err.Error()
 			return nil
 		}
 	}
 	if pln.TotalDepth != totalDepth {
 		pln.Status = req.Status
-		if err := planRepo.UpdatePlanTotalDepthTxn(txn, ctx, pln.PlanID, pln.TotalDepth); err != nil {
+		if err := repoPlan.UpdatePlanTotalDepthTxn(txn, ctx, pln.PlanID, pln.TotalDepth); err != nil {
 			txn.Rollback()
-			res.Status = response.Error
+			res.Status = constCommon.Error
 			res.Message = "error encountered while updating the plan total depth: " + err.Error()
 			return nil
 		}
 	}
 	if req.Title != "" {
 		pln.Title = req.Title
-		if err := planRepo.UpdatePlanTitleTxn(txn, ctx, pln.PlanID, pln.Title); err != nil {
+		if err := repoPlan.UpdatePlanTitleTxn(txn, ctx, pln.PlanID, pln.Title); err != nil {
 			txn.Rollback()
-			res.Status = response.Error
+			res.Status = constCommon.Error
 			res.Message = "error encountered while updating the plan title: " + err.Error()
 			return nil
 		}
 	}
 	if pln.CloseOnComplete != req.CloseOnComplete {
 		pln.CloseOnComplete = req.CloseOnComplete
-		if err := planRepo.UpdatePlanCloseOnCompleteTxn(txn, ctx, pln.PlanID, pln.CloseOnComplete); err != nil {
+		if err := repoPlan.UpdatePlanCloseOnCompleteTxn(txn, ctx, pln.PlanID, pln.CloseOnComplete); err != nil {
 			txn.Rollback()
-			res.Status = response.Error
+			res.Status = constCommon.Error
 			res.Message = "error encountered while updating the plan close on complete option: " + err.Error()
 			return nil
 		}
 	}
 	if pln.PlanTemplateID != req.PlanTemplateID {
 		pln.PlanTemplateID = req.PlanTemplateID
-		if err := planRepo.UpdatePlanTemplateTxn(txn, ctx, pln.PlanID, pln.PlanTemplateID); err != nil {
+		if err := repoPlan.UpdatePlanTemplateTxn(txn, ctx, pln.PlanID, pln.PlanTemplateID); err != nil {
 			txn.Rollback()
-			res.Status = response.Error
+			res.Status = constCommon.Error
 			res.Message = "error encountered while updating the plan template: " + err.Error()
 			return nil
 		}
@@ -920,26 +1027,26 @@ func (service *PlanService) UpdatePlan(ctx context.Context, req *protoPlan.Updat
 
 	// keep the update timestamp of the plan in sync with the orders
 	// no particular reason, but it could be useful in debugging
-	if err := planRepo.UpdatePlanTimestampTxn(txn, ctx, pln.PlanID, now); err != nil {
+	if err := repoPlan.UpdatePlanTimestampTxn(txn, ctx, pln.PlanID, now); err != nil {
 		txn.Rollback()
-		res.Status = response.Error
+		res.Status = constCommon.Error
 		res.Message = "error encountered while updating the plan timestamp: " + err.Error()
 		return nil
 	}
 
 	// drop current orders from the plan
-	if err := planRepo.DeleteOrders(txn, ctx, orderIDs); err != nil {
+	if err := repoPlan.DeleteOrders(txn, ctx, orderIDs); err != nil {
 		txn.Rollback()
-		res.Status = response.Error
+		res.Status = constCommon.Error
 		res.Message = "error while deleting the previous orders: " + err.Error()
 		return nil
 	}
 
 	if len(newOrders) > 0 {
 		// insert new orders for this plan
-		if err := planRepo.InsertOrders(txn, newOrders); err != nil {
+		if err := repoPlan.InsertOrders(txn, newOrders); err != nil {
 			txn.Rollback()
-			res.Status = response.Error
+			res.Status = constCommon.Error
 			res.Message = "insert orders error: " + err.Error()
 			return nil
 		}
@@ -951,7 +1058,7 @@ func (service *PlanService) UpdatePlan(ctx context.Context, req *protoPlan.Updat
 			}
 		}
 
-		if err := planRepo.InsertTriggers(txn, newTriggers); err != nil {
+		if err := repoPlan.InsertTriggers(txn, newTriggers); err != nil {
 			txn.Rollback()
 			return errors.New("bulk triggers failed: " + err.Error())
 		}
@@ -960,19 +1067,19 @@ func (service *PlanService) UpdatePlan(ctx context.Context, req *protoPlan.Updat
 	txn.Commit()
 
 	// activate first plan order if plan is active
-	if pln.Status == plan.Active {
+	if pln.Status == constPlan.Active {
 		// TODO send the keys with the orders so they can execute the live orders against the exchanges
 
 		// this is a new plan
 		if err := service.publishPlan(ctx, pln, true); err != nil {
-			res.Status = response.Error
+			res.Status = constCommon.Error
 			res.Message = "could not fully set this plan active, error was: " + err.Error()
 			return nil
 		}
 	}
 
 	pln.Orders = newOrders
-	res.Status = response.Success
+	res.Status = constCommon.Success
 	res.Data = &protoPlan.PlanData{Plan: pln}
 
 	return nil
