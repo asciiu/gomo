@@ -9,6 +9,7 @@ import (
 	keyProto "github.com/asciiu/gomo/key-service/proto/key"
 	userRepo "github.com/asciiu/gomo/user-service/db/sql"
 	user "github.com/asciiu/gomo/user-service/models"
+	"github.com/stretchr/testify/assert"
 )
 
 func checkErr(err error) {
@@ -30,7 +31,7 @@ func setupService() (*KeyService, *user.User) {
 	return &service, user
 }
 
-func TestInsertKey(t *testing.T) {
+func TestUnsupportedKey(t *testing.T) {
 	service, user := setupService()
 
 	defer service.DB.Close()
@@ -38,34 +39,46 @@ func TestInsertKey(t *testing.T) {
 	key := keyProto.KeyRequest{
 		UserID:      user.ID,
 		Exchange:    "monex",
-		Key:         "key",
-		Secret:      "sssh",
-		Description: "shit dwog!",
+		Key:         "public",
+		Secret:      "secret",
+		Description: "shit test!",
 	}
 
 	response := keyProto.KeyResponse{}
-
 	service.AddKey(context.Background(), &key, &response)
 
-	if response.Status != "success" {
-		t.Errorf(response.Message)
+	assert.Equal(t, "fail", response.Status, "return status is expected to be fail due to unsupported exchange")
+
+	userRepo.DeleteUserHard(service.DB, user.ID)
+}
+
+func TestSuccessfulKey(t *testing.T) {
+	service, user := setupService()
+
+	defer service.DB.Close()
+
+	key := keyProto.KeyRequest{
+		UserID:      user.ID,
+		Exchange:    "binance",
+		Key:         "public",
+		Secret:      "secret",
+		Description: "shit test 2",
 	}
 
-	if response.Data.Key.UserID != key.UserID {
-		t.Errorf("user IDs do not match")
-	}
+	response := keyProto.KeyResponse{}
+	service.AddKey(context.Background(), &key, &response)
+
+	assert.Equal(t, "success", response.Status, response.Message)
+	assert.Equal(t, key.UserID, response.Data.Key.UserID, "user ids do not match")
 
 	requestRemove := keyProto.RemoveKeyRequest{
 		UserID: user.ID,
 		KeyID:  response.Data.Key.KeyID,
 	}
-
 	responseDel := keyProto.KeyResponse{}
 	service.RemoveKey(context.Background(), &requestRemove, &responseDel)
 
-	if responseDel.Status != "success" {
-		t.Errorf(responseDel.Message)
-	}
+	assert.Equal(t, "success", responseDel.Status, response.Message)
 
 	userRepo.DeleteUserHard(service.DB, user.ID)
 }

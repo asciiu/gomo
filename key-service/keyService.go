@@ -74,9 +74,12 @@ func (service *KeyService) AddKey(ctx context.Context, req *protoKey.KeyRequest,
 
 	switch {
 	case error == nil:
-		// publish a new key event
-		if err := service.KeyPub.Publish(context.Background(), apiKey); err != nil {
-			log.Println("could not publish event new.key: ", err)
+		// ignore in test
+		if service.KeyPub != nil {
+			// publish a new key event
+			if err := service.KeyPub.Publish(context.Background(), apiKey); err != nil {
+				log.Println("could not publish event new.key: ", err)
+			}
 		}
 
 		res.Status = constRes.Success
