@@ -3,7 +3,7 @@ package sql
 import (
 	"database/sql"
 
-	pb "github.com/asciiu/gomo/key-service/proto/key"
+	protoKey "github.com/asciiu/gomo/key-service/proto/key"
 	"github.com/google/uuid"
 	"github.com/lib/pq"
 )
@@ -13,8 +13,8 @@ func DeleteKey(db *sql.DB, keyID string) error {
 	return err
 }
 
-func FindKeys(db *sql.DB, req *pb.GetKeysRequest) ([]*pb.Key, error) {
-	results := make([]*pb.Key, 0)
+func FindKeys(db *sql.DB, req *protoKey.GetKeysRequest) ([]*protoKey.Key, error) {
+	results := make([]*protoKey.Key, 0)
 
 	rows, err := db.Query(`SELECT 
 		id, 
@@ -31,7 +31,7 @@ func FindKeys(db *sql.DB, req *pb.GetKeysRequest) ([]*pb.Key, error) {
 	defer rows.Close()
 
 	for rows.Next() {
-		var k pb.Key
+		var k protoKey.Key
 		err := rows.Scan(&k.KeyID,
 			&k.UserID,
 			&k.Exchange,
@@ -55,8 +55,8 @@ func FindKeys(db *sql.DB, req *pb.GetKeysRequest) ([]*pb.Key, error) {
 
 }
 
-func FindKeyByID(db *sql.DB, req *pb.GetUserKeyRequest) (*pb.Key, error) {
-	var k pb.Key
+func FindKeyByID(db *sql.DB, req *protoKey.GetUserKeyRequest) (*protoKey.Key, error) {
+	var k protoKey.Key
 	err := db.QueryRow("SELECT id, user_id, exchange_name, api_key, secret, description, status FROM user_keys WHERE id = $1", req.KeyID).
 		Scan(&k.KeyID, &k.UserID, &k.Exchange, &k.Key, &k.Secret, &k.Description, &k.Status)
 
@@ -66,8 +66,8 @@ func FindKeyByID(db *sql.DB, req *pb.GetUserKeyRequest) (*pb.Key, error) {
 	return &k, nil
 }
 
-func FindKeysByUserID(db *sql.DB, req *pb.GetUserKeysRequest) ([]*pb.Key, error) {
-	results := make([]*pb.Key, 0)
+func FindKeysByUserID(db *sql.DB, req *protoKey.GetUserKeysRequest) ([]*protoKey.Key, error) {
+	results := make([]*protoKey.Key, 0)
 
 	rows, err := db.Query("SELECT id, user_id, exchange_name, api_key, secret, description, status FROM user_keys WHERE user_id = $1", req.UserID)
 	if err != nil {
@@ -75,7 +75,7 @@ func FindKeysByUserID(db *sql.DB, req *pb.GetUserKeysRequest) ([]*pb.Key, error)
 	}
 	defer rows.Close()
 	for rows.Next() {
-		var k pb.Key
+		var k protoKey.Key
 		err := rows.Scan(&k.KeyID, &k.UserID, &k.Exchange, &k.Key, &k.Secret, &k.Description, &k.Status)
 		if err != nil {
 			return nil, err
@@ -90,7 +90,7 @@ func FindKeysByUserID(db *sql.DB, req *pb.GetUserKeysRequest) ([]*pb.Key, error)
 	return results, nil
 }
 
-func InsertKey(db *sql.DB, req *pb.KeyRequest) (*pb.Key, error) {
+func InsertKey(db *sql.DB, req *protoKey.KeyRequest) (*protoKey.Key, error) {
 	newID := uuid.New()
 
 	sqlStatement := `insert into user_keys (id, user_id, exchange_name, api_key, secret, description, status) values ($1, $2, $3, $4, $5, $6, $7)`
@@ -99,7 +99,7 @@ func InsertKey(db *sql.DB, req *pb.KeyRequest) (*pb.Key, error) {
 	if err != nil {
 		return nil, err
 	}
-	apikey := &pb.Key{
+	apikey := &protoKey.Key{
 		KeyID:       newID.String(),
 		UserID:      req.UserID,
 		Exchange:    req.Exchange,
@@ -111,17 +111,17 @@ func InsertKey(db *sql.DB, req *pb.KeyRequest) (*pb.Key, error) {
 	return apikey, nil
 }
 
-func UpdateKeyDescription(db *sql.DB, req *pb.KeyRequest) (*pb.Key, error) {
+func UpdateKeyDescription(db *sql.DB, req *protoKey.KeyRequest) (*protoKey.Key, error) {
 	sqlStatement := `UPDATE user_keys SET description = $1 WHERE id = $2 and user_id = $3 RETURNING exchange_name, api_key, description, status`
 
-	var k pb.Key
+	var k protoKey.Key
 	err := db.QueryRow(sqlStatement, req.Description, req.KeyID, req.UserID).
 		Scan(&k.Exchange, &k.Key, &k.Description, &k.Status)
 
 	if err != nil {
 		return nil, err
 	}
-	apikey := &pb.Key{
+	apikey := &protoKey.Key{
 		KeyID:       req.KeyID,
 		UserID:      req.UserID,
 		Exchange:    k.Exchange,
@@ -132,17 +132,17 @@ func UpdateKeyDescription(db *sql.DB, req *pb.KeyRequest) (*pb.Key, error) {
 	return apikey, nil
 }
 
-func UpdateKeyStatus(db *sql.DB, req *pb.Key) (*pb.Key, error) {
+func UpdateKeyStatus(db *sql.DB, req *protoKey.Key) (*protoKey.Key, error) {
 	sqlStatement := `UPDATE user_keys SET status = $1 WHERE id = $2 and user_id = $3 RETURNING exchange_name, api_key, description, status`
 
-	var k pb.Key
+	var k protoKey.Key
 	err := db.QueryRow(sqlStatement, req.Status, req.KeyID, req.UserID).
 		Scan(&k.Exchange, &k.Key, &k.Description, &k.Status)
 
 	if err != nil {
 		return nil, err
 	}
-	apikey := &pb.Key{
+	apikey := &protoKey.Key{
 		KeyID:       req.KeyID,
 		UserID:      req.UserID,
 		Exchange:    k.Exchange,

@@ -6,7 +6,7 @@ import (
 	"os"
 
 	"github.com/asciiu/gomo/common/db"
-	pb "github.com/asciiu/gomo/user-service/proto/user"
+	protoUser "github.com/asciiu/gomo/user-service/proto/user"
 	micro "github.com/micro/go-micro"
 	k8s "github.com/micro/kubernetes/go/micro"
 )
@@ -33,7 +33,7 @@ func NewUserService(name, dbUrl string) micro.Service {
 	// Register our service with the gRPC server, this will tie our
 	// implementation into the auto-generated interface code for our
 	// protobuf definition.
-	pb.RegisterUserServiceHandler(srv.Server(), &UserService{gomoDB})
+	protoUser.RegisterUserServiceHandler(srv.Server(), &UserService{gomoDB})
 
 	return srv
 }

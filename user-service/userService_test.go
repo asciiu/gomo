@@ -6,7 +6,7 @@ import (
 	"testing"
 
 	"github.com/asciiu/gomo/common/db"
-	pb "github.com/asciiu/gomo/user-service/proto/user"
+	protoUser "github.com/asciiu/gomo/user-service/proto/user"
 )
 
 func setupService() *UserService {
@@ -19,14 +19,14 @@ func setupService() *UserService {
 func TestInsertUser(t *testing.T) {
 	service := setupService()
 
-	request := pb.CreateUserRequest{
+	request := protoUser.CreateUserRequest{
 		First:    "test",
 		Last:     "last",
 		Email:    "email@email",
 		Password: "password",
 	}
 
-	response := pb.UserResponse{}
+	response := protoUser.UserResponse{}
 
 	service.CreateUser(context.Background(), &request, &response)
 
@@ -37,12 +37,12 @@ func TestInsertUser(t *testing.T) {
 		t.Errorf("emails do not")
 	}
 
-	requestDelete := pb.DeleteUserRequest{
+	requestDelete := protoUser.DeleteUserRequest{
 		UserID: response.Data.User.UserID,
 		Hard:   true,
 	}
 
-	responseDel := pb.Response{}
+	responseDel := protoUser.Response{}
 	service.DeleteUser(context.Background(), &requestDelete, &responseDel)
 
 	if responseDel.Status != "success" {
@@ -52,14 +52,14 @@ func TestInsertUser(t *testing.T) {
 
 func TestChangePassword(t *testing.T) {
 	service := setupService()
-	request := pb.CreateUserRequest{
+	request := protoUser.CreateUserRequest{
 		First:    "test",
 		Last:     "last",
 		Email:    "email@email",
 		Password: "password",
 	}
 
-	response := pb.UserResponse{}
+	response := protoUser.UserResponse{}
 
 	service.CreateUser(context.Background(), &request, &response)
 
@@ -67,49 +67,49 @@ func TestChangePassword(t *testing.T) {
 		t.Errorf(response.Message)
 	}
 
-	invalidChangeReq := pb.ChangePasswordRequest{
+	invalidChangeReq := protoUser.ChangePasswordRequest{
 		UserID:      response.Data.User.UserID,
 		OldPassword: "pass",
 		NewPassword: "new",
 	}
 
-	response2 := pb.Response{}
+	response2 := protoUser.Response{}
 	service.ChangePassword(context.Background(), &invalidChangeReq, &response2)
 	if !strings.Contains(response2.Message, "current password mismatch") {
 		t.Errorf(response.Message)
 	}
 
-	validChangeReq := pb.ChangePasswordRequest{
+	validChangeReq := protoUser.ChangePasswordRequest{
 		UserID:      response.Data.User.UserID,
 		OldPassword: "password",
 		NewPassword: "new",
 	}
 
-	response3 := pb.Response{}
+	response3 := protoUser.Response{}
 	eor := service.ChangePassword(context.Background(), &validChangeReq, &response3)
 	if response3.Status != "success" {
 		t.Errorf(eor.Error())
 	}
 
-	requestDelete := pb.DeleteUserRequest{
+	requestDelete := protoUser.DeleteUserRequest{
 		UserID: response.Data.User.UserID,
 		Hard:   true,
 	}
 
-	responseDel := pb.Response{}
+	responseDel := protoUser.Response{}
 	service.DeleteUser(context.Background(), &requestDelete, &responseDel)
 }
 
 func TestGetUserInfo(t *testing.T) {
 	service := setupService()
-	request := pb.CreateUserRequest{
+	request := protoUser.CreateUserRequest{
 		First:    "Bobbie",
 		Last:     "McGee",
 		Email:    "bobbie@luv",
 		Password: "password",
 	}
 
-	response := pb.UserResponse{}
+	response := protoUser.UserResponse{}
 
 	service.CreateUser(context.Background(), &request, &response)
 
@@ -117,7 +117,7 @@ func TestGetUserInfo(t *testing.T) {
 		t.Errorf(response.Message)
 	}
 
-	getRequest := pb.GetUserInfoRequest{
+	getRequest := protoUser.GetUserInfoRequest{
 		UserID: response.Data.User.UserID,
 	}
 	service.GetUserInfo(context.Background(), &getRequest, &response)
@@ -126,29 +126,29 @@ func TestGetUserInfo(t *testing.T) {
 		t.Errorf(response.Message)
 	}
 
-	requestDelete := pb.DeleteUserRequest{
+	requestDelete := protoUser.DeleteUserRequest{
 		UserID: response.Data.User.UserID,
 		Hard:   true,
 	}
 
-	responseDel := pb.Response{}
+	responseDel := protoUser.Response{}
 	service.DeleteUser(context.Background(), &requestDelete, &responseDel)
 }
 
 func TestUpdateUser(t *testing.T) {
 	service := setupService()
-	request := pb.CreateUserRequest{
+	request := protoUser.CreateUserRequest{
 		First:    "Bobbie",
 		Last:     "McGee",
 		Email:    "bobbie@luv",
 		Password: "password",
 	}
 
-	response := pb.UserResponse{}
+	response := protoUser.UserResponse{}
 
 	service.CreateUser(context.Background(), &request, &response)
 
-	updateRequest := pb.UpdateUserRequest{
+	updateRequest := protoUser.UpdateUserRequest{
 		UserID: response.Data.User.UserID,
 		First:  "Bobby",
 		Last:   "McLovin",
@@ -171,11 +171,11 @@ func TestUpdateUser(t *testing.T) {
 		t.Errorf("email not updated")
 	}
 
-	requestDelete := pb.DeleteUserRequest{
+	requestDelete := protoUser.DeleteUserRequest{
 		UserID: response.Data.User.UserID,
 		Hard:   true,
 	}
 
-	responseDel := pb.Response{}
+	responseDel := protoUser.Response{}
 	service.DeleteUser(context.Background(), &requestDelete, &responseDel)
 }

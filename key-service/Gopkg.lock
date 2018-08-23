@@ -5,15 +5,15 @@
   branch = "master"
   name = "github.com/asciiu/gomo"
   packages = [
+    "activity-bulletin/proto",
     "common/constants/exchange",
-    "common/constants/messages",
+    "common/constants/message",
     "common/constants/response",
     "common/db",
-    "notification-service/proto",
     "user-service/db/sql",
     "user-service/models"
   ]
-  revision = "6da4012e50595bdb66c8e2018244969b52293304"
+  revision = "abe446508ac3b1e8ed55f55810a751213561b2a2"
 
 [[projects]]
   name = "github.com/go-log/log"
@@ -298,6 +298,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "4b66ac5a2c389a4b3638ff37215a61000dd9835f4906cb1d24355d919e17d4eb"
+  inputs-digest = "b7914258e61a18e65a39f2c5cd9fb9533e61c90be0eadc992ff0e72ec39b4b52"
   solver-name = "gps-cdcl"
   solver-version = 1

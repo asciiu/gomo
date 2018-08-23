@@ -5,10 +5,11 @@ import (
 	"log"
 	"os"
 
-	msg "github.com/asciiu/gomo/common/constants/messages"
+	constMessage "github.com/asciiu/gomo/common/constants/message"
 	"github.com/asciiu/gomo/common/db"
-	kp "github.com/asciiu/gomo/key-service/proto/key"
+	protoKey "github.com/asciiu/gomo/key-service/proto/key"
 	micro "github.com/micro/go-micro"
+	"github.com/micro/go-micro/server"
 	k8s "github.com/micro/kubernetes/go/micro"
 )
 
@@ -27,19 +28,15 @@ func main() {
 	}
 
 	keyService := KeyService{
-		DB:     gomoDB,
-		KeyPub: micro.NewPublisher(msg.TopicNewKey, srv.Client()),
-	}
-
-	kp.RegisterKeyServiceHandler(srv.Server(), &keyService)
-
-	listener1 := KeyVerifiedListener{
 		DB:        gomoDB,
-		NotifyPub: micro.NewPublisher(msg.TopicNotification, srv.Client()),
+		KeyPub:    micro.NewPublisher(constMessage.TopicNewKey, srv.Client()),
+		NotifyPub: micro.NewPublisher(constMessage.TopicNotification, srv.Client()),
 	}
+
+	protoKey.RegisterKeyServiceHandler(srv.Server(), &keyService)
 
 	// handles key verified events
-	micro.RegisterSubscriber(msg.TopicKeyVerified, srv.Server(), &listener1)
+	micro.RegisterSubscriber(constMessage.TopicKeyVerified, srv.Server(), keyService.HandleVerifiedKey, server.SubscriberQueue("verified.key"))
 
 	if err := srv.Run(); err != nil {
 		log.Fatal(err)
