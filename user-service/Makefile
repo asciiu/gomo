@@ -1,6 +1,10 @@
 build:
+	dep ensure -update github.com/asciiu/gomo
 	protoc -I. --go_out=plugins=micro:$(GOPATH)/src/github.com/asciiu/gomo/user-service proto/user/user.proto
 	docker build -t us.gcr.io/fomo-204904/user-service:dev .
+
+update:
+	dep ensure -update github.com/asciiu/gomo
 
 stage:
 	docker push us.gcr.io/fomo-204904/user-service:dev

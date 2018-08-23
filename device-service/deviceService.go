@@ -4,9 +4,9 @@ import (
 	"context"
 	"database/sql"
 
-	responseConstants "github.com/asciiu/gomo/common/constants/response"
-	deviceRepo "github.com/asciiu/gomo/device-service/db/sql"
-	deviceProto "github.com/asciiu/gomo/device-service/proto/device"
+	constRes "github.com/asciiu/gomo/common/constants/response"
+	repoDevice "github.com/asciiu/gomo/device-service/db/sql"
+	protoDevice "github.com/asciiu/gomo/device-service/proto/device"
 )
 
 type DeviceService struct {
@@ -16,24 +16,24 @@ type DeviceService struct {
 // AddDevice returns error to conform to protobuf def, but the error will always be returned as nil.
 // Can't return an error with a response object - response object is returned as nil when error is non nil.
 // Therefore, return error in response object.
-func (service *DeviceService) AddDevice(ctx context.Context, req *deviceProto.AddDeviceRequest, res *deviceProto.DeviceResponse) error {
-	mreq := deviceProto.GetDeviceMatchRequest{
+func (service *DeviceService) AddDevice(ctx context.Context, req *protoDevice.AddDeviceRequest, res *protoDevice.DeviceResponse) error {
+	mreq := protoDevice.GetDeviceMatchRequest{
 		UserID:           req.UserID,
 		DeviceType:       req.DeviceType,
 		DeviceToken:      req.DeviceToken,
 		ExternalDeviceID: req.ExternalDeviceID,
 	}
 
-	device, error := deviceRepo.FindDeviceMatch(service.DB, &mreq)
+	device, error := repoDevice.FindDeviceMatch(service.DB, &mreq)
 	switch {
 	case error == sql.ErrNoRows:
 		// there were no matches found therefore insert it
-		di, error := deviceRepo.InsertDevice(service.DB, req)
+		di, error := repoDevice.InsertDevice(service.DB, req)
 		switch {
 		case error == nil:
-			res.Status = responseConstants.Success
-			res.Data = &deviceProto.UserDeviceData{
-				Device: &deviceProto.Device{
+			res.Status = constRes.Success
+			res.Data = &protoDevice.UserDeviceData{
+				Device: &protoDevice.Device{
 					DeviceID:         di.DeviceID,
 					UserID:           di.UserID,
 					ExternalDeviceID: di.ExternalDeviceID,
@@ -42,25 +42,25 @@ func (service *DeviceService) AddDevice(ctx context.Context, req *deviceProto.Ad
 				},
 			}
 		default:
-			res.Status = responseConstants.Error
+			res.Status = constRes.Error
 			res.Message = error.Error()
 		}
 
 	case device != nil:
 		// device match found update the device
-		ureq := deviceProto.UpdateDeviceRequest{
+		ureq := protoDevice.UpdateDeviceRequest{
 			DeviceID:         device.DeviceID,
 			UserID:           req.UserID,
 			DeviceType:       req.DeviceType,
 			DeviceToken:      req.DeviceToken,
 			ExternalDeviceID: req.ExternalDeviceID,
 		}
-		du, error := deviceRepo.UpdateDevice(service.DB, &ureq)
+		du, error := repoDevice.UpdateDevice(service.DB, &ureq)
 		switch {
 		case error == nil:
-			res.Status = responseConstants.Success
-			res.Data = &deviceProto.UserDeviceData{
-				Device: &deviceProto.Device{
+			res.Status = constRes.Success
+			res.Data = &protoDevice.UserDeviceData{
+				Device: &protoDevice.Device{
 					DeviceID:         du.DeviceID,
 					UserID:           du.UserID,
 					ExternalDeviceID: du.ExternalDeviceID,
@@ -80,13 +80,13 @@ func (service *DeviceService) AddDevice(ctx context.Context, req *deviceProto.Ad
 // GetUserDevice returns error to conform to protobuf def, but the error will always be returned as nil.
 // Can't return an error with a response object - response object is returned as nil when error is non nil.
 // Therefore, return error in response object.
-func (service *DeviceService) GetUserDevice(ctx context.Context, req *deviceProto.GetUserDeviceRequest, res *deviceProto.DeviceResponse) error {
-	device, error := deviceRepo.FindDeviceByDeviceID(service.DB, req)
+func (service *DeviceService) GetUserDevice(ctx context.Context, req *protoDevice.GetUserDeviceRequest, res *protoDevice.DeviceResponse) error {
+	device, error := repoDevice.FindDeviceByDeviceID(service.DB, req)
 
 	if error == nil {
-		res.Status = responseConstants.Success
-		res.Data = &deviceProto.UserDeviceData{
-			Device: &deviceProto.Device{
+		res.Status = constRes.Success
+		res.Data = &protoDevice.UserDeviceData{
+			Device: &protoDevice.Device{
 				DeviceID:         device.DeviceID,
 				UserID:           device.UserID,
 				ExternalDeviceID: device.ExternalDeviceID,
@@ -95,7 +95,7 @@ func (service *DeviceService) GetUserDevice(ctx context.Context, req *deviceProt
 			},
 		}
 	} else {
-		res.Status = responseConstants.Error
+		res.Status = constRes.Error
 		res.Message = error.Error()
 	}
 
@@ -105,16 +105,16 @@ func (service *DeviceService) GetUserDevice(ctx context.Context, req *deviceProt
 // GetUserDevices returns error to conform to protobuf def, but the error will always be returned as nil.
 // Can't return an error with a response object - response object is returned as nil when error is non nil.
 // Therefore, return error in response object.
-func (service *DeviceService) GetUserDevices(ctx context.Context, req *deviceProto.GetUserDevicesRequest, res *deviceProto.DeviceListResponse) error {
-	dvs, err := deviceRepo.FindDevicesByUserID(service.DB, req)
+func (service *DeviceService) GetUserDevices(ctx context.Context, req *protoDevice.GetUserDevicesRequest, res *protoDevice.DeviceListResponse) error {
+	dvs, err := repoDevice.FindDevicesByUserID(service.DB, req)
 
 	if err == nil {
-		res.Status = responseConstants.Success
-		res.Data = &deviceProto.UserDevicesData{
+		res.Status = constRes.Success
+		res.Data = &protoDevice.UserDevicesData{
 			Devices: dvs,
 		}
 	} else {
-		res.Status = responseConstants.Error
+		res.Status = constRes.Error
 		res.Message = err.Error()
 	}
 
@@ -124,12 +124,12 @@ func (service *DeviceService) GetUserDevices(ctx context.Context, req *devicePro
 // RemoveDevice returns error to conform to protobuf def, but the error will always be returned as nil.
 // Can't return an error with a response object - response object is returned as nil when error is non nil.
 // Therefore, return error in response object.
-func (service *DeviceService) RemoveDevice(ctx context.Context, req *deviceProto.RemoveDeviceRequest, res *deviceProto.DeviceResponse) error {
-	error := deviceRepo.DeleteDevice(service.DB, req.DeviceID)
+func (service *DeviceService) RemoveDevice(ctx context.Context, req *protoDevice.RemoveDeviceRequest, res *protoDevice.DeviceResponse) error {
+	error := repoDevice.DeleteDevice(service.DB, req.DeviceID)
 	if error == nil {
-		res.Status = responseConstants.Success
+		res.Status = constRes.Success
 	} else {
-		res.Status = responseConstants.Error
+		res.Status = constRes.Error
 		res.Message = error.Error()
 	}
 	return nil
@@ -138,12 +138,12 @@ func (service *DeviceService) RemoveDevice(ctx context.Context, req *deviceProto
 // UpdateDevice returns error to conform to protobuf def, but the error will always be returned as nil.
 // Can't return an error with a response object - response object is returned as nil when error is non nil.
 // Therefore, return error in response object.
-func (service *DeviceService) UpdateDevice(ctx context.Context, req *deviceProto.UpdateDeviceRequest, res *deviceProto.DeviceResponse) error {
-	device, error := deviceRepo.UpdateDevice(service.DB, req)
+func (service *DeviceService) UpdateDevice(ctx context.Context, req *protoDevice.UpdateDeviceRequest, res *protoDevice.DeviceResponse) error {
+	device, error := repoDevice.UpdateDevice(service.DB, req)
 	if error == nil {
-		res.Status = responseConstants.Success
-		res.Data = &deviceProto.UserDeviceData{
-			Device: &deviceProto.Device{
+		res.Status = constRes.Success
+		res.Data = &protoDevice.UserDeviceData{
+			Device: &protoDevice.Device{
 				DeviceID:         device.DeviceID,
 				UserID:           device.UserID,
 				ExternalDeviceID: device.ExternalDeviceID,
@@ -152,7 +152,7 @@ func (service *DeviceService) UpdateDevice(ctx context.Context, req *deviceProto
 			},
 		}
 	} else {
-		res.Status = responseConstants.Error
+		res.Status = constRes.Error
 		res.Message = error.Error()
 	}
 

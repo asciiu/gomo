@@ -6,9 +6,10 @@ import (
 	"testing"
 
 	"github.com/asciiu/gomo/common/db"
-	pb "github.com/asciiu/gomo/device-service/proto/device"
-	userRepo "github.com/asciiu/gomo/user-service/db/sql"
+	protoDevice "github.com/asciiu/gomo/device-service/proto/device"
+	repoUser "github.com/asciiu/gomo/user-service/db/sql"
 	user "github.com/asciiu/gomo/user-service/models"
+	"github.com/stretchr/testify/assert"
 )
 
 func checkErr(err error) {
@@ -24,7 +25,7 @@ func setupService() (*DeviceService, *user.User) {
 	service := DeviceService{db}
 
 	user := user.NewUser("first", "last", "test@email", "hash")
-	_, error := userRepo.InsertUser(db, user)
+	_, error := repoUser.InsertUser(db, user)
 	checkErr(error)
 
 	return &service, user
@@ -35,34 +36,26 @@ func TestInsertDevice(t *testing.T) {
 
 	defer service.DB.Close()
 
-	request := pb.AddDeviceRequest{
+	request := protoDevice.AddDeviceRequest{
 		UserID:           user.ID,
 		DeviceToken:      "tokie tokie tokie",
 		DeviceType:       "test",
 		ExternalDeviceID: "1234",
 	}
 
-	response := pb.DeviceResponse{}
-
+	response := protoDevice.DeviceResponse{}
 	service.AddDevice(context.Background(), &request, &response)
 
-	if response.Status != "success" {
-		t.Errorf(response.Message)
-	}
+	assert.Equal(t, "success", response.Status, response.Message)
+	assert.Equal(t, request.UserID, response.Data.Device.UserID, "user ids do not match")
 
-	if response.Data.Device.UserID != request.UserID {
-		t.Errorf("user IDs do not match")
-	}
-
-	requestRemove := pb.RemoveDeviceRequest{
+	requestRemove := protoDevice.RemoveDeviceRequest{
 		UserID:   user.ID,
 		DeviceID: response.Data.Device.DeviceID,
 	}
-
-	responseDel := pb.DeviceResponse{}
+	responseDel := protoDevice.DeviceResponse{}
 	service.RemoveDevice(context.Background(), &requestRemove, &responseDel)
+	assert.Equal(t, "success", responseDel.Status, responseDel.Message)
 
-	if responseDel.Status != "success" {
-		t.Errorf(responseDel.Message)
-	}
+	repoUser.DeleteUserHard(service.DB, user.ID)
 }

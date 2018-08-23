@@ -7,7 +7,7 @@ import (
 
 	"github.com/asciiu/gomo/common/db"
 	keyProto "github.com/asciiu/gomo/key-service/proto/key"
-	userRepo "github.com/asciiu/gomo/user-service/db/sql"
+	repoUser "github.com/asciiu/gomo/user-service/db/sql"
 	user "github.com/asciiu/gomo/user-service/models"
 	"github.com/stretchr/testify/assert"
 )
@@ -25,7 +25,7 @@ func setupService() (*KeyService, *user.User) {
 	service := KeyService{DB: db}
 
 	user := user.NewUser("first", "last", "test@email", "hash")
-	_, error := userRepo.InsertUser(db, user)
+	_, error := repoUser.InsertUser(db, user)
 	checkErr(error)
 
 	return &service, user
@@ -49,7 +49,7 @@ func TestUnsupportedKey(t *testing.T) {
 
 	assert.Equal(t, "fail", response.Status, "return status is expected to be fail due to unsupported exchange")
 
-	userRepo.DeleteUserHard(service.DB, user.ID)
+	repoUser.DeleteUserHard(service.DB, user.ID)
 }
 
 func TestSuccessfulKey(t *testing.T) {
@@ -80,5 +80,5 @@ func TestSuccessfulKey(t *testing.T) {
 
 	assert.Equal(t, "success", responseDel.Status, response.Message)
 
-	userRepo.DeleteUserHard(service.DB, user.ID)
+	repoUser.DeleteUserHard(service.DB, user.ID)
 }

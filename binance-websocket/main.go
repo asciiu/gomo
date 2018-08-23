@@ -8,9 +8,9 @@ import (
 	"strings"
 	"time"
 
-	"github.com/asciiu/gomo/common/constants/exchange"
-	msg "github.com/asciiu/gomo/common/constants/messages"
-	evt "github.com/asciiu/gomo/common/proto/events"
+	constExch "github.com/asciiu/gomo/common/constants/exchange"
+	constMessage "github.com/asciiu/gomo/common/constants/message"
+	protoEvt "github.com/asciiu/gomo/common/proto/events"
 	"github.com/gorilla/websocket"
 	micro "github.com/micro/go-micro"
 	k8s "github.com/micro/kubernetes/go/micro"
@@ -121,7 +121,7 @@ func (c *BinanceClient) readPump() {
 			return
 		}
 
-		marketTickers := make([]*evt.TradeEvent, 0)
+		marketTickers := make([]*protoEvt.TradeEvent, 0)
 		for _, tick := range binanceTickers {
 			//tm := time.Unix(int64(tick.EventTime), 0)
 			p, err := strconv.ParseFloat(tick.ClosePrice, 64)
@@ -146,14 +146,14 @@ func (c *BinanceClient) readPump() {
 				symbol = symbol + "-BNB"
 			}
 
-			tickerEvent := evt.TradeEvent{
-				Exchange:   exchange.Binance,
+			tickerEvent := protoEvt.TradeEvent{
+				Exchange:   constExch.Binance,
 				MarketName: symbol,
 				Price:      p,
 			}
 			marketTickers = append(marketTickers, &tickerEvent)
 		}
-		payload := evt.TradeEvents{
+		payload := protoEvt.TradeEvents{
 			Events: marketTickers,
 		}
 
@@ -189,7 +189,7 @@ func main() {
 	)
 
 	srv.Init()
-	tradePublisher := micro.NewPublisher(msg.TopicAggTrade, srv.Client())
+	tradePublisher := micro.NewPublisher(constMessage.TopicAggTrade, srv.Client())
 
 	client := BinanceClient{
 		Publisher:   tradePublisher,
