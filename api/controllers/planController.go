@@ -459,6 +459,50 @@ func (controller *PlanController) HandleListPlans(c echo.Context) error {
 
 	plans := make([]*Plan, 0)
 	for _, plan := range r.Data.Plans {
+
+		cOrders := make([]*Order, 0)
+		for _, o := range plan.Orders {
+			names := strings.Split(o.MarketName, "-")
+			baseCurrencySymbol := names[1]
+			baseCurrencyName := controller.currencies[baseCurrencySymbol]
+			marketCurrencySymbol := names[0]
+			marketCurrencyName := controller.currencies[marketCurrencySymbol]
+			newo := Order{
+				OrderID:                  o.OrderID,
+				ParentOrderID:            o.ParentOrderID,
+				PlanDepth:                o.PlanDepth,
+				OrderTemplateID:          o.OrderTemplateID,
+				KeyID:                    o.KeyID,
+				KeyPublic:                o.KeyPublic,
+				KeyDescription:           o.KeyDescription,
+				OrderPriority:            o.OrderPriority,
+				OrderType:                o.OrderType,
+				Side:                     o.Side,
+				LimitPrice:               o.LimitPrice,
+				Exchange:                 o.Exchange,
+				ExchangeMarketName:       o.ExchangeMarketName,
+				MarketName:               o.MarketName,
+				BaseCurrencySymbol:       baseCurrencySymbol,
+				BaseCurrencyName:         baseCurrencyName,
+				MarketCurrencySymbol:     marketCurrencySymbol,
+				MarketCurrencyName:       marketCurrencyName,
+				InitialCurrencySymbol:    o.InitialCurrencySymbol,
+				InitialCurrencyName:      controller.currencies[o.InitialCurrencySymbol],
+				InitialCurrencyBalance:   o.InitialCurrencyBalance,
+				InitialCurrencyTraded:    o.InitialCurrencyTraded,
+				InitialCurrencyRemainder: o.InitialCurrencyRemainder,
+				FinalCurrencySymbol:      o.FinalCurrencySymbol,
+				FinalCurrencyName:        controller.currencies[o.FinalCurrencySymbol],
+				FinalCurrencyBalance:     o.FinalCurrencyBalance,
+				Grupo:                    o.Grupo,
+				Status:                   o.Status,
+				CreatedOn:                o.CreatedOn,
+				UpdatedOn:                o.UpdatedOn,
+				Triggers:                 o.Triggers,
+			}
+			cOrders = append(cOrders, &newo)
+		}
+
 		pln := Plan{
 			PlanID:                 plan.PlanID,
 			PlanTemplateID:         plan.PlanTemplateID,
@@ -478,6 +522,7 @@ func (controller *PlanController) HandleListPlans(c echo.Context) error {
 			LastExecutedPlanDepth:  plan.LastExecutedPlanDepth,
 			CreatedOn:              plan.CreatedOn,
 			UpdatedOn:              plan.UpdatedOn,
+			Orders:                 cOrders,
 		}
 
 		plans = append(plans, &pln)
