@@ -2,24 +2,24 @@ package plan
 
 const (
 	// the plan was aborted
-	Aborted string = "aborted"
+	//Aborted string = "aborted"
 	// chain status
 	// the chain of orders is running
 	Active string = "active"
 	// the plan chain is closed and cannot be modified
 	Closed string = "closed"
 	// the chain of orders has completed
-	Completed string = "completed"
+	//Completed string = "completed"
 	// this means the record was successfully delete from our DB
 	Deleted string = "deleted"
 	// the chain of orders is not running
 	Inactive string = "inactive"
 	// the chain failed
-	Failed string = "failed"
+	//Failed string = "failed"
 	// past plan that user did outside of the platform
 	Historic string = "historic"
 	// the plan is pending delete
-	PendingAbort string = "pending_abort"
+	//PendingAbort string = "pending_abort"
 	// wtf is this, a learning center for ants!
 	UnknownChainStatus string = "???"
 )
