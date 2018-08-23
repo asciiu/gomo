@@ -12,24 +12,24 @@ import (
 	"golang.org/x/net/context"
 )
 
-// A ResponseBalancesSuccess will always contain a status of "successful".
-// swagger:model responseBalancesSuccess
-type ResponseBalancesSuccess struct {
-	Status string           `json:"status"`
-	Data   *AccountBalances `json:"data"`
+// A ResponseBalanceClientSuccess will always contain a status of "successful".
+// swagger:model responseBalanceClientSuccess
+type ResponseBalanceClientSuccess struct {
+	Status string                `json:"status"`
+	Data   *AccountBalanceClient `json:"data"`
 }
 
 // This struct is used in the generated swagger docs,
 // and it is not used anywhere.
-// swagger:parameters getAllBalances
+// swagger:parameters getAllBalanceClient
 type SearchSymbol struct {
 	// Required: false
 	// In: query
 	Symbol string `json:"symbol"`
 }
 
-type AccountBalances struct {
-	Balances []*Balance `json:"protoBalance"`
+type AccountBalanceClient struct {
+	BalanceClient []*Balance `json:"protoBalance"`
 }
 
 type Balance struct {
@@ -45,26 +45,26 @@ type Balance struct {
 }
 
 type BalanceController struct {
-	DB       *sql.DB
-	Balances protoBalance.BalanceServiceClient
+	DB            *sql.DB
+	BalanceClient protoBalance.BalanceServiceClient
 }
 
 func NewBalanceController(db *sql.DB, service micro.Service) *BalanceController {
 	controller := BalanceController{
-		DB:       db,
-		Balances: protoBalance.NewBalanceServiceClient("protoBalance", service.Client()),
+		DB:            db,
+		BalanceClient: protoBalance.NewBalanceServiceClient("balances", service.Client()),
 	}
 	return &controller
 }
 
-// swagger:route GET /protoBalance protoBalance getAllBalances
+// swagger:route GET /protoBalance protoBalance getAllBalanceClient
 //
 // get all protoBalance (protected)
 //
 // Returns all protoBalance for user. Use optional query param 'symbol' as lowercase ticker symbol - e.g. ada.
 //
 // responses:
-//  200: responseBalancesSuccess "data" will contain array of protoBalance with "status": constRes.Success
+//  200: responseBalanceClientSuccess "data" will contain array of protoBalance with "status": constRes.Success
 //  500: responseError the message will state what the internal server error was with "status": constRes.Error
 func (controller *BalanceController) HandleGetBalances(c echo.Context) error {
 	token := c.Get("user").(*jwt.Token)
@@ -77,7 +77,7 @@ func (controller *BalanceController) HandleGetBalances(c echo.Context) error {
 		Symbol: symbol,
 	}
 
-	r, err := controller.Balances.GetUserBalances(context.Background(), &getRequest)
+	r, err := controller.BalanceClient.GetUserBalances(context.Background(), &getRequest)
 	if err != nil {
 		response := &ResponseError{
 			Status:  constRes.Error,
@@ -117,10 +117,10 @@ func (controller *BalanceController) HandleGetBalances(c echo.Context) error {
 		}
 	}
 
-	response := &ResponseBalancesSuccess{
+	response := &ResponseBalanceClientSuccess{
 		Status: constRes.Success,
-		Data: &AccountBalances{
-			Balances: data,
+		Data: &AccountBalanceClient{
+			BalanceClient: data,
 		},
 	}
 

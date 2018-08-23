@@ -35,11 +35,11 @@ const jwtDuration = 20 * time.Minute
 //const jwtDuration = 30 * time.Second
 
 type AuthController struct {
-	DB       *sql.DB
-	Users    protoUser.UserServiceClient
-	Balances protoBalance.BalanceServiceClient
-	Keys     protoKey.KeyServiceClient
-	Devices  protoDevice.DeviceServiceClient
+	DB            *sql.DB
+	UserClient    protoUser.UserServiceClient
+	BalanceClient protoBalance.BalanceServiceClient
+	KeyClient     protoKey.KeyServiceClient
+	DeviceClient  protoDevice.DeviceServiceClient
 }
 
 type JwtClaims struct {
@@ -91,8 +91,8 @@ type Device struct {
 }
 
 type UserData struct {
-	User    *models.UserInfo `json:"user"`
-	Devices []*Device        `json:"devices"`
+	User         *models.UserInfo `json:"user"`
+	DeviceClient []*Device        `json:"devices"`
 }
 
 // A ResponseSuccess will always contain a status of "successful".
@@ -105,11 +105,11 @@ type ResponseError struct {
 
 func NewAuthController(db *sql.DB, service micro.Service) *AuthController {
 	controller := AuthController{
-		DB:       db,
-		Users:    protoUser.NewUserServiceClient("users", service.Client()),
-		Balances: protoBalance.NewBalanceServiceClient("balances", service.Client()),
-		Keys:     protoKey.NewKeyServiceClient("keys", service.Client()),
-		Devices:  protoDevice.NewDeviceServiceClient("devices", service.Client()),
+		DB:            db,
+		UserClient:    protoUser.NewUserServiceClient("users", service.Client()),
+		BalanceClient: protoBalance.NewBalanceServiceClient("balances", service.Client()),
+		KeyClient:     protoKey.NewKeyServiceClient("keys", service.Client()),
+		DeviceClient:  protoDevice.NewDeviceServiceClient("devices", service.Client()),
 	}
 
 	return &controller
@@ -287,7 +287,7 @@ func (controller *AuthController) HandleLogin(c echo.Context) error {
 				UserID: user.ID,
 			}
 
-			r, err := controller.Devices.GetUserDevices(context.Background(), &getRequest)
+			r, err := controller.DeviceClient.GetUserDevices(context.Background(), &getRequest)
 
 			if r.Status != constRes.Success {
 				response := &ResponseError{
@@ -318,8 +318,8 @@ func (controller *AuthController) HandleLogin(c echo.Context) error {
 			response := &ResponseSuccess{
 				Status: constRes.Success,
 				Data: &UserData{
-					User:    user.Info(),
-					Devices: dvs,
+					User:         user.Info(),
+					DeviceClient: dvs,
 				},
 			}
 
@@ -407,7 +407,7 @@ func (controller *AuthController) HandleSignup(c echo.Context) error {
 		Password: signupRequest.Password,
 	}
 
-	r, _ := controller.Users.CreateUser(context.Background(), &createRequest)
+	r, _ := controller.UserClient.CreateUser(context.Background(), &createRequest)
 	if r.Status != constRes.Success {
 		response := &ResponseError{
 			Status:  r.Status,

@@ -20,19 +20,19 @@ import (
 )
 
 type PlanController struct {
-	DB       *sql.DB
-	Plans    protoPlan.PlanServiceClient
-	Keys     protoKey.KeyServiceClient
-	Bulletin protoActivity.ActivityBulletinClient
+	DB             *sql.DB
+	PlanClient     protoPlan.PlanServiceClient
+	KeyClient      protoKey.KeyServiceClient
+	BulletinClient protoActivity.ActivityBulletinClient
 	// map of ticker symbol to full name
 	currencies map[string]string
 }
 
-// A ResponsePlansSuccess will always contain a status of "successful".
-// swagger:model ResponsePlansSuccess
-type ResponsePlansSuccess struct {
-	Status string     `json:"status"`
-	Data   *PlansPage `json:"data"`
+// A ResponsePlanClientSuccess will always contain a status of "successful".
+// swagger:model ResponsePlanClientSuccess
+type ResponsePlanClientSuccess struct {
+	Status string          `json:"status"`
+	Data   *PlanClientPage `json:"data"`
 }
 
 // A ResponsePlanWithOrderPageSuccess will always contain a status of "successful".
@@ -49,11 +49,11 @@ type ResponsePlanSuccess struct {
 	Data   *Plan  `json:"data"`
 }
 
-type PlansPage struct {
-	Page     uint32  `json:"page"`
-	PageSize uint32  `json:"pageSize"`
-	Total    uint32  `json:"total"`
-	Plans    []*Plan `json:"protoPlan"`
+type PlanClientPage struct {
+	Page       uint32  `json:"page"`
+	PageSize   uint32  `json:"pageSize"`
+	Total      uint32  `json:"total"`
+	PlanClient []*Plan `json:"protoPlan"`
 }
 
 type PlanWithOrderPage struct {
@@ -82,7 +82,7 @@ type OrdersPage struct {
 	Orders   []*protoOrder.Order `json:"protoOrder"`
 }
 
-type UserPlansData struct {
+type UserPlanClientData struct {
 	PLans []*Plan `json:"protoPlan"`
 }
 
@@ -161,11 +161,11 @@ func fail(c echo.Context, msg string) error {
 
 func NewPlanController(db *sql.DB, service micro.Service) *PlanController {
 	controller := PlanController{
-		DB:         db,
-		Plans:      protoPlan.NewPlanServiceClient("protoPlan", service.Client()),
-		Keys:       protoKey.NewKeyServiceClient("protoKey", service.Client()),
-		Bulletin:   protoActivity.NewActivityBulletinClient("bulletin", service.Client()),
-		currencies: make(map[string]string),
+		DB:             db,
+		PlanClient:     protoPlan.NewPlanServiceClient("plans", service.Client()),
+		KeyClient:      protoKey.NewKeyServiceClient("keys", service.Client()),
+		BulletinClient: protoActivity.NewActivityBulletinClient("bulletin", service.Client()),
+		currencies:     make(map[string]string),
 	}
 
 	currencies, err := asql.GetCurrencyNames(db)
@@ -205,7 +205,7 @@ func (controller *PlanController) HandleDeletePlan(c echo.Context) error {
 		UserID: userID,
 	}
 
-	r, _ := controller.Plans.DeletePlan(context.Background(), &delRequest)
+	r, _ := controller.PlanClient.DeletePlan(context.Background(), &delRequest)
 	if r.Status != constRes.Success {
 		res := &ResponseError{
 			Status:  r.Status,
@@ -281,7 +281,7 @@ func (controller *PlanController) HandleGetPlan(c echo.Context) error {
 		PlanDepth:  uint32(pd),
 		PlanLength: uint32(pl)}
 
-	r, _ := controller.Plans.GetUserPlan(context.Background(), &getRequest)
+	r, _ := controller.PlanClient.GetUserPlan(context.Background(), &getRequest)
 	if r.Status != constRes.Success {
 		res := &ResponseError{
 			Status:  r.Status,
@@ -345,11 +345,11 @@ func (controller *PlanController) HandleGetPlan(c echo.Context) error {
 		ObjectID: planID,
 		Count:    1,
 	}
-	activityData, _ := controller.Bulletin.FindMostRecentActivity(context.Background(), &getActivity)
+	activityData, _ := controller.BulletinClient.FindMostRecentActivity(context.Background(), &getActivity)
 	getCount := protoActivity.ActivityCountRequest{
 		ObjectID: planID,
 	}
-	activityCount, _ := controller.Bulletin.FindActivityCount(context.Background(), &getCount)
+	activityCount, _ := controller.BulletinClient.FindActivityCount(context.Background(), &getCount)
 	var recent *protoActivity.Activity
 	if activityCount.Data.Count > 0 {
 		recent = activityData.Data.Activity[0]
@@ -388,8 +388,8 @@ func (controller *PlanController) HandleGetPlan(c echo.Context) error {
 }
 
 // required for swaggered, otherwise never used
-// swagger:parameters GetUserPlansParams
-type GetUserPlansParams struct {
+// swagger:parameters GetUserPlanClientParams
+type GetUserPlanClientParams struct {
 	Exchange   string `json:"exchange"`
 	MarketName string `json:"marketName"`
 	Status     string `json:"status"`
@@ -397,7 +397,7 @@ type GetUserPlansParams struct {
 	PageSize   uint32 `json:"pageSize"`
 }
 
-// swagger:route GET /protoPlan protoPlan GetUserPlansParams
+// swagger:route GET /protoPlan protoPlan GetUserPlanClientParams
 //
 // get user protoPlan (protected)
 //
@@ -412,7 +412,7 @@ type GetUserPlansParams struct {
 // example: /protoPlan?exchange=binance
 //
 // responses:
-//  200: ResponsePlansSuccess "data" will contain an array of plan summaries
+//  200: ResponsePlanClientSuccess "data" will contain an array of plan summaries
 //  500: responseError the message will state what the internal server error was with "status": "error"
 func (controller *PlanController) HandleListPlans(c echo.Context) error {
 	token := c.Get("user").(*jwt.Token)
@@ -442,7 +442,7 @@ func (controller *PlanController) HandleListPlans(c echo.Context) error {
 		Status:     status,
 	}
 
-	r, _ := controller.Plans.GetUserPlans(context.Background(), &getRequest)
+	r, _ := controller.PlanClient.GetUserPlans(context.Background(), &getRequest)
 	if r.Status != constRes.Success {
 		res := &ResponseError{
 			Status:  r.Status,
@@ -528,13 +528,13 @@ func (controller *PlanController) HandleListPlans(c echo.Context) error {
 		protoPlan = append(protoPlan, &pln)
 	}
 
-	res := &ResponsePlansSuccess{
+	res := &ResponsePlanClientSuccess{
 		Status: constRes.Success,
-		Data: &PlansPage{
-			Page:     r.Data.Page,
-			PageSize: r.Data.PageSize,
-			Total:    r.Data.Total,
-			Plans:    protoPlan,
+		Data: &PlanClientPage{
+			Page:       r.Data.Page,
+			PageSize:   r.Data.PageSize,
+			Total:      r.Data.Total,
+			PlanClient: protoPlan,
 		},
 	}
 
@@ -676,7 +676,7 @@ func (controller *PlanController) HandlePostPlan(c echo.Context) error {
 	}
 
 	// add plan returns nil for error
-	r, _ := controller.Plans.NewPlan(context.Background(), &newPlanRequest)
+	r, _ := controller.PlanClient.NewPlan(context.Background(), &newPlanRequest)
 	if r.Status != constRes.Success {
 		res := &ResponseError{
 			Status:  r.Status,
@@ -845,7 +845,7 @@ func (controller *PlanController) HandleUpdatePlan(c echo.Context) error {
 	}
 
 	// add plan returns nil for error
-	r, _ := controller.Plans.UpdatePlan(context.Background(), &updatePlanRequest)
+	r, _ := controller.PlanClient.UpdatePlan(context.Background(), &updatePlanRequest)
 	if r.Status != constRes.Success {
 		res := &ResponseError{
 			Status:  r.Status,

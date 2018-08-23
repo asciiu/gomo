@@ -15,8 +15,8 @@ import (
 )
 
 type KeyController struct {
-	DB   *sql.DB
-	Keys protoKey.KeyServiceClient
+	DB        *sql.DB
+	KeyClient protoKey.KeyServiceClient
 }
 
 // swagger:parameters postKey
@@ -49,19 +49,19 @@ type ResponseKeySuccess struct {
 	Data   *UserKeyData `json:"data"`
 }
 
-// A ResponseKeysSuccess will always contain a status of "successful".
-// swagger:model responseKeysSuccess
-type ResponseKeysSuccess struct {
-	Status string        `json:"status"`
-	Data   *UserKeysData `json:"data"`
+// A ResponseKeyClientSuccess will always contain a status of "successful".
+// swagger:model responseKeyClientSuccess
+type ResponseKeyClientSuccess struct {
+	Status string             `json:"status"`
+	Data   *UserKeyClientData `json:"data"`
 }
 
 type UserKeyData struct {
 	Key *Key `json:"key"`
 }
 
-type UserKeysData struct {
-	Keys []*Key `json:"protoKey"`
+type UserKeyClientData struct {
+	KeyClient []*Key `json:"protoKey"`
 }
 
 type Key struct {
@@ -74,8 +74,8 @@ type Key struct {
 
 func NewKeyController(db *sql.DB, service micro.Service) *KeyController {
 	controller := KeyController{
-		DB:   db,
-		Keys: protoKey.NewKeyServiceClient("protoKey", service.Client()),
+		DB:        db,
+		KeyClient: protoKey.NewKeyServiceClient("keys", service.Client()),
 	}
 	return &controller
 }
@@ -100,7 +100,7 @@ func (controller *KeyController) HandleGetKey(c echo.Context) error {
 		UserID: userID,
 	}
 
-	r, _ := controller.Keys.GetUserKey(context.Background(), &getRequest)
+	r, _ := controller.KeyClient.GetUserKey(context.Background(), &getRequest)
 	if r.Status != constRes.Success {
 		response := &ResponseError{
 			Status:  r.Status,
@@ -141,7 +141,7 @@ func (controller *KeyController) HandleGetKey(c echo.Context) error {
 // Get all the user protoKey for this user. The api secrets will not be returned in the response data.
 //
 // responses:
-//  200: responseKeysSuccess "data" will contain a list of key info with "status": "success"
+//  200: responseKeyClientSuccess "data" will contain a list of key info with "status": "success"
 //  500: responseError the message will state what the internal server error was with "status": "error"
 func (controller *KeyController) HandleListKeys(c echo.Context) error {
 	token := c.Get("user").(*jwt.Token)
@@ -152,7 +152,7 @@ func (controller *KeyController) HandleListKeys(c echo.Context) error {
 		UserID: userID,
 	}
 
-	r, e := controller.Keys.GetUserKeys(context.Background(), &getRequest)
+	r, e := controller.KeyClient.GetUserKeys(context.Background(), &getRequest)
 	fmt.Printf("error was %+v\n", e)
 	if r.Status != constRes.Success {
 		response := &ResponseError{
@@ -180,10 +180,10 @@ func (controller *KeyController) HandleListKeys(c echo.Context) error {
 		}
 	}
 
-	response := &ResponseKeysSuccess{
+	response := &ResponseKeyClientSuccess{
 		Status: constRes.Success,
-		Data: &UserKeysData{
-			Keys: data,
+		Data: &UserKeyClientData{
+			KeyClient: data,
 		},
 	}
 
@@ -234,7 +234,7 @@ func (controller *KeyController) HandlePostKey(c echo.Context) error {
 		Description: addKeyRequest.Description,
 	}
 
-	r, _ := controller.Keys.AddKey(context.Background(), &createRequest)
+	r, _ := controller.KeyClient.AddKey(context.Background(), &createRequest)
 	if r.Status != constRes.Success {
 		response := &ResponseError{
 			Status:  r.Status,
@@ -300,7 +300,7 @@ func (controller *KeyController) HandleUpdateKey(c echo.Context) error {
 		Description: keyRequest.Description,
 	}
 
-	r, _ := controller.Keys.UpdateKeyDescription(context.Background(), &updateRequest)
+	r, _ := controller.KeyClient.UpdateKeyDescription(context.Background(), &updateRequest)
 	if r.Status != constRes.Success {
 		response := &ResponseError{
 			Status:  r.Status,
@@ -351,7 +351,7 @@ func (controller *KeyController) HandleDeleteKey(c echo.Context) error {
 		UserID: userID,
 	}
 
-	r, _ := controller.Keys.RemoveKey(context.Background(), &removeRequest)
+	r, _ := controller.KeyClient.RemoveKey(context.Background(), &removeRequest)
 	if r.Status != constRes.Success {
 		response := &ResponseError{
 			Status:  r.Status,

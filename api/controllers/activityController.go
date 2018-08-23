@@ -42,12 +42,12 @@ type SearchActivity struct {
 }
 
 type ActivityController struct {
-	Bulletin protoActivity.ActivityBulletinClient
+	BulletinClient protoActivity.ActivityBulletinClient
 }
 
 func NewActivityController(service micro.Service) *ActivityController {
 	controller := ActivityController{
-		Bulletin: protoActivity.NewActivityBulletinClient("bulletin", service.Client()),
+		BulletinClient: protoActivity.NewActivityBulletinClient("bulletin", service.Client()),
 	}
 
 	return &controller
@@ -85,7 +85,7 @@ func (controller *ActivityController) HandleListActivity(c echo.Context) error {
 		PageSize: uint32(pageSize),
 	}
 
-	r, _ := controller.Bulletin.FindUserActivity(context.Background(), &req)
+	r, _ := controller.BulletinClient.FindUserActivity(context.Background(), &req)
 	if r.Status != constRes.Success {
 		response := &ResponseError{
 			Status:  r.Status,
@@ -150,7 +150,7 @@ func (controller *ActivityController) HandleUpdateActivity(c echo.Context) error
 		SeenAt:     updateActivity.SeenAt,
 	}
 
-	r, _ := controller.Bulletin.UpdateActivity(context.Background(), &req)
+	r, _ := controller.BulletinClient.UpdateActivity(context.Background(), &req)
 	if r.Status != constRes.Success {
 		response := &ResponseError{
 			Status:  r.Status,

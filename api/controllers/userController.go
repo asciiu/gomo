@@ -15,8 +15,8 @@ import (
 )
 
 type UserController struct {
-	DB    *sql.DB
-	Users protoUser.UserServiceClient
+	DB         *sql.DB
+	UserClient protoUser.UserServiceClient
 }
 
 // swagger:parameters changePassword
@@ -44,8 +44,8 @@ type UpdateUserRequest struct {
 
 func NewUserController(db *sql.DB, service micro.Service) *UserController {
 	controller := UserController{
-		DB:    db,
-		Users: protoUser.NewUserServiceClient("protoUser", service.Client()),
+		DB:         db,
+		UserClient: protoUser.NewUserServiceClient("users", service.Client()),
 	}
 	return &controller
 }
@@ -95,7 +95,7 @@ func (controller *UserController) HandleChangePassword(c echo.Context) error {
 		NewPassword: passwordRequest.NewPassword,
 	}
 
-	r, err := controller.Users.ChangePassword(context.Background(), &changeRequest)
+	r, err := controller.UserClient.ChangePassword(context.Background(), &changeRequest)
 	if err != nil {
 		response := &ResponseError{
 			Status:  constRes.Error,
@@ -173,7 +173,7 @@ func (controller *UserController) HandleUpdateUser(c echo.Context) error {
 		Email:  updateRequest.Email,
 	}
 
-	r, err := controller.Users.UpdateUser(context.Background(), &changeRequest)
+	r, err := controller.UserClient.UpdateUser(context.Background(), &changeRequest)
 	if err != nil {
 		response := &ResponseError{
 			Status:  constRes.Error,

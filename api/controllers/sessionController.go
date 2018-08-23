@@ -14,9 +14,9 @@ import (
 )
 
 type SessionController struct {
-	DB    *sql.DB
-	Users protoUser.UserServiceClient
-	Keys  protoKey.KeyServiceClient
+	DB         *sql.DB
+	UserClient protoUser.UserServiceClient
+	KeyClient  protoKey.KeyServiceClient
 }
 
 type UserMetaData struct {
@@ -24,11 +24,11 @@ type UserMetaData struct {
 }
 
 type UserMeta struct {
-	UserID string     `json:"userID"`
-	First  string     `json:"first"`
-	Last   string     `json:"last"`
-	Email  string     `json:"email"`
-	Keys   []*KeyMeta `json:"protoKey"`
+	UserID    string     `json:"userID"`
+	First     string     `json:"first"`
+	Last      string     `json:"last"`
+	Email     string     `json:"email"`
+	KeyClient []*KeyMeta `json:"protoKey"`
 }
 
 type KeyMeta struct {
@@ -47,9 +47,9 @@ type ResponseSessionSuccess struct {
 
 func NewSessionController(db *sql.DB, service micro.Service) *SessionController {
 	controller := SessionController{
-		DB:    db,
-		Users: protoUser.NewUserServiceClient("protoUser", service.Client()),
-		Keys:  protoKey.NewKeyServiceClient("protoKey", service.Client()),
+		DB:         db,
+		UserClient: protoUser.NewUserServiceClient("users", service.Client()),
+		KeyClient:  protoKey.NewKeyServiceClient("keys", service.Client()),
 	}
 	return &controller
 }
@@ -74,7 +74,7 @@ func (controller *SessionController) HandleSession(c echo.Context) error {
 	getRequest := protoUser.GetUserInfoRequest{
 		UserID: userID,
 	}
-	r, _ := controller.Users.GetUserInfo(context.Background(), &getRequest)
+	r, _ := controller.UserClient.GetUserInfo(context.Background(), &getRequest)
 	if r.Status != constRes.Success {
 		response := &ResponseError{
 			Status:  r.Status,
@@ -89,10 +89,10 @@ func (controller *SessionController) HandleSession(c echo.Context) error {
 		}
 	}
 
-	getKeysRequest := protoKey.GetUserKeysRequest{
+	getKeyClientRequest := protoKey.GetUserKeysRequest{
 		UserID: userID,
 	}
-	r2, _ := controller.Keys.GetUserKeys(context.Background(), &getKeysRequest)
+	r2, _ := controller.KeyClient.GetUserKeys(context.Background(), &getKeyClientRequest)
 	leprotoKey := make([]*KeyMeta, 0)
 
 	for _, k := range r2.Data.Keys {
@@ -108,11 +108,11 @@ func (controller *SessionController) HandleSession(c echo.Context) error {
 		Status: constRes.Success,
 		Data: &UserMetaData{
 			UserMeta: &UserMeta{
-				UserID: r.Data.User.UserID,
-				First:  r.Data.User.First,
-				Last:   r.Data.User.Last,
-				Email:  r.Data.User.Email,
-				Keys:   leprotoKey}}}
+				UserID:    r.Data.User.UserID,
+				First:     r.Data.User.First,
+				Last:      r.Data.User.Last,
+				Email:     r.Data.User.Email,
+				KeyClient: leprotoKey}}}
 
 	return c.JSON(http.StatusOK, response)
 }

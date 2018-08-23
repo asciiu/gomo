@@ -14,8 +14,8 @@ import (
 )
 
 type DeviceController struct {
-	DB      *sql.DB
-	Devices protoDevice.DeviceServiceClient
+	DB           *sql.DB
+	DeviceClient protoDevice.DeviceServiceClient
 }
 
 // swagger:parameters addDevice updateDevice
@@ -38,19 +38,19 @@ type ResponseDeviceSuccess struct {
 	Data   *UserDeviceData `json:"data"`
 }
 
-// A ResponseDevicesSuccess will always contain a status of "successful".
-// swagger:model responseDevicesSuccess
-type ResponseDevicesSuccess struct {
-	Status string           `json:"status"`
-	Data   *UserDevicesData `json:"data"`
+// A ResponseDeviceClientSuccess will always contain a status of "successful".
+// swagger:model responseDeviceClientSuccess
+type ResponseDeviceClientSuccess struct {
+	Status string                `json:"status"`
+	Data   *UserDeviceClientData `json:"data"`
 }
 
 type UserDeviceData struct {
 	Device *ApiDevice `json:"device"`
 }
 
-type UserDevicesData struct {
-	Devices []*ApiDevice `json:"protoDevice"`
+type UserDeviceClientData struct {
+	DeviceClient []*ApiDevice `json:"protoDevice"`
 }
 
 type ApiDevice struct {
@@ -62,8 +62,8 @@ type ApiDevice struct {
 
 func NewDeviceController(db *sql.DB, service micro.Service) *DeviceController {
 	controller := DeviceController{
-		DB:      db,
-		Devices: protoDevice.NewDeviceServiceClient("protoDevice", service.Client()),
+		DB:           db,
+		DeviceClient: protoDevice.NewDeviceServiceClient("devices", service.Client()),
 	}
 	return &controller
 }
@@ -84,7 +84,7 @@ func (controller *DeviceController) HandleGetDevice(c echo.Context) error {
 		DeviceID: deviceID,
 	}
 
-	r, _ := controller.Devices.GetUserDevice(context.Background(), &getRequest)
+	r, _ := controller.DeviceClient.GetUserDevice(context.Background(), &getRequest)
 	if r.Status != constRes.Success {
 		response := &ResponseError{
 			Status:  r.Status,
@@ -114,14 +114,14 @@ func (controller *DeviceController) HandleGetDevice(c echo.Context) error {
 	return c.JSON(http.StatusOK, response)
 }
 
-// swagger:route GET /protoDevice protoDevice getAllDevices
+// swagger:route GET /protoDevice protoDevice getAllDeviceClient
 //
 // all registered protoDevice (protected)
 //
 // Returns a list of registered protoDevice for logged in user.
 //
 // responses:
-//  200: responseDevicesSuccess "data" will contain array of protoDevice with "status": constRes.Success
+//  200: responseDeviceClientSuccess "data" will contain array of protoDevice with "status": constRes.Success
 //  500: responseError the message will state what the internal server error was with "status": constRes.Error
 func (controller *DeviceController) HandleListDevices(c echo.Context) error {
 	token := c.Get("user").(*jwt.Token)
@@ -132,7 +132,7 @@ func (controller *DeviceController) HandleListDevices(c echo.Context) error {
 		UserID: userID,
 	}
 
-	r, _ := controller.Devices.GetUserDevices(context.Background(), &getRequest)
+	r, _ := controller.DeviceClient.GetUserDevices(context.Background(), &getRequest)
 	if r.Status != constRes.Success {
 		response := &ResponseError{
 			Status:  r.Status,
@@ -157,10 +157,10 @@ func (controller *DeviceController) HandleListDevices(c echo.Context) error {
 		}
 	}
 
-	response := &ResponseDevicesSuccess{
+	response := &ResponseDeviceClientSuccess{
 		Status: constRes.Success,
-		Data: &UserDevicesData{
-			Devices: data,
+		Data: &UserDeviceClientData{
+			DeviceClient: data,
 		},
 	}
 
@@ -211,7 +211,7 @@ func (controller *DeviceController) HandlePostDevice(c echo.Context) error {
 		ExternalDeviceID: addDeviceRequest.ExternalDeviceID,
 	}
 
-	r, _ := controller.Devices.AddDevice(context.Background(), &createRequest)
+	r, _ := controller.DeviceClient.AddDevice(context.Background(), &createRequest)
 	if r.Status != constRes.Success {
 		response := &ResponseError{
 			Status:  r.Status,
@@ -286,7 +286,7 @@ func (controller *DeviceController) HandleUpdateDevice(c echo.Context) error {
 		ExternalDeviceID: addDeviceRequest.ExternalDeviceID,
 	}
 
-	r, _ := controller.Devices.UpdateDevice(context.Background(), &updateRequest)
+	r, _ := controller.DeviceClient.UpdateDevice(context.Background(), &updateRequest)
 	if r.Status != constRes.Success {
 		response := &ResponseError{
 			Status:  r.Status,
@@ -336,7 +336,7 @@ func (controller *DeviceController) HandleDeleteDevice(c echo.Context) error {
 		UserID:   userID,
 	}
 
-	r, _ := controller.Devices.RemoveDevice(context.Background(), &removeRequest)
+	r, _ := controller.DeviceClient.RemoveDevice(context.Background(), &removeRequest)
 	if r.Status != constRes.Success {
 		response := &ResponseError{
 			Status:  r.Status,
