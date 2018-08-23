@@ -10,7 +10,7 @@ import (
 	"time"
 
 	protoActivity "github.com/asciiu/gomo/activity-bulletin/proto"
-	constCommon "github.com/asciiu/gomo/common/constants/response"
+	constRes "github.com/asciiu/gomo/common/constants/response"
 	protoEvt "github.com/asciiu/gomo/common/proto/events"
 	commonUtil "github.com/asciiu/gomo/common/util"
 	constKey "github.com/asciiu/gomo/key-service/constants"
@@ -169,14 +169,14 @@ func (service *PlanService) fetchKeys(keyIDs []string) ([]*protoKey.Key, error) 
 		KeyIDs: keyIDs}
 
 	r, _ := service.KeyClient.GetKeys(context.Background(), &request)
-	if r.Status != constCommon.Success {
-		if r.Status == constCommon.Fail {
+	if r.Status != constRes.Success {
+		if r.Status == constRes.Fail {
 			return nil, fmt.Errorf(r.Message)
 		}
-		if r.Status == constCommon.Error {
+		if r.Status == constRes.Error {
 			return nil, fmt.Errorf(r.Message)
 		}
-		if r.Status == constCommon.Nonentity {
+		if r.Status == constRes.Nonentity {
 			return nil, fmt.Errorf("invalid keys")
 		}
 	}
@@ -297,39 +297,39 @@ func (service *PlanService) NewPlan(ctx context.Context, req *protoPlan.NewPlanR
 
 	switch {
 	case !ValidatePlanInputStatus(req.Status):
-		res.Status = constCommon.Fail
+		res.Status = constRes.Fail
 		res.Message = "plan status must be active, inactive, or historic"
 		return nil
 	case !ValidateMinOrder(req.Orders):
-		res.Status = constCommon.Fail
+		res.Status = constRes.Fail
 		res.Message = "at least one order required for a new plan."
 		return nil
 	case !ValidateOrderTrigger(req.Orders):
-		res.Status = constCommon.Fail
+		res.Status = constRes.Fail
 		res.Message = "orders must have triggers"
 		return nil
 	case !ValidateSingleRootNode(req.Orders):
-		res.Status = constCommon.Fail
+		res.Status = constRes.Fail
 		res.Message = "multiple root nodes found, only one is allowed"
 		return nil
 	case !ValidateConnectedRoutesFromParent(uuid.Nil.String(), req.Orders):
-		res.Status = constCommon.Fail
+		res.Status = constRes.Fail
 		res.Message = "an order does not have a valid parent_order_id in your request"
 		return nil
 	case !ValidateNodeCount(req.Orders):
-		res.Status = constCommon.Fail
+		res.Status = constRes.Fail
 		res.Message = "you can only post 10 inactive nodes at a time!"
 		return nil
 	case !ValidateNoneZeroBalance(req.Orders):
-		res.Status = constCommon.Fail
+		res.Status = constRes.Fail
 		res.Message = "non zero initialCurrencyBalance required for root order!"
 		return nil
 	case req.Orders[0].OrderType == constPlan.PaperOrder && !ValidatePaperOrders(req.Orders):
-		res.Status = constCommon.Fail
+		res.Status = constRes.Fail
 		res.Message = "you cannot add a market/limit order to a plan that will begin with a paper order"
 		return nil
 	case req.Orders[0].OrderType != constPlan.PaperOrder && !ValidateNotPaperOrders(req.Orders):
-		res.Status = constCommon.Fail
+		res.Status = constRes.Fail
 		res.Message = "you cannot add paper orders to a plan that will begin with a market/limit order"
 		return nil
 	}
@@ -342,7 +342,7 @@ func (service *PlanService) NewPlan(ctx context.Context, req *protoPlan.NewPlanR
 	kys, err := service.fetchKeys(keyIDs)
 	if err != nil {
 		if strings.Contains(err.Error(), "invalid input") {
-			res.Status = constCommon.Fail
+			res.Status = constRes.Fail
 			res.Message = fmt.Sprintf("valid keyID required for each order")
 			return nil
 		}
@@ -350,7 +350,7 @@ func (service *PlanService) NewPlan(ctx context.Context, req *protoPlan.NewPlanR
 		msg := fmt.Sprintf("ecountered error when fetching keys: %s\n", err.Error())
 		log.Println(msg)
 
-		res.Status = constCommon.Error
+		res.Status = constRes.Error
 		res.Message = msg
 		return nil
 	}
@@ -367,22 +367,22 @@ func (service *PlanService) NewPlan(ctx context.Context, req *protoPlan.NewPlanR
 		orderStatus := constPlan.Inactive
 
 		if or.MarketName == "" || or.KeyID == "" {
-			res.Status = constCommon.Fail
+			res.Status = constRes.Fail
 			res.Message = "missing marketName/keyID for order"
 			return nil
 		}
 		if !strings.Contains(or.MarketName, "-") {
-			res.Status = constCommon.Fail
+			res.Status = constRes.Fail
 			res.Message = "marketName must be currency-base: e.g. ADA-BTC"
 			return nil
 		}
 		if !ValidateOrderType(or.OrderType) {
-			res.Status = constCommon.Fail
+			res.Status = constRes.Fail
 			res.Message = "market, limit, or paper required for order type"
 			return nil
 		}
 		if !ValidateOrderSide(or.Side) {
-			res.Status = constCommon.Fail
+			res.Status = constRes.Fail
 			res.Message = "buy or sell required for order side"
 			return nil
 		}
@@ -405,7 +405,7 @@ func (service *PlanService) NewPlan(ctx context.Context, req *protoPlan.NewPlanR
 			// this will happen if the parent order for this order cannot be found
 			// it essentially means the orders are not in the correct order - sorted from parent to child
 			if depth == 0 {
-				res.Status = constCommon.Fail
+				res.Status = constRes.Fail
 				res.Message = "the orders must be sorted by plan depth, i.e. parents must be before children"
 				return nil
 			}
@@ -422,7 +422,7 @@ func (service *PlanService) NewPlan(ctx context.Context, req *protoPlan.NewPlanR
 				exchange = ky.Exchange
 
 				if ky.Status != constKey.Verified {
-					res.Status = constCommon.Fail
+					res.Status = constRes.Fail
 					res.Message = "using an unverified key!"
 					return nil
 
@@ -491,12 +491,12 @@ func (service *PlanService) NewPlan(ctx context.Context, req *protoPlan.NewPlanR
 			msg := fmt.Sprintf("failed to validate the currency balance for %s: %s", currencySymbol, err.Error())
 			log.Println(msg)
 
-			res.Status = constCommon.Error
+			res.Status = constRes.Error
 			res.Message = msg
 			return nil
 		}
 		if !validBalance {
-			res.Status = constCommon.Fail
+			res.Status = constRes.Fail
 			res.Message = fmt.Sprintf("insufficient %s balance, %.8f requested", currencySymbol, currencyBalance)
 			return nil
 		}
@@ -534,7 +534,7 @@ func (service *PlanService) NewPlan(ctx context.Context, req *protoPlan.NewPlanR
 		msg := fmt.Sprintf("insert plan failed %s", err.Error())
 		log.Println(msg)
 
-		res.Status = constCommon.Error
+		res.Status = constRes.Error
 		res.Message = msg
 		return nil
 	}
@@ -555,13 +555,13 @@ func (service *PlanService) NewPlan(ctx context.Context, req *protoPlan.NewPlanR
 		// publish this plan to the engine
 		if err := service.publishPlan(ctx, &p, false); err != nil {
 			// TODO return a warning here
-			res.Status = constCommon.Error
+			res.Status = constRes.Error
 			res.Message = "could not publish first order: " + err.Error()
 			return nil
 		}
 	}
 
-	res.Status = constCommon.Success
+	res.Status = constRes.Success
 	res.Data = &protoPlan.PlanData{Plan: &pln}
 
 	return nil
@@ -575,16 +575,16 @@ func (service *PlanService) GetUserPlan(ctx context.Context, req *protoPlan.GetU
 
 	switch {
 	case error == sql.ErrNoRows:
-		res.Status = constCommon.Nonentity
+		res.Status = constRes.Nonentity
 		res.Message = fmt.Sprintf("planID not found %s", req.PlanID)
 	case error != nil:
-		res.Status = constCommon.Error
+		res.Status = constRes.Error
 		res.Message = error.Error()
 	// case plan.totalDepth < req.PlanDepth:
-	// 	res.Status = constCommon.Nonentity
+	// 	res.Status = constRes.Nonentity
 	// 	res.Message = "plan depth out of bounds, max depth is %s"
 	case error == nil:
-		res.Status = constCommon.Success
+		res.Status = constRes.Success
 		res.Data = &protoPlan.PlanData{Plan: plan}
 	}
 
@@ -660,10 +660,10 @@ func (service *PlanService) GetUserPlans(ctx context.Context, req *protoPlan.Get
 	}
 
 	if err == nil {
-		res.Status = constCommon.Success
+		res.Status = constRes.Success
 		res.Data = page
 	} else {
-		res.Status = constCommon.Error
+		res.Status = constRes.Error
 		res.Message = err.Error()
 	}
 
@@ -676,12 +676,12 @@ func (service *PlanService) DeletePlan(ctx context.Context, req *protoPlan.Delet
 	pln, err := repoPlan.FindPlanWithUnexecutedOrders(service.DB, req.PlanID)
 	switch {
 	case err == sql.ErrNoRows:
-		res.Status = constCommon.Nonentity
+		res.Status = constRes.Nonentity
 		res.Message = fmt.Sprintf("planID not found %s", req.PlanID)
 		return nil
 
 	case err != nil:
-		res.Status = constCommon.Error
+		res.Status = constRes.Error
 		res.Message = fmt.Sprintf("unexpected error in DeletePlan: %s", err.Error())
 		return nil
 
@@ -695,11 +695,11 @@ func (service *PlanService) DeletePlan(ctx context.Context, req *protoPlan.Delet
 	err = repoPlan.UpdatePlanStatus(service.DB, req.PlanID, pln.Status)
 
 	if err != nil {
-		res.Status = constCommon.Error
+		res.Status = constRes.Error
 		res.Message = err.Error()
 	}
 
-	res.Status = constCommon.Success
+	res.Status = constRes.Success
 	res.Data = &protoPlan.PlanData{
 		Plan: pln,
 	}
@@ -721,63 +721,63 @@ func (service *PlanService) UpdatePlan(ctx context.Context, req *protoPlan.Updat
 
 	switch {
 	case err == sql.ErrNoRows:
-		res.Status = constCommon.Nonentity
+		res.Status = constRes.Nonentity
 		res.Message = fmt.Sprintf("planID not found %s", req.PlanID)
 		return nil
 	case err != nil:
 		msg := fmt.Sprintf("FindPlanWithUnexecutedOrders error: %s", err.Error())
 		log.Println(msg)
-		res.Status = constCommon.Error
+		res.Status = constRes.Error
 		res.Message = fmt.Sprintf(err.Error())
 		return nil
 	case len(req.Orders) == 0 && pln.LastExecutedPlanDepth == 0:
-		res.Status = constCommon.Fail
+		res.Status = constRes.Fail
 		res.Message = "to plan or not to plan. That is the question. A plan must have at least 1 order."
 		return nil
 	case !ValidateNonExecutedOrder(pln.Orders, req.Orders):
-		res.Status = constCommon.Fail
+		res.Status = constRes.Fail
 		res.Message = "an order has executed."
 		return nil
 	case !ValidateOrderTrigger(req.Orders):
-		res.Status = constCommon.Fail
+		res.Status = constRes.Fail
 		res.Message = "orders must have triggers"
 		return nil
 	case !ValidatePlanInputStatus(req.Status):
-		res.Status = constCommon.Fail
+		res.Status = constRes.Fail
 		res.Message = "plan status must be active, inactive"
 		return nil
 	case !ValidateConnectedRoutesFromParent(pln.LastExecutedOrderID, req.Orders):
 		// all orders must be connected using parentOrderID
-		res.Status = constCommon.Fail
+		res.Status = constRes.Fail
 		res.Message = "this ain't no tree! All orders must be connected using the parentOrderID relationship."
 		return nil
 	case pln.LastExecutedPlanDepth == 0 && !ValidateNoneZeroBalance(req.Orders):
 		// you must commit a balance for the plan in the first order
-		res.Status = constCommon.Fail
+		res.Status = constRes.Fail
 		res.Message = "the initialCurrencyBalance must be set for the root order"
 		return nil
 	case pln.LastExecutedPlanDepth == 0 && !ValidateSingleRootNode(req.Orders):
 		// you can't start a plan without a root order
-		res.Status = constCommon.Fail
+		res.Status = constRes.Fail
 		res.Message = "multiple root nodes found, only one is allowed"
 		return nil
 	case pln.LastExecutedPlanDepth > 0 && !ValidateChildNodes(req.Orders):
 		// update on an executed tree can only append child orders
-		res.Status = constCommon.Fail
+		res.Status = constRes.Fail
 		res.Message = fmt.Sprintf("an order's parentOrderID is %s. This plan already has an executed root order.", uuid.Nil.String())
 		return nil
 	case !ValidateNodeCount(req.Orders):
-		res.Status = constCommon.Fail
+		res.Status = constRes.Fail
 		res.Message = "you can only apply 10 inactive orders at a time!"
 		return nil
 	case pln.LastExecutedPlanDepth == 0 && req.Orders[0].OrderType == constPlan.PaperOrder && !ValidatePaperOrders(req.Orders):
 		// can't mix real orders to a paper plan
-		res.Status = constCommon.Fail
+		res.Status = constRes.Fail
 		res.Message = "you cannot append market or limit orders to a plan that will begin with a paper order"
 		return nil
 	case pln.LastExecutedPlanDepth > 0 && pln.Orders[0].OrderType != constPlan.PaperOrder && !ValidateNotPaperOrders(req.Orders):
 		// the executed plan was live - can't add paper orders to this plan
-		res.Status = constCommon.Fail
+		res.Status = constRes.Fail
 		res.Message = "you cannot add paper orders with a plan that has already executed a live order"
 		return nil
 	}
@@ -792,7 +792,7 @@ func (service *PlanService) UpdatePlan(ctx context.Context, req *protoPlan.Updat
 	if len(req.Orders) > 0 {
 		kys, err = service.fetchKeys(keyIDs)
 		if err != nil {
-			res.Status = constCommon.Error
+			res.Status = constRes.Error
 			res.Message = fmt.Sprintf("ecountered error when fetching keys: %s", err.Error())
 			return nil
 		}
@@ -809,22 +809,22 @@ func (service *PlanService) UpdatePlan(ctx context.Context, req *protoPlan.Updat
 		orderStatus := constPlan.Inactive
 
 		if or.MarketName == "" || or.KeyID == "" {
-			res.Status = constCommon.Fail
+			res.Status = constRes.Fail
 			res.Message = "missing marketName/keyID for order"
 			return nil
 		}
 		if !strings.Contains(or.MarketName, "-") {
-			res.Status = constCommon.Fail
+			res.Status = constRes.Fail
 			res.Message = "marketName must be currency-base: e.g. ADA-BTC"
 			return nil
 		}
 		if !ValidateOrderType(or.OrderType) {
-			res.Status = constCommon.Fail
+			res.Status = constRes.Fail
 			res.Message = "market, limit, or paper required for order type"
 			return nil
 		}
 		if !ValidateOrderSide(or.Side) {
-			res.Status = constCommon.Fail
+			res.Status = constRes.Fail
 			res.Message = "buy or sell required for order side"
 			return nil
 		}
@@ -846,7 +846,7 @@ func (service *PlanService) UpdatePlan(ctx context.Context, req *protoPlan.Updat
 			// this will happen if the parent order for this order cannot be found
 			// the depth would not change
 			if depth == pln.LastExecutedPlanDepth {
-				res.Status = constCommon.Fail
+				res.Status = constRes.Fail
 				res.Message = "the orders must be sorted by plan depth, i.e. parents must be before children"
 				return nil
 			}
@@ -862,7 +862,7 @@ func (service *PlanService) UpdatePlan(ctx context.Context, req *protoPlan.Updat
 				exchange = ky.Exchange
 
 				if ky.Status != constKey.Verified {
-					res.Status = constCommon.Fail
+					res.Status = constRes.Fail
 					res.Message = "using an unverified key!"
 					return nil
 				}
@@ -903,12 +903,12 @@ func (service *PlanService) UpdatePlan(ctx context.Context, req *protoPlan.Updat
 		if or.OrderType != constPlan.PaperOrder && or.InitialCurrencyBalance > 0 {
 			validBalance, err := service.validateBalance(ctx, currencySymbol, or.InitialCurrencyBalance, req.UserID, or.KeyID)
 			if err != nil {
-				res.Status = constCommon.Error
+				res.Status = constRes.Error
 				res.Message = fmt.Sprintf("failed to validate the currency balance for %s: %s", currencySymbol, err.Error())
 				return nil
 			}
 			if !validBalance {
-				res.Status = constCommon.Fail
+				res.Status = constRes.Fail
 				res.Message = fmt.Sprintf("insufficient %s balance, %.8f requested in orderID: %s", currencySymbol, or.InitialCurrencyBalance, or.OrderID)
 				return nil
 			}
@@ -945,7 +945,7 @@ func (service *PlanService) UpdatePlan(ctx context.Context, req *protoPlan.Updat
 		req := protoEngine.KillRequest{PlanID: pln.PlanID}
 		_, err := service.EngineClient.KillPlan(ctx, &req)
 		if err != nil {
-			res.Status = constCommon.Fail
+			res.Status = constRes.Fail
 			res.Message = "you cannot update this plan because an order for this plan has updated. To avoid seeing this message again try pausing your plan before you update it."
 			return nil
 		}
@@ -974,7 +974,7 @@ func (service *PlanService) UpdatePlan(ctx context.Context, req *protoPlan.Updat
 		pln.Exchange = newOrders[0].Exchange
 		if err := repoPlan.UpdatePlanContextTxn(txn, ctx, pln.PlanID, pln.ActiveCurrencySymbol, pln.Exchange, pln.ActiveCurrencyBalance); err != nil {
 			txn.Rollback()
-			res.Status = constCommon.Error
+			res.Status = constRes.Error
 			res.Message = "error encountered while updating the plan context: " + err.Error()
 			return nil
 		}
@@ -983,7 +983,7 @@ func (service *PlanService) UpdatePlan(ctx context.Context, req *protoPlan.Updat
 		pln.Status = req.Status
 		if err := repoPlan.UpdatePlanStatusTxn(txn, ctx, pln.PlanID, pln.Status); err != nil {
 			txn.Rollback()
-			res.Status = constCommon.Error
+			res.Status = constRes.Error
 			res.Message = "error encountered while updating the plan status: " + err.Error()
 			return nil
 		}
@@ -992,7 +992,7 @@ func (service *PlanService) UpdatePlan(ctx context.Context, req *protoPlan.Updat
 		pln.Status = req.Status
 		if err := repoPlan.UpdatePlanTotalDepthTxn(txn, ctx, pln.PlanID, pln.TotalDepth); err != nil {
 			txn.Rollback()
-			res.Status = constCommon.Error
+			res.Status = constRes.Error
 			res.Message = "error encountered while updating the plan total depth: " + err.Error()
 			return nil
 		}
@@ -1001,7 +1001,7 @@ func (service *PlanService) UpdatePlan(ctx context.Context, req *protoPlan.Updat
 		pln.Title = req.Title
 		if err := repoPlan.UpdatePlanTitleTxn(txn, ctx, pln.PlanID, pln.Title); err != nil {
 			txn.Rollback()
-			res.Status = constCommon.Error
+			res.Status = constRes.Error
 			res.Message = "error encountered while updating the plan title: " + err.Error()
 			return nil
 		}
@@ -1010,7 +1010,7 @@ func (service *PlanService) UpdatePlan(ctx context.Context, req *protoPlan.Updat
 		pln.CloseOnComplete = req.CloseOnComplete
 		if err := repoPlan.UpdatePlanCloseOnCompleteTxn(txn, ctx, pln.PlanID, pln.CloseOnComplete); err != nil {
 			txn.Rollback()
-			res.Status = constCommon.Error
+			res.Status = constRes.Error
 			res.Message = "error encountered while updating the plan close on complete option: " + err.Error()
 			return nil
 		}
@@ -1019,7 +1019,7 @@ func (service *PlanService) UpdatePlan(ctx context.Context, req *protoPlan.Updat
 		pln.PlanTemplateID = req.PlanTemplateID
 		if err := repoPlan.UpdatePlanTemplateTxn(txn, ctx, pln.PlanID, pln.PlanTemplateID); err != nil {
 			txn.Rollback()
-			res.Status = constCommon.Error
+			res.Status = constRes.Error
 			res.Message = "error encountered while updating the plan template: " + err.Error()
 			return nil
 		}
@@ -1029,7 +1029,7 @@ func (service *PlanService) UpdatePlan(ctx context.Context, req *protoPlan.Updat
 	// no particular reason, but it could be useful in debugging
 	if err := repoPlan.UpdatePlanTimestampTxn(txn, ctx, pln.PlanID, now); err != nil {
 		txn.Rollback()
-		res.Status = constCommon.Error
+		res.Status = constRes.Error
 		res.Message = "error encountered while updating the plan timestamp: " + err.Error()
 		return nil
 	}
@@ -1037,7 +1037,7 @@ func (service *PlanService) UpdatePlan(ctx context.Context, req *protoPlan.Updat
 	// drop current orders from the plan
 	if err := repoPlan.DeleteOrders(txn, ctx, orderIDs); err != nil {
 		txn.Rollback()
-		res.Status = constCommon.Error
+		res.Status = constRes.Error
 		res.Message = "error while deleting the previous orders: " + err.Error()
 		return nil
 	}
@@ -1046,7 +1046,7 @@ func (service *PlanService) UpdatePlan(ctx context.Context, req *protoPlan.Updat
 		// insert new orders for this plan
 		if err := repoPlan.InsertOrders(txn, newOrders); err != nil {
 			txn.Rollback()
-			res.Status = constCommon.Error
+			res.Status = constRes.Error
 			res.Message = "insert orders error: " + err.Error()
 			return nil
 		}
@@ -1072,14 +1072,14 @@ func (service *PlanService) UpdatePlan(ctx context.Context, req *protoPlan.Updat
 
 		// this is a new plan
 		if err := service.publishPlan(ctx, pln, true); err != nil {
-			res.Status = constCommon.Error
+			res.Status = constRes.Error
 			res.Message = "could not fully set this plan active, error was: " + err.Error()
 			return nil
 		}
 	}
 
 	pln.Orders = newOrders
-	res.Status = constCommon.Success
+	res.Status = constRes.Success
 	res.Data = &protoPlan.PlanData{Plan: pln}
 
 	return nil

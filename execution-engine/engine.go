@@ -10,14 +10,11 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/asciiu/gomo/common/constants/response"
-
-	constOrder "github.com/asciiu/gomo/common/constants/order"
-	"github.com/asciiu/gomo/common/constants/side"
-	"github.com/asciiu/gomo/common/constants/status"
-	evt "github.com/asciiu/gomo/common/proto/events"
-	"github.com/asciiu/gomo/common/util"
+	constRes "github.com/asciiu/gomo/common/constants/response"
+	protoEvt "github.com/asciiu/gomo/common/proto/events"
+	commonUtil "github.com/asciiu/gomo/common/util"
 	protoEngine "github.com/asciiu/gomo/execution-engine/proto/engine"
+	constPlan "github.com/asciiu/gomo/plan-service/constants"
 	"github.com/mattn/anko/vm"
 	micro "github.com/micro/go-micro"
 )
@@ -72,7 +69,7 @@ type Engine struct {
 
 // ProcessEvent will process TradeEvents. These events are published from the exchange sockets.
 // Whether or not a trigger for an order will execute will be deteremined here.
-func (engine *Engine) ProcessTradeEvents(ctx context.Context, payload *evt.TradeEvents) error {
+func (engine *Engine) ProcessTradeEvents(ctx context.Context, payload *protoEvt.TradeEvents) error {
 	plans := engine.Plans
 
 	// TODO this implementation is fine for prototype but needs to be more efficient for production!
@@ -89,8 +86,8 @@ func (engine *Engine) ProcessTradeEvents(ctx context.Context, payload *evt.Trade
 							// remove this order from the processor
 							engine.Plans = append(plans[:p], plans[p+1:]...)
 
-							if order.OrderType == constOrder.PaperOrder {
-								completedEvent := evt.CompletedOrderEvent{
+							if order.OrderType == constPlan.PaperOrder {
+								completedEvent := protoEvt.CompletedOrderEvent{
 									UserID:     plan.UserID,
 									PlanID:     plan.PlanID,
 									OrderID:    order.OrderID,
@@ -102,30 +99,30 @@ func (engine *Engine) ProcessTradeEvents(ctx context.Context, payload *evt.Trade
 									TriggerID:              trigger.TriggerID,
 									TriggeredPrice:         tradeEvent.Price,
 									TriggeredCondition:     desc,
-									ExchangeOrderID:        constOrder.PaperOrder,
-									ExchangeMarketName:     constOrder.PaperOrder,
-									Status:                 status.Filled,
+									ExchangeOrderID:        constPlan.PaperOrder,
+									ExchangeMarketName:     constPlan.PaperOrder,
+									Status:                 constPlan.Filled,
 									CloseOnComplete:        plan.CloseOnComplete,
 								}
 
 								symbols := strings.Split(order.MarketName, "-")
 								// adjust balances for buy
-								if order.Side == side.Buy {
-									qty := util.ToFixed(plan.ActiveCurrencyBalance/tradeEvent.Price, precision)
+								if order.Side == constPlan.Buy {
+									qty := commonUtil.ToFixed(plan.ActiveCurrencyBalance/tradeEvent.Price, precision)
 
 									completedEvent.FinalCurrencySymbol = symbols[0]
 									completedEvent.FinalCurrencyBalance = qty
-									completedEvent.InitialCurrencyTraded = util.ToFixed(completedEvent.FinalCurrencyBalance*tradeEvent.Price, precision)
-									completedEvent.InitialCurrencyRemainder = util.ToFixed(plan.ActiveCurrencyBalance-completedEvent.InitialCurrencyTraded, precision)
+									completedEvent.InitialCurrencyTraded = commonUtil.ToFixed(completedEvent.FinalCurrencyBalance*tradeEvent.Price, precision)
+									completedEvent.InitialCurrencyRemainder = commonUtil.ToFixed(plan.ActiveCurrencyBalance-completedEvent.InitialCurrencyTraded, precision)
 									completedEvent.Details = fmt.Sprintf("orderID: %s, bought %.8f %s with %.8f %s", completedEvent.OrderID, completedEvent.FinalCurrencyBalance, symbols[0], completedEvent.InitialCurrencyTraded, symbols[1])
 								}
 
 								// adjust balances for sell
-								if order.Side == side.Sell {
+								if order.Side == constPlan.Sell {
 									completedEvent.FinalCurrencySymbol = symbols[1]
-									completedEvent.FinalCurrencyBalance = util.ToFixed(plan.ActiveCurrencyBalance*tradeEvent.Price, precision)
+									completedEvent.FinalCurrencyBalance = commonUtil.ToFixed(plan.ActiveCurrencyBalance*tradeEvent.Price, precision)
 									completedEvent.InitialCurrencyRemainder = 0
-									completedEvent.InitialCurrencyTraded = util.ToFixed(plan.ActiveCurrencyBalance, precision)
+									completedEvent.InitialCurrencyTraded = commonUtil.ToFixed(plan.ActiveCurrencyBalance, precision)
 									completedEvent.Details = fmt.Sprintf("orderID: %s, sold %.8f %s for %.8f %s", completedEvent.OrderID, plan.ActiveCurrencyBalance, symbols[0], completedEvent.FinalCurrencyBalance, symbols[1])
 								}
 
@@ -138,10 +135,10 @@ func (engine *Engine) ProcessTradeEvents(ctx context.Context, payload *evt.Trade
 							} else {
 								quantity := 0.0
 								switch {
-								case order.Side == side.Buy && order.OrderType == constOrder.LimitOrder:
+								case order.Side == constPlan.Buy && order.OrderType == constPlan.LimitOrder:
 									quantity = plan.ActiveCurrencyBalance / order.LimitPrice
 
-								case order.Side == side.Buy && order.OrderType == constOrder.MarketOrder:
+								case order.Side == constPlan.Buy && order.OrderType == constPlan.MarketOrder:
 									quantity = plan.ActiveCurrencyBalance / tradeEvent.Price
 
 								default:
@@ -150,7 +147,7 @@ func (engine *Engine) ProcessTradeEvents(ctx context.Context, payload *evt.Trade
 								}
 
 								// convert this active order event to a triggered order event
-								triggeredEvent := evt.TriggeredOrderEvent{
+								triggeredEvent := protoEvt.TriggeredOrderEvent{
 									Exchange:           order.Exchange,
 									OrderID:            order.OrderID,
 									PlanID:             plan.PlanID,
@@ -229,8 +226,8 @@ func (engine *Engine) AddPlan(ctx context.Context, req *protoEngine.NewPlanReque
 
 				// execute this order right NOW! It's FOMO TIME! but only when we have the last price
 				// for the market in question
-				if order.OrderType == constOrder.PaperOrder && lastPrice != 0 {
-					completedEvent := evt.CompletedOrderEvent{
+				if order.OrderType == constPlan.PaperOrder && lastPrice != 0 {
+					completedEvent := protoEvt.CompletedOrderEvent{
 						UserID:     req.UserID,
 						PlanID:     req.PlanID,
 						OrderID:    order.OrderID,
@@ -242,30 +239,30 @@ func (engine *Engine) AddPlan(ctx context.Context, req *protoEngine.NewPlanReque
 						TriggerID:              trigger.TriggerID,
 						TriggeredPrice:         lastPrice,
 						TriggeredCondition:     "Jordan!",
-						ExchangeOrderID:        constOrder.PaperOrder,
-						ExchangeMarketName:     constOrder.PaperOrder,
-						Status:                 status.Filled,
+						ExchangeOrderID:        constPlan.PaperOrder,
+						ExchangeMarketName:     constPlan.PaperOrder,
+						Status:                 constPlan.Filled,
 						CloseOnComplete:        req.CloseOnComplete,
 					}
 
 					symbols := strings.Split(order.MarketName, "-")
 					// adjust balances for buy
-					if order.Side == side.Buy {
-						qty := util.ToFixed(req.ActiveCurrencyBalance/lastPrice, precision)
+					if order.Side == constPlan.Buy {
+						qty := commonUtil.ToFixed(req.ActiveCurrencyBalance/lastPrice, precision)
 
 						completedEvent.FinalCurrencySymbol = symbols[0]
 						completedEvent.FinalCurrencyBalance = qty
-						completedEvent.InitialCurrencyTraded = util.ToFixed(completedEvent.FinalCurrencyBalance*lastPrice, precision)
-						completedEvent.InitialCurrencyRemainder = util.ToFixed(req.ActiveCurrencyBalance-completedEvent.InitialCurrencyTraded, precision)
+						completedEvent.InitialCurrencyTraded = commonUtil.ToFixed(completedEvent.FinalCurrencyBalance*lastPrice, precision)
+						completedEvent.InitialCurrencyRemainder = commonUtil.ToFixed(req.ActiveCurrencyBalance-completedEvent.InitialCurrencyTraded, precision)
 						completedEvent.Details = fmt.Sprintf("bought %.8f %s with %.8f %s", completedEvent.FinalCurrencyBalance, symbols[0], completedEvent.InitialCurrencyTraded, symbols[1])
 					}
 
 					// adjust balances for sell
-					if order.Side == side.Sell {
+					if order.Side == constPlan.Sell {
 						completedEvent.FinalCurrencySymbol = symbols[1]
-						completedEvent.FinalCurrencyBalance = util.ToFixed(req.ActiveCurrencyBalance*lastPrice, precision)
+						completedEvent.FinalCurrencyBalance = commonUtil.ToFixed(req.ActiveCurrencyBalance*lastPrice, precision)
 						completedEvent.InitialCurrencyRemainder = 0
-						completedEvent.InitialCurrencyTraded = util.ToFixed(req.ActiveCurrencyBalance, precision)
+						completedEvent.InitialCurrencyTraded = commonUtil.ToFixed(req.ActiveCurrencyBalance, precision)
 						completedEvent.Details = fmt.Sprintf("sold %.8f %s for %.8f %s", req.ActiveCurrencyBalance, symbols[0], completedEvent.FinalCurrencyBalance, symbols[1])
 					}
 
@@ -276,7 +273,7 @@ func (engine *Engine) AddPlan(ctx context.Context, req *protoEngine.NewPlanReque
 						log.Println("publish warning: ", err, completedEvent)
 					}
 					// no need to add this plan just return
-					res.Status = response.Success
+					res.Status = constRes.Success
 					res.Data = &protoEngine.PlanList{
 						Plans: []*protoEngine.Plan{
 							&protoEngine.Plan{
@@ -338,7 +335,7 @@ func (engine *Engine) AddPlan(ctx context.Context, req *protoEngine.NewPlanReque
 		Orders:                orders,
 	})
 
-	res.Status = response.Success
+	res.Status = constRes.Success
 	res.Data = &protoEngine.PlanList{
 		Plans: []*protoEngine.Plan{
 			&protoEngine.Plan{
@@ -361,7 +358,7 @@ func (engine *Engine) GetActivePlans(ctx context.Context, req *protoEngine.Activ
 		})
 	}
 
-	res.Status = response.Success
+	res.Status = constRes.Success
 	res.Data = &protoEngine.PlanList{
 		Plans: livePlans,
 	}
@@ -378,7 +375,7 @@ func (engine *Engine) KillPlan(ctx context.Context, req *protoEngine.KillRequest
 			// remove this plan by appending the slice up until i (:i excludes i)
 			// with all elements after i
 			engine.Plans = append(plans[:i], plans[i+1:]...)
-			res.Status = response.Success
+			res.Status = constRes.Success
 			res.Data = &protoEngine.PlanList{
 				Plans: []*protoEngine.Plan{
 					&protoEngine.Plan{
@@ -410,7 +407,7 @@ func (engine *Engine) KillUserPlans(ctx context.Context, req *protoEngine.KillUs
 		}
 	}
 
-	res.Status = response.Success
+	res.Status = constRes.Success
 	res.Data = &protoEngine.PlanList{
 		Plans: killedPlans,
 	}

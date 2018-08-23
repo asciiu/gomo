@@ -6,7 +6,7 @@ import (
 	"log"
 	"os"
 
-	msg "github.com/asciiu/gomo/common/constants/messages"
+	constMessage "github.com/asciiu/gomo/common/constants/message"
 	"github.com/asciiu/gomo/common/db"
 	protoEvt "github.com/asciiu/gomo/common/proto/events"
 	protoEngine "github.com/asciiu/gomo/execution-engine/proto/engine"
@@ -37,19 +37,19 @@ func main() {
 	engine := Engine{
 		DB:        gomoDB,
 		Env:       env,
-		Aborted:   micro.NewPublisher(msg.TopicAbortedOrder, srv.Client()),
-		Completed: micro.NewPublisher(msg.TopicCompletedOrder, srv.Client()),
-		Triggered: micro.NewPublisher(msg.TopicTriggeredOrder, srv.Client()),
+		Aborted:   micro.NewPublisher(constMessage.TopicAbortedOrder, srv.Client()),
+		Completed: micro.NewPublisher(constMessage.TopicCompletedOrder, srv.Client()),
+		Triggered: micro.NewPublisher(constMessage.TopicTriggeredOrder, srv.Client()),
 		PriceLine: make(map[string]float64),
 		Plans:     make([]*Plan, 0),
 	}
 	protoEngine.RegisterExecutionEngineHandler(srv.Server(), &engine)
 
 	// subscribe to trade events from the exchanges
-	micro.RegisterSubscriber(msg.TopicAggTrade, srv.Server(), engine.ProcessTradeEvents, server.SubscriberQueue("trade.event"))
+	micro.RegisterSubscriber(constMessage.TopicAggTrade, srv.Server(), engine.ProcessTradeEvents, server.SubscriberQueue("trade.event"))
 
 	// fire this event on startup to tell the plan service to feed the engine active plans
-	starter := micro.NewPublisher(msg.TopicEngineStart, srv.Client())
+	starter := micro.NewPublisher(constMessage.TopicEngineStart, srv.Client())
 	starter.Publish(context.Background(), &protoEvt.EngineStartEvent{"replaceIDHERE"})
 
 	if err := srv.Run(); err != nil {
