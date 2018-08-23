@@ -4,8 +4,9 @@ import (
 	"database/sql"
 	"net/http"
 
-	keys "github.com/asciiu/gomo/key-service/proto/key"
-	users "github.com/asciiu/gomo/user-service/proto/user"
+	constRes "github.com/asciiu/gomo/common/constants/response"
+	protoKey "github.com/asciiu/gomo/key-service/proto/key"
+	protoUser "github.com/asciiu/gomo/user-service/proto/user"
 	jwt "github.com/dgrijalva/jwt-go"
 	"github.com/labstack/echo"
 	micro "github.com/micro/go-micro"
@@ -14,8 +15,8 @@ import (
 
 type SessionController struct {
 	DB    *sql.DB
-	Users users.UserServiceClient
-	Keys  keys.KeyServiceClient
+	Users protoUser.UserServiceClient
+	Keys  protoKey.KeyServiceClient
 }
 
 type UserMetaData struct {
@@ -27,7 +28,7 @@ type UserMeta struct {
 	First  string     `json:"first"`
 	Last   string     `json:"last"`
 	Email  string     `json:"email"`
-	Keys   []*KeyMeta `json:"keys"`
+	Keys   []*KeyMeta `json:"protoKey"`
 }
 
 type KeyMeta struct {
@@ -47,8 +48,8 @@ type ResponseSessionSuccess struct {
 func NewSessionController(db *sql.DB, service micro.Service) *SessionController {
 	controller := SessionController{
 		DB:    db,
-		Users: users.NewUserServiceClient("users", service.Client()),
-		Keys:  keys.NewKeyServiceClient("keys", service.Client()),
+		Users: protoUser.NewUserServiceClient("protoUser", service.Client()),
+		Keys:  protoKey.NewKeyServiceClient("protoKey", service.Client()),
 	}
 	return &controller
 }
@@ -70,32 +71,32 @@ func (controller *SessionController) HandleSession(c echo.Context) error {
 	claims := token.Claims.(jwt.MapClaims)
 	userID := claims["jti"].(string)
 
-	getRequest := users.GetUserInfoRequest{
+	getRequest := protoUser.GetUserInfoRequest{
 		UserID: userID,
 	}
 	r, _ := controller.Users.GetUserInfo(context.Background(), &getRequest)
-	if r.Status != "success" {
+	if r.Status != constRes.Success {
 		response := &ResponseError{
 			Status:  r.Status,
 			Message: r.Message,
 		}
 
-		if r.Status == "fail" {
+		if r.Status == constRes.Fail {
 			return c.JSON(http.StatusBadRequest, response)
 		}
-		if r.Status == "error" {
+		if r.Status == constRes.Error {
 			return c.JSON(http.StatusInternalServerError, response)
 		}
 	}
 
-	getKeysRequest := keys.GetUserKeysRequest{
+	getKeysRequest := protoKey.GetUserKeysRequest{
 		UserID: userID,
 	}
 	r2, _ := controller.Keys.GetUserKeys(context.Background(), &getKeysRequest)
-	lekeys := make([]*KeyMeta, 0)
+	leprotoKey := make([]*KeyMeta, 0)
 
 	for _, k := range r2.Data.Keys {
-		lekeys = append(lekeys,
+		leprotoKey = append(leprotoKey,
 			&KeyMeta{
 				Exchange:    k.Exchange,
 				Status:      k.Status,
@@ -104,14 +105,14 @@ func (controller *SessionController) HandleSession(c echo.Context) error {
 	}
 
 	response := &ResponseSessionSuccess{
-		Status: "success",
+		Status: constRes.Success,
 		Data: &UserMetaData{
 			UserMeta: &UserMeta{
 				UserID: r.Data.User.UserID,
 				First:  r.Data.User.First,
 				Last:   r.Data.User.Last,
 				Email:  r.Data.User.Email,
-				Keys:   lekeys}}}
+				Keys:   leprotoKey}}}
 
 	return c.JSON(http.StatusOK, response)
 }

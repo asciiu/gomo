@@ -6,7 +6,8 @@ import (
 	"fmt"
 	"net/http"
 
-	keys "github.com/asciiu/gomo/key-service/proto/key"
+	constRes "github.com/asciiu/gomo/common/constants/response"
+	protoKey "github.com/asciiu/gomo/key-service/proto/key"
 	jwt "github.com/dgrijalva/jwt-go"
 	"github.com/labstack/echo"
 	micro "github.com/micro/go-micro"
@@ -15,7 +16,7 @@ import (
 
 type KeyController struct {
 	DB   *sql.DB
-	Keys keys.KeyServiceClient
+	Keys protoKey.KeyServiceClient
 }
 
 // swagger:parameters postKey
@@ -60,7 +61,7 @@ type UserKeyData struct {
 }
 
 type UserKeysData struct {
-	Keys []*Key `json:"keys"`
+	Keys []*Key `json:"protoKey"`
 }
 
 type Key struct {
@@ -74,12 +75,12 @@ type Key struct {
 func NewKeyController(db *sql.DB, service micro.Service) *KeyController {
 	controller := KeyController{
 		DB:   db,
-		Keys: keys.NewKeyServiceClient("keys", service.Client()),
+		Keys: protoKey.NewKeyServiceClient("protoKey", service.Client()),
 	}
 	return &controller
 }
 
-// swagger:route GET /keys/:keyID keys getKey
+// swagger:route GET /protoKey/:keyID protoKey getKey
 //
 // get a key (protected)
 //
@@ -94,31 +95,31 @@ func (controller *KeyController) HandleGetKey(c echo.Context) error {
 	userID := claims["jti"].(string)
 	keyID := c.Param("keyID")
 
-	getRequest := keys.GetUserKeyRequest{
+	getRequest := protoKey.GetUserKeyRequest{
 		KeyID:  keyID,
 		UserID: userID,
 	}
 
 	r, _ := controller.Keys.GetUserKey(context.Background(), &getRequest)
-	if r.Status != "success" {
+	if r.Status != constRes.Success {
 		response := &ResponseError{
 			Status:  r.Status,
 			Message: r.Message,
 		}
 
-		if r.Status == "fail" {
+		if r.Status == constRes.Fail {
 			return c.JSON(http.StatusBadRequest, response)
 		}
-		if r.Status == "error" {
+		if r.Status == constRes.Error {
 			return c.JSON(http.StatusInternalServerError, response)
 		}
-		if r.Status == "nonentity" {
+		if r.Status == constRes.Nonentity {
 			return c.JSON(http.StatusNotFound, response)
 		}
 	}
 
 	response := &ResponseKeySuccess{
-		Status: "success",
+		Status: constRes.Success,
 		Data: &UserKeyData{
 			Key: &Key{
 				KeyID:       r.Data.Key.KeyID,
@@ -133,11 +134,11 @@ func (controller *KeyController) HandleGetKey(c echo.Context) error {
 	return c.JSON(http.StatusOK, response)
 }
 
-// swagger:route GET /keys keys getAllKey
+// swagger:route GET /protoKey protoKey getAllKey
 //
-// get all user keys (protected)
+// get all user protoKey (protected)
 //
-// Get all the user keys for this user. The api secrets will not be returned in the response data.
+// Get all the user protoKey for this user. The api secrets will not be returned in the response data.
 //
 // responses:
 //  200: responseKeysSuccess "data" will contain a list of key info with "status": "success"
@@ -147,22 +148,22 @@ func (controller *KeyController) HandleListKeys(c echo.Context) error {
 	claims := token.Claims.(jwt.MapClaims)
 	userID := claims["jti"].(string)
 
-	getRequest := keys.GetUserKeysRequest{
+	getRequest := protoKey.GetUserKeysRequest{
 		UserID: userID,
 	}
 
 	r, e := controller.Keys.GetUserKeys(context.Background(), &getRequest)
 	fmt.Printf("error was %+v\n", e)
-	if r.Status != "success" {
+	if r.Status != constRes.Success {
 		response := &ResponseError{
 			Status:  r.Status,
 			Message: r.Message,
 		}
 
-		if r.Status == "fail" {
+		if r.Status == constRes.Fail {
 			return c.JSON(http.StatusBadRequest, response)
 		}
-		if r.Status == "error" {
+		if r.Status == constRes.Error {
 			return c.JSON(http.StatusInternalServerError, response)
 		}
 	}
@@ -180,7 +181,7 @@ func (controller *KeyController) HandleListKeys(c echo.Context) error {
 	}
 
 	response := &ResponseKeysSuccess{
-		Status: "success",
+		Status: constRes.Success,
 		Data: &UserKeysData{
 			Keys: data,
 		},
@@ -189,7 +190,7 @@ func (controller *KeyController) HandleListKeys(c echo.Context) error {
 	return c.JSON(http.StatusOK, response)
 }
 
-// swagger:route POST /keys keys postKey
+// swagger:route POST /protoKey protoKey postKey
 //
 // add an api key (protected)
 //
@@ -208,7 +209,7 @@ func (controller *KeyController) HandlePostKey(c echo.Context) error {
 	err := json.NewDecoder(c.Request().Body).Decode(&addKeyRequest)
 	if err != nil {
 		response := &ResponseError{
-			Status:  "fail",
+			Status:  constRes.Fail,
 			Message: err.Error(),
 		}
 
@@ -218,14 +219,14 @@ func (controller *KeyController) HandlePostKey(c echo.Context) error {
 	// verify that all params are present
 	if addKeyRequest.Exchange == "" || addKeyRequest.Key == "" || addKeyRequest.Secret == "" {
 		response := &ResponseError{
-			Status:  "fail",
+			Status:  constRes.Fail,
 			Message: "exchange, key, and secret are required!",
 		}
 
 		return c.JSON(http.StatusBadRequest, response)
 	}
 
-	createRequest := keys.KeyRequest{
+	createRequest := protoKey.KeyRequest{
 		UserID:      userID,
 		Exchange:    addKeyRequest.Exchange,
 		Key:         addKeyRequest.Key,
@@ -234,22 +235,22 @@ func (controller *KeyController) HandlePostKey(c echo.Context) error {
 	}
 
 	r, _ := controller.Keys.AddKey(context.Background(), &createRequest)
-	if r.Status != "success" {
+	if r.Status != constRes.Success {
 		response := &ResponseError{
 			Status:  r.Status,
 			Message: r.Message,
 		}
 
-		if r.Status == "fail" {
+		if r.Status == constRes.Fail {
 			return c.JSON(http.StatusBadRequest, response)
 		}
-		if r.Status == "error" {
+		if r.Status == constRes.Error {
 			return c.JSON(http.StatusInternalServerError, response)
 		}
 	}
 
 	response := &ResponseKeySuccess{
-		Status: "success",
+		Status: constRes.Success,
 		Data: &UserKeyData{
 			Key: &Key{
 				KeyID:       r.Data.Key.KeyID,
@@ -264,7 +265,7 @@ func (controller *KeyController) HandlePostKey(c echo.Context) error {
 	return c.JSON(http.StatusOK, response)
 }
 
-// swagger:route PUT /keys/:keyID keys updateKey
+// swagger:route PUT /protoKey/:keyID protoKey updateKey
 //
 // update a user api key (protected)
 //
@@ -285,7 +286,7 @@ func (controller *KeyController) HandleUpdateKey(c echo.Context) error {
 	err := json.NewDecoder(c.Request().Body).Decode(&keyRequest)
 	if err != nil {
 		response := &ResponseError{
-			Status:  "fail",
+			Status:  constRes.Fail,
 			Message: err.Error(),
 		}
 
@@ -293,29 +294,29 @@ func (controller *KeyController) HandleUpdateKey(c echo.Context) error {
 	}
 
 	// client can only update description
-	updateRequest := keys.KeyRequest{
+	updateRequest := protoKey.KeyRequest{
 		KeyID:       keyID,
 		UserID:      userID,
 		Description: keyRequest.Description,
 	}
 
 	r, _ := controller.Keys.UpdateKeyDescription(context.Background(), &updateRequest)
-	if r.Status != "success" {
+	if r.Status != constRes.Success {
 		response := &ResponseError{
 			Status:  r.Status,
 			Message: r.Message,
 		}
 
-		if r.Status == "fail" {
+		if r.Status == constRes.Fail {
 			return c.JSON(http.StatusBadRequest, response)
 		}
-		if r.Status == "error" {
+		if r.Status == constRes.Error {
 			return c.JSON(http.StatusInternalServerError, response)
 		}
 	}
 
 	response := &ResponseKeySuccess{
-		Status: "success",
+		Status: constRes.Success,
 		Data: &UserKeyData{
 			Key: &Key{
 				KeyID:       r.Data.Key.KeyID,
@@ -330,7 +331,7 @@ func (controller *KeyController) HandleUpdateKey(c echo.Context) error {
 	return c.JSON(http.StatusOK, response)
 }
 
-// swagger:route DELETE /keys/:keyID keys deleteKey
+// swagger:route DELETE /protoKey/:keyID protoKey deleteKey
 //
 // remove user api key (protected)
 //
@@ -345,28 +346,28 @@ func (controller *KeyController) HandleDeleteKey(c echo.Context) error {
 	userID := claims["jti"].(string)
 	keyID := c.Param("keyID")
 
-	removeRequest := keys.RemoveKeyRequest{
+	removeRequest := protoKey.RemoveKeyRequest{
 		KeyID:  keyID,
 		UserID: userID,
 	}
 
 	r, _ := controller.Keys.RemoveKey(context.Background(), &removeRequest)
-	if r.Status != "success" {
+	if r.Status != constRes.Success {
 		response := &ResponseError{
 			Status:  r.Status,
 			Message: r.Message,
 		}
 
-		if r.Status == "fail" {
+		if r.Status == constRes.Fail {
 			return c.JSON(http.StatusBadRequest, response)
 		}
-		if r.Status == "error" {
+		if r.Status == constRes.Error {
 			return c.JSON(http.StatusInternalServerError, response)
 		}
 	}
 
 	response := &ResponseKeySuccess{
-		Status: "success",
+		Status: constRes.Success,
 	}
 
 	return c.JSON(http.StatusOK, response)

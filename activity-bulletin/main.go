@@ -6,7 +6,7 @@ import (
 	"os"
 
 	protoActivity "github.com/asciiu/gomo/activity-bulletin/proto"
-	constMessage "github.com/asciiu/gomo/common/constants/messages"
+	constMessage "github.com/asciiu/gomo/common/constants/message"
 	"github.com/asciiu/gomo/common/db"
 	micro "github.com/micro/go-micro"
 	"github.com/micro/go-micro/server"

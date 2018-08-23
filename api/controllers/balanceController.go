@@ -4,7 +4,8 @@ import (
 	"database/sql"
 	"net/http"
 
-	balances "github.com/asciiu/gomo/balance-service/proto/balance"
+	protoBalance "github.com/asciiu/gomo/balance-service/proto/balance"
+	constRes "github.com/asciiu/gomo/common/constants/response"
 	jwt "github.com/dgrijalva/jwt-go"
 	"github.com/labstack/echo"
 	micro "github.com/micro/go-micro"
@@ -28,7 +29,7 @@ type SearchSymbol struct {
 }
 
 type AccountBalances struct {
-	Balances []*Balance `json:"balances"`
+	Balances []*Balance `json:"protoBalance"`
 }
 
 type Balance struct {
@@ -45,33 +46,33 @@ type Balance struct {
 
 type BalanceController struct {
 	DB       *sql.DB
-	Balances balances.BalanceServiceClient
+	Balances protoBalance.BalanceServiceClient
 }
 
 func NewBalanceController(db *sql.DB, service micro.Service) *BalanceController {
 	controller := BalanceController{
 		DB:       db,
-		Balances: balances.NewBalanceServiceClient("balances", service.Client()),
+		Balances: protoBalance.NewBalanceServiceClient("protoBalance", service.Client()),
 	}
 	return &controller
 }
 
-// swagger:route GET /balances balances getAllBalances
+// swagger:route GET /protoBalance protoBalance getAllBalances
 //
-// get all balances (protected)
+// get all protoBalance (protected)
 //
-// Returns all balances for user. Use optional query param 'symbol' as lowercase ticker symbol - e.g. ada.
+// Returns all protoBalance for user. Use optional query param 'symbol' as lowercase ticker symbol - e.g. ada.
 //
 // responses:
-//  200: responseBalancesSuccess "data" will contain array of balances with "status": "success"
-//  500: responseError the message will state what the internal server error was with "status": "error"
+//  200: responseBalancesSuccess "data" will contain array of protoBalance with "status": constRes.Success
+//  500: responseError the message will state what the internal server error was with "status": constRes.Error
 func (controller *BalanceController) HandleGetBalances(c echo.Context) error {
 	token := c.Get("user").(*jwt.Token)
 	claims := token.Claims.(jwt.MapClaims)
 	userID := claims["jti"].(string)
 	symbol := c.QueryParam("symbol")
 
-	getRequest := balances.GetUserBalancesRequest{
+	getRequest := protoBalance.GetUserBalancesRequest{
 		UserID: userID,
 		Symbol: symbol,
 	}
@@ -79,23 +80,23 @@ func (controller *BalanceController) HandleGetBalances(c echo.Context) error {
 	r, err := controller.Balances.GetUserBalances(context.Background(), &getRequest)
 	if err != nil {
 		response := &ResponseError{
-			Status:  "error",
+			Status:  constRes.Error,
 			Message: err.Error(),
 		}
 
 		return c.JSON(http.StatusGone, response)
 	}
 
-	if r.Status != "success" {
+	if r.Status != constRes.Success {
 		response := &ResponseError{
 			Status:  r.Status,
 			Message: r.Message,
 		}
 
-		if r.Status == "fail" {
+		if r.Status == constRes.Fail {
 			return c.JSON(http.StatusBadRequest, response)
 		}
-		if r.Status == "error" {
+		if r.Status == constRes.Error {
 			return c.JSON(http.StatusInternalServerError, response)
 		}
 	}
@@ -117,7 +118,7 @@ func (controller *BalanceController) HandleGetBalances(c echo.Context) error {
 	}
 
 	response := &ResponseBalancesSuccess{
-		Status: "success",
+		Status: constRes.Success,
 		Data: &AccountBalances{
 			Balances: data,
 		},

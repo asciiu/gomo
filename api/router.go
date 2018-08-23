@@ -8,10 +8,10 @@ import (
 	"time"
 
 	"github.com/asciiu/gomo/api/controllers"
-	asql "github.com/asciiu/gomo/api/db/sql"
+	repoToken "github.com/asciiu/gomo/api/db/sql"
 	"github.com/asciiu/gomo/api/middlewares"
-	msg "github.com/asciiu/gomo/common/constants/messages"
-	evt "github.com/asciiu/gomo/common/proto/events"
+	constMessage "github.com/asciiu/gomo/common/constants/message"
+	constEvt "github.com/asciiu/gomo/common/proto/events"
 	"github.com/labstack/echo"
 	micro "github.com/micro/go-micro"
 	k8s "github.com/micro/kubernetes/go/micro"
@@ -30,7 +30,7 @@ func health(c echo.Context) error {
 func cleanDatabase(db *sql.DB) {
 	for {
 		time.Sleep(cleanUpInterval)
-		error := asql.DeleteStaleTokens(db, time.Now())
+		error := repoToken.DeleteStaleTokens(db, time.Now())
 		if error != nil {
 			log.Fatal(error)
 		}
@@ -121,7 +121,7 @@ func NewRouter(db *sql.DB) *echo.Echo {
 	// search endpoint
 	protectedApi.GET("/search", searchController.Search)
 
-	micro.RegisterSubscriber(msg.TopicAggTrade, service.Server(), func(ctx context.Context, tradeEvents *evt.TradeEvents) error {
+	micro.RegisterSubscriber(constMessage.TopicAggTrade, service.Server(), func(ctx context.Context, tradeEvents *constEvt.TradeEvents) error {
 		socketController.CacheEvents(tradeEvents)
 		searchController.CacheEvents(tradeEvents)
 		return nil

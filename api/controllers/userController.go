@@ -5,8 +5,9 @@ import (
 	"encoding/json"
 	"net/http"
 
-	models "github.com/asciiu/gomo/user-service/models"
-	users "github.com/asciiu/gomo/user-service/proto/user"
+	constRes "github.com/asciiu/gomo/common/constants/response"
+	user "github.com/asciiu/gomo/user-service/models"
+	protoUser "github.com/asciiu/gomo/user-service/proto/user"
 	jwt "github.com/dgrijalva/jwt-go"
 	"github.com/labstack/echo"
 	micro "github.com/micro/go-micro"
@@ -15,7 +16,7 @@ import (
 
 type UserController struct {
 	DB    *sql.DB
-	Users users.UserServiceClient
+	Users protoUser.UserServiceClient
 }
 
 // swagger:parameters changePassword
@@ -44,12 +45,12 @@ type UpdateUserRequest struct {
 func NewUserController(db *sql.DB, service micro.Service) *UserController {
 	controller := UserController{
 		DB:    db,
-		Users: users.NewUserServiceClient("users", service.Client()),
+		Users: protoUser.NewUserServiceClient("protoUser", service.Client()),
 	}
 	return &controller
 }
 
-// swagger:route PUT /users/:id/changepassword users changePassword
+// swagger:route PUT /protoUser/:id/changepassword protoUser changePassword
 //
 // change a user's password (protected)
 //
@@ -69,7 +70,7 @@ func (controller *UserController) HandleChangePassword(c echo.Context) error {
 
 	if paramID != userID {
 		response := &ResponseError{
-			Status:  "fail",
+			Status:  constRes.Fail,
 			Message: "unauthorized",
 		}
 
@@ -81,14 +82,14 @@ func (controller *UserController) HandleChangePassword(c echo.Context) error {
 	err := json.NewDecoder(c.Request().Body).Decode(&passwordRequest)
 	if err != nil {
 		response := &ResponseError{
-			Status:  "fail",
+			Status:  constRes.Fail,
 			Message: err.Error(),
 		}
 
 		return c.JSON(http.StatusBadRequest, response)
 	}
 
-	changeRequest := users.ChangePasswordRequest{
+	changeRequest := protoUser.ChangePasswordRequest{
 		UserID:      userID,
 		OldPassword: passwordRequest.OldPassword,
 		NewPassword: passwordRequest.NewPassword,
@@ -97,23 +98,23 @@ func (controller *UserController) HandleChangePassword(c echo.Context) error {
 	r, err := controller.Users.ChangePassword(context.Background(), &changeRequest)
 	if err != nil {
 		response := &ResponseError{
-			Status:  "error",
+			Status:  constRes.Error,
 			Message: "change password service unavailable",
 		}
 
 		return c.JSON(http.StatusGone, response)
 	}
 
-	if r.Status != "success" {
+	if r.Status != constRes.Success {
 		response := &ResponseError{
 			Status:  r.Status,
 			Message: r.Message,
 		}
 
-		if r.Status == "fail" {
+		if r.Status == constRes.Fail {
 			return c.JSON(http.StatusBadRequest, response)
 		}
-		if r.Status == "error" {
+		if r.Status == constRes.Error {
 			return c.JSON(http.StatusInternalServerError, response)
 		}
 	}
@@ -125,7 +126,7 @@ func (controller *UserController) HandleChangePassword(c echo.Context) error {
 	return c.JSON(http.StatusOK, response)
 }
 
-// swagger:route PUT /users/:id users updateUser
+// swagger:route PUT /protoUser/:id protoUser updateUser
 //
 // updates user info (protected)
 //
@@ -146,7 +147,7 @@ func (controller *UserController) HandleUpdateUser(c echo.Context) error {
 
 	if paramID != userID {
 		response := &ResponseError{
-			Status:  "fail",
+			Status:  constRes.Fail,
 			Message: "unauthorized",
 		}
 
@@ -158,14 +159,14 @@ func (controller *UserController) HandleUpdateUser(c echo.Context) error {
 	err := json.NewDecoder(c.Request().Body).Decode(&updateRequest)
 	if err != nil {
 		response := &ResponseError{
-			Status:  "fail",
+			Status:  constRes.Fail,
 			Message: err.Error(),
 		}
 
 		return c.JSON(http.StatusBadRequest, response)
 	}
 
-	changeRequest := users.UpdateUserRequest{
+	changeRequest := protoUser.UpdateUserRequest{
 		UserID: userID,
 		First:  updateRequest.First,
 		Last:   updateRequest.Last,
@@ -175,7 +176,7 @@ func (controller *UserController) HandleUpdateUser(c echo.Context) error {
 	r, err := controller.Users.UpdateUser(context.Background(), &changeRequest)
 	if err != nil {
 		response := &ResponseError{
-			Status:  "error",
+			Status:  constRes.Error,
 			Message: "update service unavailable",
 		}
 
@@ -183,9 +184,9 @@ func (controller *UserController) HandleUpdateUser(c echo.Context) error {
 	}
 
 	response := &ResponseSuccess{
-		Status: "success",
+		Status: constRes.Success,
 		Data: &UserData{
-			User: &models.UserInfo{
+			User: &user.UserInfo{
 				UserID: r.Data.User.UserID,
 				First:  r.Data.User.First,
 				Last:   r.Data.User.Last,

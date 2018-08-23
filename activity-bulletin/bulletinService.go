@@ -12,7 +12,7 @@ import (
 	protoGorush "github.com/appleboy/gorush/rpc/proto"
 	repoActivity "github.com/asciiu/gomo/activity-bulletin/db/sql"
 	protoActivity "github.com/asciiu/gomo/activity-bulletin/proto"
-	constResponse "github.com/asciiu/gomo/common/constants/response"
+	constRes "github.com/asciiu/gomo/common/constants/response"
 	protoDevice "github.com/asciiu/gomo/device-service/proto/device"
 	"github.com/google/uuid"
 	micro "github.com/micro/go-micro"
@@ -112,7 +112,7 @@ func (service *Bulletin) FindUserActivity(ctx context.Context, req *protoActivit
 
 	if req.ObjectID != "" {
 		if _, err := uuid.Parse(req.ObjectID); err != nil {
-			res.Status = constResponse.Fail
+			res.Status = constRes.Fail
 			res.Message = fmt.Sprintf("object %s not found", req.ObjectID)
 			return nil
 		}
@@ -128,10 +128,10 @@ func (service *Bulletin) FindUserActivity(ctx context.Context, req *protoActivit
 	}
 
 	if err == nil {
-		res.Status = constResponse.Success
+		res.Status = constRes.Success
 		res.Data = pagedResult
 	} else {
-		res.Status = constResponse.Error
+		res.Status = constRes.Error
 		res.Message = err.Error()
 	}
 	return nil
@@ -140,12 +140,12 @@ func (service *Bulletin) FindUserActivity(ctx context.Context, req *protoActivit
 func (service *Bulletin) FindMostRecentActivity(ctx context.Context, req *protoActivity.RecentActivityRequest, res *protoActivity.ActivityListResponse) error {
 	history, err := repoActivity.FindRecentObjectActivity(service.db, req)
 	if err == nil {
-		res.Status = constResponse.Success
+		res.Status = constRes.Success
 		res.Data = &protoActivity.ActivityList{
 			Activity: history,
 		}
 	} else {
-		res.Status = constResponse.Error
+		res.Status = constRes.Error
 		res.Message = err.Error()
 	}
 	return nil
@@ -153,7 +153,7 @@ func (service *Bulletin) FindMostRecentActivity(ctx context.Context, req *protoA
 
 func (service *Bulletin) FindActivityCount(ctx context.Context, req *protoActivity.ActivityCountRequest, res *protoActivity.ActivityCountResponse) error {
 	count := repoActivity.FindObjectActivityCount(service.db, req.ObjectID)
-	res.Status = constResponse.Success
+	res.Status = constRes.Success
 	res.Data = &protoActivity.ActivityCount{
 		Count: count,
 	}
@@ -165,7 +165,7 @@ func (service *Bulletin) UpdateActivity(ctx context.Context, req *protoActivity.
 	history, err := repoActivity.FindActivity(service.db, req.ActivityID)
 
 	if err == sql.ErrNoRows {
-		res.Status = constResponse.Nonentity
+		res.Status = constRes.Nonentity
 		res.Message = "activity not found"
 		return nil
 	}
@@ -174,14 +174,14 @@ func (service *Bulletin) UpdateActivity(ctx context.Context, req *protoActivity.
 		// time.Parse(time.RFC3339, "2006-01-02T15:04:05Z")
 		_, err = time.Parse(time.RFC3339, req.ClickedAt)
 		if err != nil {
-			res.Status = constResponse.Fail
+			res.Status = constRes.Fail
 			res.Message = "clickedAt must be RFC3339 format: e.g. 2006-01-02T15:04:05Z"
 			return nil
 		}
 
 		history, err = repoActivity.UpdateActivityClickedAt(service.db, req.ActivityID, req.ClickedAt)
 		if err != nil {
-			res.Status = constResponse.Error
+			res.Status = constRes.Error
 			res.Message = err.Error()
 			return nil
 		}
@@ -190,20 +190,20 @@ func (service *Bulletin) UpdateActivity(ctx context.Context, req *protoActivity.
 	if req.SeenAt != "" {
 		_, err = time.Parse(time.RFC3339, req.SeenAt)
 		if err != nil {
-			res.Status = constResponse.Fail
+			res.Status = constRes.Fail
 			res.Message = "seenAt must be RFC3339 format: e.g. 2006-01-02T15:04:05Z"
 			return nil
 		}
 
 		history, err = repoActivity.UpdateActivitySeenAt(service.db, req.ActivityID, req.SeenAt)
 		if err != nil {
-			res.Status = constResponse.Error
+			res.Status = constRes.Error
 			res.Message = err.Error()
 			return nil
 		}
 	}
 
-	res.Status = constResponse.Success
+	res.Status = constRes.Success
 	res.Data = &protoActivity.ActivityData{
 		Activity: history,
 	}

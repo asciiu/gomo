@@ -6,19 +6,19 @@ import (
 	"net/http"
 	"time"
 
-	evt "github.com/asciiu/gomo/common/proto/events"
+	protoEvt "github.com/asciiu/gomo/common/proto/events"
 	"github.com/gorilla/websocket"
 	"github.com/labstack/echo"
 )
 
 type WebsocketController struct {
 	connections []*websocket.Conn
-	buffer      []*evt.TradeEvent
+	buffer      []*protoEvt.TradeEvent
 }
 
 func NewWebsocketController() *WebsocketController {
 	return &WebsocketController{
-		buffer:      make([]*evt.TradeEvent, 0),
+		buffer:      make([]*protoEvt.TradeEvent, 0),
 		connections: make([]*websocket.Conn, 0),
 	}
 }
@@ -81,10 +81,10 @@ func (controller *WebsocketController) Ticker() {
 }
 
 // ProcessEvent will process ExchangeEvents. These events are published from the exchange sockets.
-func (controller *WebsocketController) CacheEvents(tradeEvents *evt.TradeEvents) {
+func (controller *WebsocketController) CacheEvents(tradeEvents *protoEvt.TradeEvents) {
 	for _, event := range tradeEvents.Events {
 		// shorten trade event
-		tevent := evt.TradeEvent{
+		tevent := protoEvt.TradeEvent{
 			Exchange:   event.Exchange,
 			Type:       event.Type,
 			MarketName: event.MarketName,

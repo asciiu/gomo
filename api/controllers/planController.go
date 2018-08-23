@@ -9,10 +9,10 @@ import (
 
 	protoActivity "github.com/asciiu/gomo/activity-bulletin/proto"
 	asql "github.com/asciiu/gomo/api/db/sql"
-	"github.com/asciiu/gomo/common/constants/response"
-	keys "github.com/asciiu/gomo/key-service/proto/key"
-	orders "github.com/asciiu/gomo/plan-service/proto/order"
-	plans "github.com/asciiu/gomo/plan-service/proto/plan"
+	constRes "github.com/asciiu/gomo/common/constants/response"
+	protoKey "github.com/asciiu/gomo/key-service/proto/key"
+	protoOrder "github.com/asciiu/gomo/plan-service/proto/order"
+	protoPlan "github.com/asciiu/gomo/plan-service/proto/plan"
 	jwt "github.com/dgrijalva/jwt-go"
 	"github.com/labstack/echo"
 	micro "github.com/micro/go-micro"
@@ -21,8 +21,8 @@ import (
 
 type PlanController struct {
 	DB       *sql.DB
-	Plans    plans.PlanServiceClient
-	Keys     keys.KeyServiceClient
+	Plans    protoPlan.PlanServiceClient
+	Keys     protoKey.KeyServiceClient
 	Bulletin protoActivity.ActivityBulletinClient
 	// map of ticker symbol to full name
 	currencies map[string]string
@@ -53,37 +53,37 @@ type PlansPage struct {
 	Page     uint32  `json:"page"`
 	PageSize uint32  `json:"pageSize"`
 	Total    uint32  `json:"total"`
-	Plans    []*Plan `json:"plans"`
+	Plans    []*Plan `json:"protoPlan"`
 }
 
 type PlanWithOrderPage struct {
-	PlanID             string             `json:"planID"`
-	PlanTemplateID     string             `json:"planTemplateID"`
-	KeyID              string             `json:"keyID"`
-	Exchange           string             `json:"exchange"`
-	ExchangeMarketName string             `json:"exchangeMarketName"`
-	MarketName         string             `json:"marketName"`
-	BaseCurrencySymbol string             `json:"baseCurrencySymbol"`
-	BaseCurrencyName   string             `json:"baseCurrencyName"`
-	BaseBalance        float64            `json:"baseBalance"`
-	CurrencySymbol     string             `json:"currencySymbol"`
-	CurrencyName       string             `json:"currencyName"`
-	CurrencyBalance    float64            `json:"currencyBalance"`
-	Status             string             `json:"status"`
-	CreatedOn          string             `json:"createdOn"`
-	UpdatedOn          string             `json:"updatedOn"`
-	OrdersPage         *orders.OrdersPage `json:"ordersPage"`
+	PlanID             string                 `json:"planID"`
+	PlanTemplateID     string                 `json:"planTemplateID"`
+	KeyID              string                 `json:"keyID"`
+	Exchange           string                 `json:"exchange"`
+	ExchangeMarketName string                 `json:"exchangeMarketName"`
+	MarketName         string                 `json:"marketName"`
+	BaseCurrencySymbol string                 `json:"baseCurrencySymbol"`
+	BaseCurrencyName   string                 `json:"baseCurrencyName"`
+	BaseBalance        float64                `json:"baseBalance"`
+	CurrencySymbol     string                 `json:"currencySymbol"`
+	CurrencyName       string                 `json:"currencyName"`
+	CurrencyBalance    float64                `json:"currencyBalance"`
+	Status             string                 `json:"status"`
+	CreatedOn          string                 `json:"createdOn"`
+	UpdatedOn          string                 `json:"updatedOn"`
+	OrdersPage         *protoOrder.OrdersPage `json:"protoOrderPage"`
 }
 
 type OrdersPage struct {
-	Page     uint32          `json:"page"`
-	PageSize uint32          `json:"pageSize"`
-	Total    uint32          `json:"total"`
-	Orders   []*orders.Order `json:"orders"`
+	Page     uint32              `json:"page"`
+	PageSize uint32              `json:"pageSize"`
+	Total    uint32              `json:"total"`
+	Orders   []*protoOrder.Order `json:"protoOrder"`
 }
 
 type UserPlansData struct {
-	PLans []*Plan `json:"plans"`
+	PLans []*Plan `json:"protoPlan"`
 }
 
 // This response should never return the key secret
@@ -108,7 +108,7 @@ type Plan struct {
 	CreatedOn              string              `json:"createdOn"`
 	UpdatedOn              string              `json:"updatedOn"`
 	Activity               PlanActivitySummary `json:"activity"`
-	Orders                 []*Order            `json:"orders,omitempty"`
+	Orders                 []*Order            `json:"protoOrder,omitempty"`
 }
 
 type PlanActivitySummary struct {
@@ -117,42 +117,42 @@ type PlanActivitySummary struct {
 }
 
 type Order struct {
-	OrderID                  string            `json:"orderID,omitempty"`
-	ParentOrderID            string            `json:"parentOrderID,omitempty"`
-	PlanDepth                uint32            `json:"planDepth,omitempty"`
-	OrderTemplateID          string            `json:"orderTemplateID,omitempty"`
-	KeyID                    string            `json:"keyID,omitempty"`
-	KeyPublic                string            `json:"keyPublic,omitempty"`
-	KeyDescription           string            `json:"keyDescription,omitempty"`
-	OrderPriority            uint32            `json:"orderPriority,omitempty"`
-	OrderType                string            `json:"orderType,omitempty"`
-	Side                     string            `json:"side,omitempty"`
-	LimitPrice               float64           `json:"limitPrice,omitempty"`
-	Exchange                 string            `json:"exchange,omitempty"`
-	ExchangeMarketName       string            `json:"exchangeMarketName,omitempty"`
-	MarketName               string            `json:"marketName,omitempty"`
-	BaseCurrencySymbol       string            `json:"baseCurrencySymbol"`
-	BaseCurrencyName         string            `json:"baseCurrencyName"`
-	MarketCurrencySymbol     string            `json:"marketCurrencySymbol"`
-	MarketCurrencyName       string            `json:"marketCurrencyName"`
-	InitialCurrencySymbol    string            `json:"initialCurrencySymbol"`
-	InitialCurrencyName      string            `json:"initialCurrencyName"`
-	InitialCurrencyBalance   float64           `json:"initialCurrencyBalance"`
-	InitialCurrencyTraded    float64           `json:"initialCurrencyTraded"`
-	InitialCurrencyRemainder float64           `json:"initialCurrencyRemainder"`
-	FinalCurrencySymbol      string            `json:"finalCurrencySymbol"`
-	FinalCurrencyName        string            `json:"finalCurrencyName"`
-	FinalCurrencyBalance     float64           `json:"finalCurrencyBalance"`
-	Grupo                    string            `json:"grupo"`
-	Status                   string            `json:"status,omitempty"`
-	CreatedOn                string            `json:"createdOn,omitempty"`
-	UpdatedOn                string            `json:"updatedOn,omitempty"`
-	Triggers                 []*orders.Trigger `json:"triggers,omitempty"`
+	OrderID                  string                `json:"orderID,omitempty"`
+	ParentOrderID            string                `json:"parentOrderID,omitempty"`
+	PlanDepth                uint32                `json:"planDepth,omitempty"`
+	OrderTemplateID          string                `json:"orderTemplateID,omitempty"`
+	KeyID                    string                `json:"keyID,omitempty"`
+	KeyPublic                string                `json:"keyPublic,omitempty"`
+	KeyDescription           string                `json:"keyDescription,omitempty"`
+	OrderPriority            uint32                `json:"orderPriority,omitempty"`
+	OrderType                string                `json:"orderType,omitempty"`
+	Side                     string                `json:"side,omitempty"`
+	LimitPrice               float64               `json:"limitPrice,omitempty"`
+	Exchange                 string                `json:"exchange,omitempty"`
+	ExchangeMarketName       string                `json:"exchangeMarketName,omitempty"`
+	MarketName               string                `json:"marketName,omitempty"`
+	BaseCurrencySymbol       string                `json:"baseCurrencySymbol"`
+	BaseCurrencyName         string                `json:"baseCurrencyName"`
+	MarketCurrencySymbol     string                `json:"marketCurrencySymbol"`
+	MarketCurrencyName       string                `json:"marketCurrencyName"`
+	InitialCurrencySymbol    string                `json:"initialCurrencySymbol"`
+	InitialCurrencyName      string                `json:"initialCurrencyName"`
+	InitialCurrencyBalance   float64               `json:"initialCurrencyBalance"`
+	InitialCurrencyTraded    float64               `json:"initialCurrencyTraded"`
+	InitialCurrencyRemainder float64               `json:"initialCurrencyRemainder"`
+	FinalCurrencySymbol      string                `json:"finalCurrencySymbol"`
+	FinalCurrencyName        string                `json:"finalCurrencyName"`
+	FinalCurrencyBalance     float64               `json:"finalCurrencyBalance"`
+	Grupo                    string                `json:"grupo"`
+	Status                   string                `json:"status,omitempty"`
+	CreatedOn                string                `json:"createdOn,omitempty"`
+	UpdatedOn                string                `json:"updatedOn,omitempty"`
+	Triggers                 []*protoOrder.Trigger `json:"triggers,omitempty"`
 }
 
 func fail(c echo.Context, msg string) error {
 	res := &ResponseError{
-		Status:  response.Fail,
+		Status:  constRes.Fail,
 		Message: msg,
 	}
 
@@ -162,8 +162,8 @@ func fail(c echo.Context, msg string) error {
 func NewPlanController(db *sql.DB, service micro.Service) *PlanController {
 	controller := PlanController{
 		DB:         db,
-		Plans:      plans.NewPlanServiceClient("plans", service.Client()),
-		Keys:       keys.NewKeyServiceClient("keys", service.Client()),
+		Plans:      protoPlan.NewPlanServiceClient("protoPlan", service.Client()),
+		Keys:       protoKey.NewKeyServiceClient("protoKey", service.Client()),
 		Bulletin:   protoActivity.NewActivityBulletinClient("bulletin", service.Client()),
 		currencies: make(map[string]string),
 	}
@@ -183,16 +183,16 @@ func NewPlanController(db *sql.DB, service micro.Service) *PlanController {
 
 }
 
-// swagger:route DELETE /plans/:planID plans DeletePlan
+// swagger:route DELETE /protoPlan/:planID protoPlan DeletePlan
 //
 // deletes a plan (protected)
 //
-// You may delete a plan if it has not executed. That is, the plan has no filled orders. Delete plan becomes cancel plan
-// when an order has been filled. In theory, this should kill all active orders for a plan and set the status for the plan
+// You may delete a plan if it has not executed. That is, the plan has no filled protoOrder. Delete plan becomes cancel plan
+// when an order has been filled. In theory, this should kill all active protoOrder for a plan and set the status for the plan
 // as 'aborted'. Once a plan has been 'aborted' you cannot update or restart that plan.
 //
 // responses:
-//  200: ResponsePlanSuccess "data" will contain plan summary with null orders.
+//  200: ResponsePlanSuccess "data" will contain plan summary with null protoOrder.
 //  500: responseError the message will state what the internal server error was with "status": "error"
 func (controller *PlanController) HandleDeletePlan(c echo.Context) error {
 	token := c.Get("user").(*jwt.Token)
@@ -200,22 +200,22 @@ func (controller *PlanController) HandleDeletePlan(c echo.Context) error {
 	userID := claims["jti"].(string)
 	planID := c.Param("planID")
 
-	delRequest := plans.DeletePlanRequest{
+	delRequest := protoPlan.DeletePlanRequest{
 		PlanID: planID,
 		UserID: userID,
 	}
 
 	r, _ := controller.Plans.DeletePlan(context.Background(), &delRequest)
-	if r.Status != response.Success {
+	if r.Status != constRes.Success {
 		res := &ResponseError{
 			Status:  r.Status,
 			Message: r.Message,
 		}
 
 		switch {
-		case r.Status == response.Nonentity:
+		case r.Status == constRes.Nonentity:
 			return c.JSON(http.StatusNotFound, res)
-		case r.Status == response.Fail:
+		case r.Status == constRes.Fail:
 			return c.JSON(http.StatusBadRequest, res)
 		default:
 			return c.JSON(http.StatusInternalServerError, res)
@@ -223,7 +223,7 @@ func (controller *PlanController) HandleDeletePlan(c echo.Context) error {
 	}
 
 	res := &ResponsePlanWithOrderPageSuccess{
-		Status: response.Success,
+		Status: constRes.Success,
 		Data: &PlanWithOrderPage{
 			PlanID:         r.Data.Plan.PlanID,
 			PlanTemplateID: r.Data.Plan.PlanTemplateID,
@@ -244,19 +244,19 @@ type GetPlanParams struct {
 	PlanLength uint32 `json:"planLength"`
 }
 
-// swagger:route GET /plans/:planID plans GetPlanParams
+// swagger:route GET /protoPlan/:planID protoPlan GetPlanParams
 //
 // get plan with planID (protected)
 //
-// Returns a plan with the currency and base currency names. Plan orders will be retrieved
+// Returns a plan with the currency and base currency names. Plan protoOrder will be retrieved
 // based upon planDepth and planLength. The root order of a plan begins at planDepth=0. The
 // planLength deteremines the length of the tree to retrieve.
 //
-// example: /plans/:some_plan_id?planDepth=0&planLength=10
-// The example above will retrieve the orders from planDepth 0 to planDepth 10.
+// example: /protoPlan/:some_plan_id?planDepth=0&planLength=10
+// The example above will retrieve the protoOrder from planDepth 0 to planDepth 10.
 //
 // responses:
-//  200: ResponsePlanWithOrderPageSuccess "data" will contain paged orders
+//  200: ResponsePlanWithOrderPageSuccess "data" will contain paged protoOrder
 //  500: responseError the message will state what the internal server error was with "status": "error"
 func (controller *PlanController) HandleGetPlan(c echo.Context) error {
 	token := c.Get("user").(*jwt.Token)
@@ -275,23 +275,23 @@ func (controller *PlanController) HandleGetPlan(c echo.Context) error {
 		pl = 10
 	}
 
-	getRequest := plans.GetUserPlanRequest{
+	getRequest := protoPlan.GetUserPlanRequest{
 		PlanID:     planID,
 		UserID:     userID,
 		PlanDepth:  uint32(pd),
 		PlanLength: uint32(pl)}
 
 	r, _ := controller.Plans.GetUserPlan(context.Background(), &getRequest)
-	if r.Status != response.Success {
+	if r.Status != constRes.Success {
 		res := &ResponseError{
 			Status:  r.Status,
 			Message: r.Message,
 		}
 
 		switch {
-		case r.Status == response.Nonentity:
+		case r.Status == constRes.Nonentity:
 			return c.JSON(http.StatusNotFound, res)
-		case r.Status == response.Fail:
+		case r.Status == constRes.Fail:
 			return c.JSON(http.StatusBadRequest, res)
 		default:
 			return c.JSON(http.StatusInternalServerError, res)
@@ -356,7 +356,7 @@ func (controller *PlanController) HandleGetPlan(c echo.Context) error {
 	}
 
 	res := &ResponsePlanSuccess{
-		Status: response.Success,
+		Status: constRes.Success,
 		Data: &Plan{
 			PlanID:                 r.Data.Plan.PlanID,
 			PlanTemplateID:         r.Data.Plan.PlanTemplateID,
@@ -397,11 +397,11 @@ type GetUserPlansParams struct {
 	PageSize   uint32 `json:"pageSize"`
 }
 
-// swagger:route GET /plans plans GetUserPlansParams
+// swagger:route GET /protoPlan protoPlan GetUserPlansParams
 //
-// get user plans (protected)
+// get user protoPlan (protected)
 //
-// Returns a summary of plans. The plan orders will not be returned and will be null.
+// Returns a summary of protoPlan. The plan protoOrder will not be returned and will be null.
 // Query Params: status, marketName, exchange, page, pageSize
 //
 // The defaults for the params are:
@@ -409,7 +409,7 @@ type GetUserPlansParams struct {
 // page - 0
 // pageSize - 50
 //
-// example: /plans?exchange=binance
+// example: /protoPlan?exchange=binance
 //
 // responses:
 //  200: ResponsePlansSuccess "data" will contain an array of plan summaries
@@ -433,7 +433,7 @@ func (controller *PlanController) HandleListPlans(c echo.Context) error {
 		pageSize = 50
 	}
 
-	getRequest := plans.GetUserPlansRequest{
+	getRequest := protoPlan.GetUserPlansRequest{
 		UserID:     userID,
 		Page:       uint32(page),
 		PageSize:   uint32(pageSize),
@@ -443,21 +443,21 @@ func (controller *PlanController) HandleListPlans(c echo.Context) error {
 	}
 
 	r, _ := controller.Plans.GetUserPlans(context.Background(), &getRequest)
-	if r.Status != response.Success {
+	if r.Status != constRes.Success {
 		res := &ResponseError{
 			Status:  r.Status,
 			Message: r.Message,
 		}
 
-		if r.Status == response.Fail {
+		if r.Status == constRes.Fail {
 			return c.JSON(http.StatusBadRequest, res)
 		}
-		if r.Status == response.Error {
+		if r.Status == constRes.Error {
 			return c.JSON(http.StatusInternalServerError, res)
 		}
 	}
 
-	plans := make([]*Plan, 0)
+	protoPlan := make([]*Plan, 0)
 	for _, plan := range r.Data.Plans {
 
 		cOrders := make([]*Order, 0)
@@ -525,16 +525,16 @@ func (controller *PlanController) HandleListPlans(c echo.Context) error {
 			Orders:                 cOrders,
 		}
 
-		plans = append(plans, &pln)
+		protoPlan = append(protoPlan, &pln)
 	}
 
 	res := &ResponsePlansSuccess{
-		Status: response.Success,
+		Status: constRes.Success,
 		Data: &PlansPage{
 			Page:     r.Data.Page,
 			PageSize: r.Data.PageSize,
 			Total:    r.Data.Total,
-			Plans:    plans,
+			Plans:    protoPlan,
 		},
 	}
 
@@ -555,16 +555,16 @@ type PlanRequest struct {
 	// Required bool to indicate that you want the plan to be 'closed' when the last order for the plan finishes (note: order status fail will also close the plan)
 	// in: body
 	CloseOnComplete bool `json:"closeOnComplete"`
-	// Required array of orders. The structure of the order tree will be dictated by the parentOrderID. All orders following the root order must have a parentOrderID. The root order must have a parentOrderID of "00000000-0000-0000-0000-000000000000". Use grupo (aka spanish for group) to assign a group label to orders.
+	// Required array of protoOrder. The structure of the order tree will be dictated by the parentOrderID. All protoOrder following the root order must have a parentOrderID. The root order must have a parentOrderID of "00000000-0000-0000-0000-000000000000". Use grupo (aka spanish for group) to assign a group label to protoOrder.
 	// in: body
-	Orders []*NewOrderReq `json:"orders"`
+	Orders []*NewOrderReq `json:"protoOrder"`
 }
 
 type NewOrderReq struct {
 	// Required the client assigns the order ID as a UUID, the format is 8-4-4-4-12.
 	// in: body
 	OrderID string `json:"orderID"`
-	// Optional precedence of orders when multiple orders are at the same depth: value of 1 is highest priority. E.g. depth 2 buy ADA (1) or buy EOS (2). ADA with higher priority 1 will execute and EOS will not execute.
+	// Optional precedence of protoOrder when multiple protoOrder are at the same depth: value of 1 is highest priority. E.g. depth 2 buy ADA (1) or buy EOS (2). ADA with higher priority 1 will execute and EOS will not execute.
 	// in: body
 	OrderPriority uint32 `json:"orderPriority"`
 	// Required order types are "market", "limit", "paper". Orders not within these types will be rejected.
@@ -585,10 +585,10 @@ type NewOrderReq struct {
 	// Required "buy" or "sell"
 	// in: body
 	Side string `json:"side"`
-	// Required for 'limit' orders. Defines limit price.
+	// Required for 'limit' protoOrder. Defines limit price.
 	// in: body
 	LimitPrice float64 `json:"limitPrice"`
-	// Required for the root order of the tree. Child orders for tree may or may not have a currencyBalance.
+	// Required for the root order of the tree. Child protoOrder for tree may or may not have a currencyBalance.
 	// in: body
 	InitialCurrencyBalance float64 `json:"initialCurrencyBalance"`
 	// Required these are the conditions that trigger the order to execute: ???
@@ -610,11 +610,11 @@ type TriggerReq struct {
 	Index             uint32   `json:"index"`
 }
 
-// swagger:route POST /plans plans PostPlan
+// swagger:route POST /protoPlan protoPlan PostPlan
 //
 // create a new plan (protected)
 //
-// This will create a new chain of orders for the user. All orders are encapsulated within a plan.
+// This will create a new chain of protoOrder for the user. All protoOrder are encapsulated within a plan.
 //
 // responses:
 //  200: ResponsePlanSuccess "data" will contain the order tree
@@ -635,10 +635,10 @@ func (controller *PlanController) HandlePostPlan(c echo.Context) error {
 	}
 
 	// assemble the order requests
-	newOrderRequests := make([]*orders.NewOrderRequest, 0)
+	newOrderRequests := make([]*protoOrder.NewOrderRequest, 0)
 	for _, order := range newPlan.Orders {
 
-		or := orders.NewOrderRequest{
+		or := protoOrder.NewOrderRequest{
 			OrderID:                order.OrderID,
 			OrderPriority:          order.OrderPriority,
 			OrderType:              order.OrderType,
@@ -652,7 +652,7 @@ func (controller *PlanController) HandlePostPlan(c echo.Context) error {
 			InitialCurrencyBalance: order.InitialCurrencyBalance}
 
 		for _, cond := range order.Triggers {
-			trigger := orders.TriggerRequest{
+			trigger := protoOrder.TriggerRequest{
 				TriggerTemplateID: cond.TriggerTemplateID,
 				Index:             cond.Index,
 				Title:             cond.Title,
@@ -666,7 +666,7 @@ func (controller *PlanController) HandlePostPlan(c echo.Context) error {
 		newOrderRequests = append(newOrderRequests, &or)
 	}
 
-	newPlanRequest := plans.NewPlanRequest{
+	newPlanRequest := protoPlan.NewPlanRequest{
 		UserID:          userID,
 		Title:           newPlan.Title,
 		PlanTemplateID:  newPlan.PlanTemplateID,
@@ -677,16 +677,16 @@ func (controller *PlanController) HandlePostPlan(c echo.Context) error {
 
 	// add plan returns nil for error
 	r, _ := controller.Plans.NewPlan(context.Background(), &newPlanRequest)
-	if r.Status != response.Success {
+	if r.Status != constRes.Success {
 		res := &ResponseError{
 			Status:  r.Status,
 			Message: r.Message,
 		}
 
-		if r.Status == response.Fail {
+		if r.Status == constRes.Fail {
 			return c.JSON(http.StatusBadRequest, res)
 		}
-		if r.Status == response.Error {
+		if r.Status == constRes.Error {
 			return c.JSON(http.StatusInternalServerError, res)
 		}
 	}
@@ -735,7 +735,7 @@ func (controller *PlanController) HandlePostPlan(c echo.Context) error {
 	}
 
 	res := &ResponsePlanSuccess{
-		Status: response.Success,
+		Status: constRes.Success,
 		Data: &Plan{
 			PlanID:                 r.Data.Plan.PlanID,
 			PlanTemplateID:         r.Data.Plan.PlanTemplateID,
@@ -776,19 +776,19 @@ type UpdatePlanRequest struct {
 	// Optional bool to indicate that you want the plan to be 'closed' when the last order for the plan finishes (note: order status fail will also close the plan)
 	// in: body
 	CloseOnComplete bool `json:"closeOnComplete"`
-	// Required array of orders. You cannot update executed orders. The entire inactive chain is assumed to be in this array.
+	// Required array of protoOrder. You cannot update executed protoOrder. The entire inactive chain is assumed to be in this array.
 	// in: body
-	Orders []*NewOrderReq `json:"orders"`
+	Orders []*NewOrderReq `json:"protoOrder"`
 }
 
-// swagger:route PUT /plans/:planID plans UpdatePlanParams
+// swagger:route PUT /protoPlan/:planID protoPlan UpdatePlanParams
 //
 // update a plan (protected)
 //
 // You must send in the entire inactive chain that you want updated in a single call.
 //
 // responses:
-//  200: responsePlanSuccess "data" will contain plan with inactive orders (all orders that have yet to be executed) with "status": "success"
+//  200: responsePlanSuccess "data" will contain plan with inactive protoOrder (all protoOrder that have yet to be executed) with "status": "success"
 //  500: responseError the message will state what the internal server error was with "status": "error" "data" will contain order info with "status": "success"
 func (controller *PlanController) HandleUpdatePlan(c echo.Context) error {
 	token := c.Get("user").(*jwt.Token)
@@ -804,10 +804,10 @@ func (controller *PlanController) HandleUpdatePlan(c echo.Context) error {
 	}
 
 	// assemble the order requests
-	orderRequests := make([]*orders.NewOrderRequest, 0)
+	orderRequests := make([]*protoOrder.NewOrderRequest, 0)
 	for _, order := range updatePlan.Orders {
 
-		or := orders.NewOrderRequest{
+		or := protoOrder.NewOrderRequest{
 			OrderID:                order.OrderID,
 			OrderPriority:          order.OrderPriority,
 			OrderType:              order.OrderType,
@@ -820,7 +820,7 @@ func (controller *PlanController) HandleUpdatePlan(c echo.Context) error {
 			InitialCurrencyBalance: order.InitialCurrencyBalance}
 
 		for _, cond := range order.Triggers {
-			trigger := orders.TriggerRequest{
+			trigger := protoOrder.TriggerRequest{
 				TriggerTemplateID: cond.TriggerTemplateID,
 				Index:             cond.Index,
 				Title:             cond.Title,
@@ -834,7 +834,7 @@ func (controller *PlanController) HandleUpdatePlan(c echo.Context) error {
 		orderRequests = append(orderRequests, &or)
 	}
 
-	updatePlanRequest := plans.UpdatePlanRequest{
+	updatePlanRequest := protoPlan.UpdatePlanRequest{
 		PlanID:          planID,
 		UserID:          userID,
 		Title:           updatePlan.Title,
@@ -846,18 +846,18 @@ func (controller *PlanController) HandleUpdatePlan(c echo.Context) error {
 
 	// add plan returns nil for error
 	r, _ := controller.Plans.UpdatePlan(context.Background(), &updatePlanRequest)
-	if r.Status != response.Success {
+	if r.Status != constRes.Success {
 		res := &ResponseError{
 			Status:  r.Status,
 			Message: r.Message,
 		}
 
 		switch r.Status {
-		case response.Fail:
+		case constRes.Fail:
 			return c.JSON(http.StatusBadRequest, res)
-		case response.Error:
+		case constRes.Error:
 			return c.JSON(http.StatusInternalServerError, res)
-		case response.Nonentity:
+		case constRes.Nonentity:
 			return c.JSON(http.StatusBadRequest, res)
 		}
 	}
@@ -906,7 +906,7 @@ func (controller *PlanController) HandleUpdatePlan(c echo.Context) error {
 	}
 
 	res := &ResponsePlanSuccess{
-		Status: response.Success,
+		Status: constRes.Success,
 		Data: &Plan{
 			PlanID:                 r.Data.Plan.PlanID,
 			PlanTemplateID:         r.Data.Plan.PlanTemplateID,

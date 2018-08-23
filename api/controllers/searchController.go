@@ -8,8 +8,9 @@ import (
 	"strings"
 	"sync"
 
-	asql "github.com/asciiu/gomo/api/db/sql"
-	evt "github.com/asciiu/gomo/common/proto/events"
+	repoToken "github.com/asciiu/gomo/api/db/sql"
+	constRes "github.com/asciiu/gomo/common/constants/response"
+	protoEvt "github.com/asciiu/gomo/common/proto/events"
 	"github.com/labstack/echo"
 )
 
@@ -65,7 +66,7 @@ func NewSearchController(db *sql.DB) *SearchController {
 		currencies: make(map[string]string),
 	}
 
-	currencies, err := asql.GetCurrencyNames(db)
+	currencies, err := repoToken.GetCurrencyNames(db)
 	switch {
 	case err == sql.ErrNoRows:
 		log.Println("Quaid, start the reactor!")
@@ -105,7 +106,7 @@ func (controller *SearchController) Search(c echo.Context) error {
 	}
 
 	response := &ResponseSearchSuccess{
-		Status: "success",
+		Status: constRes.Success,
 		Data:   ResponseMarkets{m},
 	}
 
@@ -113,7 +114,7 @@ func (controller *SearchController) Search(c echo.Context) error {
 }
 
 // ProcessEvent will process ExchangeEvents. These events are published from the exchange sockets.
-func (controller *SearchController) CacheEvents(tradeEvents *evt.TradeEvents) {
+func (controller *SearchController) CacheEvents(tradeEvents *protoEvt.TradeEvents) {
 	for _, event := range tradeEvents.Events {
 		names := strings.Split(event.MarketName, "-")
 		baseCurrency := names[1]

@@ -12,12 +12,12 @@ import (
 	"time"
 
 	asql "github.com/asciiu/gomo/api/db/sql"
-	balancesProto "github.com/asciiu/gomo/balance-service/proto/balance"
-	responseConstants "github.com/asciiu/gomo/common/constants/response"
-	devicesProto "github.com/asciiu/gomo/device-service/proto/device"
-	keysProto "github.com/asciiu/gomo/key-service/proto/key"
-	gsql "github.com/asciiu/gomo/user-service/db/sql"
-	usersProto "github.com/asciiu/gomo/user-service/proto/user"
+	protoBalance "github.com/asciiu/gomo/balance-service/proto/balance"
+	constRes "github.com/asciiu/gomo/common/constants/response"
+	protoDevice "github.com/asciiu/gomo/device-service/proto/device"
+	protoKey "github.com/asciiu/gomo/key-service/proto/key"
+	repoUser "github.com/asciiu/gomo/user-service/db/sql"
+	protoUser "github.com/asciiu/gomo/user-service/proto/user"
 	micro "github.com/micro/go-micro"
 
 	apiModels "github.com/asciiu/gomo/api/models"
@@ -36,10 +36,10 @@ const jwtDuration = 20 * time.Minute
 
 type AuthController struct {
 	DB       *sql.DB
-	Users    usersProto.UserServiceClient
-	Balances balancesProto.BalanceServiceClient
-	Keys     keysProto.KeyServiceClient
-	Devices  devicesProto.DeviceServiceClient
+	Users    protoUser.UserServiceClient
+	Balances protoBalance.BalanceServiceClient
+	Keys     protoKey.KeyServiceClient
+	Devices  protoDevice.DeviceServiceClient
 }
 
 type JwtClaims struct {
@@ -106,10 +106,10 @@ type ResponseError struct {
 func NewAuthController(db *sql.DB, service micro.Service) *AuthController {
 	controller := AuthController{
 		DB:       db,
-		Users:    usersProto.NewUserServiceClient("users", service.Client()),
-		Balances: balancesProto.NewBalanceServiceClient("balances", service.Client()),
-		Keys:     keysProto.NewKeyServiceClient("keys", service.Client()),
-		Devices:  devicesProto.NewDeviceServiceClient("devices", service.Client()),
+		Users:    protoUser.NewUserServiceClient("users", service.Client()),
+		Balances: protoBalance.NewBalanceServiceClient("balances", service.Client()),
+		Keys:     protoKey.NewKeyServiceClient("keys", service.Client()),
+		Devices:  protoDevice.NewDeviceServiceClient("devices", service.Client()),
 	}
 
 	return &controller
@@ -227,18 +227,18 @@ func (controller *AuthController) HandleLogin(c echo.Context) error {
 	err := json.NewDecoder(c.Request().Body).Decode(&loginRequest)
 	if err != nil {
 		response := &ResponseError{
-			Status:  responseConstants.Fail,
+			Status:  constRes.Fail,
 			Message: "malformed json request for 'email' and 'password'",
 		}
 		return c.JSON(http.StatusBadRequest, response)
 	}
 
 	// lookup user by email
-	user, err := gsql.FindUser(controller.DB, loginRequest.Email)
+	user, err := repoUser.FindUser(controller.DB, loginRequest.Email)
 	switch {
 	case err == sql.ErrNoRows:
 		response := &ResponseError{
-			Status:  responseConstants.Fail,
+			Status:  constRes.Fail,
 			Message: "password/login incorrect",
 		}
 		// no user by this email send unauthorized response
@@ -246,7 +246,7 @@ func (controller *AuthController) HandleLogin(c echo.Context) error {
 
 	case err != nil:
 		response := &ResponseError{
-			Status:  responseConstants.Error,
+			Status:  constRes.Error,
 			Message: err.Error(),
 		}
 		return c.JSON(http.StatusInternalServerError, response)
@@ -257,7 +257,7 @@ func (controller *AuthController) HandleLogin(c echo.Context) error {
 			accessToken, err := createJwtToken(user.ID, jwtDuration)
 			if err != nil {
 				response := &ResponseError{
-					Status:  responseConstants.Error,
+					Status:  constRes.Error,
 					Message: err.Error(),
 				}
 				return c.JSON(http.StatusInternalServerError, response)
@@ -272,7 +272,7 @@ func (controller *AuthController) HandleLogin(c echo.Context) error {
 
 				if err3 != nil {
 					response := &ResponseError{
-						Status:  responseConstants.Error,
+						Status:  constRes.Error,
 						Message: err.Error(),
 					}
 					return c.JSON(http.StatusInternalServerError, response)
@@ -283,22 +283,22 @@ func (controller *AuthController) HandleLogin(c echo.Context) error {
 
 			// TODO refactor with device controller implementtion
 			// get user devices here
-			getRequest := devicesProto.GetUserDevicesRequest{
+			getRequest := protoDevice.GetUserDevicesRequest{
 				UserID: user.ID,
 			}
 
 			r, err := controller.Devices.GetUserDevices(context.Background(), &getRequest)
 
-			if r.Status != responseConstants.Success {
+			if r.Status != constRes.Success {
 				response := &ResponseError{
 					Status:  r.Status,
 					Message: r.Message,
 				}
 
-				if r.Status == responseConstants.Fail {
+				if r.Status == constRes.Fail {
 					return c.JSON(http.StatusBadRequest, response)
 				}
-				if r.Status == responseConstants.Error {
+				if r.Status == constRes.Error {
 					return c.JSON(http.StatusInternalServerError, response)
 				}
 			}
@@ -316,7 +316,7 @@ func (controller *AuthController) HandleLogin(c echo.Context) error {
 			}
 
 			response := &ResponseSuccess{
-				Status: responseConstants.Success,
+				Status: constRes.Success,
 				Data: &UserData{
 					User:    user.Info(),
 					Devices: dvs,
@@ -328,7 +328,7 @@ func (controller *AuthController) HandleLogin(c echo.Context) error {
 	}
 
 	response := &ResponseError{
-		Status:  responseConstants.Fail,
+		Status:  constRes.Fail,
 		Message: "password/login incorrect",
 	}
 	return c.JSON(http.StatusUnauthorized, response)
@@ -351,7 +351,7 @@ func (controller *AuthController) HandleLogout(c echo.Context) error {
 
 		if len(sa) != 2 {
 			response := &ResponseError{
-				Status:  responseConstants.Fail,
+				Status:  constRes.Fail,
 				Message: "refresh token invalid",
 			}
 			return c.JSON(http.StatusBadRequest, response)
@@ -361,7 +361,7 @@ func (controller *AuthController) HandleLogout(c echo.Context) error {
 	}
 
 	response := &ResponseSuccess{
-		Status: responseConstants.Success,
+		Status: constRes.Success,
 	}
 	return c.JSON(http.StatusOK, response)
 }
@@ -384,7 +384,7 @@ func (controller *AuthController) HandleSignup(c echo.Context) error {
 	err := json.NewDecoder(c.Request().Body).Decode(&signupRequest)
 	if err != nil {
 		response := &ResponseError{
-			Status:  responseConstants.Fail,
+			Status:  constRes.Fail,
 			Message: err.Error(),
 		}
 
@@ -393,14 +393,14 @@ func (controller *AuthController) HandleSignup(c echo.Context) error {
 
 	if signupRequest.Email == "" || signupRequest.Password == "" {
 		response := &ResponseError{
-			Status:  responseConstants.Fail,
+			Status:  constRes.Fail,
 			Message: "email and password are required",
 		}
 
 		return c.JSON(http.StatusBadRequest, response)
 	}
 
-	createRequest := usersProto.CreateUserRequest{
+	createRequest := protoUser.CreateUserRequest{
 		First:    signupRequest.First,
 		Last:     signupRequest.Last,
 		Email:    signupRequest.Email,
@@ -408,22 +408,22 @@ func (controller *AuthController) HandleSignup(c echo.Context) error {
 	}
 
 	r, _ := controller.Users.CreateUser(context.Background(), &createRequest)
-	if r.Status != responseConstants.Success {
+	if r.Status != constRes.Success {
 		response := &ResponseError{
 			Status:  r.Status,
 			Message: r.Message,
 		}
 
-		if r.Status == responseConstants.Fail {
+		if r.Status == constRes.Fail {
 			return c.JSON(http.StatusBadRequest, response)
 		}
-		if r.Status == responseConstants.Error {
+		if r.Status == constRes.Error {
 			return c.JSON(http.StatusInternalServerError, response)
 		}
 	}
 
 	response := &ResponseSuccess{
-		Status: responseConstants.Success,
+		Status: constRes.Success,
 		Data: &UserData{
 			User: &models.UserInfo{
 				UserID: r.Data.User.UserID,

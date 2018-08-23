@@ -5,7 +5,7 @@ import (
 	"strconv"
 
 	protoActivity "github.com/asciiu/gomo/activity-bulletin/proto"
-	constResponse "github.com/asciiu/gomo/common/constants/response"
+	constRes "github.com/asciiu/gomo/common/constants/response"
 	jwt "github.com/dgrijalva/jwt-go"
 	"github.com/labstack/echo"
 	micro "github.com/micro/go-micro"
@@ -86,16 +86,16 @@ func (controller *ActivityController) HandleListActivity(c echo.Context) error {
 	}
 
 	r, _ := controller.Bulletin.FindUserActivity(context.Background(), &req)
-	if r.Status != constResponse.Success {
+	if r.Status != constRes.Success {
 		response := &ResponseError{
 			Status:  r.Status,
 			Message: r.Message,
 		}
 
-		if r.Status == constResponse.Fail {
+		if r.Status == constRes.Fail {
 			return c.JSON(http.StatusBadRequest, response)
 		}
-		if r.Status == constResponse.Error {
+		if r.Status == constRes.Error {
 			return c.JSON(http.StatusInternalServerError, response)
 		}
 	}
@@ -106,7 +106,7 @@ func (controller *ActivityController) HandleListActivity(c echo.Context) error {
 	}
 
 	response := &ResponseActivityPageSuccess{
-		Status: constResponse.Success,
+		Status: constRes.Success,
 		Data:   r.Data,
 	}
 
@@ -151,25 +151,25 @@ func (controller *ActivityController) HandleUpdateActivity(c echo.Context) error
 	}
 
 	r, _ := controller.Bulletin.UpdateActivity(context.Background(), &req)
-	if r.Status != constResponse.Success {
+	if r.Status != constRes.Success {
 		response := &ResponseError{
 			Status:  r.Status,
 			Message: r.Message,
 		}
 
-		if r.Status == constResponse.Nonentity {
+		if r.Status == constRes.Nonentity {
 			return c.JSON(http.StatusNotFound, response)
 		}
-		if r.Status == constResponse.Fail {
+		if r.Status == constRes.Fail {
 			return c.JSON(http.StatusBadRequest, response)
 		}
-		if r.Status == constResponse.Error {
+		if r.Status == constRes.Error {
 			return c.JSON(http.StatusInternalServerError, response)
 		}
 	}
 
 	response := &ResponseActivitySuccess{
-		Status: constResponse.Success,
+		Status: constRes.Success,
 		Data:   r.Data,
 	}
 
