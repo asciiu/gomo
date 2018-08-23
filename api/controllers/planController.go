@@ -479,6 +479,7 @@ func (controller *PlanController) HandleListPlans(c echo.Context) error {
 			CreatedOn:              plan.CreatedOn,
 			UpdatedOn:              plan.UpdatedOn,
 		}
+
 		plans = append(plans, &pln)
 	}
 

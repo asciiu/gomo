@@ -491,21 +491,65 @@ func (service *PlanService) GetUserPlans(ctx context.Context, req *protoPlan.Get
 
 	var page *protoPlan.PlansPage
 	var err error
-	log.Println(req)
 
 	switch {
 	case req.MarketName == "" && req.Exchange != "":
 		// search by userID, exchange, status when no marketName
 		page, err = planRepo.FindUserExchangePlansWithStatus(service.DB, req.UserID, req.Status, req.Exchange, req.Page, req.PageSize)
+		for i, p := range page.Plans {
+			plan, err := planRepo.FindChildOrders(service.DB, p.PlanID, p.LastExecutedOrderID)
+			switch {
+			case err == sql.ErrNoRows:
+				continue
+			case err != nil:
+				break
+			default:
+				page.Plans[i] = plan
+			}
+		}
+
 	case req.MarketName != "" && req.Exchange != "":
 		// search by userID, exchange, marketName, status
 		page, err = planRepo.FindUserExchangePlansWithStatus(service.DB, req.UserID, req.Status, req.Exchange, req.Page, req.PageSize)
+		for i, p := range page.Plans {
+			plan, err := planRepo.FindChildOrders(service.DB, p.PlanID, p.LastExecutedOrderID)
+			switch {
+			case err == sql.ErrNoRows:
+				continue
+			case err != nil:
+				break
+			default:
+				page.Plans[i] = plan
+			}
+		}
 	case req.Status != "":
 		// search by userID and status
 		page, err = planRepo.FindUserPlansWithStatus(service.DB, req.UserID, req.Status, req.Page, req.PageSize)
+		for i, p := range page.Plans {
+			plan, err := planRepo.FindChildOrders(service.DB, p.PlanID, p.LastExecutedOrderID)
+			switch {
+			case err == sql.ErrNoRows:
+				continue
+			case err != nil:
+				break
+			default:
+				page.Plans[i] = plan
+			}
+		}
 	default:
 		// all plans
 		page, err = planRepo.FindUserPlans(service.DB, req.UserID, req.Page, req.PageSize)
+		for i, p := range page.Plans {
+			plan, err := planRepo.FindChildOrders(service.DB, p.PlanID, p.LastExecutedOrderID)
+			switch {
+			case err == sql.ErrNoRows:
+				continue
+			case err != nil:
+				break
+			default:
+				page.Plans[i] = plan
+			}
+		}
 	}
 
 	if err == nil {

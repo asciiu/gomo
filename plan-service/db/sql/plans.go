@@ -744,25 +744,25 @@ func FindUserPlans(db *sql.DB, userID string, page, pageSize uint32) (*protoPlan
 	err := db.QueryRow(queryCount, userID).Scan(&count)
 
 	plans := make([]*protoPlan.Plan, 0)
-	query := `SELECT 
-			id,
-			title,
-			total_depth,
-			exchange_name,
-			active_currency_symbol,
-			active_currency_balance,
-			initial_currency_symbol,
-			initial_currency_balance,
-			last_executed_plan_depth,
-			last_executed_order_id,
-			plan_template_id,
-			close_on_complete,
-			user_plan_number,
-			status,
-			created_on,
-			updated_on
-		FROM plans 
-		WHERE user_id = $1 ORDER BY created_on OFFSET $2 LIMIT $3`
+	query := `SELECT
+ 			id,
+ 			title,
+ 			total_depth,
+ 			exchange_name,
+ 			active_currency_symbol,
+ 			active_currency_balance,
+ 			initial_currency_symbol,
+ 			initial_currency_balance,
+ 			last_executed_plan_depth,
+ 			last_executed_order_id,
+ 			plan_template_id,
+ 			close_on_complete,
+ 			user_plan_number,
+ 			status,
+ 			created_on,
+ 			updated_on
+ 		FROM plans
+ 		WHERE user_id = $1 ORDER BY created_on OFFSET $2 LIMIT $3`
 
 	rows, err := db.Query(query, userID, page, pageSize)
 	if err != nil {
