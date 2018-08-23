@@ -17,6 +17,13 @@ func SetMainMiddlewares(e *echo.Echo) {
 	// redirect http to https
 	e.Pre(middleware.HTTPSRedirect())
 
+	// CORS
+	e.Use(middleware.CORSWithConfig(middleware.CORSConfig{
+		AllowOrigins: []string{"*"},
+		AllowMethods: []string{echo.GET, echo.HEAD, echo.PUT, echo.PATCH, echo.POST, echo.DELETE},
+		AllowHeaders: []string{echo.HeaderOrigin, echo.HeaderContentType, echo.HeaderAccept},
+	}))
+
 	// don't crash on exceptions
 	//e.Use(middleware.Recover())
 }
