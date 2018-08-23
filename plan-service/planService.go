@@ -758,7 +758,6 @@ func (service *PlanService) UpdatePlan(ctx context.Context, req *protoPlan.Updat
 					res.Status = response.Fail
 					res.Message = "using an unverified key!"
 					return nil
-
 				}
 			}
 		}
