@@ -1,4 +1,4 @@
-package messages
+package message
 
 // TopicNewKey when a new key is added
 const TopicNewKey = "NewKey"
