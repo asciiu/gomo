@@ -1014,7 +1014,18 @@ func (service *PlanService) UpdatePlan(ctx context.Context, req *protoPlan.Updat
 			res.Message = "error encountered while updating the plan close on complete option: " + err.Error()
 			return nil
 		}
+
+		// close the plan
+		if pln.CloseOnComplete && len(req.Orders) == 0 {
+			if err := repoPlan.UpdatePlanStatusTxn(txn, ctx, pln.PlanID, constPlan.Closed); err != nil {
+				txn.Rollback()
+				res.Status = constRes.Error
+				res.Message = "error encountered while closing the plan: " + err.Error()
+				return nil
+			}
+		}
 	}
+
 	if pln.PlanTemplateID != req.PlanTemplateID {
 		pln.PlanTemplateID = req.PlanTemplateID
 		if err := repoPlan.UpdatePlanTemplateTxn(txn, ctx, pln.PlanID, pln.PlanTemplateID); err != nil {
