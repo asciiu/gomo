@@ -741,7 +741,7 @@ type UpdatePlanRequest struct {
 	CloseOnComplete bool `json:"closeOnComplete"`
 	// Required array of protoOrder. You cannot update executed protoOrder. The entire inactive chain is assumed to be in this array.
 	// in: body
-	Orders []*NewOrderReq `json:"protoOrder"`
+	Orders []*NewOrderReq `json:"orders"`
 }
 
 // swagger:route PUT /protoPlan/:planID protoPlan UpdatePlanParams
