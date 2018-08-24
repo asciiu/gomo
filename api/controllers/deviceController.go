@@ -38,19 +38,19 @@ type ResponseDeviceSuccess struct {
 	Data   *UserDeviceData `json:"data"`
 }
 
-// A ResponseDeviceClientSuccess will always contain a status of "successful".
-// swagger:model responseDeviceClientSuccess
-type ResponseDeviceClientSuccess struct {
-	Status string                `json:"status"`
-	Data   *UserDeviceClientData `json:"data"`
+// A ResponseDevicesSuccess will always contain a status of "successful".
+// swagger:model ResponseDevicesSuccess
+type ResponseDevicesSuccess struct {
+	Status string      `json:"status"`
+	Data   *DeviceList `json:"data"`
 }
 
 type UserDeviceData struct {
 	Device *ApiDevice `json:"device"`
 }
 
-type UserDeviceClientData struct {
-	DeviceClient []*ApiDevice `json:"protoDevice"`
+type DeviceList struct {
+	Devices []*ApiDevice `json:"devices"`
 }
 
 type ApiDevice struct {
@@ -114,14 +114,14 @@ func (controller *DeviceController) HandleGetDevice(c echo.Context) error {
 	return c.JSON(http.StatusOK, response)
 }
 
-// swagger:route GET /protoDevice protoDevice getAllDeviceClient
+// swagger:route GET /protoDevice protoDevice getAllDevices
 //
 // all registered protoDevice (protected)
 //
 // Returns a list of registered protoDevice for logged in user.
 //
 // responses:
-//  200: responseDeviceClientSuccess "data" will contain array of protoDevice with "status": constRes.Success
+//  200: ResponseDevicesSuccess "data" will contain array of protoDevice with "status": constRes.Success
 //  500: responseError the message will state what the internal server error was with "status": constRes.Error
 func (controller *DeviceController) HandleListDevices(c echo.Context) error {
 	token := c.Get("user").(*jwt.Token)
@@ -147,9 +147,9 @@ func (controller *DeviceController) HandleListDevices(c echo.Context) error {
 		}
 	}
 
-	data := make([]*ApiDevice, len(r.Data.Devices))
+	devices := make([]*ApiDevice, len(r.Data.Devices))
 	for i, device := range r.Data.Devices {
-		data[i] = &ApiDevice{
+		devices[i] = &ApiDevice{
 			DeviceID:         device.DeviceID,
 			ExternalDeviceID: device.ExternalDeviceID,
 			DeviceType:       device.DeviceType,
@@ -157,10 +157,10 @@ func (controller *DeviceController) HandleListDevices(c echo.Context) error {
 		}
 	}
 
-	response := &ResponseDeviceClientSuccess{
+	response := &ResponseDevicesSuccess{
 		Status: constRes.Success,
-		Data: &UserDeviceClientData{
-			DeviceClient: data,
+		Data: &DeviceList{
+			Devices: devices,
 		},
 	}
 

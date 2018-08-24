@@ -12,11 +12,11 @@ import (
 	"golang.org/x/net/context"
 )
 
-// A ResponseBalanceClientSuccess will always contain a status of "successful".
-// swagger:model responseBalanceClientSuccess
-type ResponseBalanceClientSuccess struct {
-	Status string                `json:"status"`
-	Data   *AccountBalanceClient `json:"data"`
+// A ResponseBalancesSuccess will always contain a status of "successful".
+// swagger:model ResponseBalancesSuccess
+type ResponseBalancesSuccess struct {
+	Status string           `json:"status"`
+	Data   *AccountBalances `json:"data"`
 }
 
 // This struct is used in the generated swagger docs,
@@ -28,8 +28,8 @@ type SearchSymbol struct {
 	Symbol string `json:"symbol"`
 }
 
-type AccountBalanceClient struct {
-	BalanceClient []*Balance `json:"protoBalance"`
+type AccountBalances struct {
+	Balances []*Balance `json:"balances"`
 }
 
 type Balance struct {
@@ -64,7 +64,7 @@ func NewBalanceController(db *sql.DB, service micro.Service) *BalanceController 
 // Returns all protoBalance for user. Use optional query param 'symbol' as lowercase ticker symbol - e.g. ada.
 //
 // responses:
-//  200: responseBalanceClientSuccess "data" will contain array of protoBalance with "status": constRes.Success
+//  200: ResponseBalancesSuccess "data" will contain array of protoBalance with "status": constRes.Success
 //  500: responseError the message will state what the internal server error was with "status": constRes.Error
 func (controller *BalanceController) HandleGetBalances(c echo.Context) error {
 	token := c.Get("user").(*jwt.Token)
@@ -101,10 +101,10 @@ func (controller *BalanceController) HandleGetBalances(c echo.Context) error {
 		}
 	}
 
-	data := make([]*Balance, len(r.Data.Balances))
+	balances := make([]*Balance, len(r.Data.Balances))
 	for i, balance := range r.Data.Balances {
 		// api removes the secret
-		data[i] = &Balance{
+		balances[i] = &Balance{
 			BalanceID:         balance.ID,
 			KeyID:             balance.KeyID,
 			ExchangeName:      balance.ExchangeName,
@@ -117,10 +117,10 @@ func (controller *BalanceController) HandleGetBalances(c echo.Context) error {
 		}
 	}
 
-	response := &ResponseBalanceClientSuccess{
+	response := &ResponseBalancesSuccess{
 		Status: constRes.Success,
-		Data: &AccountBalanceClient{
-			BalanceClient: data,
+		Data: &AccountBalances{
+			Balances: balances,
 		},
 	}
 

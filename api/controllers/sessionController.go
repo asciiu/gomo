@@ -24,11 +24,11 @@ type UserMetaData struct {
 }
 
 type UserMeta struct {
-	UserID    string     `json:"userID"`
-	First     string     `json:"first"`
-	Last      string     `json:"last"`
-	Email     string     `json:"email"`
-	KeyClient []*KeyMeta `json:"protoKey"`
+	UserID string     `json:"userID"`
+	First  string     `json:"first"`
+	Last   string     `json:"last"`
+	Email  string     `json:"email"`
+	Keys   []*KeyMeta `json:"keys"`
 }
 
 type KeyMeta struct {
@@ -89,14 +89,14 @@ func (controller *SessionController) HandleSession(c echo.Context) error {
 		}
 	}
 
-	getKeyClientRequest := protoKey.GetUserKeysRequest{
+	getKeysRequest := protoKey.GetUserKeysRequest{
 		UserID: userID,
 	}
-	r2, _ := controller.KeyClient.GetUserKeys(context.Background(), &getKeyClientRequest)
-	leprotoKey := make([]*KeyMeta, 0)
+	r2, _ := controller.KeyClient.GetUserKeys(context.Background(), &getKeysRequest)
+	leKeys := make([]*KeyMeta, 0)
 
 	for _, k := range r2.Data.Keys {
-		leprotoKey = append(leprotoKey,
+		leKeys = append(leKeys,
 			&KeyMeta{
 				Exchange:    k.Exchange,
 				Status:      k.Status,
@@ -108,11 +108,11 @@ func (controller *SessionController) HandleSession(c echo.Context) error {
 		Status: constRes.Success,
 		Data: &UserMetaData{
 			UserMeta: &UserMeta{
-				UserID:    r.Data.User.UserID,
-				First:     r.Data.User.First,
-				Last:      r.Data.User.Last,
-				Email:     r.Data.User.Email,
-				KeyClient: leprotoKey}}}
+				UserID: r.Data.User.UserID,
+				First:  r.Data.User.First,
+				Last:   r.Data.User.Last,
+				Email:  r.Data.User.Email,
+				Keys:   leKeys}}}
 
 	return c.JSON(http.StatusOK, response)
 }

@@ -28,18 +28,11 @@ type PlanController struct {
 	currencies map[string]string
 }
 
-// A ResponsePlanClientSuccess will always contain a status of "successful".
-// swagger:model ResponsePlanClientSuccess
-type ResponsePlanClientSuccess struct {
-	Status string          `json:"status"`
-	Data   *PlanClientPage `json:"data"`
-}
-
-// A ResponsePlanWithOrderPageSuccess will always contain a status of "successful".
-// swagger:model ResponsePlanWithOrderPageSuccess
-type ResponsePlanWithOrderPageSuccess struct {
-	Status string             `json:"status"`
-	Data   *PlanWithOrderPage `json:"data"`
+// A ResponsePlansSuccess will always contain a status of "successful".
+// swagger:model ResponsePlansSuccess
+type ResponsePlansSuccess struct {
+	Status string     `json:"status"`
+	Data   *PlansPage `json:"data"`
 }
 
 // A ResponsePlanSuccess will always contain a status of "successful".
@@ -49,41 +42,11 @@ type ResponsePlanSuccess struct {
 	Data   *Plan  `json:"data"`
 }
 
-type PlanClientPage struct {
-	Page       uint32  `json:"page"`
-	PageSize   uint32  `json:"pageSize"`
-	Total      uint32  `json:"total"`
-	PlanClient []*Plan `json:"protoPlan"`
-}
-
-type PlanWithOrderPage struct {
-	PlanID             string                 `json:"planID"`
-	PlanTemplateID     string                 `json:"planTemplateID"`
-	KeyID              string                 `json:"keyID"`
-	Exchange           string                 `json:"exchange"`
-	ExchangeMarketName string                 `json:"exchangeMarketName"`
-	MarketName         string                 `json:"marketName"`
-	BaseCurrencySymbol string                 `json:"baseCurrencySymbol"`
-	BaseCurrencyName   string                 `json:"baseCurrencyName"`
-	BaseBalance        float64                `json:"baseBalance"`
-	CurrencySymbol     string                 `json:"currencySymbol"`
-	CurrencyName       string                 `json:"currencyName"`
-	CurrencyBalance    float64                `json:"currencyBalance"`
-	Status             string                 `json:"status"`
-	CreatedOn          string                 `json:"createdOn"`
-	UpdatedOn          string                 `json:"updatedOn"`
-	OrdersPage         *protoOrder.OrdersPage `json:"protoOrderPage"`
-}
-
-type OrdersPage struct {
-	Page     uint32              `json:"page"`
-	PageSize uint32              `json:"pageSize"`
-	Total    uint32              `json:"total"`
-	Orders   []*protoOrder.Order `json:"protoOrder"`
-}
-
-type UserPlanClientData struct {
-	PLans []*Plan `json:"protoPlan"`
+type PlansPage struct {
+	Page     uint32  `json:"page"`
+	PageSize uint32  `json:"pageSize"`
+	Total    uint32  `json:"total"`
+	Plans    []*Plan `json:"plans"`
 }
 
 // This response should never return the key secret
@@ -108,7 +71,7 @@ type Plan struct {
 	CreatedOn              string              `json:"createdOn"`
 	UpdatedOn              string              `json:"updatedOn"`
 	Activity               PlanActivitySummary `json:"activity"`
-	Orders                 []*Order            `json:"protoOrder,omitempty"`
+	Orders                 []*Order            `json:"orders"`
 }
 
 type PlanActivitySummary struct {
@@ -222,19 +185,19 @@ func (controller *PlanController) HandleDeletePlan(c echo.Context) error {
 		}
 	}
 
-	res := &ResponsePlanWithOrderPageSuccess{
-		Status: constRes.Success,
-		Data: &PlanWithOrderPage{
-			PlanID:         r.Data.Plan.PlanID,
-			PlanTemplateID: r.Data.Plan.PlanTemplateID,
-			Exchange:       r.Data.Plan.Exchange,
-			Status:         r.Data.Plan.Status,
-			CreatedOn:      r.Data.Plan.CreatedOn,
-			UpdatedOn:      r.Data.Plan.UpdatedOn,
-		},
-	}
+	// res := &ResponsePlanWithOrderPageSuccess{
+	// 	Status: constRes.Success,
+	// 	Data: &PlanWithOrderPage{
+	// 		PlanID:         r.Data.Plan.PlanID,
+	// 		PlanTemplateID: r.Data.Plan.PlanTemplateID,
+	// 		Exchange:       r.Data.Plan.Exchange,
+	// 		Status:         r.Data.Plan.Status,
+	// 		CreatedOn:      r.Data.Plan.CreatedOn,
+	// 		UpdatedOn:      r.Data.Plan.UpdatedOn,
+	// 	},
+	// }
 
-	return c.JSON(http.StatusOK, res)
+	return c.JSON(http.StatusOK, "")
 }
 
 // required for swaggered, otherwise never used
@@ -388,8 +351,8 @@ func (controller *PlanController) HandleGetPlan(c echo.Context) error {
 }
 
 // required for swaggered, otherwise never used
-// swagger:parameters GetUserPlanClientParams
-type GetUserPlanClientParams struct {
+// swagger:parameters GetUserPlansParams
+type GetUserPlansParams struct {
 	Exchange   string `json:"exchange"`
 	MarketName string `json:"marketName"`
 	Status     string `json:"status"`
@@ -397,7 +360,7 @@ type GetUserPlanClientParams struct {
 	PageSize   uint32 `json:"pageSize"`
 }
 
-// swagger:route GET /protoPlan protoPlan GetUserPlanClientParams
+// swagger:route GET /protoPlan protoPlan GetUserPlansParams
 //
 // get user protoPlan (protected)
 //
@@ -412,7 +375,7 @@ type GetUserPlanClientParams struct {
 // example: /protoPlan?exchange=binance
 //
 // responses:
-//  200: ResponsePlanClientSuccess "data" will contain an array of plan summaries
+//  200: ResponsePlansSuccess "data" will contain an array of plan summaries
 //  500: responseError the message will state what the internal server error was with "status": "error"
 func (controller *PlanController) HandleListPlans(c echo.Context) error {
 	token := c.Get("user").(*jwt.Token)
@@ -457,7 +420,7 @@ func (controller *PlanController) HandleListPlans(c echo.Context) error {
 		}
 	}
 
-	protoPlan := make([]*Plan, 0)
+	plans := make([]*Plan, 0)
 	for _, plan := range r.Data.Plans {
 
 		cOrders := make([]*Order, 0)
@@ -525,16 +488,16 @@ func (controller *PlanController) HandleListPlans(c echo.Context) error {
 			Orders:                 cOrders,
 		}
 
-		protoPlan = append(protoPlan, &pln)
+		plans = append(plans, &pln)
 	}
 
-	res := &ResponsePlanClientSuccess{
+	res := &ResponsePlansSuccess{
 		Status: constRes.Success,
-		Data: &PlanClientPage{
-			Page:       r.Data.Page,
-			PageSize:   r.Data.PageSize,
-			Total:      r.Data.Total,
-			PlanClient: protoPlan,
+		Data: &PlansPage{
+			Page:     r.Data.Page,
+			PageSize: r.Data.PageSize,
+			Total:    r.Data.Total,
+			Plans:    plans,
 		},
 	}
 
@@ -557,7 +520,7 @@ type PlanRequest struct {
 	CloseOnComplete bool `json:"closeOnComplete"`
 	// Required array of protoOrder. The structure of the order tree will be dictated by the parentOrderID. All protoOrder following the root order must have a parentOrderID. The root order must have a parentOrderID of "00000000-0000-0000-0000-000000000000". Use grupo (aka spanish for group) to assign a group label to protoOrder.
 	// in: body
-	Orders []*NewOrderReq `json:"protoOrder"`
+	Orders []*NewOrderReq `json:"orders"`
 }
 
 type NewOrderReq struct {

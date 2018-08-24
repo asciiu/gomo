@@ -91,8 +91,8 @@ type Device struct {
 }
 
 type UserData struct {
-	User         *models.UserInfo `json:"user"`
-	DeviceClient []*Device        `json:"devices"`
+	User    *models.UserInfo `json:"user"`
+	Devices []*Device        `json:"devices"`
 }
 
 // A ResponseSuccess will always contain a status of "successful".
@@ -318,8 +318,8 @@ func (controller *AuthController) HandleLogin(c echo.Context) error {
 			response := &ResponseSuccess{
 				Status: constRes.Success,
 				Data: &UserData{
-					User:         user.Info(),
-					DeviceClient: dvs,
+					User:    user.Info(),
+					Devices: dvs,
 				},
 			}
 

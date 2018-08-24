@@ -49,19 +49,19 @@ type ResponseKeySuccess struct {
 	Data   *UserKeyData `json:"data"`
 }
 
-// A ResponseKeyClientSuccess will always contain a status of "successful".
-// swagger:model responseKeyClientSuccess
-type ResponseKeyClientSuccess struct {
-	Status string             `json:"status"`
-	Data   *UserKeyClientData `json:"data"`
+// A ResponseKeyListSuccess will always contain a status of "successful".
+// swagger:model ResponseKeyListSuccess
+type ResponseKeyListSuccess struct {
+	Status string   `json:"status"`
+	Data   *KeyList `json:"data"`
 }
 
 type UserKeyData struct {
 	Key *Key `json:"key"`
 }
 
-type UserKeyClientData struct {
-	KeyClient []*Key `json:"protoKey"`
+type KeyList struct {
+	Keys []*Key `json:"keys"`
 }
 
 type Key struct {
@@ -141,7 +141,7 @@ func (controller *KeyController) HandleGetKey(c echo.Context) error {
 // Get all the user protoKey for this user. The api secrets will not be returned in the response data.
 //
 // responses:
-//  200: responseKeyClientSuccess "data" will contain a list of key info with "status": "success"
+//  200: ResponseKeyListSuccess "data" will contain a list of key info with "status": "success"
 //  500: responseError the message will state what the internal server error was with "status": "error"
 func (controller *KeyController) HandleListKeys(c echo.Context) error {
 	token := c.Get("user").(*jwt.Token)
@@ -168,10 +168,10 @@ func (controller *KeyController) HandleListKeys(c echo.Context) error {
 		}
 	}
 
-	data := make([]*Key, len(r.Data.Keys))
+	keys := make([]*Key, len(r.Data.Keys))
 	for i, key := range r.Data.Keys {
 		// api removes the secret
-		data[i] = &Key{
+		keys[i] = &Key{
 			KeyID:       key.KeyID,
 			Exchange:    key.Exchange,
 			Key:         key.Key,
@@ -180,10 +180,10 @@ func (controller *KeyController) HandleListKeys(c echo.Context) error {
 		}
 	}
 
-	response := &ResponseKeyClientSuccess{
+	response := &ResponseKeyListSuccess{
 		Status: constRes.Success,
-		Data: &UserKeyClientData{
-			KeyClient: data,
+		Data: &KeyList{
+			Keys: keys,
 		},
 	}
 
