@@ -1077,6 +1077,8 @@ func (service *PlanService) UpdatePlan(ctx context.Context, req *protoPlan.Updat
 
 	txn.Commit()
 
+	pln.Orders = newOrders
+
 	// activate first plan order if plan is active
 	if pln.Status == constPlan.Active {
 		// TODO send the keys with the orders so they can execute the live orders against the exchanges
@@ -1089,7 +1091,6 @@ func (service *PlanService) UpdatePlan(ctx context.Context, req *protoPlan.Updat
 		}
 	}
 
-	pln.Orders = newOrders
 	res.Status = constRes.Success
 	res.Data = &protoPlan.PlanData{Plan: pln}
 
