@@ -8,7 +8,7 @@
     "common/constants/message",
     "common/db"
   ]
-  revision = "acfd70227083e38279d80408b51c6e00389d664a"
+  revision = "0a73810fd4344a8cec40e1fa17b8a72ecfb7e482"
 
 [[projects]]
   name = "github.com/go-log/log"

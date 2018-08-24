@@ -5,6 +5,7 @@ import (
 	"log"
 	"os"
 
+	protoBalance "github.com/asciiu/gomo/balance-service/proto/balance"
 	constMessage "github.com/asciiu/gomo/common/constants/message"
 	"github.com/asciiu/gomo/common/db"
 	micro "github.com/micro/go-micro"
@@ -30,6 +31,7 @@ func main() {
 	// subscribe to new key topic with a key validator
 	micro.RegisterSubscriber(constMessage.TopicBalanceUpdate, srv.Server(), balanceService.HandleBalances, server.SubscriberQueue("update.balances"))
 
+	protoBalance.RegisterBalanceServiceHandler(srv.Server(), &balanceService)
 	if err := srv.Run(); err != nil {
 		log.Fatal(err)
 	}
