@@ -1,0 +1,80 @@
+syntax = "proto3";
+
+package account;
+
+import "github.com/asciiu/gomo/account-service/proto/balance/balance.proto";
+
+service AccountService {
+  rpc AddAccount(NewAccountRequest) returns (AccountResponse) {}
+  rpc DeleteAccount(AccountRequest) returns (AccountResponse) {}
+  rpc GetAccounts(GetAccountsRequest) returns (AccountsResponse) {}
+  rpc GetAccount(AccountRequest) returns (AccountResponse) {}
+  rpc UpdateAccount(UpdateAccountRequest) returns (AccountResponse) {}
+}
+
+// Requests
+message NewAccountRequest {
+  string userID = 1;
+  string exchange = 2;
+  string keyPublic = 3;
+  string keySecret = 4;
+  string description = 5;
+  repeated balance.NewBalanceRequest balances = 6; 
+}
+
+message UpdateAccountRequest {
+  string accountID = 1;
+  string userID = 2;
+  string keyPublic = 3;
+  string keySecret = 4;
+  string description = 5;
+  repeated balance.NewBalanceRequest balances = 6; 
+}
+
+message AccountRequest {
+  string accountID = 1;
+}
+
+message GetAccountsRequest {
+  string userID = 1;
+}
+
+message GetKeysRequest {
+  repeated string keyIDs = 1;
+}
+
+message GetUserKeysRequest {
+    string userID = 1;
+}
+
+
+// Responses
+message Account {
+  string accountID = 1;
+  string userID = 2;
+  string exchange = 3;
+  string keyPublic = 4;
+  string keySecret = 5;
+  string status = 6;
+  string description = 7;
+  repeated balance.Balance balances = 8;
+}
+
+message UserAccount {
+  Account account = 1;
+}
+
+message AccountResponse {
+  string status = 1;
+  string message = 2;
+  UserAccount data = 3;
+}
+
+message UserAccounts {
+  repeated Account accounts = 1;
+}
+message AccountsResponse {
+  string status = 1;
+  string message = 2;
+  UserAccounts data = 3;
+}

@@ -1,23 +1,23 @@
 apiVersion: apps/v1beta1
 kind: Deployment
 metadata:
-  name: balances 
+  name: accounts 
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: balances 
+      app: accounts 
   template:
     metadata:
       labels:
-        app: balances 
+        app: accounts 
     spec:
         containers:
-        - name: balance-service 
-          image: us.gcr.io/fomo-204904/balance-service:dev
+        - name: account-service 
+          image: us.gcr.io/fomo-204904/account-service:dev
           imagePullPolicy: Always 
           command: [
-            "./balance-service",
+            "./account-service",
             "--selector=static",
             "--server_address=:8080"
           ]
@@ -26,7 +26,7 @@ spec:
               name: fomo-config
           env:
           - name: UPDATED_AT
-            value: "Thu Aug 23 18:43:26 MDT 2018" 
+            value: "{{ UPDATED_AT }}" 
           ports:
           - containerPort: 8080
-            name: balances-port
+            name: accounts-port
