@@ -603,59 +603,26 @@ func (service *PlanService) GetUserPlans(ctx context.Context, req *protoPlan.Get
 	case req.MarketName == "" && req.Exchange != "":
 		// search by userID, exchange, status when no marketName
 		page, err = repoPlan.FindUserExchangePlansWithStatus(service.DB, req.UserID, req.Status, req.Exchange, req.Page, req.PageSize)
-		for i, p := range page.Plans {
-			plan, err := repoPlan.FindChildOrders(service.DB, p.PlanID, p.LastExecutedOrderID)
-			switch {
-			case err == sql.ErrNoRows:
-				continue
-			case err != nil:
-				break
-			default:
-				page.Plans[i] = plan
-			}
-		}
-
 	case req.MarketName != "" && req.Exchange != "":
 		// search by userID, exchange, marketName, status
 		page, err = repoPlan.FindUserExchangePlansWithStatus(service.DB, req.UserID, req.Status, req.Exchange, req.Page, req.PageSize)
-		for i, p := range page.Plans {
-			plan, err := repoPlan.FindChildOrders(service.DB, p.PlanID, p.LastExecutedOrderID)
-			switch {
-			case err == sql.ErrNoRows:
-				continue
-			case err != nil:
-				break
-			default:
-				page.Plans[i] = plan
-			}
-		}
 	case req.Status != "":
 		// search by userID and status
 		page, err = repoPlan.FindUserPlansWithStatus(service.DB, req.UserID, req.Status, req.Page, req.PageSize)
-		for i, p := range page.Plans {
-			plan, err := repoPlan.FindChildOrders(service.DB, p.PlanID, p.LastExecutedOrderID)
-			switch {
-			case err == sql.ErrNoRows:
-				continue
-			case err != nil:
-				break
-			default:
-				page.Plans[i] = plan
-			}
-		}
 	default:
 		// all plans
 		page, err = repoPlan.FindUserPlans(service.DB, req.UserID, req.Page, req.PageSize)
-		for i, p := range page.Plans {
-			plan, err := repoPlan.FindChildOrders(service.DB, p.PlanID, p.LastExecutedOrderID)
-			switch {
-			case err == sql.ErrNoRows:
-				continue
-			case err != nil:
-				break
-			default:
-				page.Plans[i] = plan
-			}
+	}
+
+	for i, p := range page.Plans {
+		plan, err := repoPlan.FindParentAndChildren(service.DB, p.PlanID, p.LastExecutedOrderID)
+		switch {
+		case err == sql.ErrNoRows:
+			continue
+		case err != nil:
+			break
+		default:
+			page.Plans[i] = plan
 		}
 	}
 

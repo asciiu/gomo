@@ -751,6 +751,194 @@ func FindChildOrders(db *sql.DB, planID, parentOrderID string) (*protoPlan.Plan,
 	return &plan, nil
 }
 
+// Leo wants to display the last executed order from the plan list summary card.
+func FindParentAndChildren(db *sql.DB, planID, parentOrderID string) (*protoPlan.Plan, error) {
+	rows, err := db.Query(`SELECT 
+		p.id as plan_id,
+		p.user_id,
+		p.title,
+		p.total_depth,
+		p.exchange_name,
+		p.active_currency_symbol,
+		p.active_currency_balance,
+		p.initial_currency_symbol,
+		p.initial_currency_balance,
+		p.last_executed_plan_depth,
+		p.last_executed_order_id,
+		p.close_on_complete,
+		p.user_plan_number,
+		p.status,
+		p.created_on,
+		p.updated_on,
+		k.id as key_id,
+		k.api_key,
+		k.secret,
+		k.description,
+		o.id as order_id,
+		o.parent_order_id,
+		o.plan_id,
+		o.plan_depth,
+		o.exchange_name,
+		o.market_name,
+		o.initial_currency_symbol,
+		o.initial_currency_balance,
+		o.initial_currency_traded,
+		o.initial_currency_remainder,
+		o.final_currency_symbol,
+		o.final_currency_balance,
+		o.order_priority,
+		o.order_template_id,
+		o.order_type,
+		o.side,
+		o.limit_price, 
+		o.status,
+		o.grupo,
+		o.created_on,
+		o.updated_on,
+		t.id as trigger_id,
+		t.index,
+		t.title,
+		t.name,
+		t.code,
+		array_to_json(t.actions),
+		t.triggered,
+		t.triggered_price,
+		t.triggered_condition,
+		t.triggered_timestamp,
+		t.trigger_template_id,
+		t.created_on,
+		t.updated_on
+		FROM plans p 
+		JOIN orders o on p.id = o.plan_id
+		JOIN triggers t on o.id = t.order_id
+		JOIN user_keys k on o.user_key_id = k.id
+		WHERE p.id = $1 AND (o.parent_order_id = $2 or o.id = $2)
+		ORDER BY o.plan_depth, o.order_priority, o.id, t.index`, planID, parentOrderID)
+
+	if err != nil {
+		return nil, err
+	}
+
+	defer rows.Close()
+
+	var plan protoPlan.Plan
+	var price sql.NullFloat64
+
+	for rows.Next() {
+		var trigger protoOrder.Trigger
+		var triggerTemplateID sql.NullString
+		var triggeredPrice sql.NullFloat64
+		var triggeredCondition sql.NullString
+		var triggeredTimestamp sql.NullString
+		var finalCurrencySymbol sql.NullString
+		var actionsStr string
+		var order protoOrder.Order
+
+		err := rows.Scan(
+			&plan.PlanID,
+			&plan.UserID,
+			&plan.Title,
+			&plan.TotalDepth,
+			&plan.Exchange,
+			&plan.ActiveCurrencySymbol,
+			&plan.ActiveCurrencyBalance,
+			&plan.InitialCurrencySymbol,
+			&plan.InitialCurrencyBalance,
+			&plan.LastExecutedPlanDepth,
+			&plan.LastExecutedOrderID,
+			&plan.CloseOnComplete,
+			&plan.UserPlanNumber,
+			&plan.Status,
+			&plan.CreatedOn,
+			&plan.UpdatedOn,
+			&order.KeyID,
+			&order.KeyPublic,
+			&order.KeySecret,
+			&order.KeyDescription,
+			&order.OrderID,
+			&order.ParentOrderID,
+			&order.PlanID,
+			&order.PlanDepth,
+			&order.Exchange,
+			&order.MarketName,
+			&order.InitialCurrencySymbol,
+			&order.InitialCurrencyBalance,
+			&order.InitialCurrencyTraded,
+			&order.InitialCurrencyRemainder,
+			&finalCurrencySymbol,
+			&order.FinalCurrencyBalance,
+			&order.OrderPriority,
+			&order.OrderTemplateID,
+			&order.OrderType,
+			&order.Side,
+			&price,
+			&order.Status,
+			&order.Grupo,
+			&order.CreatedOn,
+			&order.UpdatedOn,
+			&trigger.TriggerID,
+			&trigger.Index,
+			&trigger.Title,
+			&trigger.Name,
+			&trigger.Code,
+			&actionsStr,
+			&trigger.Triggered,
+			&triggeredPrice,
+			&triggeredCondition,
+			&triggeredTimestamp,
+			&triggerTemplateID,
+			&trigger.CreatedOn,
+			&trigger.UpdatedOn)
+
+		if err != nil {
+			return nil, err
+		}
+		if price.Valid {
+			order.LimitPrice = price.Float64
+		}
+		if finalCurrencySymbol.Valid {
+			order.FinalCurrencySymbol = finalCurrencySymbol.String
+		}
+		if triggeredPrice.Valid {
+			trigger.TriggeredPrice = triggeredPrice.Float64
+		}
+		if triggeredCondition.Valid {
+			trigger.TriggeredCondition = triggeredCondition.String
+		}
+		if triggeredTimestamp.Valid {
+			trigger.TriggeredTimestamp = triggeredTimestamp.String
+		}
+		if triggerTemplateID.Valid {
+			trigger.TriggerTemplateID = triggerTemplateID.String
+		}
+		if err := json.Unmarshal([]byte(actionsStr), &trigger.Actions); err != nil {
+			return nil, err
+		}
+		trigger.OrderID = order.OrderID
+
+		// loop through the orders and append trigger to existing
+		var found = false
+		for _, o := range plan.Orders {
+			if o.OrderID == order.OrderID {
+				o.Triggers = append(o.Triggers, &trigger)
+				found = true
+				break
+			}
+		}
+		if !found {
+			order.Triggers = append(order.Triggers, &trigger)
+			plan.Orders = append(plan.Orders, &order)
+		}
+	}
+
+	// no child orders
+	if plan.PlanID == "" {
+		return nil, sql.ErrNoRows
+	}
+
+	return &plan, nil
+}
+
 func FindUserPlans(db *sql.DB, userID string, page, pageSize uint32) (*protoPlan.PlansPage, error) {
 
 	var count uint32
