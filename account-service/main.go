@@ -9,7 +9,6 @@ import (
 	constMessage "github.com/asciiu/gomo/common/constants/message"
 	"github.com/asciiu/gomo/common/db"
 	micro "github.com/micro/go-micro"
-	"github.com/micro/go-micro/server"
 	k8s "github.com/micro/kubernetes/go/micro"
 )
 
@@ -36,7 +35,7 @@ func main() {
 	protoAccount.RegisterAccountServiceHandler(srv.Server(), &accountService)
 
 	// handles key verified events
-	micro.RegisterSubscriber(constMessage.TopicKeyVerified, srv.Server(), accountService.HandleVerifiedKey, server.SubscriberQueue("verified.key"))
+	//micro.RegisterSubscriber(constMessage.TopicKeyVerified, srv.Server(), accountService.HandleVerifiedKey, server.SubscriberQueue("verified.key"))
 
 	if err := srv.Run(); err != nil {
 		log.Fatal(err)

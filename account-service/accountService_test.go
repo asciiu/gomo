@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"log"
 	"testing"
 
@@ -50,6 +51,34 @@ func TestUnsupportedExchange(t *testing.T) {
 	service.AddAccount(context.Background(), &request, &response)
 
 	assert.Equal(t, "fail", response.Status, "return status is expected to be fail due to unsupported exchange")
+
+	repoUser.DeleteUserHard(service.DB, user.ID)
+}
+
+func TestNewAccount(t *testing.T) {
+	service, user := setupService()
+
+	defer service.DB.Close()
+
+	request := protoAccount.NewAccountRequest{
+		UserID:      user.ID,
+		Exchange:    "binance paper",
+		KeyPublic:   "public",
+		KeySecret:   "secret",
+		Description: "shit test again!",
+		Balances: []*protoBalance.NewBalanceRequest{
+			&protoBalance.NewBalanceRequest{
+				CurrencySymbol:  "BTC",
+				CurrencyBalance: 1.0,
+			},
+		},
+	}
+
+	response := protoAccount.AccountResponse{}
+	service.AddAccount(context.Background(), &request, &response)
+
+	assert.Equal(t, "success", response.Status, response.Message)
+	fmt.Println(response)
 
 	repoUser.DeleteUserHard(service.DB, user.ID)
 }
