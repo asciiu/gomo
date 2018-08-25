@@ -15,7 +15,7 @@
     "user-service/db/sql",
     "user-service/models"
   ]
-  revision = "7e39898685a3aafff284f07dfb940c53162f83c6"
+  revision = "e4c3002e7bf06e2ac1d6cc10c53ee9091042d77c"
 
 [[projects]]
   name = "github.com/go-log/log"
@@ -209,6 +209,12 @@
   version = "v0.8.0"
 
 [[projects]]
+  name = "github.com/satori/go.uuid"
+  packages = ["."]
+  revision = "f58768cc1a7a7e77a3bd49e98cdd21419399b6a3"
+  version = "v1.2.0"
+
+[[projects]]
   branch = "master"
   name = "golang.org/x/crypto"
   packages = [
@@ -300,6 +306,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "b3a51ed75bd4c74ac2425cca31dc9ebc51fb9aed0a1f99628649233ac25dbebc"
+  inputs-digest = "67bf869bd99d056ebf36905863183a9c3b2784a9fd73d4c1f4b82fba00b8b1e3"
   solver-name = "gps-cdcl"
   solver-version = 1
