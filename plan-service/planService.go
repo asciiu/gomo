@@ -110,7 +110,7 @@ func (service *PlanService) publishPlan(ctx context.Context, plan *protoPlan.Pla
 
 		// update the order status
 		for _, o := range newOrders {
-			if _, _, err := repoPlan.UpdateOrderStatus(service.DB, o.OrderID, constPlan.Active); err != nil {
+			if _, _, err := repoPlan.UpdateOrderStatusAndBalance(service.DB, o.OrderID, constPlan.Active, plan.ActiveCurrencyBalance); err != nil {
 				log.Println("could not update order status to active -- ", err.Error())
 			}
 		}
@@ -248,6 +248,7 @@ func (service *PlanService) HandleCompletedOrder(ctx context.Context, completedO
 
 		switch {
 		case err == sql.ErrNoRows:
+			// close status of plan when no more orders and CloseOnComplete is true
 			if completedOrderEvent.CloseOnComplete && repoPlan.UpdatePlanStatus(service.DB, planID, constPlan.Closed) != nil {
 				log.Printf("could not close plan -- %s\n", planID)
 			}

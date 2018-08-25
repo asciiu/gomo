@@ -84,7 +84,6 @@ func InsertOrders(txn *sql.Tx, orders []*protoOrder.Order) error {
 	return nil
 }
 
-// returns (planID, depth, err)
 func UpdateOrderStatus(db *sql.DB, orderID, status string) (string, int32, error) {
 	updatePlanOrderSql := `UPDATE orders SET status = $1 WHERE id = $2 
 	RETURNING plan_id, plan_depth`
@@ -92,6 +91,26 @@ func UpdateOrderStatus(db *sql.DB, orderID, status string) (string, int32, error
 	var planID string
 	var depth int32
 	err := db.QueryRow(updatePlanOrderSql, status, orderID).
+		Scan(&planID, &depth)
+
+	if err != nil {
+		return "", 0, err
+	}
+
+	return planID, depth, nil
+}
+
+// returns (planID, depth, err)
+func UpdateOrderStatusAndBalance(db *sql.DB, orderID, status string, initBalance float64) (string, int32, error) {
+	updatePlanOrderSql := `
+	UPDATE orders 
+	SET status = $1, initial_currency_balance = $2
+	WHERE id = $3 
+	RETURNING plan_id, plan_depth`
+
+	var planID string
+	var depth int32
+	err := db.QueryRow(updatePlanOrderSql, status, initBalance, orderID).
 		Scan(&planID, &depth)
 
 	if err != nil {
