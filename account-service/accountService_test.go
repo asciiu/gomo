@@ -1,11 +1,16 @@
 package main
 
 import (
+	"context"
 	"log"
+	"testing"
 
+	protoAccount "github.com/asciiu/gomo/account-service/proto/account"
+	protoBalance "github.com/asciiu/gomo/account-service/proto/balance"
 	"github.com/asciiu/gomo/common/db"
 	repoUser "github.com/asciiu/gomo/user-service/db/sql"
 	user "github.com/asciiu/gomo/user-service/models"
+	"github.com/stretchr/testify/assert"
 )
 
 func checkErr(err error) {
@@ -27,23 +32,24 @@ func setupService() (*AccountService, *user.User) {
 	return &service, user
 }
 
-// func TestUnsupportedKey(t *testing.T) {
-// 	service, user := setupService()
+func TestUnsupportedExchange(t *testing.T) {
+	service, user := setupService()
 
-// 	defer service.DB.Close()
+	defer service.DB.Close()
 
-// 	key := keyProto.KeyRequest{
-// 		UserID:      user.ID,
-// 		Exchange:    "monex",
-// 		Key:         "public",
-// 		Secret:      "secret",
-// 		Description: "shit test!",
-// 	}
+	request := protoAccount.NewAccountRequest{
+		UserID:      user.ID,
+		Exchange:    "monex",
+		KeyPublic:   "public",
+		KeySecret:   "secret",
+		Description: "shit test again!",
+		Balances:    make([]*protoBalance.NewBalanceRequest, 0),
+	}
 
-// 	response := keyProto.KeyResponse{}
-// 	service.AddKey(context.Background(), &key, &response)
+	response := protoAccount.AccountResponse{}
+	service.AddAccount(context.Background(), &request, &response)
 
-// 	assert.Equal(t, "fail", response.Status, "return status is expected to be fail due to unsupported exchange")
+	assert.Equal(t, "fail", response.Status, "return status is expected to be fail due to unsupported exchange")
 
-// 	repoUser.DeleteUserHard(service.DB, user.ID)
-// }
+	repoUser.DeleteUserHard(service.DB, user.ID)
+}

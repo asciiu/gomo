@@ -5,9 +5,9 @@ import (
 	"database/sql"
 	"fmt"
 	"log"
-	"strings"
 	"time"
 
+	protoAccount "github.com/asciiu/gomo/account-service/proto/account"
 	protoActivity "github.com/asciiu/gomo/activity-bulletin/proto"
 	constExch "github.com/asciiu/gomo/common/constants/exchange"
 	constRes "github.com/asciiu/gomo/common/constants/response"
@@ -26,7 +26,7 @@ type AccountService struct {
 // TODO: read these from a config or from the DB
 var supported = [...]string{constExch.Binance}
 
-func stringInSupported(a string) bool {
+func supportedExchange(a string) bool {
 	for _, b := range supported {
 		if b == a {
 			return true
@@ -58,155 +58,24 @@ func (service *AccountService) HandleVerifiedKey(ctx context.Context, key *proto
 	return error
 }
 
-// AddKey returns error to conform to protobuf def, but the error will always be returned as nil.
-// Can't return an error with a response object - response object is returned as nil when error is non nil.
-// Therefore, return error in response object.
-func (service *AccountService) AddKey(ctx context.Context, req *protoKey.KeyRequest, res *protoKey.KeyResponse) error {
-
+func (service *AccountService) AddAccount(ctx context.Context, req *protoAccount.NewAccountRequest, res *protoAccount.AccountResponse) error {
 	// supported exchange keys check
-	if !stringInSupported(req.Exchange) {
+	if !supportedExchange(req.Exchange) {
 		res.Status = constRes.Fail
 		res.Message = fmt.Sprintf("%s is not a supported exchange", req.Exchange)
 		return nil
 	}
-
-	apiKey, error := repoKey.InsertKey(service.DB, req)
-
-	switch {
-	case error == nil:
-		// ignore in test
-		if service.KeyPub != nil {
-			// publish a new key event
-			if err := service.KeyPub.Publish(context.Background(), apiKey); err != nil {
-				log.Println("could not publish event new.key: ", err)
-			}
-		}
-
-		res.Status = constRes.Success
-		res.Data = &protoKey.UserKeyData{
-			Key: &protoKey.Key{
-				KeyID:       apiKey.KeyID,
-				UserID:      apiKey.UserID,
-				Exchange:    apiKey.Exchange,
-				Key:         apiKey.Key,
-				Description: apiKey.Description,
-				Status:      apiKey.Status,
-			},
-		}
-
-	case strings.Contains(error.Error(), "user_keys_api_key_secret_key"):
-		res.Status = constRes.Fail
-		res.Message = "key/secret pair already exists"
-
-	default:
-		res.Status = constRes.Error
-		res.Message = error.Error()
-	}
 	return nil
 }
-
-func (service *AccountService) GetKeys(ctx context.Context, req *protoKey.GetKeysRequest, res *protoKey.KeyListResponse) error {
-	keys, error := repoKey.FindKeys(service.DB, req)
-
-	switch {
-	case error == nil:
-		res.Status = constRes.Success
-		res.Data = &protoKey.UserKeysData{
-			Keys: keys,
-		}
-	default:
-		res.Status = constRes.Error
-		res.Message = error.Error()
-	}
+func (service *AccountService) DeleteAccount(ctx context.Context, req *protoAccount.AccountRequest, res *protoAccount.AccountResponse) error {
 	return nil
 }
-
-// GetUserKey returns error to conform to protobuf def, but the error will always be returned as nil.
-// Can't return an error with a response object - response object is returned as nil when error is non nil.
-// Therefore, return error in response object.
-func (service *AccountService) GetUserKey(ctx context.Context, req *protoKey.GetUserKeyRequest, res *protoKey.KeyResponse) error {
-	apiKey, error := repoKey.FindKeyByID(service.DB, req)
-
-	switch {
-	case error == nil:
-		res.Status = constRes.Success
-		res.Data = &protoKey.UserKeyData{
-			Key: &protoKey.Key{
-				KeyID:       apiKey.KeyID,
-				UserID:      apiKey.UserID,
-				Exchange:    apiKey.Exchange,
-				Key:         apiKey.Key,
-				Secret:      apiKey.Secret,
-				Description: apiKey.Description,
-				Status:      apiKey.Status,
-			},
-		}
-	case strings.Contains(error.Error(), "no rows in result set"):
-		res.Status = constRes.Nonentity
-		res.Message = fmt.Sprintf("key not found")
-	default:
-		res.Status = constRes.Error
-		res.Message = error.Error()
-	}
-
+func (service *AccountService) GetAccounts(ctx context.Context, req *protoAccount.GetAccountsRequest, res *protoAccount.AccountsResponse) error {
 	return nil
 }
-
-// GetUserKeys returns error to conform to protobuf def, but the error will always be returned as nil.
-// Can't return an error with a response object - response object is returned as nil when error is non nil.
-// Therefore, return error in response object.
-func (service *AccountService) GetUserKeys(ctx context.Context, req *protoKey.GetUserKeysRequest, res *protoKey.KeyListResponse) error {
-	keys, error := repoKey.FindKeysByUserID(service.DB, req)
-
-	switch {
-	case error == nil:
-		res.Status = constRes.Success
-		res.Data = &protoKey.UserKeysData{
-			Keys: keys,
-		}
-	default:
-		res.Status = constRes.Error
-		res.Message = error.Error()
-	}
+func (service *AccountService) GetAccount(ctx context.Context, req *protoAccount.AccountRequest, res *protoAccount.AccountResponse) error {
 	return nil
 }
-
-// RemoveKey returns error to conform to protobuf def, but the error will always be returned as nil.
-// Can't return an error with a response object - response object is returned as nil when error is non nil.
-// Therefore, return error in response object.
-func (service *AccountService) RemoveKey(ctx context.Context, req *protoKey.RemoveKeyRequest, res *protoKey.KeyResponse) error {
-	error := repoKey.DeleteKey(service.DB, req.KeyID)
-	switch {
-	case error == nil:
-		res.Status = constRes.Success
-	default:
-		res.Status = constRes.Error
-		res.Message = error.Error()
-	}
-	return nil
-}
-
-// UpdateKeyDescription returns error to conform to protobuf def, but the error will always be returned as nil.
-// Can't return an error with a response object - response object is returned as nil when error is non nil.
-// Therefore, return error in response object.
-func (service *AccountService) UpdateKeyDescription(ctx context.Context, req *protoKey.KeyRequest, res *protoKey.KeyResponse) error {
-	apiKey, error := repoKey.UpdateKeyDescription(service.DB, req)
-	switch {
-	case error == nil:
-		res.Status = constRes.Success
-		res.Data = &protoKey.UserKeyData{
-			Key: &protoKey.Key{
-				KeyID:       apiKey.KeyID,
-				UserID:      apiKey.UserID,
-				Exchange:    apiKey.Exchange,
-				Key:         apiKey.Key,
-				Description: apiKey.Description,
-				Status:      apiKey.Status,
-			},
-		}
-	default:
-		res.Status = constRes.Error
-		res.Message = error.Error()
-	}
+func (service *AccountService) UpdateAccount(ctx context.Context, req *protoAccount.UpdateAccountRequest, res *protoAccount.AccountResponse) error {
 	return nil
 }

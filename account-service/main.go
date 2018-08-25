@@ -5,9 +5,9 @@ import (
 	"log"
 	"os"
 
+	protoAccount "github.com/asciiu/gomo/account-service/proto/account"
 	constMessage "github.com/asciiu/gomo/common/constants/message"
 	"github.com/asciiu/gomo/common/db"
-	protoKey "github.com/asciiu/gomo/key-service/proto/key"
 	micro "github.com/micro/go-micro"
 	"github.com/micro/go-micro/server"
 	k8s "github.com/micro/kubernetes/go/micro"
@@ -33,7 +33,7 @@ func main() {
 		NotifyPub: micro.NewPublisher(constMessage.TopicNotification, srv.Client()),
 	}
 
-	protoKey.RegisterKeyServiceHandler(srv.Server(), &accountService)
+	protoAccount.RegisterAccountServiceHandler(srv.Server(), &accountService)
 
 	// handles key verified events
 	micro.RegisterSubscriber(constMessage.TopicKeyVerified, srv.Server(), accountService.HandleVerifiedKey, server.SubscriberQueue("verified.key"))
