@@ -396,9 +396,6 @@ func (service *PlanService) NewPlan(ctx context.Context, req *protoPlan.NewPlanR
 			for _, o := range newOrders {
 				if o.OrderID == or.ParentOrderID {
 					depth = o.PlanDepth + 1
-					if depth > totalDepth {
-						totalDepth = depth
-					}
 					break
 				}
 			}
@@ -410,6 +407,10 @@ func (service *PlanService) NewPlan(ctx context.Context, req *protoPlan.NewPlanR
 				res.Message = "the orders must be sorted by plan depth, i.e. parents must be before children"
 				return nil
 			}
+		}
+
+		if depth > totalDepth {
+			totalDepth = depth
 		}
 
 		// root order status should be active
@@ -804,9 +805,6 @@ func (service *PlanService) UpdatePlan(ctx context.Context, req *protoPlan.Updat
 			for _, o := range newOrders {
 				if o.OrderID == or.ParentOrderID {
 					depth = o.PlanDepth + 1
-					if depth > totalDepth {
-						totalDepth = depth
-					}
 					break
 				}
 			}
@@ -818,6 +816,10 @@ func (service *PlanService) UpdatePlan(ctx context.Context, req *protoPlan.Updat
 				res.Message = "the orders must be sorted by plan depth, i.e. parents must be before children"
 				return nil
 			}
+		}
+
+		if depth > totalDepth {
+			totalDepth = depth
 		}
 
 		if or.ParentOrderID == none && req.Status == constPlan.Active {
