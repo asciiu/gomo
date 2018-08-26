@@ -123,3 +123,56 @@ func TestGetAccount(t *testing.T) {
 
 	repoUser.DeleteUserHard(service.DB, user.ID)
 }
+
+func TestGetAccounts(t *testing.T) {
+	service, user := setupService()
+
+	defer service.DB.Close()
+
+	newRequest1 := protoAccount.NewAccountRequest{
+		UserID:      user.ID,
+		Exchange:    "binance paper",
+		KeyPublic:   "public1",
+		KeySecret:   "secret1",
+		Description: "Test Account 1",
+		Balances: []*protoBalance.NewBalanceRequest{
+			&protoBalance.NewBalanceRequest{
+				CurrencySymbol:  "USDT",
+				CurrencyBalance: 10.00,
+			},
+		},
+	}
+	response1 := protoAccount.AccountResponse{}
+	service.AddAccount(context.Background(), &newRequest1, &response1)
+	assert.Equal(t, "success", response1.Status, response1.Message)
+
+	newRequest2 := protoAccount.NewAccountRequest{
+		UserID:      user.ID,
+		Exchange:    "binance paper",
+		KeyPublic:   "public2",
+		KeySecret:   "secret2",
+		Description: "Test Account 2",
+		Balances: []*protoBalance.NewBalanceRequest{
+			&protoBalance.NewBalanceRequest{
+				CurrencySymbol:  "BTC",
+				CurrencyBalance: 5.0,
+			},
+		},
+	}
+	response2 := protoAccount.AccountResponse{}
+	service.AddAccount(context.Background(), &newRequest2, &response2)
+	assert.Equal(t, "success", response2.Status, response2.Message)
+
+	requestAccounts := protoAccount.AccountsRequest{
+		UserID: user.ID,
+	}
+	response3 := protoAccount.AccountsResponse{}
+	service.GetAccounts(context.Background(), &requestAccounts, &response3)
+
+	assert.Equal(t, "success", response2.Status, response2.Message)
+	assert.Equal(t, 2, len(response3.Data.Accounts), "should have two accounts")
+	assert.Equal(t, "BTC", response3.Data.Accounts[1].Balances[0].CurrencySymbol, "currency for second account should be BTC")
+	assert.Equal(t, "USDT", response3.Data.Accounts[0].Balances[0].CurrencySymbol, "currency for first account should be USDT")
+
+	repoUser.DeleteUserHard(service.DB, user.ID)
+}

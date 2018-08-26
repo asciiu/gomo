@@ -7,7 +7,7 @@ import "github.com/asciiu/gomo/account-service/proto/balance/balance.proto";
 service AccountService {
   rpc AddAccount(NewAccountRequest) returns (AccountResponse) {}
   rpc DeleteAccount(AccountRequest) returns (AccountResponse) {}
-  rpc GetAccounts(GetAccountsRequest) returns (AccountsResponse) {}
+  rpc GetAccounts(AccountsRequest) returns (AccountsResponse) {}
   rpc GetAccount(AccountRequest) returns (AccountResponse) {}
   rpc UpdateAccount(UpdateAccountRequest) returns (AccountResponse) {}
 }
@@ -35,16 +35,8 @@ message AccountRequest {
   string accountID = 1;
 }
 
-message GetAccountsRequest {
+message AccountsRequest {
   string userID = 1;
-}
-
-message GetKeysRequest {
-  repeated string keyIDs = 1;
-}
-
-message GetUserKeysRequest {
-    string userID = 1;
 }
 
 

@@ -127,7 +127,21 @@ func (service *AccountService) AddAccount(ctx context.Context, req *protoAccount
 func (service *AccountService) DeleteAccount(ctx context.Context, req *protoAccount.AccountRequest, res *protoAccount.AccountResponse) error {
 	return nil
 }
-func (service *AccountService) GetAccounts(ctx context.Context, req *protoAccount.GetAccountsRequest, res *protoAccount.AccountsResponse) error {
+
+func (service *AccountService) GetAccounts(ctx context.Context, req *protoAccount.AccountsRequest, res *protoAccount.AccountsResponse) error {
+	accounts, err := repoAccount.FindAccounts(service.DB, req.UserID)
+
+	if err != nil {
+		log.Println("GetAccount error: ", err.Error())
+		res.Status = constRes.Error
+		res.Message = err.Error()
+	} else {
+		res.Status = constRes.Success
+		res.Data = &protoAccount.UserAccounts{
+			Accounts: accounts,
+		}
+	}
+
 	return nil
 }
 
@@ -135,11 +149,15 @@ func (service *AccountService) GetAccounts(ctx context.Context, req *protoAccoun
 func (service *AccountService) GetAccount(ctx context.Context, req *protoAccount.AccountRequest, res *protoAccount.AccountResponse) error {
 	account, err := repoAccount.FindAccount(service.DB, req.AccountID)
 
-	if err != nil {
+	switch {
+	case err == sql.ErrNoRows:
+		res.Status = constRes.Nonentity
+		res.Message = "no account by that ID"
+	case err != nil:
 		log.Println("GetAccount error: ", err.Error())
 		res.Status = constRes.Error
 		res.Message = err.Error()
-	} else {
+	default:
 		res.Status = constRes.Success
 		res.Data = &protoAccount.UserAccount{
 			Account: account,
@@ -148,6 +166,7 @@ func (service *AccountService) GetAccount(ctx context.Context, req *protoAccount
 
 	return nil
 }
+
 func (service *AccountService) UpdateAccount(ctx context.Context, req *protoAccount.UpdateAccountRequest, res *protoAccount.AccountResponse) error {
 	return nil
 }

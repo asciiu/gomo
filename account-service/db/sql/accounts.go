@@ -138,3 +138,90 @@ func FindAccount(db *sql.DB, accountID string) (*protoAccount.Account, error) {
 
 	return account, nil
 }
+
+func FindAccounts(db *sql.DB, userID string) ([]*protoAccount.Account, error) {
+	accounts := make([]*protoAccount.Account, 0)
+	query := `SELECT 
+			a.id, 
+			a.user_id, 
+			a.exchange_name, 
+			a.key_public, 
+			a.key_secret, 
+			a.description, 
+			a.status,
+			a.created_on,
+			a.updated_on,
+			b.id,
+			b.user_id,
+			b.account_id,
+			b.currency_symbol,
+			b.available,
+			b.locked,
+			b.exchange_total,
+			b.exchange_available,
+			b.exchange_locked,
+			b.created_on,
+			b.updated_on 
+		FROM accounts a 
+		JOIN balances b on a.id = b.account_id 
+		WHERE a.user_id = $1 ORDER BY a.created_on`
+
+	rows, err := db.Query(query, userID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		account := new(protoAccount.Account)
+		balance := new(protoBalance.Balance)
+		err := rows.Scan(
+			&account.AccountID,
+			&account.UserID,
+			&account.Exchange,
+			&account.KeyPublic,
+			&account.KeySecret,
+			&account.Description,
+			&account.Status,
+			&account.CreatedOn,
+			&account.UpdatedOn,
+			&balance.BalanceID,
+			&balance.UserID,
+			&balance.AccountID,
+			&balance.CurrencySymbol,
+			&balance.Available,
+			&balance.Locked,
+			&balance.ExchangeTotal,
+			&balance.ExchangeAvailable,
+			&balance.ExchangeLocked,
+			&balance.CreatedOn,
+			&balance.UpdatedOn,
+		)
+
+		if err != nil {
+			return nil, err
+		}
+
+		var found = false
+		for _, a := range accounts {
+			if a.AccountID == account.AccountID {
+				// append balance to this account
+				a.Balances = append(a.Balances, balance)
+				found = true
+				break
+			}
+		}
+		if !found {
+			// append new account
+			account.Balances = append(account.Balances, balance)
+			accounts = append(accounts, account)
+		}
+	}
+
+	err = rows.Err()
+	if err != nil {
+		return nil, err
+	}
+
+	return accounts, nil
+}
