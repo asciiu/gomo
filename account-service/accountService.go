@@ -185,5 +185,39 @@ func (service *AccountService) GetAccount(ctx context.Context, req *protoAccount
 }
 
 func (service *AccountService) UpdateAccount(ctx context.Context, req *protoAccount.UpdateAccountRequest, res *protoAccount.AccountResponse) error {
+	account, err := repoAccount.FindAccount(service.DB, req.AccountID)
+
+	if err == sql.ErrNoRows {
+		res.Status = constRes.Nonentity
+		res.Message = "no account by that ID"
+		return nil
+	}
+
+	txn, err := service.DB.Begin()
+	if err != nil {
+		res.Status = constRes.Error
+		res.Message = err.Error()
+		log.Println("UpdateAccount on begin transaction: ", err.Error())
+		return nil
+	}
+
+	if err := repoAccount.UpdateAccountTxn(txn, ctx, req.AccountID, req.KeyPublic, req.KeySecret, req.Description); err != nil {
+		txn.Rollback()
+		res.Status = constRes.Error
+		res.Message = "error encountered while updating account: " + err.Error()
+		log.Println("UpdateAccountTxn error: ", err.Error())
+		return nil
+	}
+
+	txn.Commit()
+	account.KeyPublic = req.KeyPublic
+	account.KeySecret = req.KeySecret
+	account.Description = req.Description
+
+	res.Status = constRes.Success
+	res.Data = &protoAccount.UserAccount{
+		Account: account,
+	}
+
 	return nil
 }

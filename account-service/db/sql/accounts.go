@@ -1,6 +1,7 @@
 package sql
 
 import (
+	"context"
 	"database/sql"
 	"errors"
 
@@ -16,6 +17,7 @@ This file has this functions:
 	FindAccounts
 	InsertAccount
 	UpdateAccountStatus
+	UpdateAccountTxn
 */
 
 func InsertAccount(db *sql.DB, newAccount *protoAccount.Account) error {
@@ -269,4 +271,18 @@ func UpdateAccountStatus(db *sql.DB, accountID, status string) (*protoAccount.Ac
 	}
 
 	return account, nil
+}
+
+func UpdateAccountTxn(txn *sql.Tx, ctx context.Context, accountID, public, secret, description string) error {
+	_, err := txn.ExecContext(ctx, `
+		UPDATE accounts 
+		SET 
+			key_public = $1, 
+			key_secret = $2, 
+			description = $3
+		WHERE
+			id = $4`,
+		public, secret, description, accountID)
+
+	return err
 }
