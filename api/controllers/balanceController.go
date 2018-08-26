@@ -57,15 +57,16 @@ func NewBalanceController(db *sql.DB, service micro.Service) *BalanceController 
 	return &controller
 }
 
-// swagger:route GET /protoBalance protoBalance getAllBalanceClient
+// swagger:route GET /balances balances getAllBalanceClient
 //
-// get all protoBalance (protected)
+// get all balances (protected)
 //
-// Returns all protoBalance for user. Use optional query param 'symbol' as lowercase ticker symbol - e.g. ada.
+// Returns all balances for the user. Use optional query param 'symbol' as lowercase ticker symbol - e.g. ada.
+// Note: This is going away once accounts is fully implemented.
 //
 // responses:
-//  200: ResponseBalancesSuccess "data" will contain array of protoBalance with "status": constRes.Success
-//  500: responseError the message will state what the internal server error was with "status": constRes.Error
+//  200: ResponseBalancesSuccess "data" will contain array of balances with "status": "success"
+//  500: responseError the message will state what the internal server error was with "status": "error"
 func (controller *BalanceController) HandleGetBalances(c echo.Context) error {
 	token := c.Get("user").(*jwt.Token)
 	claims := token.Claims.(jwt.MapClaims)

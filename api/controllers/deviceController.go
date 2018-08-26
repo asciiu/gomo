@@ -18,7 +18,7 @@ type DeviceController struct {
 	DeviceClient protoDevice.DeviceServiceClient
 }
 
-// swagger:parameters addDevice updateDevice
+// swagger:parameters AddDevice UpdateDevice
 type DeviceRequest struct {
 	// Required.
 	// in: body
@@ -32,7 +32,7 @@ type DeviceRequest struct {
 }
 
 // A ResponseDeviceSuccess will always contain a status of "successful".
-// swagger:model responseDeviceSuccess
+// swagger:model ResponseDeviceSuccess
 type ResponseDeviceSuccess struct {
 	Status string          `json:"status"`
 	Data   *UserDeviceData `json:"data"`
@@ -68,14 +68,14 @@ func NewDeviceController(db *sql.DB, service micro.Service) *DeviceController {
 	return &controller
 }
 
-// swagger:route GET /protoDevice/:deviceID protoDevice getDevice
+// swagger:route GET /devices/:deviceID devices GetDevice
 //
 // get a device by ID (protected)
 //
 // Get a user's device by the device's ID.
 //
 // responses:
-//  200: responseDeviceSuccess "data" will contain device stuffs with "status": constRes.Success
+//  200: ResponseDeviceSuccess "data" will contain device stuffs with "status": "success"
 //  500: responseError the message will state what the internal server error was with "status": constRes.Error
 func (controller *DeviceController) HandleGetDevice(c echo.Context) error {
 	deviceID := c.Param("deviceID")
@@ -114,15 +114,15 @@ func (controller *DeviceController) HandleGetDevice(c echo.Context) error {
 	return c.JSON(http.StatusOK, response)
 }
 
-// swagger:route GET /protoDevice protoDevice getAllDevices
+// swagger:route GET /devices devices GetAllDevices
 //
-// all registered protoDevice (protected)
+// all registered devices (protected)
 //
-// Returns a list of registered protoDevice for logged in user.
+// Returns a list of the user's registered devicesr.
 //
 // responses:
-//  200: ResponseDevicesSuccess "data" will contain array of protoDevice with "status": constRes.Success
-//  500: responseError the message will state what the internal server error was with "status": constRes.Error
+//  200: ResponseDevicesSuccess "data" will contain array of devices with "status": "success"
+//  500: responseError the message will state what the internal server error was with "status": "error"
 func (controller *DeviceController) HandleListDevices(c echo.Context) error {
 	token := c.Get("user").(*jwt.Token)
 	claims := token.Claims.(jwt.MapClaims)
@@ -167,16 +167,16 @@ func (controller *DeviceController) HandleListDevices(c echo.Context) error {
 	return c.JSON(http.StatusOK, response)
 }
 
-// swagger:route POST /protoDevice protoDevice addDevice
+// swagger:route POST /devices devices AddDevice
 //
 // add new device (protected)
 //
 // Registers a new device for a user so they may receive push notifications.
 //
 // responses:
-//  200: responseDeviceSuccess "data" will be non null with "status": constRes.Success
+//  200: ResponseDeviceSuccess "data" will be non null with "status": success
 //  400: responseError missing params
-//  500: responseError the message will state what the internal server error was with "status": constRes.Error
+//  500: responseError the message will state what the internal server error was with "status": error
 func (controller *DeviceController) HandlePostDevice(c echo.Context) error {
 	token := c.Get("user").(*jwt.Token)
 	claims := token.Claims.(jwt.MapClaims)
@@ -241,15 +241,15 @@ func (controller *DeviceController) HandlePostDevice(c echo.Context) error {
 	return c.JSON(http.StatusOK, response)
 }
 
-// swagger:route PUT /protoDevice/:deviceID protoDevice updateDevice
+// swagger:route PUT /devices/:deviceID devices UpdateDevice
 //
 // update a registered device (protected)
 //
 // Updates a user's device.
 //
 // responses:
-//  200: responseDeviceSuccess "data" will contain updated device info with "status": constRes.Success
-//  500: responseError the message will state what the internal server error was with "status": constRes.Error
+//  200: ResponseDeviceSuccess "data" will contain updated device info with "status": success
+//  500: responseError the message will state what the internal server error was with "status": error
 func (controller *DeviceController) HandleUpdateDevice(c echo.Context) error {
 	token := c.Get("user").(*jwt.Token)
 	claims := token.Claims.(jwt.MapClaims)
@@ -316,15 +316,15 @@ func (controller *DeviceController) HandleUpdateDevice(c echo.Context) error {
 	return c.JSON(http.StatusOK, response)
 }
 
-// swagger:route DELETE /protoDevice/:deviceID protoDevice deleteDevice
+// swagger:route DELETE /devices/:deviceID devices DeleteDevice
 //
 // removes a user's device (protected)
 //
 // Removes device by ID.
 //
 // responses:
-//  200: responseSuccess data will be null with "status": constRes.Success
-//  500: responseError the message will state what the internal server error was with "status": constRes.Error
+//  200: responseSuccess data will be null with "status": success
+//  500: responseError the message will state what the internal server error was with "status": error
 func (controller *DeviceController) HandleDeleteDevice(c echo.Context) error {
 	token := c.Get("user").(*jwt.Token)
 	claims := token.Claims.(jwt.MapClaims)

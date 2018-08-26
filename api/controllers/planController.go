@@ -146,7 +146,7 @@ func NewPlanController(db *sql.DB, service micro.Service) *PlanController {
 
 }
 
-// swagger:route DELETE /protoPlan/:planID protoPlan DeletePlan
+// swagger:route DELETE /plans/:planID plans DeletePlan
 //
 // deletes a plan (protected)
 //
@@ -155,7 +155,7 @@ func NewPlanController(db *sql.DB, service micro.Service) *PlanController {
 // as 'aborted'. Once a plan has been 'aborted' you cannot update or restart that plan.
 //
 // responses:
-//  200: ResponsePlanSuccess "data" will contain plan summary with null protoOrder.
+//  200: ResponsePlanSuccess "data" will contain plan summary.
 //  500: responseError the message will state what the internal server error was with "status": "error"
 func (controller *PlanController) HandleDeletePlan(c echo.Context) error {
 	token := c.Get("user").(*jwt.Token)
@@ -207,7 +207,7 @@ type GetPlanParams struct {
 	PlanLength uint32 `json:"planLength"`
 }
 
-// swagger:route GET /protoPlan/:planID protoPlan GetPlanParams
+// swagger:route GET /plans/:planID plans GetPlanParams
 //
 // get plan with planID (protected)
 //
@@ -215,11 +215,11 @@ type GetPlanParams struct {
 // based upon planDepth and planLength. The root order of a plan begins at planDepth=0. The
 // planLength deteremines the length of the tree to retrieve.
 //
-// example: /protoPlan/:some_plan_id?planDepth=0&planLength=10
-// The example above will retrieve the protoOrder from planDepth 0 to planDepth 10.
+// example: /plans/:some_plan_id?planDepth=0&planLength=10
+// The example above will retrieve the plan from planDepth 0 to planDepth 10.
 //
 // responses:
-//  200: ResponsePlanWithOrderPageSuccess "data" will contain paged protoOrder
+//  200: ResponsePlanSuccess "data" will contain plan deets.
 //  500: responseError the message will state what the internal server error was with "status": "error"
 func (controller *PlanController) HandleGetPlan(c echo.Context) error {
 	token := c.Get("user").(*jwt.Token)
@@ -360,11 +360,11 @@ type GetUserPlansParams struct {
 	PageSize   uint32 `json:"pageSize"`
 }
 
-// swagger:route GET /protoPlan protoPlan GetUserPlansParams
+// swagger:route GET /plans plans GetUserPlansParams
 //
-// get user protoPlan (protected)
+// get user plans (protected)
 //
-// Returns a summary of protoPlan. The plan protoOrder will not be returned and will be null.
+// Returns a summary for each plan. The plan orders will contain the last executed order and the child orders of the executed order.
 // Query Params: status, marketName, exchange, page, pageSize
 //
 // The defaults for the params are:
@@ -372,7 +372,7 @@ type GetUserPlansParams struct {
 // page - 0
 // pageSize - 50
 //
-// example: /protoPlan?exchange=binance
+// example: /plans?exchange=binance
 //
 // responses:
 //  200: ResponsePlansSuccess "data" will contain an array of plan summaries
@@ -509,7 +509,7 @@ type PlanRequest struct {
 	// Required plan title
 	// in: body
 	Title string `json:"title"`
-	// Optional plan template ID.
+	// Optional plan template ID. Leo wanted this for the templating system.
 	// in: body
 	PlanTemplateID string `json:"planTemplateID"`
 	// Optional defaults to 'active' status. Valid input status is 'active', 'inactive', or 'historic'
@@ -518,7 +518,7 @@ type PlanRequest struct {
 	// Required bool to indicate that you want the plan to be 'closed' when the last order for the plan finishes (note: order status fail will also close the plan)
 	// in: body
 	CloseOnComplete bool `json:"closeOnComplete"`
-	// Required array of protoOrder. The structure of the order tree will be dictated by the parentOrderID. All protoOrder following the root order must have a parentOrderID. The root order must have a parentOrderID of "00000000-0000-0000-0000-000000000000". Use grupo (aka spanish for group) to assign a group label to protoOrder.
+	// Required array of orders. The structure of the order tree will be dictated by the parentOrderID. All orders following the root order must have a parentOrderID. The root order must have a parentOrderID of "00000000-0000-0000-0000-000000000000". Use grupo (aka spanish for group) to assign a group label to the order.
 	// in: body
 	Orders []*NewOrderReq `json:"orders"`
 }
@@ -527,18 +527,21 @@ type NewOrderReq struct {
 	// Required the client assigns the order ID as a UUID, the format is 8-4-4-4-12.
 	// in: body
 	OrderID string `json:"orderID"`
-	// Optional precedence of protoOrder when multiple protoOrder are at the same depth: value of 1 is highest priority. E.g. depth 2 buy ADA (1) or buy EOS (2). ADA with higher priority 1 will execute and EOS will not execute.
+	// Optional precedence of order when multiple orders are at the same depth: value of 1 is highest priority. E.g. depth 2 buy ADA (1) or buy EOS (2). ADA with higher priority 1 will execute and EOS will not execute.
 	// in: body
 	OrderPriority uint32 `json:"orderPriority"`
 	// Required order types are "market", "limit", "paper". Orders not within these types will be rejected.
 	// in: body
 	OrderType string `json:"orderType"`
-	// Optional order template ID.
+	// Optional order template ID. This is a Leo thing.
 	// in: body
 	OrderTemplateID string `json:"orderTemplateID"`
-	// Required this is our api key ID (string uuid) assigned to the user's exchange key and secret.
+	// Deprecated this used to be our key ID (string uuid) assigned to the user's exchange key and secret. Use accountID instead.
 	// in: body
 	KeyID string `json:"keyID"`
+	// Required account to use in the order.
+	// in: body
+	AccountID string `json:"accountID"`
 	// Required the root node of the decision tree should be assigned a parentOrderID of "00000000-0000-0000-0000-000000000000" .
 	// in: body
 	ParentOrderID string `json:"parentOrderID"`
@@ -573,11 +576,11 @@ type TriggerReq struct {
 	Index             uint32   `json:"index"`
 }
 
-// swagger:route POST /protoPlan protoPlan PostPlan
+// swagger:route POST /plans plans PostPlan
 //
 // create a new plan (protected)
 //
-// This will create a new chain of protoOrder for the user. All protoOrder are encapsulated within a plan.
+// This will create a new chain of orders for the user.
 //
 // responses:
 //  200: ResponsePlanSuccess "data" will contain the order tree
@@ -739,19 +742,19 @@ type UpdatePlanRequest struct {
 	// Optional bool to indicate that you want the plan to be 'closed' when the last order for the plan finishes (note: order status fail will also close the plan)
 	// in: body
 	CloseOnComplete bool `json:"closeOnComplete"`
-	// Required array of protoOrder. You cannot update executed protoOrder. The entire inactive chain is assumed to be in this array.
+	// Required array of orders. You cannot update executed orders. The entire inactive chain is assumed to be in this array.
 	// in: body
 	Orders []*NewOrderReq `json:"orders"`
 }
 
-// swagger:route PUT /protoPlan/:planID protoPlan UpdatePlanParams
+// swagger:route PUT /plans/:planID plans UpdatePlanParams
 //
 // update a plan (protected)
 //
 // You must send in the entire inactive chain that you want updated in a single call.
 //
 // responses:
-//  200: responsePlanSuccess "data" will contain plan with inactive protoOrder (all protoOrder that have yet to be executed) with "status": "success"
+//  200: responsePlanSuccess "data" will contain plan with inactive orders (all orders that have yet to be executed) with "status": "success"
 //  500: responseError the message will state what the internal server error was with "status": "error" "data" will contain order info with "status": "success"
 func (controller *PlanController) HandleUpdatePlan(c echo.Context) error {
 	token := c.Get("user").(*jwt.Token)

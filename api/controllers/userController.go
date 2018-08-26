@@ -19,7 +19,7 @@ type UserController struct {
 	UserClient protoUser.UserServiceClient
 }
 
-// swagger:parameters changePassword
+// swagger:parameters ChangePassword
 type ChangePasswordRequest struct {
 	// Required.
 	// in: body
@@ -29,7 +29,7 @@ type ChangePasswordRequest struct {
 	NewPassword string `json:"newPassword"`
 }
 
-// swagger:parameters updateUser
+// swagger:parameters UpdateUser
 type UpdateUserRequest struct {
 	// Optional.
 	// in: body
@@ -50,7 +50,7 @@ func NewUserController(db *sql.DB, service micro.Service) *UserController {
 	return &controller
 }
 
-// swagger:route PUT /protoUser/:id/changepassword protoUser changePassword
+// swagger:route PUT /users/:id/changepassword users ChangePassword
 //
 // change a user's password (protected)
 //
@@ -126,7 +126,7 @@ func (controller *UserController) HandleChangePassword(c echo.Context) error {
 	return c.JSON(http.StatusOK, response)
 }
 
-// swagger:route PUT /protoUser/:id protoUser updateUser
+// swagger:route PUT /users/:id users UpdateUser
 //
 // updates user info (protected)
 //

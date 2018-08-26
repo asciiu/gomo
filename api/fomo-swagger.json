@@ -89,6 +89,391 @@
         }
       }
     },
+    "/balances": {
+      "get": {
+        "description": "Returns all balances for the user. Use optional query param 'symbol' as lowercase ticker symbol - e.g. ada.\nNote: This is going away once accounts is fully implemented.",
+        "tags": [
+          "balances"
+        ],
+        "summary": "get all balances (protected)",
+        "operationId": "getAllBalanceClient",
+        "parameters": [
+          {
+            "type": "string",
+            "x-go-name": "Symbol",
+            "name": "symbol",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "\"data\" will contain array of balances with \"status\": \"success\"",
+            "schema": {
+              "$ref": "#/definitions/ResponseBalancesSuccess"
+            }
+          },
+          "500": {
+            "description": "the message will state what the internal server error was with \"status\": \"error\"",
+            "schema": {
+              "$ref": "#/definitions/responseError"
+            }
+          }
+        }
+      }
+    },
+    "/devices": {
+      "get": {
+        "description": "Returns a list of the user's registered devicesr.",
+        "tags": [
+          "devices"
+        ],
+        "summary": "all registered devices (protected)",
+        "operationId": "GetAllDevices",
+        "responses": {
+          "200": {
+            "description": "\"data\" will contain array of devices with \"status\": \"success\"",
+            "schema": {
+              "$ref": "#/definitions/ResponseDevicesSuccess"
+            }
+          },
+          "500": {
+            "description": "the message will state what the internal server error was with \"status\": \"error\"",
+            "schema": {
+              "$ref": "#/definitions/responseError"
+            }
+          }
+        }
+      },
+      "post": {
+        "description": "Registers a new device for a user so they may receive push notifications.",
+        "tags": [
+          "devices"
+        ],
+        "summary": "add new device (protected)",
+        "operationId": "AddDevice",
+        "parameters": [
+          {
+            "x-go-name": "DeviceType",
+            "description": "Required.",
+            "name": "deviceType",
+            "in": "body",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "x-go-name": "DeviceToken",
+            "description": "Required.",
+            "name": "deviceToken",
+            "in": "body",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "x-go-name": "ExternalDeviceID",
+            "description": "Required.",
+            "name": "externalDeviceID",
+            "in": "body",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "\"data\" will be non null with \"status\": success",
+            "schema": {
+              "$ref": "#/definitions/ResponseDeviceSuccess"
+            }
+          },
+          "400": {
+            "description": "missing params",
+            "schema": {
+              "$ref": "#/definitions/responseError"
+            }
+          },
+          "500": {
+            "description": "the message will state what the internal server error was with \"status\": error",
+            "schema": {
+              "$ref": "#/definitions/responseError"
+            }
+          }
+        }
+      }
+    },
+    "/devices/:deviceID": {
+      "get": {
+        "description": "Get a user's device by the device's ID.",
+        "tags": [
+          "devices"
+        ],
+        "summary": "get a device by ID (protected)",
+        "operationId": "GetDevice",
+        "responses": {
+          "200": {
+            "description": "\"data\" will contain device stuffs with \"status\": \"success\"",
+            "schema": {
+              "$ref": "#/definitions/ResponseDeviceSuccess"
+            }
+          },
+          "500": {
+            "description": "the message will state what the internal server error was with \"status\": constRes.Error",
+            "schema": {
+              "$ref": "#/definitions/responseError"
+            }
+          }
+        }
+      },
+      "put": {
+        "description": "Updates a user's device.",
+        "tags": [
+          "devices"
+        ],
+        "summary": "update a registered device (protected)",
+        "operationId": "UpdateDevice",
+        "parameters": [
+          {
+            "x-go-name": "DeviceType",
+            "description": "Required.",
+            "name": "deviceType",
+            "in": "body",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "x-go-name": "DeviceToken",
+            "description": "Required.",
+            "name": "deviceToken",
+            "in": "body",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "x-go-name": "ExternalDeviceID",
+            "description": "Required.",
+            "name": "externalDeviceID",
+            "in": "body",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "\"data\" will contain updated device info with \"status\": success",
+            "schema": {
+              "$ref": "#/definitions/ResponseDeviceSuccess"
+            }
+          },
+          "500": {
+            "description": "the message will state what the internal server error was with \"status\": error",
+            "schema": {
+              "$ref": "#/definitions/responseError"
+            }
+          }
+        }
+      },
+      "delete": {
+        "description": "Removes device by ID.",
+        "tags": [
+          "devices"
+        ],
+        "summary": "removes a user's device (protected)",
+        "operationId": "DeleteDevice",
+        "responses": {
+          "200": {
+            "description": "data will be null with \"status\": success",
+            "schema": {
+              "$ref": "#/definitions/responseSuccess"
+            }
+          },
+          "500": {
+            "description": "the message will state what the internal server error was with \"status\": error",
+            "schema": {
+              "$ref": "#/definitions/responseError"
+            }
+          }
+        }
+      }
+    },
+    "/keys": {
+      "get": {
+        "description": "The api secrets will not be returned in the response data.",
+        "tags": [
+          "keys"
+        ],
+        "summary": "get all user keys (protected)",
+        "operationId": "GetAllKey",
+        "responses": {
+          "200": {
+            "description": "\"data\" will contain a list of key info with \"status\": \"success\"",
+            "schema": {
+              "$ref": "#/definitions/ResponseKeyListSuccess"
+            }
+          },
+          "500": {
+            "description": "the message will state what the internal server error was with \"status\": \"error\"",
+            "schema": {
+              "$ref": "#/definitions/responseError"
+            }
+          }
+        }
+      },
+      "post": {
+        "description": "Associate a new exchange api key to a user's account. Secrets will not be returned in response data.",
+        "tags": [
+          "keys"
+        ],
+        "summary": "add an api key (protected)",
+        "operationId": "AddKey",
+        "parameters": [
+          {
+            "x-go-name": "Exchange",
+            "description": "Required.",
+            "name": "exchange",
+            "in": "body",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "x-go-name": "Key",
+            "description": "Required.",
+            "name": "key",
+            "in": "body",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "x-go-name": "Secret",
+            "description": "Required.",
+            "name": "secret",
+            "in": "body",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "x-go-name": "Description",
+            "description": "Optional.",
+            "name": "description",
+            "in": "body",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "\"data\" will contain key info with \"status\": \"success\"",
+            "schema": {
+              "$ref": "#/definitions/ResponseKeySuccess"
+            }
+          },
+          "400": {
+            "description": "missing params with \"status\": \"fail\"",
+            "schema": {
+              "$ref": "#/definitions/responseError"
+            }
+          },
+          "500": {
+            "description": "the message will state what the internal server error was with \"status\": \"error\"",
+            "schema": {
+              "$ref": "#/definitions/responseError"
+            }
+          }
+        }
+      }
+    },
+    "/keys/:keyID": {
+      "get": {
+        "description": "Gets a user's key by the key ID. The secret will not be returned in the response data.",
+        "tags": [
+          "keys"
+        ],
+        "summary": "get a key (protected)",
+        "operationId": "GetKey",
+        "responses": {
+          "200": {
+            "description": "\"data\" will contain key stuffs with \"status\": \"success\"",
+            "schema": {
+              "$ref": "#/definitions/ResponseKeySuccess"
+            }
+          },
+          "500": {
+            "description": "the message will state what the internal server error was with \"status\": \"error\"",
+            "schema": {
+              "$ref": "#/definitions/responseError"
+            }
+          }
+        }
+      },
+      "put": {
+        "description": "The user can only update the description of an added key. The secret will not be returned.",
+        "tags": [
+          "keys"
+        ],
+        "summary": "update a user api key (protected)",
+        "operationId": "UpdateKey",
+        "parameters": [
+          {
+            "x-go-name": "Description",
+            "description": "Required.",
+            "name": "description",
+            "in": "body",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "\"data\" will contain key info with \"status\": \"success\"",
+            "schema": {
+              "$ref": "#/definitions/ResponseKeySuccess"
+            }
+          },
+          "400": {
+            "description": "missing params with \"status\": \"fail\"",
+            "schema": {
+              "$ref": "#/definitions/responseError"
+            }
+          },
+          "500": {
+            "description": "the message will state what the internal server error was with \"status\": \"error\"",
+            "schema": {
+              "$ref": "#/definitions/responseError"
+            }
+          }
+        }
+      },
+      "delete": {
+        "description": "This will remove the api key from the system.",
+        "tags": [
+          "keys"
+        ],
+        "summary": "remove user api key (protected)",
+        "operationId": "DeleteKey",
+        "responses": {
+          "200": {
+            "description": "data will be null with \"status\": \"success\"",
+            "schema": {
+              "$ref": "#/definitions/ResponseKeySuccess"
+            }
+          },
+          "500": {
+            "description": "the message will state what the internal server error was with \"status\": \"error\"",
+            "schema": {
+              "$ref": "#/definitions/responseError"
+            }
+          }
+        }
+      }
+    },
     "/login": {
       "post": {
         "description": "The login endpoint returns an authorization token in the \"set-authorization\" response header.\nYou may also receive an optional refresh token if you include 'remember': true in your post request.\nBoth tokens will be returned in the reponse headers as \"set-refresh\" and \"set-authorization\".",
@@ -178,398 +563,13 @@
         }
       }
     },
-    "/protoBalance": {
+    "/plans": {
       "get": {
-        "description": "Returns all protoBalance for user. Use optional query param 'symbol' as lowercase ticker symbol - e.g. ada.",
+        "description": "Returns a summary for each plan. The plan orders will contain the last executed order and the child orders of the executed order.\nQuery Params: status, marketName, exchange, page, pageSize\n\nThe defaults for the params are:\nstatus - active\npage - 0\npageSize - 50\n\nexample: /plans?exchange=binance",
         "tags": [
-          "protoBalance"
+          "plans"
         ],
-        "summary": "get all protoBalance (protected)",
-        "operationId": "getAllBalanceClient",
-        "parameters": [
-          {
-            "type": "string",
-            "x-go-name": "Symbol",
-            "name": "symbol",
-            "in": "query"
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "\"data\" will contain array of protoBalance with \"status\": constRes.Success",
-            "schema": {
-              "$ref": "#/definitions/ResponseBalancesSuccess"
-            }
-          },
-          "500": {
-            "description": "the message will state what the internal server error was with \"status\": constRes.Error",
-            "schema": {
-              "$ref": "#/definitions/responseError"
-            }
-          }
-        }
-      }
-    },
-    "/protoDevice": {
-      "get": {
-        "description": "Returns a list of registered protoDevice for logged in user.",
-        "tags": [
-          "protoDevice"
-        ],
-        "summary": "all registered protoDevice (protected)",
-        "operationId": "getAllDevices",
-        "responses": {
-          "200": {
-            "description": "\"data\" will contain array of protoDevice with \"status\": constRes.Success",
-            "schema": {
-              "$ref": "#/definitions/ResponseDevicesSuccess"
-            }
-          },
-          "500": {
-            "description": "the message will state what the internal server error was with \"status\": constRes.Error",
-            "schema": {
-              "$ref": "#/definitions/responseError"
-            }
-          }
-        }
-      },
-      "post": {
-        "description": "Registers a new device for a user so they may receive push notifications.",
-        "tags": [
-          "protoDevice"
-        ],
-        "summary": "add new device (protected)",
-        "operationId": "addDevice",
-        "parameters": [
-          {
-            "x-go-name": "DeviceType",
-            "description": "Required.",
-            "name": "deviceType",
-            "in": "body",
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "x-go-name": "DeviceToken",
-            "description": "Required.",
-            "name": "deviceToken",
-            "in": "body",
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "x-go-name": "ExternalDeviceID",
-            "description": "Required.",
-            "name": "externalDeviceID",
-            "in": "body",
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "\"data\" will be non null with \"status\": constRes.Success",
-            "schema": {
-              "$ref": "#/definitions/responseDeviceSuccess"
-            }
-          },
-          "400": {
-            "description": "missing params",
-            "schema": {
-              "$ref": "#/definitions/responseError"
-            }
-          },
-          "500": {
-            "description": "the message will state what the internal server error was with \"status\": constRes.Error",
-            "schema": {
-              "$ref": "#/definitions/responseError"
-            }
-          }
-        }
-      }
-    },
-    "/protoDevice/:deviceID": {
-      "get": {
-        "description": "Get a user's device by the device's ID.",
-        "tags": [
-          "protoDevice"
-        ],
-        "summary": "get a device by ID (protected)",
-        "operationId": "getDevice",
-        "responses": {
-          "200": {
-            "description": "\"data\" will contain device stuffs with \"status\": constRes.Success",
-            "schema": {
-              "$ref": "#/definitions/responseDeviceSuccess"
-            }
-          },
-          "500": {
-            "description": "the message will state what the internal server error was with \"status\": constRes.Error",
-            "schema": {
-              "$ref": "#/definitions/responseError"
-            }
-          }
-        }
-      },
-      "put": {
-        "description": "Updates a user's device.",
-        "tags": [
-          "protoDevice"
-        ],
-        "summary": "update a registered device (protected)",
-        "operationId": "updateDevice",
-        "parameters": [
-          {
-            "x-go-name": "DeviceType",
-            "description": "Required.",
-            "name": "deviceType",
-            "in": "body",
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "x-go-name": "DeviceToken",
-            "description": "Required.",
-            "name": "deviceToken",
-            "in": "body",
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "x-go-name": "ExternalDeviceID",
-            "description": "Required.",
-            "name": "externalDeviceID",
-            "in": "body",
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "\"data\" will contain updated device info with \"status\": constRes.Success",
-            "schema": {
-              "$ref": "#/definitions/responseDeviceSuccess"
-            }
-          },
-          "500": {
-            "description": "the message will state what the internal server error was with \"status\": constRes.Error",
-            "schema": {
-              "$ref": "#/definitions/responseError"
-            }
-          }
-        }
-      },
-      "delete": {
-        "description": "Removes device by ID.",
-        "tags": [
-          "protoDevice"
-        ],
-        "summary": "removes a user's device (protected)",
-        "operationId": "deleteDevice",
-        "responses": {
-          "200": {
-            "description": "data will be null with \"status\": constRes.Success",
-            "schema": {
-              "$ref": "#/definitions/responseSuccess"
-            }
-          },
-          "500": {
-            "description": "the message will state what the internal server error was with \"status\": constRes.Error",
-            "schema": {
-              "$ref": "#/definitions/responseError"
-            }
-          }
-        }
-      }
-    },
-    "/protoKey": {
-      "get": {
-        "description": "Get all the user protoKey for this user. The api secrets will not be returned in the response data.",
-        "tags": [
-          "protoKey"
-        ],
-        "summary": "get all user protoKey (protected)",
-        "operationId": "getAllKey",
-        "responses": {
-          "200": {
-            "description": "\"data\" will contain a list of key info with \"status\": \"success\"",
-            "schema": {
-              "$ref": "#/definitions/ResponseKeyListSuccess"
-            }
-          },
-          "500": {
-            "description": "the message will state what the internal server error was with \"status\": \"error\"",
-            "schema": {
-              "$ref": "#/definitions/responseError"
-            }
-          }
-        }
-      },
-      "post": {
-        "description": "Associate a new exchange api key to a user's account. Secrets will not be returned in response data.",
-        "tags": [
-          "protoKey"
-        ],
-        "summary": "add an api key (protected)",
-        "operationId": "postKey",
-        "parameters": [
-          {
-            "x-go-name": "Exchange",
-            "description": "Required.",
-            "name": "exchange",
-            "in": "body",
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "x-go-name": "Key",
-            "description": "Required.",
-            "name": "key",
-            "in": "body",
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "x-go-name": "Secret",
-            "description": "Required.",
-            "name": "secret",
-            "in": "body",
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "x-go-name": "Description",
-            "description": "Optional.",
-            "name": "description",
-            "in": "body",
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "\"data\" will contain key info with \"status\": \"success\"",
-            "schema": {
-              "$ref": "#/definitions/responseKeySuccess"
-            }
-          },
-          "400": {
-            "description": "missing params with \"status\": \"fail\"",
-            "schema": {
-              "$ref": "#/definitions/responseError"
-            }
-          },
-          "500": {
-            "description": "the message will state what the internal server error was with \"status\": \"error\"",
-            "schema": {
-              "$ref": "#/definitions/responseError"
-            }
-          }
-        }
-      }
-    },
-    "/protoKey/:keyID": {
-      "get": {
-        "description": "Gets a user's key by the key ID. The secret will not be returned in the response data.",
-        "tags": [
-          "protoKey"
-        ],
-        "summary": "get a key (protected)",
-        "operationId": "getKey",
-        "responses": {
-          "200": {
-            "description": "\"data\" will contain key stuffs with \"status\": \"success\"",
-            "schema": {
-              "$ref": "#/definitions/responseKeySuccess"
-            }
-          },
-          "500": {
-            "description": "the message will state what the internal server error was with \"status\": \"error\"",
-            "schema": {
-              "$ref": "#/definitions/responseError"
-            }
-          }
-        }
-      },
-      "put": {
-        "description": "The user can only update the description of an added key. The secret will not be returned.",
-        "tags": [
-          "protoKey"
-        ],
-        "summary": "update a user api key (protected)",
-        "operationId": "updateKey",
-        "parameters": [
-          {
-            "x-go-name": "Description",
-            "description": "Required.",
-            "name": "description",
-            "in": "body",
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "\"data\" will contain key info with \"status\": \"success\"",
-            "schema": {
-              "$ref": "#/definitions/responseKeySuccess"
-            }
-          },
-          "400": {
-            "description": "missing params with \"status\": \"fail\"",
-            "schema": {
-              "$ref": "#/definitions/responseError"
-            }
-          },
-          "500": {
-            "description": "the message will state what the internal server error was with \"status\": \"error\"",
-            "schema": {
-              "$ref": "#/definitions/responseError"
-            }
-          }
-        }
-      },
-      "delete": {
-        "description": "This will remove the api key from the system.",
-        "tags": [
-          "protoKey"
-        ],
-        "summary": "remove user api key (protected)",
-        "operationId": "deleteKey",
-        "responses": {
-          "200": {
-            "description": "data will be null with \"status\": \"success\"",
-            "schema": {
-              "$ref": "#/definitions/responseKeySuccess"
-            }
-          },
-          "500": {
-            "description": "the message will state what the internal server error was with \"status\": \"error\"",
-            "schema": {
-              "$ref": "#/definitions/responseError"
-            }
-          }
-        }
-      }
-    },
-    "/protoPlan": {
-      "get": {
-        "description": "Returns a summary of protoPlan. The plan protoOrder will not be returned and will be null.\nQuery Params: status, marketName, exchange, page, pageSize\n\nThe defaults for the params are:\nstatus - active\npage - 0\npageSize - 50\n\nexample: /protoPlan?exchange=binance",
-        "tags": [
-          "protoPlan"
-        ],
-        "summary": "get user protoPlan (protected)",
+        "summary": "get user plans (protected)",
         "operationId": "GetUserPlansParams",
         "parameters": [
           {
@@ -621,9 +621,9 @@
         }
       },
       "post": {
-        "description": "This will create a new chain of protoOrder for the user. All protoOrder are encapsulated within a plan.",
+        "description": "This will create a new chain of orders for the user.",
         "tags": [
-          "protoPlan"
+          "plans"
         ],
         "summary": "create a new plan (protected)",
         "operationId": "PostPlan",
@@ -639,7 +639,7 @@
           },
           {
             "x-go-name": "PlanTemplateID",
-            "description": "Optional plan template ID.",
+            "description": "Optional plan template ID. Leo wanted this for the templating system.",
             "name": "planTemplateID",
             "in": "body",
             "schema": {
@@ -666,7 +666,7 @@
           },
           {
             "x-go-name": "Orders",
-            "description": "Required array of protoOrder. The structure of the order tree will be dictated by the parentOrderID. All protoOrder following the root order must have a parentOrderID. The root order must have a parentOrderID of \"00000000-0000-0000-0000-000000000000\". Use grupo (aka spanish for group) to assign a group label to protoOrder.",
+            "description": "Required array of orders. The structure of the order tree will be dictated by the parentOrderID. All orders following the root order must have a parentOrderID. The root order must have a parentOrderID of \"00000000-0000-0000-0000-000000000000\". Use grupo (aka spanish for group) to assign a group label to the order.",
             "name": "orders",
             "in": "body",
             "schema": {
@@ -699,11 +699,11 @@
         }
       }
     },
-    "/protoPlan/:planID": {
+    "/plans/:planID": {
       "get": {
-        "description": "Returns a plan with the currency and base currency names. Plan protoOrder will be retrieved\nbased upon planDepth and planLength. The root order of a plan begins at planDepth=0. The\nplanLength deteremines the length of the tree to retrieve.\n\nexample: /protoPlan/:some_plan_id?planDepth=0\u0026planLength=10\nThe example above will retrieve the protoOrder from planDepth 0 to planDepth 10.",
+        "description": "Returns a plan with the currency and base currency names. Plan protoOrder will be retrieved\nbased upon planDepth and planLength. The root order of a plan begins at planDepth=0. The\nplanLength deteremines the length of the tree to retrieve.\n\nexample: /plans/:some_plan_id?planDepth=0\u0026planLength=10\nThe example above will retrieve the plan from planDepth 0 to planDepth 10.",
         "tags": [
-          "protoPlan"
+          "plans"
         ],
         "summary": "get plan with planID (protected)",
         "operationId": "GetPlanParams",
@@ -725,7 +725,10 @@
         ],
         "responses": {
           "200": {
-            "$ref": "#/responses/ResponsePlanWithOrderPageSuccess"
+            "description": "\"data\" will contain plan deets.",
+            "schema": {
+              "$ref": "#/definitions/ResponsePlanSuccess"
+            }
           },
           "500": {
             "description": "the message will state what the internal server error was with \"status\": \"error\"",
@@ -738,7 +741,7 @@
       "put": {
         "description": "You must send in the entire inactive chain that you want updated in a single call.",
         "tags": [
-          "protoPlan"
+          "plans"
         ],
         "summary": "update a plan (protected)",
         "operationId": "UpdatePlanParams",
@@ -781,8 +784,8 @@
           },
           {
             "x-go-name": "Orders",
-            "description": "Required array of protoOrder. You cannot update executed protoOrder. The entire inactive chain is assumed to be in this array.",
-            "name": "protoOrder",
+            "description": "Required array of orders. You cannot update executed orders. The entire inactive chain is assumed to be in this array.",
+            "name": "orders",
             "in": "body",
             "schema": {
               "type": "array",
@@ -807,148 +810,15 @@
       "delete": {
         "description": "You may delete a plan if it has not executed. That is, the plan has no filled protoOrder. Delete plan becomes cancel plan\nwhen an order has been filled. In theory, this should kill all active protoOrder for a plan and set the status for the plan\nas 'aborted'. Once a plan has been 'aborted' you cannot update or restart that plan.",
         "tags": [
-          "protoPlan"
+          "plans"
         ],
         "summary": "deletes a plan (protected)",
         "operationId": "DeletePlan",
         "responses": {
           "200": {
-            "description": "\"data\" will contain plan summary with null protoOrder.",
+            "description": "\"data\" will contain plan summary.",
             "schema": {
               "$ref": "#/definitions/ResponsePlanSuccess"
-            }
-          },
-          "500": {
-            "description": "the message will state what the internal server error was with \"status\": \"error\"",
-            "schema": {
-              "$ref": "#/definitions/responseError"
-            }
-          }
-        }
-      }
-    },
-    "/protoUser/:id": {
-      "put": {
-        "description": "You can change the user's first, last, or email. Note we need to implement a secure method of\nverifing the user's new email. This has yet to be implemented.",
-        "tags": [
-          "protoUser"
-        ],
-        "summary": "updates user info (protected)",
-        "operationId": "updateUser",
-        "parameters": [
-          {
-            "x-go-name": "First",
-            "description": "Optional.",
-            "name": "first",
-            "in": "body",
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "x-go-name": "Last",
-            "description": "Optional.",
-            "name": "last",
-            "in": "body",
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "x-go-name": "Email",
-            "description": "Optional. Note: we need to validate these!",
-            "name": "email",
-            "in": "body",
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "\"data\" will contain updated user data with \"status\": \"success\"",
-            "schema": {
-              "$ref": "#/definitions/responseSuccess"
-            }
-          },
-          "400": {
-            "description": "message in badrequest should be descriptive with \"status\": \"fail\"",
-            "schema": {
-              "$ref": "#/definitions/responseError"
-            }
-          },
-          "401": {
-            "description": "unauthorized user because of incorrect url param with \"status\": \"fail\"",
-            "schema": {
-              "$ref": "#/definitions/responseError"
-            }
-          },
-          "410": {
-            "description": "the user-service is unreachable with status \"error\"",
-            "schema": {
-              "$ref": "#/definitions/responseError"
-            }
-          },
-          "500": {
-            "description": "the message will state what the internal server error was with \"status\": \"error\"",
-            "schema": {
-              "$ref": "#/definitions/responseError"
-            }
-          }
-        }
-      }
-    },
-    "/protoUser/:id/changepassword": {
-      "put": {
-        "description": "Allows an authenticated user to change their password. The url param is the user's id.",
-        "tags": [
-          "protoUser"
-        ],
-        "summary": "change a user's password (protected)",
-        "operationId": "changePassword",
-        "parameters": [
-          {
-            "x-go-name": "OldPassword",
-            "description": "Required.",
-            "name": "oldPassword",
-            "in": "body",
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "x-go-name": "NewPassword",
-            "description": "Required.",
-            "name": "newPassword",
-            "in": "body",
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "the status will be \"success\" with data null.",
-            "schema": {
-              "$ref": "#/definitions/responseSuccess"
-            }
-          },
-          "400": {
-            "description": "you did something wrong here with status \"fail\". Hopefully, the message is descriptive enough.",
-            "schema": {
-              "$ref": "#/definitions/responseError"
-            }
-          },
-          "401": {
-            "description": "the user ID in url param does not match with status \"fail\".",
-            "schema": {
-              "$ref": "#/definitions/responseError"
-            }
-          },
-          "410": {
-            "description": "the user-service is unreachable with status \"error\"",
-            "schema": {
-              "$ref": "#/definitions/responseError"
             }
           },
           "500": {
@@ -1071,6 +941,139 @@
           },
           "410": {
             "description": "the user-service is not reachable. The user-service is a microservice that runs independantly from the api. When we take it offline you will receive this error.",
+            "schema": {
+              "$ref": "#/definitions/responseError"
+            }
+          },
+          "500": {
+            "description": "the message will state what the internal server error was with \"status\": \"error\"",
+            "schema": {
+              "$ref": "#/definitions/responseError"
+            }
+          }
+        }
+      }
+    },
+    "/users/:id": {
+      "put": {
+        "description": "You can change the user's first, last, or email. Note we need to implement a secure method of\nverifing the user's new email. This has yet to be implemented.",
+        "tags": [
+          "users"
+        ],
+        "summary": "updates user info (protected)",
+        "operationId": "UpdateUser",
+        "parameters": [
+          {
+            "x-go-name": "First",
+            "description": "Optional.",
+            "name": "first",
+            "in": "body",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "x-go-name": "Last",
+            "description": "Optional.",
+            "name": "last",
+            "in": "body",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "x-go-name": "Email",
+            "description": "Optional. Note: we need to validate these!",
+            "name": "email",
+            "in": "body",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "\"data\" will contain updated user data with \"status\": \"success\"",
+            "schema": {
+              "$ref": "#/definitions/responseSuccess"
+            }
+          },
+          "400": {
+            "description": "message in badrequest should be descriptive with \"status\": \"fail\"",
+            "schema": {
+              "$ref": "#/definitions/responseError"
+            }
+          },
+          "401": {
+            "description": "unauthorized user because of incorrect url param with \"status\": \"fail\"",
+            "schema": {
+              "$ref": "#/definitions/responseError"
+            }
+          },
+          "410": {
+            "description": "the user-service is unreachable with status \"error\"",
+            "schema": {
+              "$ref": "#/definitions/responseError"
+            }
+          },
+          "500": {
+            "description": "the message will state what the internal server error was with \"status\": \"error\"",
+            "schema": {
+              "$ref": "#/definitions/responseError"
+            }
+          }
+        }
+      }
+    },
+    "/users/:id/changepassword": {
+      "put": {
+        "description": "Allows an authenticated user to change their password. The url param is the user's id.",
+        "tags": [
+          "users"
+        ],
+        "summary": "change a user's password (protected)",
+        "operationId": "ChangePassword",
+        "parameters": [
+          {
+            "x-go-name": "OldPassword",
+            "description": "Required.",
+            "name": "oldPassword",
+            "in": "body",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "x-go-name": "NewPassword",
+            "description": "Required.",
+            "name": "newPassword",
+            "in": "body",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "the status will be \"success\" with data null.",
+            "schema": {
+              "$ref": "#/definitions/responseSuccess"
+            }
+          },
+          "400": {
+            "description": "you did something wrong here with status \"fail\". Hopefully, the message is descriptive enough.",
+            "schema": {
+              "$ref": "#/definitions/responseError"
+            }
+          },
+          "401": {
+            "description": "the user ID in url param does not match with status \"fail\".",
+            "schema": {
+              "$ref": "#/definitions/responseError"
+            }
+          },
+          "410": {
+            "description": "the user-service is unreachable with status \"error\"",
             "schema": {
               "$ref": "#/definitions/responseError"
             }
@@ -1642,6 +1645,11 @@
     "NewOrderReq": {
       "type": "object",
       "properties": {
+        "accountID": {
+          "description": "Required account to use in the order.\nin: body",
+          "type": "string",
+          "x-go-name": "AccountID"
+        },
         "grupo": {
           "description": "Optional group of order\nin: body",
           "type": "string",
@@ -1654,7 +1662,7 @@
           "x-go-name": "InitialCurrencyBalance"
         },
         "keyID": {
-          "description": "Required this is our api key ID (string uuid) assigned to the user's exchange key and secret.\nin: body",
+          "description": "Deprecated this used to be our key ID (string uuid) assigned to the user's exchange key and secret. Use accountID instead.\nin: body",
           "type": "string",
           "x-go-name": "KeyID"
         },
@@ -1675,13 +1683,13 @@
           "x-go-name": "OrderID"
         },
         "orderPriority": {
-          "description": "Optional precedence of protoOrder when multiple protoOrder are at the same depth: value of 1 is highest priority. E.g. depth 2 buy ADA (1) or buy EOS (2). ADA with higher priority 1 will execute and EOS will not execute.\nin: body",
+          "description": "Optional precedence of order when multiple orders are at the same depth: value of 1 is highest priority. E.g. depth 2 buy ADA (1) or buy EOS (2). ADA with higher priority 1 will execute and EOS will not execute.\nin: body",
           "type": "integer",
           "format": "uint32",
           "x-go-name": "OrderPriority"
         },
         "orderTemplateID": {
-          "description": "Optional order template ID.\nin: body",
+          "description": "Optional order template ID. This is a Leo thing.\nin: body",
           "type": "string",
           "x-go-name": "OrderTemplateID"
         },
@@ -1990,7 +1998,7 @@
           "x-go-name": "CloseOnComplete"
         },
         "orders": {
-          "description": "Required array of protoOrder. The structure of the order tree will be dictated by the parentOrderID. All protoOrder following the root order must have a parentOrderID. The root order must have a parentOrderID of \"00000000-0000-0000-0000-000000000000\". Use grupo (aka spanish for group) to assign a group label to protoOrder.\nin: body",
+          "description": "Required array of orders. The structure of the order tree will be dictated by the parentOrderID. All orders following the root order must have a parentOrderID. The root order must have a parentOrderID of \"00000000-0000-0000-0000-000000000000\". Use grupo (aka spanish for group) to assign a group label to the order.\nin: body",
           "type": "array",
           "items": {
             "$ref": "#/definitions/NewOrderReq"
@@ -1998,7 +2006,7 @@
           "x-go-name": "Orders"
         },
         "planTemplateID": {
-          "description": "Optional plan template ID.\nin: body",
+          "description": "Optional plan template ID. Leo wanted this for the templating system.\nin: body",
           "type": "string",
           "x-go-name": "PlanTemplateID"
         },
@@ -2089,6 +2097,20 @@
       },
       "x-go-package": "github.com/asciiu/gomo/api/controllers"
     },
+    "ResponseDeviceSuccess": {
+      "type": "object",
+      "title": "A ResponseDeviceSuccess will always contain a status of \"successful\".",
+      "properties": {
+        "data": {
+          "$ref": "#/definitions/UserDeviceData"
+        },
+        "status": {
+          "type": "string",
+          "x-go-name": "Status"
+        }
+      },
+      "x-go-package": "github.com/asciiu/gomo/api/controllers"
+    },
     "ResponseDevicesSuccess": {
       "type": "object",
       "title": "A ResponseDevicesSuccess will always contain a status of \"successful\".",
@@ -2109,6 +2131,20 @@
       "properties": {
         "data": {
           "$ref": "#/definitions/KeyList"
+        },
+        "status": {
+          "type": "string",
+          "x-go-name": "Status"
+        }
+      },
+      "x-go-package": "github.com/asciiu/gomo/api/controllers"
+    },
+    "ResponseKeySuccess": {
+      "type": "object",
+      "title": "A ResponseKeySuccess will always contain a status of \"successful\".",
+      "properties": {
+        "data": {
+          "$ref": "#/definitions/UserKeyData"
         },
         "status": {
           "type": "string",
@@ -2401,18 +2437,18 @@
           "type": "boolean",
           "x-go-name": "CloseOnComplete"
         },
-        "planTemplateID": {
-          "description": "Optional plan template ID.\nin: body",
-          "type": "string",
-          "x-go-name": "PlanTemplateID"
-        },
-        "protoOrder": {
-          "description": "Required array of protoOrder. You cannot update executed protoOrder. The entire inactive chain is assumed to be in this array.\nin: body",
+        "orders": {
+          "description": "Required array of orders. You cannot update executed orders. The entire inactive chain is assumed to be in this array.\nin: body",
           "type": "array",
           "items": {
             "$ref": "#/definitions/NewOrderReq"
           },
           "x-go-name": "Orders"
+        },
+        "planTemplateID": {
+          "description": "Optional plan template ID.\nin: body",
+          "type": "string",
+          "x-go-name": "PlanTemplateID"
         },
         "status": {
           "description": "Optional only needed to update the status of the plan to 'inactive', 'active'\nin: body",
@@ -2553,21 +2589,6 @@
       "type": "object",
       "x-go-package": "github.com/asciiu/gomo/api/vendor/github.com/asciiu/gomo/user-service/proto/user"
     },
-    "responseDeviceSuccess": {
-      "type": "object",
-      "title": "A ResponseDeviceSuccess will always contain a status of \"successful\".",
-      "properties": {
-        "data": {
-          "$ref": "#/definitions/UserDeviceData"
-        },
-        "status": {
-          "type": "string",
-          "x-go-name": "Status"
-        }
-      },
-      "x-go-name": "ResponseDeviceSuccess",
-      "x-go-package": "github.com/asciiu/gomo/api/controllers"
-    },
     "responseError": {
       "description": "This response may or may not include data encapsulating the user information.",
       "type": "object",
@@ -2583,21 +2604,6 @@
         }
       },
       "x-go-name": "ResponseError",
-      "x-go-package": "github.com/asciiu/gomo/api/controllers"
-    },
-    "responseKeySuccess": {
-      "type": "object",
-      "title": "A ResponseKeySuccess will always contain a status of \"successful\".",
-      "properties": {
-        "data": {
-          "$ref": "#/definitions/UserKeyData"
-        },
-        "status": {
-          "type": "string",
-          "x-go-name": "Status"
-        }
-      },
-      "x-go-name": "ResponseKeySuccess",
       "x-go-package": "github.com/asciiu/gomo/api/controllers"
     },
     "responseSearchSuccess": {
