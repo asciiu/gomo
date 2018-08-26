@@ -125,6 +125,23 @@ func (service *AccountService) AddAccount(ctx context.Context, req *protoAccount
 }
 
 func (service *AccountService) DeleteAccount(ctx context.Context, req *protoAccount.AccountRequest, res *protoAccount.AccountResponse) error {
+	account, err := repoAccount.UpdateAccountStatus(service.DB, req.AccountID, constAccount.AccountDeleted)
+
+	switch {
+	case err == sql.ErrNoRows:
+		res.Status = constRes.Nonentity
+		res.Message = "account not found"
+	case err != nil:
+		log.Println("GetAccount error: ", err.Error())
+		res.Status = constRes.Error
+		res.Message = err.Error()
+	default:
+		res.Status = constRes.Success
+		res.Data = &protoAccount.UserAccount{
+			Account: account,
+		}
+	}
+
 	return nil
 }
 

@@ -5,11 +5,14 @@ import (
 	"log"
 	"testing"
 
+	constAccount "github.com/asciiu/gomo/account-service/constants"
 	protoAccount "github.com/asciiu/gomo/account-service/proto/account"
 	protoBalance "github.com/asciiu/gomo/account-service/proto/balance"
+	constRes "github.com/asciiu/gomo/common/constants/response"
 	"github.com/asciiu/gomo/common/db"
 	repoUser "github.com/asciiu/gomo/user-service/db/sql"
 	user "github.com/asciiu/gomo/user-service/models"
+	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -173,6 +176,72 @@ func TestGetAccounts(t *testing.T) {
 	assert.Equal(t, 2, len(response3.Data.Accounts), "should have two accounts")
 	assert.Equal(t, "BTC", response3.Data.Accounts[1].Balances[0].CurrencySymbol, "currency for second account should be BTC")
 	assert.Equal(t, "USDT", response3.Data.Accounts[0].Balances[0].CurrencySymbol, "currency for first account should be USDT")
+
+	repoUser.DeleteUserHard(service.DB, user.ID)
+}
+
+func TestDeleteAccount(t *testing.T) {
+	service, user := setupService()
+
+	defer service.DB.Close()
+
+	request := protoAccount.NewAccountRequest{
+		UserID:      user.ID,
+		Exchange:    "binance paper",
+		KeyPublic:   "public",
+		KeySecret:   "secret",
+		Description: "shit test again!",
+		Balances: []*protoBalance.NewBalanceRequest{
+			&protoBalance.NewBalanceRequest{
+				CurrencySymbol:  "BTC",
+				CurrencyBalance: 1.0,
+			},
+		},
+	}
+
+	response := protoAccount.AccountResponse{}
+	service.AddAccount(context.Background(), &request, &response)
+
+	assert.Equal(t, "success", response.Status, response.Message)
+
+	delRequest := protoAccount.AccountRequest{
+		AccountID: response.Data.Account.AccountID,
+	}
+	response2 := protoAccount.AccountResponse{}
+	service.DeleteAccount(context.Background(), &delRequest, &response2)
+
+	assert.Equal(t, "success", response2.Status, response2.Message)
+	assert.Equal(t, constAccount.AccountDeleted, response2.Data.Account.Status)
+
+	repoUser.DeleteUserHard(service.DB, user.ID)
+}
+
+func TestGetAccountFailOnID(t *testing.T) {
+	service, user := setupService()
+
+	defer service.DB.Close()
+	getRequest := protoAccount.AccountRequest{
+		AccountID: uuid.New().String(),
+	}
+	response := protoAccount.AccountResponse{}
+	service.GetAccount(context.Background(), &getRequest, &response)
+
+	assert.Equal(t, constRes.Nonentity, response.Status, response.Message)
+
+	repoUser.DeleteUserHard(service.DB, user.ID)
+}
+
+func TestDeleteAccountFailOnID(t *testing.T) {
+	service, user := setupService()
+
+	defer service.DB.Close()
+	getRequest := protoAccount.AccountRequest{
+		AccountID: uuid.New().String(),
+	}
+	response := protoAccount.AccountResponse{}
+	service.DeleteAccount(context.Background(), &getRequest, &response)
+
+	assert.Equal(t, constRes.Nonentity, response.Status, response.Message)
 
 	repoUser.DeleteUserHard(service.DB, user.ID)
 }

@@ -12,7 +12,10 @@ import (
 All account specific queries shall live here.
 
 This file has this functions:
+	FindAccount
+	FindAccounts
 	InsertAccount
+	UpdateAccountStatus
 */
 
 func InsertAccount(db *sql.DB, newAccount *protoAccount.Account) error {
@@ -136,6 +139,10 @@ func FindAccount(db *sql.DB, accountID string) (*protoAccount.Account, error) {
 	}
 	account.Balances = balances
 
+	if account.AccountID == "" {
+		return nil, sql.ErrNoRows
+	}
+
 	return account, nil
 }
 
@@ -224,4 +231,42 @@ func FindAccounts(db *sql.DB, userID string) ([]*protoAccount.Account, error) {
 	}
 
 	return accounts, nil
+}
+
+func UpdateAccountStatus(db *sql.DB, accountID, status string) (*protoAccount.Account, error) {
+	stmt := `
+		UPDATE accounts 
+		SET 
+			status = $1
+		WHERE
+			id = $2
+		RETURNING 
+			id, 
+			user_id, 
+			exchange_name, 
+			key_public, 
+			key_secret, 
+			description, 
+			status,
+			created_on,
+			updated_on`
+
+	account := new(protoAccount.Account)
+	err := db.QueryRow(stmt, status, accountID).
+		Scan(
+			&account.AccountID,
+			&account.UserID,
+			&account.Exchange,
+			&account.KeyPublic,
+			&account.KeySecret,
+			&account.Description,
+			&account.Status,
+			&account.CreatedOn,
+			&account.UpdatedOn)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return account, nil
 }
