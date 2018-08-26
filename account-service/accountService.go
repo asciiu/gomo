@@ -64,11 +64,12 @@ func supportedExchange(a string) bool {
 // 	return error
 // }
 
+// Add a new account. An account may be real or paper. Paper accounts do not need to be verfied.
 func (service *AccountService) AddAccount(ctx context.Context, req *protoAccount.NewAccountRequest, res *protoAccount.AccountResponse) error {
 	// supported exchange keys check
 	if !supportedExchange(req.Exchange) {
 		res.Status = constRes.Fail
-		res.Message = fmt.Sprintf("%s is not a supported exchange", req.Exchange)
+		res.Message = fmt.Sprintf("%s is not supported", req.Exchange)
 		return nil
 	}
 
@@ -129,7 +130,22 @@ func (service *AccountService) DeleteAccount(ctx context.Context, req *protoAcco
 func (service *AccountService) GetAccounts(ctx context.Context, req *protoAccount.GetAccountsRequest, res *protoAccount.AccountsResponse) error {
 	return nil
 }
+
+// Get a specific account by ID.
 func (service *AccountService) GetAccount(ctx context.Context, req *protoAccount.AccountRequest, res *protoAccount.AccountResponse) error {
+	account, err := repoAccount.FindAccount(service.DB, req.AccountID)
+
+	if err != nil {
+		log.Println("GetAccount error: ", err.Error())
+		res.Status = constRes.Error
+		res.Message = err.Error()
+	} else {
+		res.Status = constRes.Success
+		res.Data = &protoAccount.UserAccount{
+			Account: account,
+		}
+	}
+
 	return nil
 }
 func (service *AccountService) UpdateAccount(ctx context.Context, req *protoAccount.UpdateAccountRequest, res *protoAccount.AccountResponse) error {

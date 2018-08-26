@@ -5,6 +5,7 @@ import (
 	"errors"
 
 	protoAccount "github.com/asciiu/gomo/account-service/proto/account"
+	protoBalance "github.com/asciiu/gomo/account-service/proto/balance"
 )
 
 /*
@@ -63,4 +64,77 @@ func InsertAccount(db *sql.DB, newAccount *protoAccount.Account) error {
 	}
 
 	return err
+}
+
+func FindAccount(db *sql.DB, accountID string) (*protoAccount.Account, error) {
+	account := new(protoAccount.Account)
+	balances := make([]*protoBalance.Balance, 0)
+	query := `SELECT 
+			a.id, 
+			a.user_id, 
+			a.exchange_name, 
+			a.key_public, 
+			a.key_secret, 
+			a.description, 
+			a.status,
+			a.created_on,
+			a.updated_on,
+			b.id,
+			b.user_id,
+			b.account_id,
+			b.currency_symbol,
+			b.available,
+			b.locked,
+			b.exchange_total,
+			b.exchange_available,
+			b.exchange_locked,
+			b.created_on,
+			b.updated_on 
+		FROM accounts a 
+		JOIN balances b on a.id = b.account_id 
+		WHERE account_id = $1`
+
+	rows, err := db.Query(query, accountID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	for rows.Next() {
+		balance := new(protoBalance.Balance)
+		err := rows.Scan(
+			&account.AccountID,
+			&account.UserID,
+			&account.Exchange,
+			&account.KeyPublic,
+			&account.KeySecret,
+			&account.Description,
+			&account.Status,
+			&account.CreatedOn,
+			&account.UpdatedOn,
+			&balance.BalanceID,
+			&balance.UserID,
+			&balance.AccountID,
+			&balance.CurrencySymbol,
+			&balance.Available,
+			&balance.Locked,
+			&balance.ExchangeTotal,
+			&balance.ExchangeAvailable,
+			&balance.ExchangeLocked,
+			&balance.CreatedOn,
+			&balance.UpdatedOn,
+		)
+
+		if err != nil {
+			return nil, err
+		}
+
+		balances = append(balances, balance)
+	}
+	err = rows.Err()
+	if err != nil {
+		return nil, err
+	}
+	account.Balances = balances
+
+	return account, nil
 }
