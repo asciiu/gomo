@@ -959,7 +959,7 @@ func (service *PlanService) UpdatePlan(ctx context.Context, req *protoPlan.Updat
 		}
 	}
 	if pln.TotalDepth != totalDepth {
-		pln.Status = req.Status
+		pln.TotalDepth = totalDepth
 		if err := repoPlan.UpdatePlanTotalDepthTxn(txn, ctx, pln.PlanID, pln.TotalDepth); err != nil {
 			txn.Rollback()
 			res.Status = constRes.Error

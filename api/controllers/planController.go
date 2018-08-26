@@ -64,6 +64,7 @@ type Plan struct {
 	InitialCurrencySymbol  string              `json:"initialCurrencySymbol"`
 	InitialCurrencyName    string              `json:"initialCurrencyName"`
 	InitialCurrencyBalance float64             `json:"initialCurrencyBalance"`
+	InitialCurrencyValue   float64             `json:"initialCurrencyValue"`
 	LastExecutedOrderID    string              `json:"lastExecutedOrderID"`
 	LastExecutedPlanDepth  uint32              `json:"lastExecutedPlanDepth"`
 	Status                 string              `json:"status"`
@@ -101,11 +102,13 @@ type Order struct {
 	InitialCurrencySymbol    string                `json:"initialCurrencySymbol"`
 	InitialCurrencyName      string                `json:"initialCurrencyName"`
 	InitialCurrencyBalance   float64               `json:"initialCurrencyBalance"`
+	InitialCurrencyValue     float64               `json:"initialCurrencyValue"`
 	InitialCurrencyTraded    float64               `json:"initialCurrencyTraded"`
 	InitialCurrencyRemainder float64               `json:"initialCurrencyRemainder"`
 	FinalCurrencySymbol      string                `json:"finalCurrencySymbol"`
 	FinalCurrencyName        string                `json:"finalCurrencyName"`
 	FinalCurrencyBalance     float64               `json:"finalCurrencyBalance"`
+	FinalCurrencyValue       float64               `json:"finalCurrencyValue"`
 	Grupo                    string                `json:"grupo"`
 	Status                   string                `json:"status,omitempty"`
 	CreatedOn                string                `json:"createdOn,omitempty"`
