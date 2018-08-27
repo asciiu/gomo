@@ -7,6 +7,7 @@ import (
 	"os"
 	"time"
 
+	protoAnalytics "github.com/asciiu/gomo/analytics-service/proto/analytics"
 	constMessage "github.com/asciiu/gomo/common/constants/message"
 	"github.com/asciiu/gomo/common/db"
 	protoEvt "github.com/asciiu/gomo/common/proto/events"
@@ -41,6 +42,11 @@ func main() {
 	})
 
 	go priceTicker.Ticker()
+
+	service := AnalyticsService{
+		DB: gomoDB,
+	}
+	protoAnalytics.RegisterAnalyticsServiceHandler(srv.Server(), &service)
 
 	if err := srv.Run(); err != nil {
 		log.Fatal(err)

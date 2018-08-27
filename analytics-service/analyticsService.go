@@ -92,7 +92,7 @@ func (service *AnalyticsService) HandleTradeEvent(payload *evt.TradeEvents) erro
 	return nil
 }
 
-func (service *AnalyticsService) ConvertCurrencyToCurrency(ctx context.Context, req *protoAnalytics.ConversionRequest, res *protoAnalytics.ConversionResponse) error {
+func (service *AnalyticsService) ConvertCurrency(ctx context.Context, req *protoAnalytics.ConversionRequest, res *protoAnalytics.ConversionResponse) error {
 	var rate, reverse, fromRate, toRate float64
 	from := req.From
 	to := req.To

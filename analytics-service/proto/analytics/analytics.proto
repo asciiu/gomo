@@ -3,7 +3,7 @@ syntax = "proto3";
 package analytics; 
 
 service AnalyticsService {
-  rpc ConvertCurrencyToCurrency(ConversionRequest) returns (ConversionResponse) {}
+  rpc ConvertCurrency(ConversionRequest) returns (ConversionResponse) {}
 }
 
 // Requests
