@@ -26,7 +26,7 @@ spec:
               name: fomo-config
           env:
           - name: UPDATED_AT
-            value: "Sun Aug 26 23:35:55 MDT 2018" 
+            value: "Mon Aug 27 16:22:09 MDT 2018" 
           ports:
           - containerPort: 8080
             name: analytics-port
