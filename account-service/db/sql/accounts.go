@@ -12,7 +12,7 @@ import (
 /*
 All account specific queries shall live here.
 
-This file has this functions:
+This file has these functions:
 	FindAccount
 	FindAccounts
 	InsertAccount

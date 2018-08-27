@@ -510,12 +510,19 @@ func (service *PlanService) NewPlan(ctx context.Context, req *protoPlan.NewPlanR
 		title = fmt.Sprintf("Trade %d", count+1)
 	}
 
+	// base currency defaults to USDT
+	baseCurrencySymbol := "USDT"
+	if req.BaseCurrencySymbol != "" {
+		baseCurrencySymbol = req.BaseCurrencySymbol
+	}
+
 	pln := protoPlan.Plan{
 		PlanID:                 planID.String(),
 		PlanTemplateID:         req.PlanTemplateID,
 		UserID:                 req.UserID,
 		Title:                  title,
 		TotalDepth:             totalDepth,
+		BaseCurrencySymbol:     baseCurrencySymbol,
 		ActiveCurrencySymbol:   newOrders[0].InitialCurrencySymbol,
 		ActiveCurrencyBalance:  newOrders[0].InitialCurrencyBalance,
 		InitialCurrencySymbol:  newOrders[0].InitialCurrencySymbol,
@@ -946,6 +953,15 @@ func (service *PlanService) UpdatePlan(ctx context.Context, req *protoPlan.Updat
 			txn.Rollback()
 			res.Status = constRes.Error
 			res.Message = "error encountered while updating the plan context: " + err.Error()
+			return nil
+		}
+	}
+	if pln.BaseCurrencySymbol != req.BaseCurrencySymbol {
+		pln.BaseCurrencySymbol = req.BaseCurrencySymbol
+		if err := repoPlan.UpdatePlanBaseCurrencyTxn(txn, ctx, pln.PlanID, pln.BaseCurrencySymbol); err != nil {
+			txn.Rollback()
+			res.Status = constRes.Error
+			res.Message = "error encountered while updating the plan base currency: " + err.Error()
 			return nil
 		}
 	}

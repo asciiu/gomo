@@ -13,6 +13,34 @@ import (
 	protoPlan "github.com/asciiu/gomo/plan-service/proto/plan"
 )
 
+/*
+This file has these functions:
+	DeletePlan
+	InsertPlan
+	FindActivePlans
+	FindChildOrders
+	FindParentAndChildren
+	FindPlanOrders
+	FindPlanWithUnexecutedOrders
+	FindUserExchangePlansWithStatus
+	FindUserMarketPlansWithStatus
+	FindUserPlans
+	FindUserPlansWithStatus
+	FindUserPlanCount
+	UpdatePlanBaseCurrencyTxn
+	UpdatePlanCloseOnCompleteTxn
+	UpdatePlanContext
+	UpdatePlanContextTxn
+	UpdatePlanExecutedOrder
+	UpdatePlanStatus
+	UpdatePlanStatusTxn
+	UpdatePlanTemplateTxn
+	UpdatePlanTimestampTxn
+	UpdatePlanTitleTxn
+	UpdatePlanTotalDepthTxn
+	UpdatePlanTxn
+*/
+
 // DeletePlan is a hard delete
 func DeletePlan(db *sql.DB, planID string) error {
 	_, err := db.Exec("DELETE FROM plans WHERE id = $1", planID)
@@ -27,6 +55,7 @@ func FindPlanWithUnexecutedOrders(db *sql.DB, planID string) (*protoPlan.Plan, e
 		p.title,
 		p.total_depth,
 		p.exchange_name,
+		p.base_currency_symbol,
 		p.active_currency_symbol,
 		p.active_currency_balance,
 		p.initial_currency_symbol,
@@ -108,6 +137,7 @@ func FindPlanWithUnexecutedOrders(db *sql.DB, planID string) (*protoPlan.Plan, e
 			&plan.Title,
 			&plan.TotalDepth,
 			&plan.Exchange,
+			&plan.BaseCurrencySymbol,
 			&plan.ActiveCurrencySymbol,
 			&plan.ActiveCurrencyBalance,
 			&plan.InitialCurrencySymbol,
@@ -215,6 +245,7 @@ func FindActivePlans(db *sql.DB) ([]*protoPlan.Plan, error) {
 		p.title,
 		p.total_depth,
 		p.exchange_name,
+		p.base_currency_symbol,
 		p.active_currency_symbol,
 		p.active_currency_balance,
 		p.initial_currency_symbol,
@@ -283,6 +314,7 @@ func FindActivePlans(db *sql.DB) ([]*protoPlan.Plan, error) {
 			&plan.Title,
 			&plan.TotalDepth,
 			&plan.Exchange,
+			&plan.BaseCurrencySymbol,
 			&plan.ActiveCurrencySymbol,
 			&plan.ActiveCurrencyBalance,
 			&plan.InitialCurrencySymbol,
@@ -384,6 +416,7 @@ func FindPlanOrders(db *sql.DB, req *protoPlan.GetUserPlanRequest) (*protoPlan.P
 		p.title,
 		p.total_depth,
 		p.exchange_name,
+		p.base_currency_symbol,
 		p.active_currency_symbol,
 		p.active_currency_balance,
 		p.initial_currency_symbol,
@@ -466,6 +499,7 @@ func FindPlanOrders(db *sql.DB, req *protoPlan.GetUserPlanRequest) (*protoPlan.P
 			&plan.Title,
 			&plan.TotalDepth,
 			&plan.Exchange,
+			&plan.BaseCurrencySymbol,
 			&plan.ActiveCurrencySymbol,
 			&plan.ActiveCurrencyBalance,
 			&plan.InitialCurrencySymbol,
@@ -573,6 +607,7 @@ func FindChildOrders(db *sql.DB, planID, parentOrderID string) (*protoPlan.Plan,
 		p.title,
 		p.total_depth,
 		p.exchange_name,
+		p.base_currency_symbol,
 		p.active_currency_symbol,
 		p.active_currency_balance,
 		p.initial_currency_symbol,
@@ -653,6 +688,7 @@ func FindChildOrders(db *sql.DB, planID, parentOrderID string) (*protoPlan.Plan,
 			&plan.Title,
 			&plan.TotalDepth,
 			&plan.Exchange,
+			&plan.BaseCurrencySymbol,
 			&plan.ActiveCurrencySymbol,
 			&plan.ActiveCurrencyBalance,
 			&plan.InitialCurrencySymbol,
@@ -759,6 +795,7 @@ func FindParentAndChildren(db *sql.DB, planID, parentOrderID string) (*protoPlan
 		p.title,
 		p.total_depth,
 		p.exchange_name,
+		p.base_currency_symbol,
 		p.active_currency_symbol,
 		p.active_currency_balance,
 		p.initial_currency_symbol,
@@ -840,6 +877,7 @@ func FindParentAndChildren(db *sql.DB, planID, parentOrderID string) (*protoPlan
 			&plan.Title,
 			&plan.TotalDepth,
 			&plan.Exchange,
+			&plan.BaseCurrencySymbol,
 			&plan.ActiveCurrencySymbol,
 			&plan.ActiveCurrencyBalance,
 			&plan.InitialCurrencySymbol,
@@ -950,7 +988,8 @@ func FindUserPlans(db *sql.DB, userID string, page, pageSize uint32) (*protoPlan
  			id,
  			title,
  			total_depth,
- 			exchange_name,
+			exchange_name,
+			base_currency_symbol,
  			active_currency_symbol,
  			active_currency_balance,
  			initial_currency_symbol,
@@ -980,6 +1019,7 @@ func FindUserPlans(db *sql.DB, userID string, page, pageSize uint32) (*protoPlan
 			&plan.Title,
 			&plan.TotalDepth,
 			&plan.Exchange,
+			&plan.BaseCurrencySymbol,
 			&plan.ActiveCurrencySymbol,
 			&plan.ActiveCurrencyBalance,
 			&plan.InitialCurrencySymbol,
@@ -1030,6 +1070,7 @@ func FindUserPlansWithStatus(db *sql.DB, userID, status string, page, pageSize u
 			title,
 			total_depth,
 			exchange_name,
+			base_currency_symbol,
 			active_currency_symbol,
 			active_currency_balance,
 			initial_currency_symbol,
@@ -1059,6 +1100,7 @@ func FindUserPlansWithStatus(db *sql.DB, userID, status string, page, pageSize u
 			&plan.Title,
 			&plan.TotalDepth,
 			&plan.Exchange,
+			&plan.BaseCurrencySymbol,
 			&plan.ActiveCurrencySymbol,
 			&plan.ActiveCurrencyBalance,
 			&plan.InitialCurrencySymbol,
@@ -1110,6 +1152,7 @@ func FindUserExchangePlansWithStatus(db *sql.DB, userID, status, exchange string
 			title,
 			total_depth,
 			exchange_name,
+			base_currency_symbol,
 			active_currency_symbol,
 			active_currency_balance,
 			initial_currency_symbol,
@@ -1139,6 +1182,7 @@ func FindUserExchangePlansWithStatus(db *sql.DB, userID, status, exchange string
 			&plan.Title,
 			&plan.TotalDepth,
 			&plan.Exchange,
+			&plan.BaseCurrencySymbol,
 			&plan.ActiveCurrencySymbol,
 			&plan.ActiveCurrencyBalance,
 			&plan.InitialCurrencySymbol,
@@ -1189,6 +1233,7 @@ func FindUserMarketPlansWithStatus(db *sql.DB, userID, status, exchange, marketN
 			title,
 			total_depth,
 			exchange_name,
+			base_currency_symbol,
 			active_currency_symbol,
 			active_currency_balance,
 			initial_currency_symbol,
@@ -1218,6 +1263,7 @@ func FindUserMarketPlansWithStatus(db *sql.DB, userID, status, exchange, marketN
 			&plan.Title,
 			&plan.TotalDepth,
 			&plan.Exchange,
+			&plan.BaseCurrencySymbol,
 			&plan.ActiveCurrencySymbol,
 			&plan.ActiveCurrencyBalance,
 			&plan.InitialCurrencySymbol,
@@ -1269,6 +1315,7 @@ func InsertPlan(db *sql.DB, newPlan *protoPlan.Plan) error {
 		title,
 		total_depth,
 		exchange_name,
+		base_currency_symbol,
 		active_currency_symbol,
 		active_currency_balance,
 		initial_currency_symbol,
@@ -1281,7 +1328,7 @@ func InsertPlan(db *sql.DB, newPlan *protoPlan.Plan) error {
 		status, 
 		created_on,
 		updated_on) 
-		values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17)`)
+		values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18)`)
 
 	if err != nil {
 		txn.Rollback()
@@ -1293,6 +1340,7 @@ func InsertPlan(db *sql.DB, newPlan *protoPlan.Plan) error {
 		newPlan.Title,
 		newPlan.TotalDepth,
 		newPlan.Exchange,
+		newPlan.BaseCurrencySymbol,
 		newPlan.ActiveCurrencySymbol,
 		newPlan.ActiveCurrencyBalance,
 		newPlan.InitialCurrencySymbol,
@@ -1402,6 +1450,18 @@ func UpdatePlanContextTxn(txn *sql.Tx, ctx context.Context, planID, symbol, exch
 	return err
 }
 
+func UpdatePlanBaseCurrencyTxn(txn *sql.Tx, ctx context.Context, planID, baseCurrencySym string) error {
+	_, err := txn.ExecContext(ctx, `
+		UPDATE plans 
+		SET 
+			base_currency_symbol = $1 
+		WHERE
+			id = $2`,
+		baseCurrencySym, planID)
+
+	return err
+}
+
 func UpdatePlanStatusTxn(txn *sql.Tx, ctx context.Context, planID, status string) error {
 	_, err := txn.ExecContext(ctx, `
 		UPDATE plans 
@@ -1439,6 +1499,7 @@ func UpdatePlanTitleTxn(txn *sql.Tx, ctx context.Context, planID, title string) 
 }
 
 func UpdatePlanCloseOnCompleteTxn(txn *sql.Tx, ctx context.Context, planID string, closeOnComplete bool) error {
+
 	_, err := txn.ExecContext(ctx, `
 		UPDATE plans 
 		SET 
