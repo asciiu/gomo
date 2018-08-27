@@ -9,10 +9,17 @@ import (
 
 /*
 This file has these functions:
+	DeleteExchangeRates
 	FindExchangeRate
 	FindExchangeRates
 	InsertPrices
 */
+
+// used in dropping test data
+func DeleteExchangeRates(db *sql.DB) error {
+	_, err := db.Exec("DELETE FROM exchange_rates")
+	return err
+}
 
 func FindExchangeRate(db *sql.DB, exchange, marketName, time string) (*protoPrice.MarketPrice, error) {
 	p := new(protoPrice.MarketPrice)

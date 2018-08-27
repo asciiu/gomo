@@ -92,6 +92,7 @@ func (service *AnalyticsService) HandleTradeEvent(payload *evt.TradeEvents) erro
 	return nil
 }
 
+// This function was formly known as the Amigoni special. It has been refined by yours truely - Axl Codes.
 func (service *AnalyticsService) ConvertCurrency(ctx context.Context, req *protoAnalytics.ConversionRequest, res *protoAnalytics.ConversionResponse) error {
 	var rate, reverse, fromRate, toRate float64
 	from := req.From
@@ -127,11 +128,19 @@ func (service *AnalyticsService) ConvertCurrency(ctx context.Context, req *proto
 			// reverse case exists BTC-ADA
 			reverse = 1 / market.ClosedAtPrice
 		}
+		//if market.MarketName == from+"-BTC" {
+		//	// indirect from rate
+		//	fromRate = market.ClosedAtPrice
+		//}
+		//if market.MarketName == to+"-BTC" {
+		//	// indirect to rate
+		//	toRate = market.ClosedAtPrice
+		//}
 		if market.MarketName == from+"-BTC" {
 			// indirect from rate
 			fromRate = market.ClosedAtPrice
 		}
-		if market.MarketName == to+"-BTC" {
+		if market.MarketName == "BTC-"+to {
 			// indirect to rate
 			toRate = market.ClosedAtPrice
 		}
@@ -142,7 +151,8 @@ func (service *AnalyticsService) ConvertCurrency(ctx context.Context, req *proto
 		rate = reverse
 	case rate == 0 && reverse == 0:
 		// direct rate doesn't exist so going through BTC to convert i.e ADAXVG
-		rate = fromRate / toRate
+		//rate = fromRate / toRate
+		rate = fromRate * toRate
 	}
 
 	//Ti.API.trace("Convert: "+from+" to "+to+" = "+rate+" "+fromExchange);

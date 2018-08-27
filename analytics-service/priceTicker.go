@@ -71,46 +71,46 @@ func (service *PriceTicker) HandleExchangeEvent(payload *protoEvt.TradeEvents) e
 }
 
 // from and to params are symbols: e.g. from: BTC to: USDT
-func AmigoniSpecial(exchange, from, to, atTime string, fromAmount float64) float64 {
-	var rate, reverse, fromRate, toRate float64
+// func AmigoniSpecial(exchange, from, to, atTime string, fromAmount float64) float64 {
+// 	var rate, reverse, fromRate, toRate float64
 
-	//Case in which to and from are the same i.e. BTCBTC
-	if from == to {
-		return fromAmount
-	}
+// 	//Case in which to and from are the same i.e. BTCBTC
+// 	if from == to {
+// 		return fromAmount
+// 	}
 
-	// find all prices here for given time
-	// repoAnalytics.FindPricesAtTime(exchange, time)
-	markets := make([]*protoAnalytics.MarketPrice, 0)
+// 	// find all prices here for given time
+// 	// repoAnalytics.FindPricesAtTime(exchange, time)
+// 	markets := make([]*protoAnalytics.MarketPrice, 0)
 
-	for _, market := range markets {
-		if market.MarketName == from+"-"+to {
-			//Simple Case where the rate exists i.e. ADA-BTC
-			rate = market.ClosedAtPrice
-			break
-		}
-		if market.MarketName == to+"-"+from {
-			// reverse case exists BTC-ADA
-			reverse = 1 / market.ClosedAtPrice
-		}
-		if market.MarketName == from+"-BTC" {
-			// indirect from rate
-			fromRate = market.ClosedAtPrice
-		}
-		if market.MarketName == to+"-BTC" {
-			// indirect to rate
-			toRate = market.ClosedAtPrice
-		}
-	}
+// 	for _, market := range markets {
+// 		if market.MarketName == from+"-"+to {
+// 			//Simple Case where the rate exists i.e. ADA-BTC
+// 			rate = market.ClosedAtPrice
+// 			break
+// 		}
+// 		if market.MarketName == to+"-"+from {
+// 			// reverse case exists BTC-ADA
+// 			reverse = 1 / market.ClosedAtPrice
+// 		}
+// 		if market.MarketName == from+"-BTC" {
+// 			// indirect from rate
+// 			fromRate = market.ClosedAtPrice
+// 		}
+// 		if market.MarketName == to+"-BTC" {
+// 			// indirect to rate
+// 			toRate = market.ClosedAtPrice
+// 		}
+// 	}
 
-	switch {
-	case rate == 0 && reverse != 0:
-		rate = reverse
-	case rate == 0 && reverse == 0:
-		// direct rate doesn't exist so going through BTC to convert i.e ADAXVG
-		rate = fromRate / toRate
-	}
+// 	switch {
+// 	case rate == 0 && reverse != 0:
+// 		rate = reverse
+// 	case rate == 0 && reverse == 0:
+// 		// direct rate doesn't exist so going through BTC to convert i.e ADAXVG
+// 		rate = fromRate / toRate
+// 	}
 
-	//Ti.API.trace("Convert: "+from+" to "+to+" = "+rate+" "+fromExchange);
-	return rate * fromAmount
-}
+// 	//Ti.API.trace("Convert: "+from+" to "+to+" = "+rate+" "+fromExchange);
+// 	return rate * fromAmount
+// }
