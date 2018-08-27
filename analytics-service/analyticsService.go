@@ -1,12 +1,17 @@
 package main
 
 import (
+	"context"
 	"database/sql"
 	"fmt"
 	"sync"
 	"time"
 
+	repoAnalytics "github.com/asciiu/gomo/analytics-service/db/sql"
+	protoAnalytics "github.com/asciiu/gomo/analytics-service/proto/analytics"
+	constRes "github.com/asciiu/gomo/common/constants/response"
 	evt "github.com/asciiu/gomo/common/proto/events"
+	"github.com/lib/pq"
 	micro "github.com/micro/go-micro"
 )
 
@@ -84,5 +89,66 @@ func (service *AnalyticsService) HandleTradeEvent(payload *evt.TradeEvents) erro
 		// }
 	}
 
+	return nil
+}
+
+func (service *AnalyticsService) ConvertCurrencyToCurrency(ctx context.Context, req *protoAnalytics.ConversionRequest, res *protoAnalytics.ConversionResponse) error {
+	var rate, reverse, fromRate, toRate float64
+	from := req.From
+	to := req.To
+	atTime, _ := time.Parse(time.RFC3339, req.AtTimestamp)
+	trunctTime := atTime.Truncate(time.Duration(5) * time.Minute)
+	trunctTimeStr := string(pq.FormatTimestamp(trunctTime))
+
+	//Case in which to and from are the same i.e. BTCBTC
+	if from == to {
+		res.Status = constRes.Success
+		res.Data = &protoAnalytics.ConversionAmount{
+			ConvertedAmount: req.FromAmount,
+		}
+		return nil
+	}
+
+	// find all prices here for given time
+	markets, err := repoAnalytics.FindExchangeRates(service.DB, req.Exchange, trunctTimeStr)
+	if err != nil {
+		res.Status = constRes.Error
+		res.Message = err.Error()
+		return nil
+	}
+
+	for _, market := range markets {
+		if market.MarketName == from+"-"+to {
+			//Simple Case where the rate exists i.e. ADA-BTC
+			rate = market.ClosedAtPrice
+			break
+		}
+		if market.MarketName == to+"-"+from {
+			// reverse case exists BTC-ADA
+			reverse = 1 / market.ClosedAtPrice
+		}
+		if market.MarketName == from+"-BTC" {
+			// indirect from rate
+			fromRate = market.ClosedAtPrice
+		}
+		if market.MarketName == to+"-BTC" {
+			// indirect to rate
+			toRate = market.ClosedAtPrice
+		}
+	}
+
+	switch {
+	case rate == 0 && reverse != 0:
+		rate = reverse
+	case rate == 0 && reverse == 0:
+		// direct rate doesn't exist so going through BTC to convert i.e ADAXVG
+		rate = fromRate / toRate
+	}
+
+	//Ti.API.trace("Convert: "+from+" to "+to+" = "+rate+" "+fromExchange);
+	res.Status = constRes.Success
+	res.Data = &protoAnalytics.ConversionAmount{
+		ConvertedAmount: rate * req.FromAmount,
+	}
 	return nil
 }

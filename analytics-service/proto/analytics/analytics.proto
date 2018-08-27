@@ -1,0 +1,48 @@
+syntax = "proto3";
+
+package analytics; 
+
+service AnalyticsService {
+  rpc ConvertCurrencyToCurrency(ConversionRequest) returns (ConversionResponse) {}
+}
+
+// Requests
+message ConversionRequest {
+  string exchange = 1;
+  string from = 2;
+  string to = 3;
+  double fromAmount = 4;
+  string atTimestamp = 5;
+}
+
+// Responses
+message MarketPrice {
+  string exchange = 1;
+  string marketName = 2;
+  string closedAtTime = 3;
+  double closedAtPrice = 4;
+}
+
+message ConversionAmount {
+  double convertedAmount = 1;
+}
+//
+//message PriceResponse {
+//  string status = 1;
+//  string message = 2;
+//  PlanData data = 3;
+//}
+//
+
+message ConversionResponse {
+  string status = 1;
+  string message = 2;
+  ConversionAmount data = 3;
+}
+//
+//message PlansPage {
+//  uint32 page = 1;
+//  uint32 pageSize = 2; 
+//  uint32 total = 3;
+//  repeated Plan plans = 4; 
+//}

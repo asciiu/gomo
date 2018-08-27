@@ -28,7 +28,7 @@ func main() {
 		log.Fatalf(err.Error())
 	}
 
-	price := PriceService{
+	priceTicker := PriceTicker{
 		DB:           gomoDB,
 		MarketPrices: make(map[Market]float64),
 		TimePeriod:   time.Duration(5) * time.Minute, // 5 minute period
@@ -36,11 +36,11 @@ func main() {
 
 	// subscribe to the exchange events here
 	micro.RegisterSubscriber(constMessage.TopicAggTrade, srv.Server(), func(ctx context.Context, tradeEvents *protoEvt.TradeEvents) error {
-		price.HandleExchangeEvent(tradeEvents)
+		priceTicker.HandleExchangeEvent(tradeEvents)
 		return nil
 	})
 
-	go price.Ticker()
+	go priceTicker.Ticker()
 
 	if err := srv.Run(); err != nil {
 		log.Fatal(err)
