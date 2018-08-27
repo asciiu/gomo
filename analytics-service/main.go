@@ -5,17 +5,18 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"time"
 
-	msg "github.com/asciiu/gomo/common/constants/messages"
+	constMessage "github.com/asciiu/gomo/common/constants/message"
 	"github.com/asciiu/gomo/common/db"
-	evt "github.com/asciiu/gomo/common/proto/events"
+	protoEvt "github.com/asciiu/gomo/common/proto/events"
 	micro "github.com/micro/go-micro"
 	k8s "github.com/micro/kubernetes/go/micro"
 )
 
 func main() {
 	srv := k8s.NewService(
-		micro.Name("fomo.analytics"),
+		micro.Name("analytics"),
 		micro.Version("latest"),
 	)
 
@@ -27,19 +28,19 @@ func main() {
 		log.Fatalf(err.Error())
 	}
 
-	processor := Processor{
-		DB:               gomoDB,
-		MarketClosePrice: make(map[Market]float64),
-		CandlePub:        micro.NewPublisher(msg.TopicCandleDataRequest, srv.Client()),
+	price := PriceService{
+		DB:           gomoDB,
+		MarketPrices: make(map[Market]float64),
+		TimePeriod:   time.Duration(5) * time.Minute, // 5 minute period
 	}
 
-	// subscribe to new key topic with a key validator
-	micro.RegisterSubscriber(msg.TopicAggTrade, srv.Server(), func(ctx context.Context, tradeEvents *evt.TradeEvents) error {
-		processor.ProcessEvents(tradeEvents)
+	// subscribe to the exchange events here
+	micro.RegisterSubscriber(constMessage.TopicAggTrade, srv.Server(), func(ctx context.Context, tradeEvents *protoEvt.TradeEvents) error {
+		price.HandleExchangeEvent(tradeEvents)
 		return nil
 	})
 
-	go processor.Ticker()
+	go price.Ticker()
 
 	if err := srv.Run(); err != nil {
 		log.Fatal(err)

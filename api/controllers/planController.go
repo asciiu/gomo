@@ -58,9 +58,11 @@ type Plan struct {
 	TotalDepth             uint32              `json:"totalDepth"`
 	Exchange               string              `json:"exchange"`
 	ExchangeMarketName     string              `json:"exchangeMarketName"`
+	BaseCurrencySymbol     string              `json:"baseCurrencySymbol"`
 	ActiveCurrencySymbol   string              `json:"activeCurrencySymbol"`
 	ActiveCurrencyName     string              `json:"activeCurrencyName"`
 	ActiveCurrencyBalance  float64             `json:"activeCurrencyBalance"`
+	ActiveCurrencyValue    float64             `json"activeCurrencyValue"`
 	InitialCurrencySymbol  string              `json:"initialCurrencySymbol"`
 	InitialCurrencyName    string              `json:"initialCurrencyName"`
 	InitialCurrencyBalance float64             `json:"initialCurrencyBalance"`
@@ -330,6 +332,7 @@ func (controller *PlanController) HandleGetPlan(c echo.Context) error {
 			Title:                  r.Data.Plan.Title,
 			TotalDepth:             r.Data.Plan.TotalDepth,
 			Exchange:               r.Data.Plan.Exchange,
+			BaseCurrencySymbol:     r.Data.Plan.BaseCurrencySymbol,
 			ActiveCurrencySymbol:   r.Data.Plan.ActiveCurrencySymbol,
 			ActiveCurrencyName:     controller.currencies[r.Data.Plan.ActiveCurrencySymbol],
 			ActiveCurrencyBalance:  r.Data.Plan.ActiveCurrencyBalance,
@@ -476,6 +479,7 @@ func (controller *PlanController) HandleListPlans(c echo.Context) error {
 			Title:                  plan.Title,
 			TotalDepth:             plan.TotalDepth,
 			Exchange:               plan.Exchange,
+			BaseCurrencySymbol:     plan.BaseCurrencySymbol,
 			ActiveCurrencySymbol:   plan.ActiveCurrencySymbol,
 			ActiveCurrencyName:     controller.currencies[plan.ActiveCurrencySymbol],
 			ActiveCurrencyBalance:  plan.ActiveCurrencyBalance,
@@ -509,6 +513,9 @@ func (controller *PlanController) HandleListPlans(c echo.Context) error {
 
 // swagger:parameters PostPlan
 type PlanRequest struct {
+	// Optional base currency from which plan currency will be measured with. e.g. USDT, BTC, ETH. Default to USDT.
+	// in: body
+	BaseCurrencySymbol string `json:"baseCurrencySymbol"`
 	// Required plan title
 	// in: body
 	Title string `json:"title"`
@@ -636,12 +643,13 @@ func (controller *PlanController) HandlePostPlan(c echo.Context) error {
 	}
 
 	newPlanRequest := protoPlan.NewPlanRequest{
-		UserID:          userID,
-		Title:           newPlan.Title,
-		PlanTemplateID:  newPlan.PlanTemplateID,
-		Status:          newPlan.Status,
-		CloseOnComplete: newPlan.CloseOnComplete,
-		Orders:          newOrderRequests,
+		UserID:             userID,
+		Title:              newPlan.Title,
+		BaseCurrencySymbol: newPlan.BaseCurrencySymbol,
+		PlanTemplateID:     newPlan.PlanTemplateID,
+		Status:             newPlan.Status,
+		CloseOnComplete:    newPlan.CloseOnComplete,
+		Orders:             newOrderRequests,
 	}
 
 	// add plan returns nil for error
@@ -712,6 +720,7 @@ func (controller *PlanController) HandlePostPlan(c echo.Context) error {
 			TotalDepth:             r.Data.Plan.TotalDepth,
 			Title:                  r.Data.Plan.Title,
 			Exchange:               r.Data.Plan.Exchange,
+			BaseCurrencySymbol:     r.Data.Plan.BaseCurrencySymbol,
 			ActiveCurrencySymbol:   r.Data.Plan.ActiveCurrencySymbol,
 			ActiveCurrencyName:     controller.currencies[r.Data.Plan.ActiveCurrencySymbol],
 			ActiveCurrencyBalance:  r.Data.Plan.ActiveCurrencyBalance,
@@ -733,6 +742,9 @@ func (controller *PlanController) HandlePostPlan(c echo.Context) error {
 
 // swagger:parameters UpdatePlanParams
 type UpdatePlanRequest struct {
+	// Optional base currency from which plan currency will be measured with.
+	// in: body
+	BaseCurrencySymbol string `json:"baseCurrencySymbol"`
 	// Optional plan title
 	// in: body
 	Title string `json:"title"`
@@ -804,13 +816,14 @@ func (controller *PlanController) HandleUpdatePlan(c echo.Context) error {
 	}
 
 	updatePlanRequest := protoPlan.UpdatePlanRequest{
-		PlanID:          planID,
-		UserID:          userID,
-		Title:           updatePlan.Title,
-		PlanTemplateID:  updatePlan.PlanTemplateID,
-		Status:          updatePlan.Status,
-		CloseOnComplete: updatePlan.CloseOnComplete,
-		Orders:          orderRequests,
+		PlanID:             planID,
+		UserID:             userID,
+		Title:              updatePlan.Title,
+		BaseCurrencySymbol: updatePlan.BaseCurrencySymbol,
+		PlanTemplateID:     updatePlan.PlanTemplateID,
+		Status:             updatePlan.Status,
+		CloseOnComplete:    updatePlan.CloseOnComplete,
+		Orders:             orderRequests,
 	}
 
 	// add plan returns nil for error
@@ -883,6 +896,7 @@ func (controller *PlanController) HandleUpdatePlan(c echo.Context) error {
 			Title:                  r.Data.Plan.Title,
 			TotalDepth:             r.Data.Plan.TotalDepth,
 			Exchange:               r.Data.Plan.Exchange,
+			BaseCurrencySymbol:     r.Data.Plan.BaseCurrencySymbol,
 			ActiveCurrencySymbol:   r.Data.Plan.ActiveCurrencySymbol,
 			ActiveCurrencyName:     controller.currencies[r.Data.Plan.ActiveCurrencySymbol],
 			ActiveCurrencyBalance:  r.Data.Plan.ActiveCurrencyBalance,

@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"log"
 	"testing"
 
@@ -285,5 +286,41 @@ func TestAccountUpdate(t *testing.T) {
 	assert.Equal(t, response1.Data.Account.Exchange, response2.Data.Account.Exchange, "exchanges do not match")
 	assert.Equal(t, "public2", response2.Data.Account.KeyPublic, "public keys don't match")
 	assert.Equal(t, "description2", response2.Data.Account.Description, "descriptions don't match")
+	repoUser.DeleteUserHard(service.DB, user.ID)
+}
+
+func TestSomething(t *testing.T) {
+	service, user := setupService()
+
+	defer service.DB.Close()
+
+	request := protoAccount.NewAccountRequest{
+		UserID:      user.ID,
+		Exchange:    "binance paper",
+		KeyPublic:   "public",
+		KeySecret:   "secret",
+		Description: "shit test again!",
+		Balances: []*protoBalance.NewBalanceRequest{
+			&protoBalance.NewBalanceRequest{
+				CurrencySymbol:  "USDT",
+				CurrencyBalance: 10.00,
+			},
+		},
+	}
+
+	baseCurrency := "USDT"
+	ada := 595.336
+	// find all pairs with baseCurrency BTC
+	adaBtc := 0.00001383
+	// find all pairs with baseCurrency USDT
+	btcUsdt := 6680.02
+
+	fmt.Println(ada * adaBtc * btcUsdt)
+
+	response1 := protoAccount.AccountResponse{}
+	service.AddAccount(context.Background(), &request, &response1)
+
+	assert.Equal(t, "success", response1.Status, response1.Message)
+
 	repoUser.DeleteUserHard(service.DB, user.ID)
 }

@@ -1,0 +1,45 @@
+syntax = "proto3";
+
+package price;
+
+//service PriceService {
+//  rpc GetPrice(PriceRequest) returns (PlanResponse) {}
+//}
+
+// Requests
+message PriceRequest {
+  string exchange = 1;
+  string marketName = 2;
+  string timestamp = 3;
+}
+
+// Responses
+message MarketPrice {
+  string exchange = 1;
+  string marketName = 2;
+  string closedAtTime = 3;
+  double closedAtPrice = 4;
+}
+
+//message PlanData {
+//  Plan plan = 1;
+//}
+//
+//message PlanResponse {
+//  string status = 1;
+//  string message = 2;
+//  PlanData data = 3;
+//}
+//
+//message PlansPageResponse {
+//  string status = 1;
+//  string message = 2;
+//  PlansPage data = 3;
+//}
+//
+//message PlansPage {
+//  uint32 page = 1;
+//  uint32 pageSize = 2; 
+//  uint32 total = 3;
+//  repeated Plan plans = 4; 
+//}

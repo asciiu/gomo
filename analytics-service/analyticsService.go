@@ -11,7 +11,7 @@ import (
 )
 
 // Processor will process orders
-type Processor struct {
+type AnalyticsService struct {
 	sync.RWMutex
 	DB               *sql.DB
 	MarketClosePrice map[Market]float64
@@ -26,18 +26,18 @@ func remove(s []string, i int) []string {
 	return s[:len(s)-1]
 }
 
-func (processor *Processor) Ticker() error {
+func (service *AnalyticsService) Ticker() error {
 	fmt.Println("ticker started: ", time.Now())
 	for {
 		time.Sleep(2 * time.Second)
 
-		for k := range processor.ProcessQueue {
-			processor.Lock()
+		for k := range service.ProcessQueue {
+			service.Lock()
 
-			processor.MarketCandles[k] = "ding"
-			delete(processor.ProcessQueue, k)
+			service.MarketCandles[k] = "ding"
+			delete(service.ProcessQueue, k)
 
-			processor.Unlock()
+			service.Unlock()
 			fmt.Println(k)
 			break
 		}
@@ -54,7 +54,7 @@ func (processor *Processor) Ticker() error {
 }
 
 // ProcessEvent will process ExchangeEvents. These events are published from the exchange sockets.
-func (processor *Processor) ProcessEvents(payload *evt.TradeEvents) error {
+func (service *AnalyticsService) HandleTradeEvent(payload *evt.TradeEvents) error {
 	// record close price for the market
 	for _, event := range payload.Events {
 		market := Market{
@@ -62,15 +62,15 @@ func (processor *Processor) ProcessEvents(payload *evt.TradeEvents) error {
 			Name:     event.MarketName,
 		}
 
-		processor.RLock()
-		_, ok1 := processor.MarketCandles[market]
-		_, ok2 := processor.ProcessQueue[market]
-		processor.RUnlock()
+		service.RLock()
+		_, ok1 := service.MarketCandles[market]
+		_, ok2 := service.ProcessQueue[market]
+		service.RUnlock()
 
 		if !ok1 && !ok2 {
-			processor.Lock()
-			processor.ProcessQueue[market] = event.Price
-			processor.Unlock()
+			service.Lock()
+			service.ProcessQueue[market] = event.Price
+			service.Unlock()
 		}
 
 		//found := false
