@@ -6,6 +6,7 @@
   name = "github.com/asciiu/gomo"
   packages = [
     "activity-bulletin/proto",
+    "analytics-service/proto/analytics",
     "balance-service/proto/balance",
     "common/constants/message",
     "common/constants/response",
@@ -19,7 +20,7 @@
     "user-service/models",
     "user-service/proto/user"
   ]
-  revision = "882e0be90cf320c039e283e143c4f3821eaa9b64"
+  revision = "924bf94c708c5a6eae4a07ea5f08c2aa4d102e30"
 
 [[projects]]
   name = "github.com/dgrijalva/jwt-go"
@@ -386,6 +387,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "5951b69b664e7b64b28a3d1ba6b9755921e100da1a9cbfc7aa1fdba274016662"
+  inputs-digest = "5fc7fca4de13c72908e86468cfe36c370169f041edd58a85851cb41203587984"
   solver-name = "gps-cdcl"
   solver-version = 1

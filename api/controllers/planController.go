@@ -6,8 +6,10 @@ import (
 	"net/http"
 	"strconv"
 	"strings"
+	"time"
 
 	protoActivity "github.com/asciiu/gomo/activity-bulletin/proto"
+	protoAnalytics "github.com/asciiu/gomo/analytics-service/proto/analytics"
 	asql "github.com/asciiu/gomo/api/db/sql"
 	constRes "github.com/asciiu/gomo/common/constants/response"
 	protoKey "github.com/asciiu/gomo/key-service/proto/key"
@@ -20,10 +22,11 @@ import (
 )
 
 type PlanController struct {
-	DB             *sql.DB
-	PlanClient     protoPlan.PlanServiceClient
-	KeyClient      protoKey.KeyServiceClient
-	BulletinClient protoActivity.ActivityBulletinClient
+	DB              *sql.DB
+	PlanClient      protoPlan.PlanServiceClient
+	KeyClient       protoKey.KeyServiceClient
+	BulletinClient  protoActivity.ActivityBulletinClient
+	AnalyticsClient protoAnalytics.AnalyticsServiceClient
 	// map of ticker symbol to full name
 	currencies map[string]string
 }
@@ -62,7 +65,7 @@ type Plan struct {
 	ActiveCurrencySymbol   string              `json:"activeCurrencySymbol"`
 	ActiveCurrencyName     string              `json:"activeCurrencyName"`
 	ActiveCurrencyBalance  float64             `json:"activeCurrencyBalance"`
-	ActiveCurrencyValue    float64             `json"activeCurrencyValue"`
+	ActiveCurrencyValue    float64             `json:"activeCurrencyValue"`
 	InitialCurrencySymbol  string              `json:"initialCurrencySymbol"`
 	InitialCurrencyName    string              `json:"initialCurrencyName"`
 	InitialCurrencyBalance float64             `json:"initialCurrencyBalance"`
@@ -129,11 +132,12 @@ func fail(c echo.Context, msg string) error {
 
 func NewPlanController(db *sql.DB, service micro.Service) *PlanController {
 	controller := PlanController{
-		DB:             db,
-		PlanClient:     protoPlan.NewPlanServiceClient("plans", service.Client()),
-		KeyClient:      protoKey.NewKeyServiceClient("keys", service.Client()),
-		BulletinClient: protoActivity.NewActivityBulletinClient("bulletin", service.Client()),
-		currencies:     make(map[string]string),
+		DB:              db,
+		PlanClient:      protoPlan.NewPlanServiceClient("plans", service.Client()),
+		KeyClient:       protoKey.NewKeyServiceClient("keys", service.Client()),
+		BulletinClient:  protoActivity.NewActivityBulletinClient("bulletin", service.Client()),
+		AnalyticsClient: protoAnalytics.NewAnalyticsServiceClient("analytics", service.Client()),
+		currencies:      make(map[string]string),
 	}
 
 	currencies, err := asql.GetCurrencyNames(db)
@@ -472,6 +476,15 @@ func (controller *PlanController) HandleListPlans(c echo.Context) error {
 			cOrders = append(cOrders, &newo)
 		}
 
+		convertReq := protoAnalytics.ConversionRequest{
+			Exchange:    plan.Exchange,
+			From:        plan.ActiveCurrencySymbol,
+			FromAmount:  plan.ActiveCurrencyBalance,
+			To:          plan.BaseCurrencySymbol,
+			AtTimestamp: time.Now().UTC().Format(time.RFC3339),
+		}
+		convertRes, _ := controller.AnalyticsClient.ConvertCurrency(context.Background(), &convertReq)
+
 		pln := Plan{
 			PlanID:                 plan.PlanID,
 			PlanTemplateID:         plan.PlanTemplateID,
@@ -483,6 +496,7 @@ func (controller *PlanController) HandleListPlans(c echo.Context) error {
 			ActiveCurrencySymbol:   plan.ActiveCurrencySymbol,
 			ActiveCurrencyName:     controller.currencies[plan.ActiveCurrencySymbol],
 			ActiveCurrencyBalance:  plan.ActiveCurrencyBalance,
+			ActiveCurrencyValue:    convertRes.Data.ConvertedAmount,
 			InitialCurrencySymbol:  plan.InitialCurrencySymbol,
 			InitialCurrencyName:    controller.currencies[plan.InitialCurrencySymbol],
 			InitialCurrencyBalance: plan.InitialCurrencyBalance,
