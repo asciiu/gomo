@@ -8,4 +8,4 @@ CREATE TABLE exchange_rates (
 );
 
 -- +goose Down
-DELETE TABLE exchange_rates;
+DROP TABLE exchange_rates;
