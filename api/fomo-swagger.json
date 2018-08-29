@@ -629,6 +629,15 @@
         "operationId": "PostPlan",
         "parameters": [
           {
+            "x-go-name": "UserCurrencySymbol",
+            "description": "Optional base currency from which plan currency will be measured with. e.g. USDT, BTC, ETH. Default to USDT.",
+            "name": "userCurrencySymbol",
+            "in": "body",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
             "x-go-name": "Title",
             "description": "Required plan title",
             "name": "title",
@@ -641,6 +650,15 @@
             "x-go-name": "PlanTemplateID",
             "description": "Optional plan template ID. Leo wanted this for the templating system.",
             "name": "planTemplateID",
+            "in": "body",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "x-go-name": "InitialTimestamp",
+            "description": "Optional init timestamp for plan RFC3339 formatted (e.g. 2018-08-26T22:49:10.168652Z). This timestamp will be used to measure initial user currency balance (valuation in user preferred currency)",
+            "name": "initialTimestamp",
             "in": "body",
             "schema": {
               "type": "string"
@@ -747,6 +765,15 @@
         "operationId": "UpdatePlanParams",
         "parameters": [
           {
+            "x-go-name": "UserCurrencySymbol",
+            "description": "Optional base currency from which plan currency will be measured with.",
+            "name": "userCurrencySymbol",
+            "in": "body",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
             "x-go-name": "Title",
             "description": "Optional plan title",
             "name": "title",
@@ -759,6 +786,15 @@
             "x-go-name": "PlanTemplateID",
             "description": "Optional plan template ID.",
             "name": "planTemplateID",
+            "in": "body",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "x-go-name": "InitialTimestamp",
+            "description": "Optional init timestamp for plan RFC3339 formatted (e.g. 2018-08-26T22:49:10.168652Z). This timestamp will be used to measure initial user currency balance (valuation in user preferred currency)",
+            "name": "initialTimestamp",
             "in": "body",
             "schema": {
               "type": "string"
@@ -1174,6 +1210,10 @@
         }
       },
       "x-go-package": "github.com/asciiu/gomo/api/vendor/github.com/asciiu/gomo/activity-bulletin/proto"
+    },
+    "AnalyticsServiceClient": {
+      "type": "object",
+      "x-go-package": "github.com/asciiu/gomo/api/vendor/github.com/asciiu/gomo/analytics-service/proto/analytics"
     },
     "ApiDevice": {
       "type": "object",
@@ -1755,6 +1795,11 @@
           "type": "string",
           "x-go-name": "FinalCurrencySymbol"
         },
+        "finalCurrencyValue": {
+          "type": "number",
+          "format": "double",
+          "x-go-name": "FinalCurrencyValue"
+        },
         "grupo": {
           "type": "string",
           "x-go-name": "Grupo"
@@ -1781,6 +1826,11 @@
           "type": "number",
           "format": "double",
           "x-go-name": "InitialCurrencyTraded"
+        },
+        "initialCurrencyValue": {
+          "type": "number",
+          "format": "double",
+          "x-go-name": "InitialCurrencyValue"
         },
         "keyDescription": {
           "type": "string",
@@ -1908,6 +1958,15 @@
           "type": "string",
           "x-go-name": "InitialCurrencySymbol"
         },
+        "initialTimestamp": {
+          "type": "string",
+          "x-go-name": "InitialTimestamp"
+        },
+        "initialUserCurrencyBalance": {
+          "type": "number",
+          "format": "double",
+          "x-go-name": "InitialUserCurrencyBalance"
+        },
         "lastExecutedOrderID": {
           "type": "string",
           "x-go-name": "LastExecutedOrderID"
@@ -1953,6 +2012,15 @@
         "updatedOn": {
           "type": "string",
           "x-go-name": "UpdatedOn"
+        },
+        "userCurrencyBalance": {
+          "type": "number",
+          "format": "double",
+          "x-go-name": "UserCurrencyBalance"
+        },
+        "userCurrencySymbol": {
+          "type": "string",
+          "x-go-name": "UserCurrencySymbol"
         }
       },
       "x-go-package": "github.com/asciiu/gomo/api/controllers"
@@ -1974,6 +2042,9 @@
     "PlanController": {
       "type": "object",
       "properties": {
+        "AnalyticsClient": {
+          "$ref": "#/definitions/AnalyticsServiceClient"
+        },
         "BulletinClient": {
           "$ref": "#/definitions/ActivityBulletinClient"
         },
@@ -1997,6 +2068,11 @@
           "type": "boolean",
           "x-go-name": "CloseOnComplete"
         },
+        "initialTimestamp": {
+          "description": "Optional init timestamp for plan RFC3339 formatted (e.g. 2018-08-26T22:49:10.168652Z). This timestamp will be used to measure initial user currency balance (valuation in user preferred currency)\nin: body",
+          "type": "string",
+          "x-go-name": "InitialTimestamp"
+        },
         "orders": {
           "description": "Required array of orders. The structure of the order tree will be dictated by the parentOrderID. All orders following the root order must have a parentOrderID. The root order must have a parentOrderID of \"00000000-0000-0000-0000-000000000000\". Use grupo (aka spanish for group) to assign a group label to the order.\nin: body",
           "type": "array",
@@ -2019,6 +2095,11 @@
           "description": "Required plan title\nin: body",
           "type": "string",
           "x-go-name": "Title"
+        },
+        "userCurrencySymbol": {
+          "description": "Optional base currency from which plan currency will be measured with. e.g. USDT, BTC, ETH. Default to USDT.\nin: body",
+          "type": "string",
+          "x-go-name": "UserCurrencySymbol"
         }
       },
       "x-go-package": "github.com/asciiu/gomo/api/controllers"
@@ -2437,6 +2518,11 @@
           "type": "boolean",
           "x-go-name": "CloseOnComplete"
         },
+        "initialTimestamp": {
+          "description": "Optional init timestamp for plan RFC3339 formatted (e.g. 2018-08-26T22:49:10.168652Z). This timestamp will be used to measure initial user currency balance (valuation in user preferred currency)\nin: body",
+          "type": "string",
+          "x-go-name": "InitialTimestamp"
+        },
         "orders": {
           "description": "Required array of orders. You cannot update executed orders. The entire inactive chain is assumed to be in this array.\nin: body",
           "type": "array",
@@ -2459,6 +2545,11 @@
           "description": "Optional plan title\nin: body",
           "type": "string",
           "x-go-name": "Title"
+        },
+        "userCurrencySymbol": {
+          "description": "Optional base currency from which plan currency will be measured with.\nin: body",
+          "type": "string",
+          "x-go-name": "UserCurrencySymbol"
         }
       },
       "x-go-package": "github.com/asciiu/gomo/api/controllers"

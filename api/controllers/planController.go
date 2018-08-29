@@ -64,14 +64,13 @@ type Plan struct {
 	UserCurrencySymbol         string              `json:"userCurrencySymbol"`
 	UserCurrencyBalance        float64             `json:"userCurrencyBalance"`
 	InitialUserCurrencyBalance float64             `json:"initialUserCurrencyBalance"`
-	AmigoUserCurrencyBalance   float64             `json:"amigoniUserCurrencyBalance"`
+	InitialTimestamp           string              `json:"initialTimestamp"`
 	ActiveCurrencySymbol       string              `json:"activeCurrencySymbol"`
 	ActiveCurrencyName         string              `json:"activeCurrencyName"`
 	ActiveCurrencyBalance      float64             `json:"activeCurrencyBalance"`
 	InitialCurrencySymbol      string              `json:"initialCurrencySymbol"`
 	InitialCurrencyName        string              `json:"initialCurrencyName"`
 	InitialCurrencyBalance     float64             `json:"initialCurrencyBalance"`
-	InitialTimestamp           string              `json:"initialTimestamp"`
 	LastExecutedOrderID        string              `json:"lastExecutedOrderID"`
 	LastExecutedPlanDepth      uint32              `json:"lastExecutedPlanDepth"`
 	Status                     string              `json:"status"`
@@ -271,9 +270,11 @@ func (controller *PlanController) HandleGetPlan(c echo.Context) error {
 			return c.JSON(http.StatusInternalServerError, res)
 		}
 	}
+	plan := r.Data.Plan
 
+	// convert orders in data plan to api model orders
 	newOrders := make([]*Order, 0)
-	for _, o := range r.Data.Plan.Orders {
+	for _, o := range plan.Orders {
 		names := strings.Split(o.MarketName, "-")
 		baseCurrencySymbol := names[1]
 		baseCurrencyName := controller.currencies[baseCurrencySymbol]
@@ -315,6 +316,7 @@ func (controller *PlanController) HandleGetPlan(c echo.Context) error {
 		newOrders = append(newOrders, &newo)
 	}
 
+	// retrieve plan activity
 	getActivity := protoActivity.RecentActivityRequest{
 		ObjectID: planID,
 		Count:    1,
@@ -329,30 +331,46 @@ func (controller *PlanController) HandleGetPlan(c echo.Context) error {
 		recent = activityData.Data.Activity[0]
 	}
 
+	// calc plan initial balance at time only if initial timestamp is valid
+	// when initial timestamp == "" it means it was not set yet -- 8/29/18 set as first triggeredTime
+	initialTimeBalance := 0.0
+	if plan.InitialTimestamp != "" {
+		convertReq2 := protoAnalytics.ConversionRequest{
+			Exchange:    plan.Exchange,
+			From:        plan.InitialCurrencySymbol,
+			FromAmount:  plan.InitialCurrencyBalance,
+			To:          plan.BaseCurrencySymbol,
+			AtTimestamp: plan.InitialTimestamp,
+		}
+		convertRes2, _ := controller.AnalyticsClient.ConvertCurrency(context.Background(), &convertReq2)
+		initialTimeBalance = convertRes2.Data.ConvertedAmount
+	}
+
 	res := &ResponsePlanSuccess{
 		Status: constRes.Success,
 		Data: &Plan{
-			PlanID:                 r.Data.Plan.PlanID,
-			PlanTemplateID:         r.Data.Plan.PlanTemplateID,
-			PlanNumber:             r.Data.Plan.UserPlanNumber,
-			Title:                  r.Data.Plan.Title,
-			TotalDepth:             r.Data.Plan.TotalDepth,
-			Exchange:               r.Data.Plan.Exchange,
-			UserCurrencySymbol:     r.Data.Plan.BaseCurrencySymbol,
-			ActiveCurrencySymbol:   r.Data.Plan.ActiveCurrencySymbol,
-			ActiveCurrencyName:     controller.currencies[r.Data.Plan.ActiveCurrencySymbol],
-			ActiveCurrencyBalance:  r.Data.Plan.ActiveCurrencyBalance,
-			InitialCurrencySymbol:  r.Data.Plan.InitialCurrencySymbol,
-			InitialCurrencyName:    controller.currencies[r.Data.Plan.InitialCurrencySymbol],
-			InitialCurrencyBalance: r.Data.Plan.InitialCurrencyBalance,
-			InitialTimestamp:       r.Data.Plan.InitialTimestamp,
-			Status:                 r.Data.Plan.Status,
-			CloseOnComplete:        r.Data.Plan.CloseOnComplete,
-			LastExecutedOrderID:    r.Data.Plan.LastExecutedOrderID,
-			LastExecutedPlanDepth:  r.Data.Plan.LastExecutedPlanDepth,
-			Orders:                 newOrders,
-			CreatedOn:              r.Data.Plan.CreatedOn,
-			UpdatedOn:              r.Data.Plan.UpdatedOn,
+			PlanID:                     plan.PlanID,
+			PlanTemplateID:             plan.PlanTemplateID,
+			PlanNumber:                 plan.UserPlanNumber,
+			Title:                      plan.Title,
+			TotalDepth:                 plan.TotalDepth,
+			Exchange:                   plan.Exchange,
+			UserCurrencySymbol:         plan.BaseCurrencySymbol,
+			ActiveCurrencySymbol:       plan.ActiveCurrencySymbol,
+			ActiveCurrencyName:         controller.currencies[plan.ActiveCurrencySymbol],
+			ActiveCurrencyBalance:      plan.ActiveCurrencyBalance,
+			InitialCurrencySymbol:      plan.InitialCurrencySymbol,
+			InitialCurrencyName:        controller.currencies[plan.InitialCurrencySymbol],
+			InitialCurrencyBalance:     plan.InitialCurrencyBalance,
+			InitialTimestamp:           plan.InitialTimestamp,
+			InitialUserCurrencyBalance: initialTimeBalance,
+			Status:                plan.Status,
+			CloseOnComplete:       plan.CloseOnComplete,
+			LastExecutedOrderID:   plan.LastExecutedOrderID,
+			LastExecutedPlanDepth: plan.LastExecutedPlanDepth,
+			Orders:                newOrders,
+			CreatedOn:             plan.CreatedOn,
+			UpdatedOn:             plan.UpdatedOn,
 			Activity: PlanActivitySummary{
 				Total:  activityCount.Data.Count,
 				Recent: recent,
@@ -488,7 +506,8 @@ func (controller *PlanController) HandleListPlans(c echo.Context) error {
 		}
 		convertRes, _ := controller.AnalyticsClient.ConvertCurrency(context.Background(), &convertReq)
 
-		initialUserCurrencyBalance := 0.0
+		// calc initial time balance only if there is a valid timestamp
+		initialTimeBalance := 0.0
 		if plan.InitialTimestamp != "" {
 			convertReq2 := protoAnalytics.ConversionRequest{
 				Exchange:    plan.Exchange,
@@ -498,7 +517,7 @@ func (controller *PlanController) HandleListPlans(c echo.Context) error {
 				AtTimestamp: plan.InitialTimestamp,
 			}
 			convertRes2, _ := controller.AnalyticsClient.ConvertCurrency(context.Background(), &convertReq2)
-			initialUserCurrencyBalance = convertRes2.Data.ConvertedAmount
+			initialTimeBalance = convertRes2.Data.ConvertedAmount
 		}
 
 		pln := Plan{
@@ -510,14 +529,14 @@ func (controller *PlanController) HandleListPlans(c echo.Context) error {
 			Exchange:                   plan.Exchange,
 			UserCurrencySymbol:         plan.BaseCurrencySymbol,
 			UserCurrencyBalance:        convertRes.Data.ConvertedAmount,
-			InitialUserCurrencyBalance: initialUserCurrencyBalance,
+			InitialTimestamp:           plan.InitialTimestamp,
+			InitialUserCurrencyBalance: initialTimeBalance,
 			ActiveCurrencySymbol:       plan.ActiveCurrencySymbol,
 			ActiveCurrencyName:         controller.currencies[plan.ActiveCurrencySymbol],
 			ActiveCurrencyBalance:      plan.ActiveCurrencyBalance,
 			InitialCurrencySymbol:      plan.InitialCurrencySymbol,
 			InitialCurrencyName:        controller.currencies[plan.InitialCurrencySymbol],
 			InitialCurrencyBalance:     plan.InitialCurrencyBalance,
-			InitialTimestamp:           plan.InitialTimestamp,
 			Status:                     plan.Status,
 			CloseOnComplete:            plan.CloseOnComplete,
 			LastExecutedOrderID:        plan.LastExecutedOrderID,
@@ -547,7 +566,7 @@ func (controller *PlanController) HandleListPlans(c echo.Context) error {
 type PlanRequest struct {
 	// Optional base currency from which plan currency will be measured with. e.g. USDT, BTC, ETH. Default to USDT.
 	// in: body
-	BaseCurrencySymbol string `json:"baseCurrencySymbol"`
+	UserCurrencySymbol string `json:"userCurrencySymbol"`
 	// Required plan title
 	// in: body
 	Title string `json:"title"`
@@ -680,7 +699,7 @@ func (controller *PlanController) HandlePostPlan(c echo.Context) error {
 	newPlanRequest := protoPlan.NewPlanRequest{
 		UserID:             userID,
 		Title:              newPlan.Title,
-		BaseCurrencySymbol: newPlan.BaseCurrencySymbol,
+		BaseCurrencySymbol: newPlan.UserCurrencySymbol,
 		PlanTemplateID:     newPlan.PlanTemplateID,
 		Status:             newPlan.Status,
 		CloseOnComplete:    newPlan.CloseOnComplete,
@@ -703,9 +722,10 @@ func (controller *PlanController) HandlePostPlan(c echo.Context) error {
 			return c.JSON(http.StatusInternalServerError, res)
 		}
 	}
+	plan := r.Data.Plan
 
 	newOrders := make([]*Order, 0)
-	for _, o := range r.Data.Plan.Orders {
+	for _, o := range plan.Orders {
 		names := strings.Split(o.MarketName, "-")
 		baseCurrencySymbol := names[1]
 		baseCurrencyName := controller.currencies[baseCurrencySymbol]
@@ -747,30 +767,45 @@ func (controller *PlanController) HandlePostPlan(c echo.Context) error {
 		newOrders = append(newOrders, &newo)
 	}
 
+	// calc initial time balance only if there is a valid timestamp
+	initialTimeBalance := 0.0
+	if plan.InitialTimestamp != "" {
+		convertReq2 := protoAnalytics.ConversionRequest{
+			Exchange:    plan.Exchange,
+			From:        plan.InitialCurrencySymbol,
+			FromAmount:  plan.InitialCurrencyBalance,
+			To:          plan.BaseCurrencySymbol,
+			AtTimestamp: plan.InitialTimestamp,
+		}
+		convertRes2, _ := controller.AnalyticsClient.ConvertCurrency(context.Background(), &convertReq2)
+		initialTimeBalance = convertRes2.Data.ConvertedAmount
+	}
+
 	res := &ResponsePlanSuccess{
 		Status: constRes.Success,
 		Data: &Plan{
-			PlanID:                 r.Data.Plan.PlanID,
-			PlanTemplateID:         r.Data.Plan.PlanTemplateID,
-			PlanNumber:             r.Data.Plan.UserPlanNumber,
-			TotalDepth:             r.Data.Plan.TotalDepth,
-			Title:                  r.Data.Plan.Title,
-			Exchange:               r.Data.Plan.Exchange,
-			UserCurrencySymbol:     r.Data.Plan.BaseCurrencySymbol,
-			ActiveCurrencySymbol:   r.Data.Plan.ActiveCurrencySymbol,
-			ActiveCurrencyName:     controller.currencies[r.Data.Plan.ActiveCurrencySymbol],
-			ActiveCurrencyBalance:  r.Data.Plan.ActiveCurrencyBalance,
-			InitialCurrencySymbol:  r.Data.Plan.InitialCurrencySymbol,
-			InitialCurrencyName:    controller.currencies[r.Data.Plan.InitialCurrencySymbol],
-			InitialCurrencyBalance: r.Data.Plan.InitialCurrencyBalance,
-			InitialTimestamp:       r.Data.Plan.InitialTimestamp,
-			Status:                 r.Data.Plan.Status,
-			CloseOnComplete:        r.Data.Plan.CloseOnComplete,
-			LastExecutedOrderID:    r.Data.Plan.LastExecutedOrderID,
-			LastExecutedPlanDepth:  r.Data.Plan.LastExecutedPlanDepth,
-			Orders:                 newOrders,
-			CreatedOn:              r.Data.Plan.CreatedOn,
-			UpdatedOn:              r.Data.Plan.UpdatedOn,
+			PlanID:                     plan.PlanID,
+			PlanTemplateID:             plan.PlanTemplateID,
+			PlanNumber:                 plan.UserPlanNumber,
+			TotalDepth:                 plan.TotalDepth,
+			Title:                      plan.Title,
+			Exchange:                   plan.Exchange,
+			UserCurrencySymbol:         plan.BaseCurrencySymbol,
+			InitialUserCurrencyBalance: initialTimeBalance,
+			ActiveCurrencySymbol:       plan.ActiveCurrencySymbol,
+			ActiveCurrencyName:         controller.currencies[plan.ActiveCurrencySymbol],
+			ActiveCurrencyBalance:      plan.ActiveCurrencyBalance,
+			InitialCurrencySymbol:      plan.InitialCurrencySymbol,
+			InitialCurrencyName:        controller.currencies[plan.InitialCurrencySymbol],
+			InitialCurrencyBalance:     plan.InitialCurrencyBalance,
+			InitialTimestamp:           plan.InitialTimestamp,
+			Status:                     plan.Status,
+			CloseOnComplete:            plan.CloseOnComplete,
+			LastExecutedOrderID:        plan.LastExecutedOrderID,
+			LastExecutedPlanDepth:      plan.LastExecutedPlanDepth,
+			Orders:                     newOrders,
+			CreatedOn:                  plan.CreatedOn,
+			UpdatedOn:                  plan.UpdatedOn,
 		},
 	}
 
@@ -781,7 +816,7 @@ func (controller *PlanController) HandlePostPlan(c echo.Context) error {
 type UpdatePlanRequest struct {
 	// Optional base currency from which plan currency will be measured with.
 	// in: body
-	BaseCurrencySymbol string `json:"baseCurrencySymbol"`
+	UserCurrencySymbol string `json:"userCurrencySymbol"`
 	// Optional plan title
 	// in: body
 	Title string `json:"title"`
@@ -859,7 +894,7 @@ func (controller *PlanController) HandleUpdatePlan(c echo.Context) error {
 		PlanID:             planID,
 		UserID:             userID,
 		Title:              updatePlan.Title,
-		BaseCurrencySymbol: updatePlan.BaseCurrencySymbol,
+		BaseCurrencySymbol: updatePlan.UserCurrencySymbol,
 		PlanTemplateID:     updatePlan.PlanTemplateID,
 		InitialTimestamp:   updatePlan.InitialTimestamp,
 		Status:             updatePlan.Status,
@@ -884,9 +919,10 @@ func (controller *PlanController) HandleUpdatePlan(c echo.Context) error {
 			return c.JSON(http.StatusBadRequest, res)
 		}
 	}
+	plan := r.Data.Plan
 
 	newOrders := make([]*Order, 0)
-	for _, o := range r.Data.Plan.Orders {
+	for _, o := range plan.Orders {
 		names := strings.Split(o.MarketName, "-")
 		baseCurrencySymbol := names[1]
 		baseCurrencyName := controller.currencies[baseCurrencySymbol]
@@ -928,30 +964,45 @@ func (controller *PlanController) HandleUpdatePlan(c echo.Context) error {
 		newOrders = append(newOrders, &newo)
 	}
 
+	// calc initial time balance only if there is a valid timestamp
+	initialTimeBalance := 0.0
+	if plan.InitialTimestamp != "" {
+		convertReq2 := protoAnalytics.ConversionRequest{
+			Exchange:    plan.Exchange,
+			From:        plan.InitialCurrencySymbol,
+			FromAmount:  plan.InitialCurrencyBalance,
+			To:          plan.BaseCurrencySymbol,
+			AtTimestamp: plan.InitialTimestamp,
+		}
+		convertRes2, _ := controller.AnalyticsClient.ConvertCurrency(context.Background(), &convertReq2)
+		initialTimeBalance = convertRes2.Data.ConvertedAmount
+	}
+
 	res := &ResponsePlanSuccess{
 		Status: constRes.Success,
 		Data: &Plan{
-			PlanID:                 r.Data.Plan.PlanID,
-			PlanTemplateID:         r.Data.Plan.PlanTemplateID,
-			PlanNumber:             r.Data.Plan.UserPlanNumber,
-			Title:                  r.Data.Plan.Title,
-			TotalDepth:             r.Data.Plan.TotalDepth,
-			Exchange:               r.Data.Plan.Exchange,
-			UserCurrencySymbol:     r.Data.Plan.BaseCurrencySymbol,
-			ActiveCurrencySymbol:   r.Data.Plan.ActiveCurrencySymbol,
-			ActiveCurrencyName:     controller.currencies[r.Data.Plan.ActiveCurrencySymbol],
-			ActiveCurrencyBalance:  r.Data.Plan.ActiveCurrencyBalance,
-			InitialCurrencySymbol:  r.Data.Plan.InitialCurrencySymbol,
-			InitialCurrencyName:    controller.currencies[r.Data.Plan.InitialCurrencySymbol],
-			InitialCurrencyBalance: r.Data.Plan.InitialCurrencyBalance,
-			InitialTimestamp:       r.Data.Plan.InitialTimestamp,
-			Status:                 r.Data.Plan.Status,
-			CloseOnComplete:        r.Data.Plan.CloseOnComplete,
-			LastExecutedOrderID:    r.Data.Plan.LastExecutedOrderID,
-			LastExecutedPlanDepth:  r.Data.Plan.LastExecutedPlanDepth,
-			Orders:                 newOrders,
-			CreatedOn:              r.Data.Plan.CreatedOn,
-			UpdatedOn:              r.Data.Plan.UpdatedOn,
+			PlanID:                     plan.PlanID,
+			PlanTemplateID:             plan.PlanTemplateID,
+			PlanNumber:                 plan.UserPlanNumber,
+			Title:                      plan.Title,
+			TotalDepth:                 plan.TotalDepth,
+			Exchange:                   plan.Exchange,
+			UserCurrencySymbol:         plan.BaseCurrencySymbol,
+			InitialUserCurrencyBalance: initialTimeBalance,
+			ActiveCurrencySymbol:       plan.ActiveCurrencySymbol,
+			ActiveCurrencyName:         controller.currencies[plan.ActiveCurrencySymbol],
+			ActiveCurrencyBalance:      plan.ActiveCurrencyBalance,
+			InitialCurrencySymbol:      plan.InitialCurrencySymbol,
+			InitialCurrencyName:        controller.currencies[plan.InitialCurrencySymbol],
+			InitialCurrencyBalance:     plan.InitialCurrencyBalance,
+			InitialTimestamp:           plan.InitialTimestamp,
+			Status:                     plan.Status,
+			CloseOnComplete:            plan.CloseOnComplete,
+			LastExecutedOrderID:        plan.LastExecutedOrderID,
+			LastExecutedPlanDepth:      plan.LastExecutedPlanDepth,
+			Orders:                     newOrders,
+			CreatedOn:                  plan.CreatedOn,
+			UpdatedOn:                  plan.UpdatedOn,
 		},
 	}
 
