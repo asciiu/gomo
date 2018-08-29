@@ -187,11 +187,13 @@ func (service *PlanService) fetchKeys(keyIDs []string) ([]*protoKey.Key, error) 
 // Handle a completed order event
 func (service *PlanService) HandleCompletedOrder(ctx context.Context, completedOrderEvent *protoEvt.CompletedOrderEvent) error {
 
+	now := string(pq.FormatTimestamp(time.Now().UTC()))
+
 	notification := protoActivity.Activity{
 		UserID:      completedOrderEvent.UserID,
 		ObjectID:    completedOrderEvent.PlanID,
 		Type:        "plan",
-		Timestamp:   string(pq.FormatTimestamp(time.Now().UTC())),
+		Timestamp:   now,
 		Title:       completedOrderEvent.MarketName,
 		Subtitle:    completedOrderEvent.Side,
 		Description: completedOrderEvent.Details,
@@ -209,6 +211,13 @@ func (service *PlanService) HandleCompletedOrder(ctx context.Context, completedO
 	if err != nil {
 		log.Println("could not update order status -- ", err.Error())
 		return nil
+	}
+
+	if depth == 1 {
+		if err := repoPlan.UpdatePlanInitTimestamp(service.DB, planID, now); err != nil {
+			log.Println("could not update plan init time -- ", err.Error())
+			return nil
+		}
 	}
 
 	if completedOrderEvent.Status == constPlan.Filled {

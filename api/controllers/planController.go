@@ -54,30 +54,31 @@ type PlansPage struct {
 
 // This response should never return the key secret
 type Plan struct {
-	PlanID                 string              `json:"planID"`
-	PlanTemplateID         string              `json:"planTemplateID"`
-	PlanNumber             uint64              `json:"planNumber"`
-	Title                  string              `json:"title"`
-	TotalDepth             uint32              `json:"totalDepth"`
-	Exchange               string              `json:"exchange"`
-	ExchangeMarketName     string              `json:"exchangeMarketName"`
-	BaseCurrencySymbol     string              `json:"baseCurrencySymbol"`
-	ActiveCurrencySymbol   string              `json:"activeCurrencySymbol"`
-	ActiveCurrencyName     string              `json:"activeCurrencyName"`
-	ActiveCurrencyBalance  float64             `json:"activeCurrencyBalance"`
-	ActiveCurrencyValue    float64             `json:"activeCurrencyValue"`
-	InitialCurrencySymbol  string              `json:"initialCurrencySymbol"`
-	InitialCurrencyName    string              `json:"initialCurrencyName"`
-	InitialCurrencyBalance float64             `json:"initialCurrencyBalance"`
-	InitialCurrencyValue   float64             `json:"initialCurrencyValue"`
-	LastExecutedOrderID    string              `json:"lastExecutedOrderID"`
-	LastExecutedPlanDepth  uint32              `json:"lastExecutedPlanDepth"`
-	Status                 string              `json:"status"`
-	CloseOnComplete        bool                `json:"closeOnComplete"`
-	CreatedOn              string              `json:"createdOn"`
-	UpdatedOn              string              `json:"updatedOn"`
-	Activity               PlanActivitySummary `json:"activity"`
-	Orders                 []*Order            `json:"orders"`
+	PlanID                     string              `json:"planID"`
+	PlanTemplateID             string              `json:"planTemplateID"`
+	PlanNumber                 uint64              `json:"planNumber"`
+	Title                      string              `json:"title"`
+	TotalDepth                 uint32              `json:"totalDepth"`
+	Exchange                   string              `json:"exchange"`
+	ExchangeMarketName         string              `json:"exchangeMarketName"`
+	UserCurrencySymbol         string              `json:"userCurrencySymbol"`
+	UserCurrencyBalance        float64             `json:"userCurrencyBalance"`
+	InitialUserCurrencyBalance float64             `json:"initialUserCurrencyBalance"`
+	AmigoUserCurrencyBalance   float64             `json:"amigoniUserCurrencyBalance"`
+	ActiveCurrencySymbol       string              `json:"activeCurrencySymbol"`
+	ActiveCurrencyName         string              `json:"activeCurrencyName"`
+	ActiveCurrencyBalance      float64             `json:"activeCurrencyBalance"`
+	InitialCurrencySymbol      string              `json:"initialCurrencySymbol"`
+	InitialCurrencyName        string              `json:"initialCurrencyName"`
+	InitialCurrencyBalance     float64             `json:"initialCurrencyBalance"`
+	LastExecutedOrderID        string              `json:"lastExecutedOrderID"`
+	LastExecutedPlanDepth      uint32              `json:"lastExecutedPlanDepth"`
+	Status                     string              `json:"status"`
+	CloseOnComplete            bool                `json:"closeOnComplete"`
+	CreatedOn                  string              `json:"createdOn"`
+	UpdatedOn                  string              `json:"updatedOn"`
+	Activity                   PlanActivitySummary `json:"activity"`
+	Orders                     []*Order            `json:"orders"`
 }
 
 type PlanActivitySummary struct {
@@ -336,7 +337,7 @@ func (controller *PlanController) HandleGetPlan(c echo.Context) error {
 			Title:                  r.Data.Plan.Title,
 			TotalDepth:             r.Data.Plan.TotalDepth,
 			Exchange:               r.Data.Plan.Exchange,
-			BaseCurrencySymbol:     r.Data.Plan.BaseCurrencySymbol,
+			UserCurrencySymbol:     r.Data.Plan.BaseCurrencySymbol,
 			ActiveCurrencySymbol:   r.Data.Plan.ActiveCurrencySymbol,
 			ActiveCurrencyName:     controller.currencies[r.Data.Plan.ActiveCurrencySymbol],
 			ActiveCurrencyBalance:  r.Data.Plan.ActiveCurrencyBalance,
@@ -484,29 +485,38 @@ func (controller *PlanController) HandleListPlans(c echo.Context) error {
 			AtTimestamp: time.Now().UTC().Format(time.RFC3339),
 		}
 		convertRes, _ := controller.AnalyticsClient.ConvertCurrency(context.Background(), &convertReq)
+		convertReq2 := protoAnalytics.ConversionRequest{
+			Exchange:    plan.Exchange,
+			From:        plan.InitialCurrencySymbol,
+			FromAmount:  plan.InitialCurrencyBalance,
+			To:          plan.BaseCurrencySymbol,
+			AtTimestamp: plan.CreatedOn,
+		}
+		convertRes2, _ := controller.AnalyticsClient.ConvertCurrency(context.Background(), &convertReq2)
 
 		pln := Plan{
-			PlanID:                 plan.PlanID,
-			PlanTemplateID:         plan.PlanTemplateID,
-			PlanNumber:             plan.UserPlanNumber,
-			Title:                  plan.Title,
-			TotalDepth:             plan.TotalDepth,
-			Exchange:               plan.Exchange,
-			BaseCurrencySymbol:     plan.BaseCurrencySymbol,
-			ActiveCurrencySymbol:   plan.ActiveCurrencySymbol,
-			ActiveCurrencyName:     controller.currencies[plan.ActiveCurrencySymbol],
-			ActiveCurrencyBalance:  plan.ActiveCurrencyBalance,
-			ActiveCurrencyValue:    convertRes.Data.ConvertedAmount,
-			InitialCurrencySymbol:  plan.InitialCurrencySymbol,
-			InitialCurrencyName:    controller.currencies[plan.InitialCurrencySymbol],
-			InitialCurrencyBalance: plan.InitialCurrencyBalance,
-			Status:                 plan.Status,
-			CloseOnComplete:        plan.CloseOnComplete,
-			LastExecutedOrderID:    plan.LastExecutedOrderID,
-			LastExecutedPlanDepth:  plan.LastExecutedPlanDepth,
-			CreatedOn:              plan.CreatedOn,
-			UpdatedOn:              plan.UpdatedOn,
-			Orders:                 cOrders,
+			PlanID:                     plan.PlanID,
+			PlanTemplateID:             plan.PlanTemplateID,
+			PlanNumber:                 plan.UserPlanNumber,
+			Title:                      plan.Title,
+			TotalDepth:                 plan.TotalDepth,
+			Exchange:                   plan.Exchange,
+			UserCurrencySymbol:         plan.BaseCurrencySymbol,
+			UserCurrencyBalance:        convertRes.Data.ConvertedAmount,
+			InitialUserCurrencyBalance: convertRes2.Data.ConvertedAmount,
+			ActiveCurrencySymbol:       plan.ActiveCurrencySymbol,
+			ActiveCurrencyName:         controller.currencies[plan.ActiveCurrencySymbol],
+			ActiveCurrencyBalance:      plan.ActiveCurrencyBalance,
+			InitialCurrencySymbol:      plan.InitialCurrencySymbol,
+			InitialCurrencyName:        controller.currencies[plan.InitialCurrencySymbol],
+			InitialCurrencyBalance:     plan.InitialCurrencyBalance,
+			Status:                     plan.Status,
+			CloseOnComplete:            plan.CloseOnComplete,
+			LastExecutedOrderID:        plan.LastExecutedOrderID,
+			LastExecutedPlanDepth:      plan.LastExecutedPlanDepth,
+			CreatedOn:                  plan.CreatedOn,
+			UpdatedOn:                  plan.UpdatedOn,
+			Orders:                     cOrders,
 		}
 
 		plans = append(plans, &pln)
@@ -734,7 +744,7 @@ func (controller *PlanController) HandlePostPlan(c echo.Context) error {
 			TotalDepth:             r.Data.Plan.TotalDepth,
 			Title:                  r.Data.Plan.Title,
 			Exchange:               r.Data.Plan.Exchange,
-			BaseCurrencySymbol:     r.Data.Plan.BaseCurrencySymbol,
+			UserCurrencySymbol:     r.Data.Plan.BaseCurrencySymbol,
 			ActiveCurrencySymbol:   r.Data.Plan.ActiveCurrencySymbol,
 			ActiveCurrencyName:     controller.currencies[r.Data.Plan.ActiveCurrencySymbol],
 			ActiveCurrencyBalance:  r.Data.Plan.ActiveCurrencyBalance,
@@ -910,7 +920,7 @@ func (controller *PlanController) HandleUpdatePlan(c echo.Context) error {
 			Title:                  r.Data.Plan.Title,
 			TotalDepth:             r.Data.Plan.TotalDepth,
 			Exchange:               r.Data.Plan.Exchange,
-			BaseCurrencySymbol:     r.Data.Plan.BaseCurrencySymbol,
+			UserCurrencySymbol:     r.Data.Plan.BaseCurrencySymbol,
 			ActiveCurrencySymbol:   r.Data.Plan.ActiveCurrencySymbol,
 			ActiveCurrencyName:     controller.currencies[r.Data.Plan.ActiveCurrencySymbol],
 			ActiveCurrencyBalance:  r.Data.Plan.ActiveCurrencyBalance,

@@ -1417,6 +1417,19 @@ func UpdatePlanStatus(db *sql.DB, planID, status string) error {
 // 	return error
 // }
 
+func UpdatePlanInitTimestamp(db *sql.DB, planID, timestamp string) error {
+	stmt := `
+		UPDATE plans 
+		SET 
+			initial_timestamp = $1
+		WHERE
+			id = $2`
+
+	_, err := db.Exec(stmt, timestamp, planID)
+
+	return err
+}
+
 func UpdatePlanContext(db *sql.DB, planID, executedOrderID, exchange, symbol string, activeBalance float64, planDepth int32) error {
 	stmt := `
 		UPDATE plans 
