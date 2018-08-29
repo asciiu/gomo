@@ -207,13 +207,14 @@ func (service *PlanService) HandleCompletedOrder(ctx context.Context, completedO
 		log.Println("could not publish notification: ", err)
 	}
 
-	planID, depth, err := repoPlan.UpdateOrderStatus(service.DB, completedOrderEvent.OrderID, completedOrderEvent.Status)
+	planID, depth, initTime, err := repoPlan.UpdateOrderStatus(service.DB, completedOrderEvent.OrderID, completedOrderEvent.Status)
 	if err != nil {
 		log.Println("could not update order status -- ", err.Error())
 		return nil
 	}
 
-	if depth == 1 {
+	// first order and init time was not set
+	if depth == 1 && initTime == "" {
 		if err := repoPlan.UpdatePlanInitTimestamp(service.DB, planID, now); err != nil {
 			log.Println("could not update plan init time -- ", err.Error())
 			return nil

@@ -16,22 +16,24 @@ service PlanService {
 message NewPlanRequest {
   string userID = 1;
   string baseCurrencySymbol = 2;
-  string title = 3;
-  string planTemplateID = 4;
-  string status = 5;
-  bool closeOnComplete = 6;
-  repeated order.NewOrderRequest orders = 7; 
+  string initialTimestamp = 3;
+  string title = 4;
+  string planTemplateID = 5;
+  string status = 6;
+  bool closeOnComplete = 7;
+  repeated order.NewOrderRequest orders = 8; 
 }
 
 message UpdatePlanRequest {
   string planID = 1;
   string userID = 2;
   string baseCurrencySymbol = 3;
-  string title = 4;
-  string planTemplateID = 5;
-  string status = 6;
-  bool closeOnComplete = 7;
-  repeated order.NewOrderRequest orders = 8; 
+  string initialTimestamp = 4;
+  string title = 5;
+  string planTemplateID = 6;
+  string status = 7;
+  bool closeOnComplete = 8;
+  repeated order.NewOrderRequest orders = 9; 
 }
 
 
@@ -65,18 +67,19 @@ message Plan {
   string exchange = 5;
   string title = 6;
   uint32 totalDepth = 7;
-  string baseCurrencySymbol = 19;
-  string activeCurrencySymbol = 8;
-  double activeCurrencyBalance = 9;
-  string initialCurrencySymbol = 10;
-  double initialCurrencyBalance = 11;
-  uint32 lastExecutedPlanDepth = 12;
-  string lastExecutedOrderID = 13;
-  string status = 14;
-  bool closeOnComplete = 15;
-  string createdOn = 16;
-  string updatedOn = 17;
-  repeated order.Order orders = 18; 
+  string baseCurrencySymbol = 8;
+  string activeCurrencySymbol = 9;
+  double activeCurrencyBalance = 10;
+  string initialCurrencySymbol = 11;
+  double initialCurrencyBalance = 12;
+  string initialTimestamp = 13;
+  uint32 lastExecutedPlanDepth = 14;
+  string lastExecutedOrderID = 15;
+  string status = 16;
+  bool closeOnComplete = 17;
+  string createdOn = 18;
+  string updatedOn = 19;
+  repeated order.Order orders = 20; 
 }
 
 message PlanData {

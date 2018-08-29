@@ -60,6 +60,7 @@ func FindPlanWithUnexecutedOrders(db *sql.DB, planID string) (*protoPlan.Plan, e
 		p.active_currency_balance,
 		p.initial_currency_symbol,
 		p.initial_currency_balance,
+		p.initial_timestamp,
 		p.last_executed_plan_depth,
 		p.last_executed_order_id,
 		p.user_plan_number,
@@ -128,6 +129,7 @@ func FindPlanWithUnexecutedOrders(db *sql.DB, planID string) (*protoPlan.Plan, e
 		var triggeredPrice sql.NullFloat64
 		var triggeredCondition sql.NullString
 		var triggeredTimestamp sql.NullString
+		var initialTimestamp sql.NullString
 		var actionsStr string
 		var order protoOrder.Order
 
@@ -142,6 +144,7 @@ func FindPlanWithUnexecutedOrders(db *sql.DB, planID string) (*protoPlan.Plan, e
 			&plan.ActiveCurrencyBalance,
 			&plan.InitialCurrencySymbol,
 			&plan.InitialCurrencyBalance,
+			&initialTimestamp,
 			&plan.LastExecutedPlanDepth,
 			&plan.LastExecutedOrderID,
 			&plan.UserPlanNumber,
@@ -209,6 +212,9 @@ func FindPlanWithUnexecutedOrders(db *sql.DB, planID string) (*protoPlan.Plan, e
 		if triggeredTimestamp.Valid {
 			trigger.TriggeredTimestamp = triggeredTimestamp.String
 		}
+		if initialTimestamp.Valid {
+			plan.InitialTimestamp = initialTimestamp.String
+		}
 		if err := json.Unmarshal([]byte(actionsStr), &trigger.Actions); err != nil {
 			return nil, err
 		}
@@ -250,6 +256,7 @@ func FindActivePlans(db *sql.DB) ([]*protoPlan.Plan, error) {
 		p.active_currency_balance,
 		p.initial_currency_symbol,
 		p.initial_currency_balance,
+		p.initial_timestamp,
 		p.last_executed_plan_depth,
 		p.last_executed_order_id,
 		p.close_on_complete,
@@ -305,6 +312,7 @@ func FindActivePlans(db *sql.DB) ([]*protoPlan.Plan, error) {
 		var trigger protoOrder.Trigger
 		var triggerTemplateID sql.NullString
 		var actionsStr string
+		var initialTimestamp sql.NullString
 		var plan protoPlan.Plan
 		var order protoOrder.Order
 
@@ -319,6 +327,7 @@ func FindActivePlans(db *sql.DB) ([]*protoPlan.Plan, error) {
 			&plan.ActiveCurrencyBalance,
 			&plan.InitialCurrencySymbol,
 			&plan.InitialCurrencyBalance,
+			&initialTimestamp,
 			&plan.LastExecutedPlanDepth,
 			&plan.LastExecutedOrderID,
 			&plan.CloseOnComplete,
@@ -359,6 +368,9 @@ func FindActivePlans(db *sql.DB) ([]*protoPlan.Plan, error) {
 		if err != nil {
 			log.Fatal(err)
 			return nil, err
+		}
+		if initialTimestamp.Valid {
+			plan.InitialTimestamp = initialTimestamp.String
 		}
 		if price.Valid {
 			order.LimitPrice = price.Float64
@@ -421,6 +433,7 @@ func FindPlanOrders(db *sql.DB, req *protoPlan.GetUserPlanRequest) (*protoPlan.P
 		p.active_currency_balance,
 		p.initial_currency_symbol,
 		p.initial_currency_balance,
+		p.initial_timestamp,
 		p.last_executed_plan_depth,
 		p.last_executed_order_id,
 		p.plan_template_id,
@@ -489,6 +502,7 @@ func FindPlanOrders(db *sql.DB, req *protoPlan.GetUserPlanRequest) (*protoPlan.P
 		var triggeredPrice sql.NullFloat64
 		var triggeredCondition sql.NullString
 		var triggeredTimestamp sql.NullString
+		var initialTimestamp sql.NullString
 		var finalCurrencySymbol sql.NullString
 		var actionsStr string
 		var order protoOrder.Order
@@ -504,6 +518,7 @@ func FindPlanOrders(db *sql.DB, req *protoPlan.GetUserPlanRequest) (*protoPlan.P
 			&plan.ActiveCurrencyBalance,
 			&plan.InitialCurrencySymbol,
 			&plan.InitialCurrencyBalance,
+			&initialTimestamp,
 			&plan.LastExecutedPlanDepth,
 			&plan.LastExecutedOrderID,
 			&plan.PlanTemplateID,
@@ -553,6 +568,9 @@ func FindPlanOrders(db *sql.DB, req *protoPlan.GetUserPlanRequest) (*protoPlan.P
 
 		if err != nil {
 			return nil, err
+		}
+		if initialTimestamp.Valid {
+			plan.InitialTimestamp = initialTimestamp.String
 		}
 		if price.Valid {
 			order.LimitPrice = price.Float64
@@ -612,6 +630,7 @@ func FindChildOrders(db *sql.DB, planID, parentOrderID string) (*protoPlan.Plan,
 		p.active_currency_balance,
 		p.initial_currency_symbol,
 		p.initial_currency_balance,
+		p.initial_timestamp,
 		p.last_executed_plan_depth,
 		p.last_executed_order_id,
 		p.close_on_complete,
@@ -679,6 +698,7 @@ func FindChildOrders(db *sql.DB, planID, parentOrderID string) (*protoPlan.Plan,
 		var triggeredCondition sql.NullString
 		var triggeredTimestamp sql.NullString
 		var finalCurrencySymbol sql.NullString
+		var initialTimestamp sql.NullString
 		var actionsStr string
 		var order protoOrder.Order
 
@@ -693,6 +713,7 @@ func FindChildOrders(db *sql.DB, planID, parentOrderID string) (*protoPlan.Plan,
 			&plan.ActiveCurrencyBalance,
 			&plan.InitialCurrencySymbol,
 			&plan.InitialCurrencyBalance,
+			&initialTimestamp,
 			&plan.LastExecutedPlanDepth,
 			&plan.LastExecutedOrderID,
 			&plan.CloseOnComplete,
@@ -740,6 +761,9 @@ func FindChildOrders(db *sql.DB, planID, parentOrderID string) (*protoPlan.Plan,
 
 		if err != nil {
 			return nil, err
+		}
+		if initialTimestamp.Valid {
+			plan.InitialTimestamp = initialTimestamp.String
 		}
 		if price.Valid {
 			order.LimitPrice = price.Float64
@@ -800,6 +824,7 @@ func FindParentAndChildren(db *sql.DB, planID, parentOrderID string) (*protoPlan
 		p.active_currency_balance,
 		p.initial_currency_symbol,
 		p.initial_currency_balance,
+		p.initial_timestamp,
 		p.last_executed_plan_depth,
 		p.last_executed_order_id,
 		p.close_on_complete,
@@ -868,6 +893,7 @@ func FindParentAndChildren(db *sql.DB, planID, parentOrderID string) (*protoPlan
 		var triggeredCondition sql.NullString
 		var triggeredTimestamp sql.NullString
 		var finalCurrencySymbol sql.NullString
+		var initialTimestamp sql.NullString
 		var actionsStr string
 		var order protoOrder.Order
 
@@ -882,6 +908,7 @@ func FindParentAndChildren(db *sql.DB, planID, parentOrderID string) (*protoPlan
 			&plan.ActiveCurrencyBalance,
 			&plan.InitialCurrencySymbol,
 			&plan.InitialCurrencyBalance,
+			&initialTimestamp,
 			&plan.LastExecutedPlanDepth,
 			&plan.LastExecutedOrderID,
 			&plan.CloseOnComplete,
@@ -930,6 +957,9 @@ func FindParentAndChildren(db *sql.DB, planID, parentOrderID string) (*protoPlan
 
 		if err != nil {
 			return nil, err
+		}
+		if initialTimestamp.Valid {
+			plan.InitialTimestamp = initialTimestamp.String
 		}
 		if price.Valid {
 			order.LimitPrice = price.Float64
@@ -993,7 +1023,8 @@ func FindUserPlans(db *sql.DB, userID string, page, pageSize uint32) (*protoPlan
  			active_currency_symbol,
  			active_currency_balance,
  			initial_currency_symbol,
- 			initial_currency_balance,
+			initial_currency_balance,
+			initial_timestamp,
  			last_executed_plan_depth,
  			last_executed_order_id,
  			plan_template_id,
@@ -1013,6 +1044,7 @@ func FindUserPlans(db *sql.DB, userID string, page, pageSize uint32) (*protoPlan
 	for rows.Next() {
 		var plan protoPlan.Plan
 		var planTemplateID sql.NullString
+		var initialTimestamp sql.NullString
 
 		err := rows.Scan(
 			&plan.PlanID,
@@ -1024,6 +1056,7 @@ func FindUserPlans(db *sql.DB, userID string, page, pageSize uint32) (*protoPlan
 			&plan.ActiveCurrencyBalance,
 			&plan.InitialCurrencySymbol,
 			&plan.InitialCurrencyBalance,
+			&initialTimestamp,
 			&plan.LastExecutedPlanDepth,
 			&plan.LastExecutedOrderID,
 			&planTemplateID,
@@ -1035,6 +1068,9 @@ func FindUserPlans(db *sql.DB, userID string, page, pageSize uint32) (*protoPlan
 
 		if err != nil {
 			return nil, err
+		}
+		if initialTimestamp.Valid {
+			plan.InitialTimestamp = initialTimestamp.String
 		}
 		if planTemplateID.Valid {
 			plan.PlanTemplateID = planTemplateID.String
@@ -1075,6 +1111,7 @@ func FindUserPlansWithStatus(db *sql.DB, userID, status string, page, pageSize u
 			active_currency_balance,
 			initial_currency_symbol,
 			initial_currency_balance,
+			initial_timestamp,
 			last_executed_plan_depth,
 			last_executed_order_id,
 			plan_template_id,
@@ -1094,6 +1131,7 @@ func FindUserPlansWithStatus(db *sql.DB, userID, status string, page, pageSize u
 	for rows.Next() {
 		var plan protoPlan.Plan
 		var planTemplateID sql.NullString
+		var initialTimestamp sql.NullString
 
 		err := rows.Scan(
 			&plan.PlanID,
@@ -1105,6 +1143,7 @@ func FindUserPlansWithStatus(db *sql.DB, userID, status string, page, pageSize u
 			&plan.ActiveCurrencyBalance,
 			&plan.InitialCurrencySymbol,
 			&plan.InitialCurrencyBalance,
+			&initialTimestamp,
 			&plan.LastExecutedPlanDepth,
 			&plan.LastExecutedOrderID,
 			&planTemplateID,
@@ -1116,6 +1155,9 @@ func FindUserPlansWithStatus(db *sql.DB, userID, status string, page, pageSize u
 
 		if err != nil {
 			return nil, err
+		}
+		if initialTimestamp.Valid {
+			plan.InitialTimestamp = initialTimestamp.String
 		}
 		if planTemplateID.Valid {
 			plan.PlanTemplateID = planTemplateID.String
@@ -1157,6 +1199,7 @@ func FindUserExchangePlansWithStatus(db *sql.DB, userID, status, exchange string
 			active_currency_balance,
 			initial_currency_symbol,
 			initial_currency_balance,
+			initial_timestamp,
 			last_executed_plan_depth,
 			last_executed_order_id,
 			plan_template_id,
@@ -1176,6 +1219,7 @@ func FindUserExchangePlansWithStatus(db *sql.DB, userID, status, exchange string
 	for rows.Next() {
 		var plan protoPlan.Plan
 		var planTemplateID sql.NullString
+		var initialTimestamp sql.NullString
 
 		err := rows.Scan(
 			&plan.PlanID,
@@ -1187,6 +1231,7 @@ func FindUserExchangePlansWithStatus(db *sql.DB, userID, status, exchange string
 			&plan.ActiveCurrencyBalance,
 			&plan.InitialCurrencySymbol,
 			&plan.InitialCurrencyBalance,
+			&initialTimestamp,
 			&plan.LastExecutedPlanDepth,
 			&plan.LastExecutedOrderID,
 			&planTemplateID,
@@ -1198,6 +1243,9 @@ func FindUserExchangePlansWithStatus(db *sql.DB, userID, status, exchange string
 
 		if err != nil {
 			return nil, err
+		}
+		if initialTimestamp.Valid {
+			plan.InitialTimestamp = initialTimestamp.String
 		}
 		if planTemplateID.Valid {
 			plan.PlanTemplateID = planTemplateID.String
@@ -1238,6 +1286,7 @@ func FindUserMarketPlansWithStatus(db *sql.DB, userID, status, exchange, marketN
 			active_currency_balance,
 			initial_currency_symbol,
 			initial_currency_balance,
+			initial_timestamp,
 			last_executed_plan_depth,
 			last_executed_order_id,
 			plan_template_id,
@@ -1257,6 +1306,7 @@ func FindUserMarketPlansWithStatus(db *sql.DB, userID, status, exchange, marketN
 	for rows.Next() {
 		var plan protoPlan.Plan
 		var planTemplateID sql.NullString
+		var initialTimestamp sql.NullString
 
 		err := rows.Scan(
 			&plan.PlanID,
@@ -1268,6 +1318,7 @@ func FindUserMarketPlansWithStatus(db *sql.DB, userID, status, exchange, marketN
 			&plan.ActiveCurrencyBalance,
 			&plan.InitialCurrencySymbol,
 			&plan.InitialCurrencyBalance,
+			&initialTimestamp,
 			&plan.LastExecutedPlanDepth,
 			&plan.LastExecutedOrderID,
 			&planTemplateID,
@@ -1279,6 +1330,9 @@ func FindUserMarketPlansWithStatus(db *sql.DB, userID, status, exchange, marketN
 
 		if err != nil {
 			return nil, err
+		}
+		if initialTimestamp.Valid {
+			plan.InitialTimestamp = initialTimestamp.String
 		}
 		if planTemplateID.Valid {
 			plan.PlanTemplateID = planTemplateID.String
@@ -1320,6 +1374,7 @@ func InsertPlan(db *sql.DB, newPlan *protoPlan.Plan) error {
 		active_currency_balance,
 		initial_currency_symbol,
 		initial_currency_balance,
+		initial_timestamp,
 		last_executed_plan_depth,
 		last_executed_order_id,
 		plan_template_id,
@@ -1328,7 +1383,7 @@ func InsertPlan(db *sql.DB, newPlan *protoPlan.Plan) error {
 		status, 
 		created_on,
 		updated_on) 
-		values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18)`)
+		values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19)`)
 
 	if err != nil {
 		txn.Rollback()
@@ -1345,6 +1400,7 @@ func InsertPlan(db *sql.DB, newPlan *protoPlan.Plan) error {
 		newPlan.ActiveCurrencyBalance,
 		newPlan.InitialCurrencySymbol,
 		newPlan.InitialCurrencyBalance,
+		newPlan.InitialTimestamp,
 		newPlan.LastExecutedPlanDepth,
 		newPlan.LastExecutedOrderID,
 		newPlan.PlanTemplateID,
