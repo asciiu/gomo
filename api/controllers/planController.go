@@ -71,6 +71,7 @@ type Plan struct {
 	InitialCurrencySymbol      string              `json:"initialCurrencySymbol"`
 	InitialCurrencyName        string              `json:"initialCurrencyName"`
 	InitialCurrencyBalance     float64             `json:"initialCurrencyBalance"`
+	InitialTimestamp           string              `json:"initialTimestamp"`
 	LastExecutedOrderID        string              `json:"lastExecutedOrderID"`
 	LastExecutedPlanDepth      uint32              `json:"lastExecutedPlanDepth"`
 	Status                     string              `json:"status"`
@@ -344,6 +345,7 @@ func (controller *PlanController) HandleGetPlan(c echo.Context) error {
 			InitialCurrencySymbol:  r.Data.Plan.InitialCurrencySymbol,
 			InitialCurrencyName:    controller.currencies[r.Data.Plan.InitialCurrencySymbol],
 			InitialCurrencyBalance: r.Data.Plan.InitialCurrencyBalance,
+			InitialTimestamp:       r.Data.Plan.InitialTimestamp,
 			Status:                 r.Data.Plan.Status,
 			CloseOnComplete:        r.Data.Plan.CloseOnComplete,
 			LastExecutedOrderID:    r.Data.Plan.LastExecutedOrderID,
@@ -485,14 +487,19 @@ func (controller *PlanController) HandleListPlans(c echo.Context) error {
 			AtTimestamp: time.Now().UTC().Format(time.RFC3339),
 		}
 		convertRes, _ := controller.AnalyticsClient.ConvertCurrency(context.Background(), &convertReq)
-		convertReq2 := protoAnalytics.ConversionRequest{
-			Exchange:    plan.Exchange,
-			From:        plan.InitialCurrencySymbol,
-			FromAmount:  plan.InitialCurrencyBalance,
-			To:          plan.BaseCurrencySymbol,
-			AtTimestamp: plan.CreatedOn,
+
+		initialUserCurrencyBalance := 0.0
+		if plan.InitialTimestamp != "" {
+			convertReq2 := protoAnalytics.ConversionRequest{
+				Exchange:    plan.Exchange,
+				From:        plan.InitialCurrencySymbol,
+				FromAmount:  plan.InitialCurrencyBalance,
+				To:          plan.BaseCurrencySymbol,
+				AtTimestamp: plan.InitialTimestamp,
+			}
+			convertRes2, _ := controller.AnalyticsClient.ConvertCurrency(context.Background(), &convertReq2)
+			initialUserCurrencyBalance = convertRes2.Data.ConvertedAmount
 		}
-		convertRes2, _ := controller.AnalyticsClient.ConvertCurrency(context.Background(), &convertReq2)
 
 		pln := Plan{
 			PlanID:                     plan.PlanID,
@@ -503,13 +510,14 @@ func (controller *PlanController) HandleListPlans(c echo.Context) error {
 			Exchange:                   plan.Exchange,
 			UserCurrencySymbol:         plan.BaseCurrencySymbol,
 			UserCurrencyBalance:        convertRes.Data.ConvertedAmount,
-			InitialUserCurrencyBalance: convertRes2.Data.ConvertedAmount,
+			InitialUserCurrencyBalance: initialUserCurrencyBalance,
 			ActiveCurrencySymbol:       plan.ActiveCurrencySymbol,
 			ActiveCurrencyName:         controller.currencies[plan.ActiveCurrencySymbol],
 			ActiveCurrencyBalance:      plan.ActiveCurrencyBalance,
 			InitialCurrencySymbol:      plan.InitialCurrencySymbol,
 			InitialCurrencyName:        controller.currencies[plan.InitialCurrencySymbol],
 			InitialCurrencyBalance:     plan.InitialCurrencyBalance,
+			InitialTimestamp:           plan.InitialTimestamp,
 			Status:                     plan.Status,
 			CloseOnComplete:            plan.CloseOnComplete,
 			LastExecutedOrderID:        plan.LastExecutedOrderID,
@@ -546,6 +554,9 @@ type PlanRequest struct {
 	// Optional plan template ID. Leo wanted this for the templating system.
 	// in: body
 	PlanTemplateID string `json:"planTemplateID"`
+	// Optional init timestamp for plan RFC3339 formatted (e.g. 2018-08-26T22:49:10.168652Z). This timestamp will be used to measure initial user currency balance (valuation in user preferred currency)
+	// in: body
+	InitialTimestamp string `json:"initialTimestamp"`
 	// Optional defaults to 'active' status. Valid input status is 'active', 'inactive', or 'historic'
 	// in: body
 	Status string `json:"status"`
@@ -673,6 +684,7 @@ func (controller *PlanController) HandlePostPlan(c echo.Context) error {
 		PlanTemplateID:     newPlan.PlanTemplateID,
 		Status:             newPlan.Status,
 		CloseOnComplete:    newPlan.CloseOnComplete,
+		InitialTimestamp:   newPlan.InitialTimestamp,
 		Orders:             newOrderRequests,
 	}
 
@@ -751,6 +763,7 @@ func (controller *PlanController) HandlePostPlan(c echo.Context) error {
 			InitialCurrencySymbol:  r.Data.Plan.InitialCurrencySymbol,
 			InitialCurrencyName:    controller.currencies[r.Data.Plan.InitialCurrencySymbol],
 			InitialCurrencyBalance: r.Data.Plan.InitialCurrencyBalance,
+			InitialTimestamp:       r.Data.Plan.InitialTimestamp,
 			Status:                 r.Data.Plan.Status,
 			CloseOnComplete:        r.Data.Plan.CloseOnComplete,
 			LastExecutedOrderID:    r.Data.Plan.LastExecutedOrderID,
@@ -775,6 +788,9 @@ type UpdatePlanRequest struct {
 	// Optional plan template ID.
 	// in: body
 	PlanTemplateID string `json:"planTemplateID"`
+	// Optional init timestamp for plan RFC3339 formatted (e.g. 2018-08-26T22:49:10.168652Z). This timestamp will be used to measure initial user currency balance (valuation in user preferred currency)
+	// in: body
+	InitialTimestamp string `json:"initialTimestamp"`
 	// Optional only needed to update the status of the plan to 'inactive', 'active'
 	// in: body
 	Status string `json:"status"`
@@ -845,6 +861,7 @@ func (controller *PlanController) HandleUpdatePlan(c echo.Context) error {
 		Title:              updatePlan.Title,
 		BaseCurrencySymbol: updatePlan.BaseCurrencySymbol,
 		PlanTemplateID:     updatePlan.PlanTemplateID,
+		InitialTimestamp:   updatePlan.InitialTimestamp,
 		Status:             updatePlan.Status,
 		CloseOnComplete:    updatePlan.CloseOnComplete,
 		Orders:             orderRequests,
@@ -927,6 +944,7 @@ func (controller *PlanController) HandleUpdatePlan(c echo.Context) error {
 			InitialCurrencySymbol:  r.Data.Plan.InitialCurrencySymbol,
 			InitialCurrencyName:    controller.currencies[r.Data.Plan.InitialCurrencySymbol],
 			InitialCurrencyBalance: r.Data.Plan.InitialCurrencyBalance,
+			InitialTimestamp:       r.Data.Plan.InitialTimestamp,
 			Status:                 r.Data.Plan.Status,
 			CloseOnComplete:        r.Data.Plan.CloseOnComplete,
 			LastExecutedOrderID:    r.Data.Plan.LastExecutedOrderID,

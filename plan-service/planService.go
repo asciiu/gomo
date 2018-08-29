@@ -537,6 +537,7 @@ func (service *PlanService) NewPlan(ctx context.Context, req *protoPlan.NewPlanR
 		ActiveCurrencyBalance:  newOrders[0].InitialCurrencyBalance,
 		InitialCurrencySymbol:  newOrders[0].InitialCurrencySymbol,
 		InitialCurrencyBalance: newOrders[0].InitialCurrencyBalance,
+		InitialTimestamp:       req.InitialTimestamp,
 		Exchange:               newOrders[0].Exchange,
 		LastExecutedPlanDepth:  0,
 		LastExecutedOrderID:    none,
@@ -981,6 +982,15 @@ func (service *PlanService) UpdatePlan(ctx context.Context, req *protoPlan.Updat
 			txn.Rollback()
 			res.Status = constRes.Error
 			res.Message = "error encountered while updating the plan status: " + err.Error()
+			return nil
+		}
+	}
+	if pln.InitialTimestamp != req.InitialTimestamp {
+		pln.InitialTimestamp = req.InitialTimestamp
+		if err := repoPlan.UpdatePlanInitTimeTxn(txn, ctx, pln.PlanID, pln.InitialTimestamp); err != nil {
+			txn.Rollback()
+			res.Status = constRes.Error
+			res.Message = "error encountered while updating the plan init time: " + err.Error()
 			return nil
 		}
 	}

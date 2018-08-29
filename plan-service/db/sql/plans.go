@@ -1531,6 +1531,19 @@ func UpdatePlanBaseCurrencyTxn(txn *sql.Tx, ctx context.Context, planID, baseCur
 	return err
 }
 
+func UpdatePlanInitTimeTxn(txn *sql.Tx, ctx context.Context, planID, timestamp string) error {
+	stmt := `
+		UPDATE plans 
+		SET 
+			initial_timestamp = $1
+		WHERE
+			id = $2`
+
+	_, err := txn.ExecContext(ctx, stmt, timestamp, planID)
+
+	return err
+}
+
 func UpdatePlanStatusTxn(txn *sql.Tx, ctx context.Context, planID, status string) error {
 	_, err := txn.ExecContext(ctx, `
 		UPDATE plans 
