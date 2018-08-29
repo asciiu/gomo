@@ -985,7 +985,7 @@ func (service *PlanService) UpdatePlan(ctx context.Context, req *protoPlan.Updat
 			return nil
 		}
 	}
-	if pln.InitialTimestamp != req.InitialTimestamp {
+	if pln.InitialTimestamp != req.InitialTimestamp && req.InitialTimestamp != "" {
 		pln.InitialTimestamp = req.InitialTimestamp
 		if err := repoPlan.UpdatePlanInitTimeTxn(txn, ctx, pln.PlanID, pln.InitialTimestamp); err != nil {
 			txn.Rollback()
