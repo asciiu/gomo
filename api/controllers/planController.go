@@ -331,6 +331,15 @@ func (controller *PlanController) HandleGetPlan(c echo.Context) error {
 		recent = activityData.Data.Activity[0]
 	}
 
+	convertReq := protoAnalytics.ConversionRequest{
+		Exchange:    plan.Exchange,
+		From:        plan.ActiveCurrencySymbol,
+		FromAmount:  plan.ActiveCurrencyBalance,
+		To:          plan.BaseCurrencySymbol,
+		AtTimestamp: time.Now().UTC().Format(time.RFC3339),
+	}
+	convertRes, _ := controller.AnalyticsClient.ConvertCurrency(context.Background(), &convertReq)
+
 	// calc plan initial balance at time only if initial timestamp is valid
 	// when initial timestamp == "" it means it was not set yet -- 8/29/18 set as first triggeredTime
 	initialTimeBalance := 0.0
@@ -355,22 +364,23 @@ func (controller *PlanController) HandleGetPlan(c echo.Context) error {
 			Title:                      plan.Title,
 			TotalDepth:                 plan.TotalDepth,
 			Exchange:                   plan.Exchange,
+			InitialTimestamp:           plan.InitialTimestamp,
 			UserCurrencySymbol:         plan.BaseCurrencySymbol,
+			UserCurrencyBalance:        convertRes.Data.ConvertedAmount,
+			InitialUserCurrencyBalance: initialTimeBalance,
 			ActiveCurrencySymbol:       plan.ActiveCurrencySymbol,
 			ActiveCurrencyName:         controller.currencies[plan.ActiveCurrencySymbol],
 			ActiveCurrencyBalance:      plan.ActiveCurrencyBalance,
 			InitialCurrencySymbol:      plan.InitialCurrencySymbol,
 			InitialCurrencyName:        controller.currencies[plan.InitialCurrencySymbol],
 			InitialCurrencyBalance:     plan.InitialCurrencyBalance,
-			InitialTimestamp:           plan.InitialTimestamp,
-			InitialUserCurrencyBalance: initialTimeBalance,
-			Status:                plan.Status,
-			CloseOnComplete:       plan.CloseOnComplete,
-			LastExecutedOrderID:   plan.LastExecutedOrderID,
-			LastExecutedPlanDepth: plan.LastExecutedPlanDepth,
-			Orders:                newOrders,
-			CreatedOn:             plan.CreatedOn,
-			UpdatedOn:             plan.UpdatedOn,
+			Status:                     plan.Status,
+			CloseOnComplete:            plan.CloseOnComplete,
+			LastExecutedOrderID:        plan.LastExecutedOrderID,
+			LastExecutedPlanDepth:      plan.LastExecutedPlanDepth,
+			Orders:                     newOrders,
+			CreatedOn:                  plan.CreatedOn,
+			UpdatedOn:                  plan.UpdatedOn,
 			Activity: PlanActivitySummary{
 				Total:  activityCount.Data.Count,
 				Recent: recent,
