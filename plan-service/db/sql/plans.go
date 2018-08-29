@@ -1486,7 +1486,8 @@ func UpdatePlanInitTimestamp(db *sql.DB, planID, timestamp string) error {
 	return err
 }
 
-func UpdatePlanContext(db *sql.DB, planID, executedOrderID, exchange, symbol string, activeBalance float64, planDepth int32) error {
+// returns (initial_time, error)
+func UpdatePlanContext(db *sql.DB, planID, executedOrderID, exchange, symbol string, activeBalance float64, planDepth int32) (string, error) {
 	stmt := `
 		UPDATE plans 
 		SET 
@@ -1496,11 +1497,16 @@ func UpdatePlanContext(db *sql.DB, planID, executedOrderID, exchange, symbol str
 			active_currency_balance = $4,
 			exchange_name = $5 
 		WHERE
-			id = $6`
+			id = $6
+		RETURNING initial_timestamp`
 
-	_, err := db.Exec(stmt, executedOrderID, planDepth, symbol, activeBalance, exchange, planID)
+	var initTime sql.NullString
+	err := db.QueryRow(stmt, executedOrderID, planDepth, symbol, activeBalance, exchange, planID).Scan(&initTime)
+	if err != nil {
+		return "", err
+	}
 
-	return err
+	return initTime.String, nil
 }
 
 func UpdatePlanContextTxn(txn *sql.Tx, ctx context.Context, planID, symbol, exchange string, activeBalance float64) error {

@@ -207,18 +207,10 @@ func (service *PlanService) HandleCompletedOrder(ctx context.Context, completedO
 		log.Println("could not publish notification: ", err)
 	}
 
-	planID, depth, initTime, err := repoPlan.UpdateOrderStatus(service.DB, completedOrderEvent.OrderID, completedOrderEvent.Status)
+	planID, depth, err := repoPlan.UpdateOrderStatus(service.DB, completedOrderEvent.OrderID, completedOrderEvent.Status)
 	if err != nil {
 		log.Println("could not update order status -- ", err.Error())
 		return nil
-	}
-
-	// first order and init time was not set
-	if depth == 1 && initTime == "" {
-		if err := repoPlan.UpdatePlanInitTimestamp(service.DB, planID, now); err != nil {
-			log.Println("could not update plan init time -- ", err.Error())
-			return nil
-		}
 	}
 
 	if completedOrderEvent.Status == constPlan.Filled {
@@ -242,15 +234,24 @@ func (service *PlanService) HandleCompletedOrder(ctx context.Context, completedO
 			return nil
 		}
 
-		if err := repoPlan.UpdatePlanContext(service.DB,
+		initTime, err := repoPlan.UpdatePlanContext(service.DB,
 			planID,
 			completedOrderEvent.OrderID,
 			completedOrderEvent.Exchange,
 			completedOrderEvent.FinalCurrencySymbol,
 			completedOrderEvent.FinalCurrencyBalance,
-			depth); err != nil {
+			depth)
+		if err != nil {
 			log.Println("completed order error trying to update the plan context -- ", err.Error())
 			return nil
+		}
+
+		// first order and init time was not set
+		if depth == 1 && initTime == "" {
+			if err := repoPlan.UpdatePlanInitTimestamp(service.DB, planID, now); err != nil {
+				log.Println("could not update plan init time -- ", err.Error())
+				return nil
+			}
 		}
 
 		// load the child orders of this completed order

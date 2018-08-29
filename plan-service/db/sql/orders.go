@@ -84,27 +84,21 @@ func InsertOrders(txn *sql.Tx, orders []*protoOrder.Order) error {
 	return nil
 }
 
-// returns (planID, plan_depth, initial_timestamp, error)
-func UpdateOrderStatus(db *sql.DB, orderID, status string) (string, int32, string, error) {
+// returns (planID, plan_depth, error)
+func UpdateOrderStatus(db *sql.DB, orderID, status string) (string, int32, error) {
 	updatePlanOrderSql := `UPDATE orders SET status = $1 WHERE id = $2 
-	RETURNING plan_id, plan_depth, initial_timestamp`
+	RETURNING plan_id, plan_depth`
 
 	var planID string
 	var depth int32
-	var initialTime sql.NullString
 	err := db.QueryRow(updatePlanOrderSql, status, orderID).
-		Scan(&planID, &depth, &initialTime)
+		Scan(&planID, &depth)
 
 	if err != nil {
-		return "", 0, "", err
+		return "", 0, err
 	}
 
-	initialTimestamp := ""
-	if initialTime.Valid {
-		initialTimestamp = initialTime.String
-	}
-
-	return planID, depth, initialTimestamp, nil
+	return planID, depth, nil
 }
 
 // returns (planID, depth, err)
