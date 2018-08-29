@@ -89,8 +89,9 @@ func UpdateOrderStatus(db *sql.DB, orderID, status string) (string, int32, strin
 	updatePlanOrderSql := `UPDATE orders SET status = $1 WHERE id = $2 
 	RETURNING plan_id, plan_depth, initial_timestamp`
 
-	var planID, initialTime string
+	var planID string
 	var depth int32
+	var initialTime sql.NullString
 	err := db.QueryRow(updatePlanOrderSql, status, orderID).
 		Scan(&planID, &depth, &initialTime)
 
@@ -98,7 +99,12 @@ func UpdateOrderStatus(db *sql.DB, orderID, status string) (string, int32, strin
 		return "", 0, "", err
 	}
 
-	return planID, depth, initialTime, nil
+	initialTimestamp := ""
+	if initialTime.Valid {
+		initialTimestamp = initialTime.String
+	}
+
+	return planID, depth, initialTimestamp, nil
 }
 
 // returns (planID, depth, err)
