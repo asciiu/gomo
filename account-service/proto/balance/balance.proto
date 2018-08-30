@@ -4,21 +4,57 @@ package balance;
 
 // Requests
 message NewBalanceRequest {
-  string currencySymbol = 1;
-  double currencyBalance = 2;
+  string accountID = 1;
+  string currencySymbol = 2;
+  double available = 3;
+}
+
+message BalanceRequest {
+  string accountID = 1;
+  string currencySymbol = 2;
+}
+
+message UpdateBalanceRequest {
+  string accountID = 1;
+  string currencySymbol = 2;
+  double available = 3;
+  double locked = 4;
+  double exchangeTotal = 5;
+  double exchangeAvailable = 6;
+  double exchangeLocked = 7; 
+}
+
+message ValidateBalanceRequest {
+  string accountID = 1;
+  string currencySymbol = 2;
+  double available = 3;
 }
 
 // Responses
 message Balance {
-  string balanceID = 1;
-  string userID = 2;
-  string accountID = 3;
-  string currencySymbol = 4;
-  double available = 5;
-  double locked = 6;
-  double exchangeTotal = 7;
-  double exchangeAvailable = 8;
-  double exchangeLocked = 9; 
-  string created_on = 10;
-  string updated_on = 11;
+  string userID = 1;
+  string accountID = 2;
+  string currencySymbol = 3;
+  double available = 4;
+  double locked = 5;
+  double exchangeTotal = 6;
+  double exchangeAvailable = 7;
+  double exchangeLocked = 8; 
+  string created_on = 9;
+  string updated_on = 10;
+}
+
+message BalanceData {
+  Balance balance = 1;
+}
+
+message BalanceResponse {
+  string status = 1;
+  string message = 2;
+  BalanceData data = 3;
+}
+
+message ValidateBalanceResponse {
+  string status = 1;
+  string message = 2;
 }

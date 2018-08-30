@@ -78,13 +78,11 @@ func (service *AccountService) AddAccount(ctx context.Context, req *protoAccount
 	balances := make([]*protoBalance.Balance, 0, len(req.Balances))
 
 	for _, b := range req.Balances {
-		balanceID := uuid.New()
 		balance := protoBalance.Balance{
-			BalanceID:      balanceID.String(),
 			UserID:         req.UserID,
 			AccountID:      accountID,
 			CurrencySymbol: b.CurrencySymbol,
-			Available:      b.CurrencyBalance,
+			Available:      b.Available,
 			Locked:         0,
 			CreatedOn:      now,
 			UpdatedOn:      now,
@@ -121,6 +119,10 @@ func (service *AccountService) AddAccount(ctx context.Context, req *protoAccount
 	res.Status = constRes.Success
 	res.Data = &protoAccount.UserAccount{Account: &account}
 
+	return nil
+}
+
+func (service *AccountService) AddAccountBalance(ctx context.Context, req *protoBalance.NewBalanceRequest, res *protoBalance.BalanceResponse) error {
 	return nil
 }
 
@@ -184,6 +186,10 @@ func (service *AccountService) GetAccount(ctx context.Context, req *protoAccount
 	return nil
 }
 
+func (service *AccountService) GetAccountBalance(ctx context.Context, req *protoBalance.BalanceRequest, res *protoBalance.BalanceResponse) error {
+	return nil
+}
+
 func (service *AccountService) UpdateAccount(ctx context.Context, req *protoAccount.UpdateAccountRequest, res *protoAccount.AccountResponse) error {
 	account, err := repoAccount.FindAccount(service.DB, req.AccountID)
 
@@ -219,5 +225,13 @@ func (service *AccountService) UpdateAccount(ctx context.Context, req *protoAcco
 		Account: account,
 	}
 
+	return nil
+}
+
+func (service *AccountService) UpdateAccountBalance(ctx context.Context, req *protoBalance.UpdateBalanceRequest, res *protoBalance.BalanceResponse) error {
+	return nil
+}
+
+func (service *AccountService) ValidateAccountBalance(ctx context.Context, req *protoBalance.ValidateBalanceRequest, res *protoBalance.ValidateBalanceResponse) error {
 	return nil
 }

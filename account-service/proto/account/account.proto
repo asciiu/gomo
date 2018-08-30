@@ -6,10 +6,14 @@ import "github.com/asciiu/gomo/account-service/proto/balance/balance.proto";
 
 service AccountService {
   rpc AddAccount(NewAccountRequest) returns (AccountResponse) {}
+  rpc AddAccountBalance(balance.NewBalanceRequest) returns (balance.BalanceResponse) {}
   rpc DeleteAccount(AccountRequest) returns (AccountResponse) {}
   rpc GetAccounts(AccountsRequest) returns (AccountsResponse) {}
   rpc GetAccount(AccountRequest) returns (AccountResponse) {}
+  rpc GetAccountBalance(balance.BalanceRequest) returns (balance.BalanceResponse) {}
   rpc UpdateAccount(UpdateAccountRequest) returns (AccountResponse) {}
+  rpc UpdateAccountBalance(balance.UpdateBalanceRequest) returns (balance.BalanceResponse) {}
+  rpc ValidateAccountBalance(balance.ValidateBalanceRequest) returns (balance.ValidateBalanceResponse) {} 
 }
 
 // Requests

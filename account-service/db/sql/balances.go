@@ -27,8 +27,9 @@ func InsertBalances(txn *sql.Tx, balances []*protoBalance.Balance) error {
 	}
 
 	for _, balance := range balances {
+		balanceID := uuid.Must(uuid.NewV4(), nil)
 		_, err = stmt.Exec(
-			uuid.FromStringOrNil(balance.BalanceID),
+			uuid.FromStringOrNil(balanceID.String()),
 			uuid.FromStringOrNil(balance.UserID),
 			uuid.FromStringOrNil(balance.AccountID),
 			balance.CurrencySymbol,
