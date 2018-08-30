@@ -6,7 +6,7 @@ import (
 	"os"
 
 	protoAccount "github.com/asciiu/gomo/account-service/proto/account"
-	constMessage "github.com/asciiu/gomo/common/constants/message"
+	protoBinance "github.com/asciiu/gomo/binance-service/proto/binance"
 	"github.com/asciiu/gomo/common/db"
 	micro "github.com/micro/go-micro"
 	k8s "github.com/micro/kubernetes/go/micro"
@@ -14,7 +14,8 @@ import (
 
 func main() {
 	srv := k8s.NewService(
-		micro.Name("keys"),
+		micro.Name("fomo.accounts"),
+		micro.Version("latest"),
 	)
 
 	// Init will parse the command line flags.
@@ -27,9 +28,8 @@ func main() {
 	}
 
 	accountService := AccountService{
-		DB:        gomoDB,
-		KeyPub:    micro.NewPublisher(constMessage.TopicNewKey, srv.Client()),
-		NotifyPub: micro.NewPublisher(constMessage.TopicNotification, srv.Client()),
+		DB:            gomoDB,
+		BinanceClient: protoBinance.NewBinanceServiceClient("binance", srv.Client()),
 	}
 
 	protoAccount.RegisterAccountServiceHandler(srv.Server(), &accountService)

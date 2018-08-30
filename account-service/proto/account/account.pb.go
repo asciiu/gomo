@@ -44,12 +44,12 @@ const _ = proto.ProtoPackageIsVersion2 // please upgrade the proto package
 
 // Requests
 type NewAccountRequest struct {
-	UserID      string                       `protobuf:"bytes,1,opt,name=userID" json:"userID"`
-	Exchange    string                       `protobuf:"bytes,2,opt,name=exchange" json:"exchange"`
-	KeyPublic   string                       `protobuf:"bytes,3,opt,name=keyPublic" json:"keyPublic"`
-	KeySecret   string                       `protobuf:"bytes,4,opt,name=keySecret" json:"keySecret"`
-	Description string                       `protobuf:"bytes,5,opt,name=description" json:"description"`
-	Balances    []*balance.NewBalanceRequest `protobuf:"bytes,6,rep,name=balances" json:"balances"`
+	UserID      string                       `protobuf:"bytes,1,opt,name=userID" json:"userID,omitempty"`
+	Exchange    string                       `protobuf:"bytes,2,opt,name=exchange" json:"exchange,omitempty"`
+	KeyPublic   string                       `protobuf:"bytes,3,opt,name=keyPublic" json:"keyPublic,omitempty"`
+	KeySecret   string                       `protobuf:"bytes,4,opt,name=keySecret" json:"keySecret,omitempty"`
+	Description string                       `protobuf:"bytes,5,opt,name=description" json:"description,omitempty"`
+	Balances    []*balance.NewBalanceRequest `protobuf:"bytes,6,rep,name=balances" json:"balances,omitempty"`
 }
 
 func (m *NewAccountRequest) Reset()                    { *m = NewAccountRequest{} }
@@ -100,12 +100,12 @@ func (m *NewAccountRequest) GetBalances() []*balance.NewBalanceRequest {
 }
 
 type UpdateAccountRequest struct {
-	AccountID   string                       `protobuf:"bytes,1,opt,name=accountID" json:"accountID"`
-	UserID      string                       `protobuf:"bytes,2,opt,name=userID" json:"userID"`
-	KeyPublic   string                       `protobuf:"bytes,3,opt,name=keyPublic" json:"keyPublic"`
-	KeySecret   string                       `protobuf:"bytes,4,opt,name=keySecret" json:"keySecret"`
-	Description string                       `protobuf:"bytes,5,opt,name=description" json:"description"`
-	Balances    []*balance.NewBalanceRequest `protobuf:"bytes,6,rep,name=balances" json:"balances"`
+	AccountID   string                       `protobuf:"bytes,1,opt,name=accountID" json:"accountID,omitempty"`
+	UserID      string                       `protobuf:"bytes,2,opt,name=userID" json:"userID,omitempty"`
+	KeyPublic   string                       `protobuf:"bytes,3,opt,name=keyPublic" json:"keyPublic,omitempty"`
+	KeySecret   string                       `protobuf:"bytes,4,opt,name=keySecret" json:"keySecret,omitempty"`
+	Description string                       `protobuf:"bytes,5,opt,name=description" json:"description,omitempty"`
+	Balances    []*balance.NewBalanceRequest `protobuf:"bytes,6,rep,name=balances" json:"balances,omitempty"`
 }
 
 func (m *UpdateAccountRequest) Reset()                    { *m = UpdateAccountRequest{} }
@@ -156,7 +156,7 @@ func (m *UpdateAccountRequest) GetBalances() []*balance.NewBalanceRequest {
 }
 
 type AccountRequest struct {
-	AccountID string `protobuf:"bytes,1,opt,name=accountID" json:"accountID"`
+	AccountID string `protobuf:"bytes,1,opt,name=accountID" json:"accountID,omitempty"`
 }
 
 func (m *AccountRequest) Reset()                    { *m = AccountRequest{} }
@@ -172,7 +172,7 @@ func (m *AccountRequest) GetAccountID() string {
 }
 
 type AccountsRequest struct {
-	UserID string `protobuf:"bytes,1,opt,name=userID" json:"userID"`
+	UserID string `protobuf:"bytes,1,opt,name=userID" json:"userID,omitempty"`
 }
 
 func (m *AccountsRequest) Reset()                    { *m = AccountsRequest{} }
@@ -189,17 +189,17 @@ func (m *AccountsRequest) GetUserID() string {
 
 // Responses
 type Account struct {
-	AccountID   string             `protobuf:"bytes,1,opt,name=accountID" json:"accountID"`
-	UserID      string             `protobuf:"bytes,2,opt,name=userID" json:"userID"`
-	Exchange    string             `protobuf:"bytes,3,opt,name=exchange" json:"exchange"`
-	KeyPublic   string             `protobuf:"bytes,4,opt,name=keyPublic" json:"keyPublic"`
-	KeySecret   string             `protobuf:"bytes,5,opt,name=keySecret" json:"keySecret"`
-	Title       string             `protobuf:"bytes,6,opt,name=title" json:"title"`
-	Description string             `protobuf:"bytes,7,opt,name=description" json:"description"`
-	Status      string             `protobuf:"bytes,8,opt,name=status" json:"status"`
-	CreatedOn   string             `protobuf:"bytes,9,opt,name=createdOn" json:"createdOn"`
-	UpdatedOn   string             `protobuf:"bytes,10,opt,name=updatedOn" json:"updatedOn"`
-	Balances    []*balance.Balance `protobuf:"bytes,11,rep,name=balances" json:"balances"`
+	AccountID   string             `protobuf:"bytes,1,opt,name=accountID" json:"accountID,omitempty"`
+	UserID      string             `protobuf:"bytes,2,opt,name=userID" json:"userID,omitempty"`
+	Exchange    string             `protobuf:"bytes,3,opt,name=exchange" json:"exchange,omitempty"`
+	KeyPublic   string             `protobuf:"bytes,4,opt,name=keyPublic" json:"keyPublic,omitempty"`
+	KeySecret   string             `protobuf:"bytes,5,opt,name=keySecret" json:"keySecret,omitempty"`
+	Title       string             `protobuf:"bytes,6,opt,name=title" json:"title,omitempty"`
+	Description string             `protobuf:"bytes,7,opt,name=description" json:"description,omitempty"`
+	Status      string             `protobuf:"bytes,8,opt,name=status" json:"status,omitempty"`
+	CreatedOn   string             `protobuf:"bytes,9,opt,name=createdOn" json:"createdOn,omitempty"`
+	UpdatedOn   string             `protobuf:"bytes,10,opt,name=updatedOn" json:"updatedOn,omitempty"`
+	Balances    []*balance.Balance `protobuf:"bytes,11,rep,name=balances" json:"balances,omitempty"`
 }
 
 func (m *Account) Reset()                    { *m = Account{} }
@@ -285,7 +285,7 @@ func (m *Account) GetBalances() []*balance.Balance {
 }
 
 type UserAccount struct {
-	Account *Account `protobuf:"bytes,1,opt,name=account" json:"account"`
+	Account *Account `protobuf:"bytes,1,opt,name=account" json:"account,omitempty"`
 }
 
 func (m *UserAccount) Reset()                    { *m = UserAccount{} }
@@ -301,9 +301,9 @@ func (m *UserAccount) GetAccount() *Account {
 }
 
 type AccountResponse struct {
-	Status  string       `protobuf:"bytes,1,opt,name=status" json:"status"`
-	Message string       `protobuf:"bytes,2,opt,name=message" json:"message"`
-	Data    *UserAccount `protobuf:"bytes,3,opt,name=data" json:"data"`
+	Status  string       `protobuf:"bytes,1,opt,name=status" json:"status,omitempty"`
+	Message string       `protobuf:"bytes,2,opt,name=message" json:"message,omitempty"`
+	Data    *UserAccount `protobuf:"bytes,3,opt,name=data" json:"data,omitempty"`
 }
 
 func (m *AccountResponse) Reset()                    { *m = AccountResponse{} }
@@ -333,7 +333,7 @@ func (m *AccountResponse) GetData() *UserAccount {
 }
 
 type UserAccounts struct {
-	Accounts []*Account `protobuf:"bytes,1,rep,name=accounts" json:"accounts"`
+	Accounts []*Account `protobuf:"bytes,1,rep,name=accounts" json:"accounts,omitempty"`
 }
 
 func (m *UserAccounts) Reset()                    { *m = UserAccounts{} }
@@ -349,9 +349,9 @@ func (m *UserAccounts) GetAccounts() []*Account {
 }
 
 type AccountsResponse struct {
-	Status  string        `protobuf:"bytes,1,opt,name=status" json:"status"`
-	Message string        `protobuf:"bytes,2,opt,name=message" json:"message"`
-	Data    *UserAccounts `protobuf:"bytes,3,opt,name=data" json:"data"`
+	Status  string        `protobuf:"bytes,1,opt,name=status" json:"status,omitempty"`
+	Message string        `protobuf:"bytes,2,opt,name=message" json:"message,omitempty"`
+	Data    *UserAccounts `protobuf:"bytes,3,opt,name=data" json:"data,omitempty"`
 }
 
 func (m *AccountsResponse) Reset()                    { *m = AccountsResponse{} }

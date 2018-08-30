@@ -12,17 +12,17 @@ import (
 	repoAccount "github.com/asciiu/gomo/account-service/db/sql"
 	protoAccount "github.com/asciiu/gomo/account-service/proto/account"
 	protoBalance "github.com/asciiu/gomo/account-service/proto/balance"
+	protoBinanceBal "github.com/asciiu/gomo/binance-service/proto/balance"
+	protoBinance "github.com/asciiu/gomo/binance-service/proto/binance"
 	constExch "github.com/asciiu/gomo/common/constants/exchange"
 	constRes "github.com/asciiu/gomo/common/constants/response"
 	"github.com/google/uuid"
 	"github.com/lib/pq"
-	micro "github.com/micro/go-micro"
 )
 
 type AccountService struct {
-	DB        *sql.DB
-	KeyPub    micro.Publisher
-	NotifyPub micro.Publisher
+	DB            *sql.DB
+	BinanceClient protoBinance.BinanceServiceClient
 }
 
 // IMPORTANT! When adding support for new exchanges we must add there names here!
@@ -107,6 +107,33 @@ func (service *AccountService) AddAccount(ctx context.Context, req *protoAccount
 		UpdatedOn:   now,
 		Balances:    balances,
 	}
+
+	// validate account request when keys are present
+	switch {
+	case account.KeyPublic != "" && account.KeySecret == "":
+		res.Status = constRes.Fail
+		res.Message = "keySecret required with keyPublic!"
+		return nil
+	case account.KeyPublic == "" && account.KeySecret != "":
+		res.Status = constRes.Fail
+		res.Message = "keyPublic required with keySecret!"
+		return nil
+	}
+	// TODO if key public and key secret use call real exchange and retrieve balances
+	if account.KeyPublic != "" && account.KeySecret != "" {
+		switch account.Exchange {
+		case constExch.Binance:
+			req := protoBinanceBal.BalanceRequest{
+				UserID:    account.UserID,
+				KeyPublic: account.KeyPublic,
+				KeySecret: account.KeySecret,
+			}
+			res, _ := service.BinanceClient.GetBalances(ctx, &req)
+			fmt.Println(res)
+		}
+	}
+	// if invalid reponse send back failure
+	// else proceed
 
 	if err := repoAccount.InsertAccount(service.DB, &account); err != nil {
 		msg := fmt.Sprintf("insert account failed %s", err.Error())

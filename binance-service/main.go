@@ -13,24 +13,17 @@ func main() {
 	srv := k8s.NewService(
 		micro.Name("fomo.binance"),
 	)
-
 	srv.Init()
-
-	//verifiedPub := micro.NewPublisher(constMessage.TopicKeyVerified, srv.Client())
-	//balancePub := micro.NewPublisher(constMessage.TopicBalanceUpdate, srv.Client())
-	completedPub := micro.NewPublisher(constMessage.TopicCompletedOrder, srv.Client())
 
 	//candleRetriever := CandleRetriever{}
 	fulfiller := OrderFulfiller{
-		CompletedPub: completedPub,
+		CompletedPub: micro.NewPublisher(constMessage.TopicCompletedOrder, srv.Client()),
 	}
-
-	binanceService := new(BinanceService)
-
 	// subscribe to new key topic with a key validator
 	micro.RegisterSubscriber(constMessage.TopicTriggeredOrder, srv.Server(), &fulfiller)
 	//micro.RegisterSubscriber(constMessage.TopicCandleDataRequest, srv.Server(), &candleRetriever)
 
+	binanceService := new(BinanceService)
 	protoBinance.RegisterBinanceServiceHandler(srv.Server(), binanceService)
 
 	if err := srv.Run(); err != nil {

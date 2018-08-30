@@ -5,14 +5,15 @@
   branch = "master"
   name = "github.com/asciiu/gomo"
   packages = [
+    "binance-service/proto/balance",
+    "binance-service/proto/binance",
     "common/constants/exchange",
-    "common/constants/message",
     "common/constants/response",
     "common/db",
     "user-service/db/sql",
     "user-service/models"
   ]
-  revision = "050dbaa0ab16d1c2f7d23acb658589e10198b8da"
+  revision = "83970dd7d65e29ac7229cad174bb4ca20f801733"
 
 [[projects]]
   name = "github.com/davecgh/go-spew"
@@ -321,6 +322,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "a4f2bfdaa95a648228e7587f80504068c8f1dfbc882cb2494bbbd651a344d445"
+  inputs-digest = "1ff26887a9ceb789eb3cdb8a85294bb9bf2c8f4cddcea6493c9839b110671183"
   solver-name = "gps-cdcl"
   solver-version = 1
