@@ -1,0 +1,42 @@
+syntax = "proto3";
+
+package balance; 
+
+// Requests
+message BalanceRequest {
+  string userID = 1;
+  string keyPublic = 2;
+  string keySecret = 3;
+}
+
+// Responses
+message Balance {
+  string currencySymbol = 1;
+  double free = 2;
+  double locked = 3;
+}
+
+message BalanceList {
+  repeated Balance balances = 1;
+}
+
+message BalanceData {
+  Balance balance = 1;
+}
+
+message BalanceResponse {
+  string status = 1;
+  string message = 2;
+  BalanceData data = 3;
+}
+
+message BalancesResponse {
+  string status = 1;
+  string message = 2;
+  BalanceList data = 3;
+}
+
+message ValidateBalanceResponse {
+  string status = 1;
+  string message = 2;
+}

@@ -3,7 +3,8 @@ package main
 import (
 	"log"
 
-	msg "github.com/asciiu/gomo/common/constants/messages"
+	protoBinance "github.com/asciiu/gomo/binance-service/proto/binance"
+	constMessage "github.com/asciiu/gomo/common/constants/message"
 	micro "github.com/micro/go-micro"
 	k8s "github.com/micro/kubernetes/go/micro"
 )
@@ -15,24 +16,22 @@ func main() {
 
 	srv.Init()
 
-	verifiedPub := micro.NewPublisher(msg.TopicKeyVerified, srv.Client())
-	balancePub := micro.NewPublisher(msg.TopicBalanceUpdate, srv.Client())
-	completedPub := micro.NewPublisher(msg.TopicCompletedOrder, srv.Client())
-	keyValidator := KeyValidator{
-		KeyVerifiedPub: verifiedPub,
-		BalancePub:     balancePub,
-	}
-	// subscribe to new key topic with a key validator
-	micro.RegisterSubscriber(msg.TopicNewKey, srv.Server(), &keyValidator)
+	//verifiedPub := micro.NewPublisher(constMessage.TopicKeyVerified, srv.Client())
+	//balancePub := micro.NewPublisher(constMessage.TopicBalanceUpdate, srv.Client())
+	completedPub := micro.NewPublisher(constMessage.TopicCompletedOrder, srv.Client())
 
-	candleRetriever := CandleRetriever{}
+	//candleRetriever := CandleRetriever{}
 	fulfiller := OrderFulfiller{
 		CompletedPub: completedPub,
 	}
+
+	binanceService := new(BinanceService)
+
 	// subscribe to new key topic with a key validator
-	micro.RegisterSubscriber(msg.TopicTriggeredOrder, srv.Server(), &fulfiller)
-	micro.RegisterSubscriber(msg.TopicTriggeredOrder, srv.Server(), &fulfiller)
-	micro.RegisterSubscriber(msg.TopicCandleDataRequest, srv.Server(), &candleRetriever)
+	micro.RegisterSubscriber(constMessage.TopicTriggeredOrder, srv.Server(), &fulfiller)
+	//micro.RegisterSubscriber(constMessage.TopicCandleDataRequest, srv.Server(), &candleRetriever)
+
+	protoBinance.RegisterBinanceServiceHandler(srv.Server(), binanceService)
 
 	if err := srv.Run(); err != nil {
 		log.Fatal(err)

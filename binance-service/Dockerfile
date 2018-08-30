@@ -16,7 +16,7 @@ RUN go get -u github.com/golang/dep/cmd/dep
 
 # Create a dep project, and run `ensure`, which will pull in all 
 # of the dependencies within this directory.
-RUN dep init && dep ensure
+RUN dep ensure
 
 # Build the binary, with a few flags which will allow
 # us to run this binary in Alpine. 

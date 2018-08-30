@@ -16,7 +16,7 @@ import (
 type CandleRetriever struct {
 }
 
-func (service *KeyValidator) ProcessGetCandle(ctx context.Context, request *evt.CandleDataRequest) error {
+func (service *CandleRetriever) ProcessGetCandle(ctx context.Context, request *evt.CandleDataRequest) error {
 	if request.Exchange != exchange.Binance {
 		return nil
 	}

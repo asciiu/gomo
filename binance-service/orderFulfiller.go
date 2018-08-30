@@ -8,11 +8,9 @@ import (
 	"time"
 
 	binance "github.com/asciiu/go-binance"
-	"github.com/asciiu/gomo/common/constants/exchange"
-	"github.com/asciiu/gomo/common/constants/order"
-	"github.com/asciiu/gomo/common/constants/side"
-	"github.com/asciiu/gomo/common/constants/status"
-	evt "github.com/asciiu/gomo/common/proto/events"
+	constExt "github.com/asciiu/gomo/common/constants/exchange"
+	protoEvt "github.com/asciiu/gomo/common/proto/events"
+	constPlan "github.com/asciiu/gomo/plan-service/constants"
 	gokitlog "github.com/go-kit/kit/log"
 	micro "github.com/micro/go-micro"
 )
@@ -21,12 +19,12 @@ type OrderFulfiller struct {
 	CompletedPub micro.Publisher
 }
 
-func (filler *OrderFulfiller) FillOrder(ctx context.Context, triggerEvent *evt.TriggeredOrderEvent) error {
+func (filler *OrderFulfiller) FillOrder(ctx context.Context, triggerEvent *protoEvt.TriggeredOrderEvent) error {
 	// ignore events not binance
 	// perhaps we can have this handler only receive binance triggers but for the sake of
 	// simplicity when adding new exchanges let's just have each exchange service do a check
 	// on the exchange
-	if triggerEvent.Exchange != exchange.Binance {
+	if triggerEvent.Exchange != constExt.Binance {
 		return nil
 	}
 
@@ -57,12 +55,12 @@ func (filler *OrderFulfiller) FillOrder(ctx context.Context, triggerEvent *evt.T
 		symbol := strings.Replace(triggerEvent.MarketName, "-", "", 1)
 		// buy or sell
 		ellado := binance.SideBuy
-		if triggerEvent.Side == side.Sell {
+		if triggerEvent.Side == constPlan.Sell {
 			ellado = binance.SideSell
 		}
 		// order type can be market or limit
 		orderType := binance.TypeMarket
-		if triggerEvent.OrderType == order.LimitOrder {
+		if triggerEvent.OrderType == constPlan.LimitOrder {
 			orderType = binance.TypeLimit
 		}
 		// https://github.com/binance-exchange/binance-official-api-docs/blob/master/rest-api.md
@@ -93,14 +91,14 @@ func (filler *OrderFulfiller) FillOrder(ctx context.Context, triggerEvent *evt.T
 			// 	log.Println("could not publish failed order: ", err)
 			// }
 
-			completedEvent := evt.CompletedOrderEvent{
+			completedEvent := protoEvt.CompletedOrderEvent{
 				UserID:             triggerEvent.UserID,
 				PlanID:             triggerEvent.PlanID,
 				OrderID:            triggerEvent.OrderID,
 				Side:               triggerEvent.Side,
 				TriggeredPrice:     triggerEvent.TriggeredPrice,
 				TriggeredCondition: triggerEvent.TriggeredCondition,
-				Status:             status.Failed,
+				Status:             constPlan.Failed,
 				Details:            err.Error(),
 			}
 
