@@ -1374,7 +1374,6 @@ func InsertPlan(db *sql.DB, newPlan *protoPlan.Plan) error {
 		active_currency_balance,
 		initial_currency_symbol,
 		initial_currency_balance,
-		initial_timestamp,
 		last_executed_plan_depth,
 		last_executed_order_id,
 		plan_template_id,
@@ -1383,7 +1382,7 @@ func InsertPlan(db *sql.DB, newPlan *protoPlan.Plan) error {
 		status, 
 		created_on,
 		updated_on) 
-		values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19)`)
+		values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18)`)
 
 	if err != nil {
 		txn.Rollback()
@@ -1400,7 +1399,6 @@ func InsertPlan(db *sql.DB, newPlan *protoPlan.Plan) error {
 		newPlan.ActiveCurrencyBalance,
 		newPlan.InitialCurrencySymbol,
 		newPlan.InitialCurrencyBalance,
-		newPlan.InitialTimestamp,
 		newPlan.LastExecutedPlanDepth,
 		newPlan.LastExecutedOrderID,
 		newPlan.PlanTemplateID,
