@@ -17,6 +17,198 @@
   "host": "stage.fomo.exchange",
   "basePath": "/api",
   "paths": {
+    "/accounts": {
+      "get": {
+        "description": "Returns all accounts with their balances.",
+        "tags": [
+          "accounts"
+        ],
+        "summary": "get user accounts (protected)",
+        "operationId": "GetUserAccountsParams",
+        "responses": {
+          "200": {
+            "$ref": "#/responses/ResponseAccountListSuccess"
+          },
+          "500": {
+            "description": "the message will state what the internal server error was with \"status\": \"error\"",
+            "schema": {
+              "$ref": "#/definitions/responseError"
+            }
+          }
+        }
+      },
+      "post": {
+        "description": "An exchange account is associated with balances. Paper accounts may also have optional client specified balances.\nReal exchange accounts require the public/secret key pair to populate the account balances.",
+        "tags": [
+          "accounts"
+        ],
+        "summary": "add new exchange account (protected)",
+        "operationId": "PostAccount",
+        "parameters": [
+          {
+            "x-go-name": "Exchange",
+            "description": "Required exchange for account. Specify 'binance', 'binance paper', '... paper', etc",
+            "name": "exchange",
+            "in": "body",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "x-go-name": "KeyPublic",
+            "description": "Optional public viewable key-secret pair. This value is required for non paper accounts.",
+            "name": "keyPublic",
+            "in": "body",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "x-go-name": "KeySecret",
+            "description": "Optional init timestamp for plan RFC3339 formatted (e.g. 2018-08-26T22:49:10.168652Z). This timestamp will be used to measure initial user currency balance (valuation in user preferred currency)",
+            "name": "keySecret",
+            "in": "body",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "x-go-name": "Description",
+            "description": "Optional defaults to 'active' status. Valid input status is 'active', 'inactive', or 'historic'",
+            "name": "description",
+            "in": "body",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "x-go-name": "Balances",
+            "description": "Optional balances for a paper account",
+            "name": "balances",
+            "in": "body",
+            "schema": {
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/NewBalanceReq"
+              }
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "\"data\" will contain account data",
+            "schema": {
+              "$ref": "#/definitions/ResponseAccountSuccess"
+            }
+          },
+          "400": {
+            "description": "missing or incorrect params with \"status\": \"fail\"",
+            "schema": {
+              "$ref": "#/definitions/responseError"
+            }
+          },
+          "500": {
+            "description": "the message will state what the internal server error was with \"status\": \"error\"",
+            "schema": {
+              "$ref": "#/definitions/responseError"
+            }
+          }
+        }
+      }
+    },
+    "/accounts/:accountID": {
+      "get": {
+        "description": "Returns account deets with balances.",
+        "tags": [
+          "accounts"
+        ],
+        "summary": "get account by accountID (protected)",
+        "operationId": "GetAccountParms",
+        "responses": {
+          "200": {
+            "description": "\"data\" will contain account deets.",
+            "schema": {
+              "$ref": "#/definitions/ResponseAccountSuccess"
+            }
+          },
+          "500": {
+            "description": "the message will state what the internal server error was with \"status\": \"error\"",
+            "schema": {
+              "$ref": "#/definitions/responseError"
+            }
+          }
+        }
+      },
+      "put": {
+        "description": "update a account (protected)",
+        "tags": [
+          "accounts"
+        ],
+        "operationId": "UpdateAccountParams",
+        "parameters": [
+          {
+            "x-go-name": "KeyPublic",
+            "description": "Optional public viewable key-secret pair. This value is required for non paper accounts.",
+            "name": "keyPublic",
+            "in": "body",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "x-go-name": "KeySecret",
+            "description": "Optional init timestamp for plan RFC3339 formatted (e.g. 2018-08-26T22:49:10.168652Z). This timestamp will be used to measure initial user currency balance (valuation in user preferred currency)",
+            "name": "keySecret",
+            "in": "body",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "x-go-name": "Description",
+            "description": "Optional defaults to 'active' status. Valid input status is 'active', 'inactive', or 'historic'",
+            "name": "description",
+            "in": "body",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/responseAccountSuccess"
+          },
+          "500": {
+            "description": "the message will state what the internal server error was with \"status\": \"error\" \"data\" will contain order info with \"status\": \"success\"",
+            "schema": {
+              "$ref": "#/definitions/responseError"
+            }
+          }
+        }
+      },
+      "delete": {
+        "description": "This will set the status of an account to deleted.",
+        "tags": [
+          "accounts"
+        ],
+        "summary": "soft delete account (protected)",
+        "operationId": "DeleteAccount",
+        "responses": {
+          "200": {
+            "description": "\"data\" will contain account summary.",
+            "schema": {
+              "$ref": "#/definitions/ResponseAccountSuccess"
+            }
+          },
+          "500": {
+            "description": "the message will state what the internal server error was with \"status\": \"error\"",
+            "schema": {
+              "$ref": "#/definitions/responseError"
+            }
+          }
+        }
+      }
+    },
     "/activity": {
       "get": {
         "description": "Returns a list of activity. Response is paginated.",
@@ -1125,6 +1317,43 @@
     }
   },
   "definitions": {
+    "Account": {
+      "description": "This response should never return the key secret",
+      "type": "object",
+      "properties": {
+        "Description": {
+          "type": "string"
+        },
+        "balances": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/Balance"
+          },
+          "x-go-name": "Balances"
+        },
+        "createdOn": {
+          "type": "string",
+          "x-go-name": "CreatedOn"
+        },
+        "exchange": {
+          "type": "string",
+          "x-go-name": "Exchange"
+        },
+        "keyPublic": {
+          "type": "string",
+          "x-go-name": "KeyPublic"
+        },
+        "planID": {
+          "type": "string",
+          "x-go-name": "AccountID"
+        },
+        "updatedOn": {
+          "type": "string",
+          "x-go-name": "UpdatedOn"
+        }
+      },
+      "x-go-package": "github.com/asciiu/gomo/api/controllers"
+    },
     "AccountBalances": {
       "type": "object",
       "properties": {
@@ -1137,6 +1366,69 @@
         }
       },
       "x-go-package": "github.com/asciiu/gomo/api/controllers"
+    },
+    "AccountController": {
+      "type": "object",
+      "properties": {
+        "AccountClient": {
+          "$ref": "#/definitions/AccountServiceClient"
+        },
+        "DB": {
+          "$ref": "#/definitions/DB"
+        }
+      },
+      "x-go-package": "github.com/asciiu/gomo/api/controllers"
+    },
+    "AccountList": {
+      "type": "object",
+      "properties": {
+        "accounts": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/Account"
+          },
+          "x-go-name": "Accounts"
+        }
+      },
+      "x-go-package": "github.com/asciiu/gomo/api/controllers"
+    },
+    "AccountRequest": {
+      "type": "object",
+      "properties": {
+        "balances": {
+          "description": "Optional balances for a paper account\nin: body",
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/NewBalanceReq"
+          },
+          "x-go-name": "Balances"
+        },
+        "description": {
+          "description": "Optional defaults to 'active' status. Valid input status is 'active', 'inactive', or 'historic'\nin: body",
+          "type": "string",
+          "x-go-name": "Description"
+        },
+        "exchange": {
+          "description": "Required exchange for account. Specify 'binance', 'binance paper', '... paper', etc\nin: body",
+          "type": "string",
+          "x-go-name": "Exchange"
+        },
+        "keyPublic": {
+          "description": "Optional public viewable key-secret pair. This value is required for non paper accounts.\nin: body",
+          "type": "string",
+          "x-go-name": "KeyPublic"
+        },
+        "keySecret": {
+          "description": "Optional init timestamp for plan RFC3339 formatted (e.g. 2018-08-26T22:49:10.168652Z). This timestamp will be used to measure initial user currency balance (valuation in user preferred currency)\nin: body",
+          "type": "string",
+          "x-go-name": "KeySecret"
+        }
+      },
+      "x-go-package": "github.com/asciiu/gomo/api/controllers"
+    },
+    "AccountServiceClient": {
+      "type": "object",
+      "x-go-package": "github.com/asciiu/gomo/api/vendor/github.com/asciiu/gomo/account-service/proto/account"
     },
     "Activity": {
       "description": "Responses",
@@ -1682,6 +1974,23 @@
       },
       "x-go-package": "github.com/asciiu/gomo/api/controllers"
     },
+    "NewBalanceReq": {
+      "type": "object",
+      "properties": {
+        "available": {
+          "description": "Required amount of currency.\nin: body",
+          "type": "number",
+          "format": "double",
+          "x-go-name": "Available"
+        },
+        "currencySymbol": {
+          "description": "Required examples: BTC, USDT.\nin: body",
+          "type": "string",
+          "x-go-name": "CurrencySymbol"
+        }
+      },
+      "x-go-package": "github.com/asciiu/gomo/api/controllers"
+    },
     "NewOrderReq": {
       "type": "object",
       "properties": {
@@ -2136,6 +2445,35 @@
       },
       "x-go-package": "github.com/asciiu/gomo/api/controllers"
     },
+    "ResponseAccountSuccess": {
+      "type": "object",
+      "title": "A ResponseAccountSuccess will always contain a status of \"successful\".",
+      "properties": {
+        "data": {
+          "$ref": "#/definitions/Account"
+        },
+        "status": {
+          "type": "string",
+          "x-go-name": "Status"
+        }
+      },
+      "x-go-package": "github.com/asciiu/gomo/api/controllers"
+    },
+    "ResponseAccountsSuccess": {
+      "type": "object",
+      "title": "A ResponseAccountsSuccess will always contain a status of \"successful\".",
+      "properties": {
+        "data": {
+          "$ref": "#/definitions/AccountList"
+        },
+        "status": {
+          "type": "string",
+          "x-go-name": "Status"
+        }
+      },
+      "x-go-name": "ResponseAccountListSuccess",
+      "x-go-package": "github.com/asciiu/gomo/api/controllers"
+    },
     "ResponseActivityPageSuccess": {
       "type": "object",
       "title": "A ResponseActivityPageSuccess will always contain a status of \"successful\".",
@@ -2479,6 +2817,27 @@
           "description": "Optional trigger template ID.\nin: body",
           "type": "string",
           "x-go-name": "TriggerTemplateID"
+        }
+      },
+      "x-go-package": "github.com/asciiu/gomo/api/controllers"
+    },
+    "UpdateAccountRequest": {
+      "type": "object",
+      "properties": {
+        "description": {
+          "description": "Optional defaults to 'active' status. Valid input status is 'active', 'inactive', or 'historic'\nin: body",
+          "type": "string",
+          "x-go-name": "Description"
+        },
+        "keyPublic": {
+          "description": "Optional public viewable key-secret pair. This value is required for non paper accounts.\nin: body",
+          "type": "string",
+          "x-go-name": "KeyPublic"
+        },
+        "keySecret": {
+          "description": "Optional init timestamp for plan RFC3339 formatted (e.g. 2018-08-26T22:49:10.168652Z). This timestamp will be used to measure initial user currency balance (valuation in user preferred currency)\nin: body",
+          "type": "string",
+          "x-go-name": "KeySecret"
         }
       },
       "x-go-package": "github.com/asciiu/gomo/api/controllers"
