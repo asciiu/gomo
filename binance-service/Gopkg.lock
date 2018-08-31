@@ -14,10 +14,19 @@
     "common/constants/exchange",
     "common/constants/message",
     "common/constants/response",
+    "common/db",
     "common/proto/events",
-    "plan-service/constants"
+    "plan-service/constants",
+    "user-service/db/sql",
+    "user-service/models"
   ]
-  revision = "d84a84165585ff6712e9e18bd331a103bd5d79bd"
+  revision = "0947c4ea7ec0ac4b0cd0e74abc4ecb224fe39c49"
+
+[[projects]]
+  name = "github.com/davecgh/go-spew"
+  packages = ["spew"]
+  revision = "8991bc29aa16c548c550c7ff78260e27b9ab7c73"
+  version = "v1.1.1"
 
 [[projects]]
   name = "github.com/go-kit/kit"
@@ -60,6 +69,12 @@
   ]
   revision = "aa810b61a9c79d51363740d207bb46cf8e620ed5"
   version = "v1.2.0"
+
+[[projects]]
+  name = "github.com/google/uuid"
+  packages = ["."]
+  revision = "d460ce9f8df2e77fb1ba55ca87fafed96c607494"
+  version = "v1.0.0"
 
 [[projects]]
   name = "github.com/gorilla/websocket"
@@ -107,6 +122,15 @@
   revision = "b84e30acd515aadc4b783ad4ff83aff3299bdfe0"
 
 [[projects]]
+  name = "github.com/lib/pq"
+  packages = [
+    ".",
+    "oid"
+  ]
+  revision = "4ded0e9383f75c197b3a2aaa6d590ac52df6fd79"
+  version = "v1.0.0"
+
+[[projects]]
   branch = "master"
   name = "github.com/micro/cli"
   packages = ["."]
@@ -151,8 +175,8 @@
     "transport/codec",
     "transport/http"
   ]
-  revision = "9d3cb65daaf630acb1c87b8f45d13b8def7d7a22"
-  version = "v0.11.0"
+  revision = "5372707d0ec1ebd736bec36818ddb2e700606589"
+  version = "v0.9.0"
 
 [[projects]]
   name = "github.com/micro/go-plugins"
@@ -279,9 +303,23 @@
   version = "v0.8.0"
 
 [[projects]]
+  name = "github.com/pmezard/go-difflib"
+  packages = ["difflib"]
+  revision = "792786c7400a136282c1664665ae0a8db921c6c2"
+  version = "v1.0.0"
+
+[[projects]]
+  name = "github.com/stretchr/testify"
+  packages = ["assert"]
+  revision = "f35b8ab0b5a2cef36673838d662e249dd9c94686"
+  version = "v1.2.2"
+
+[[projects]]
   branch = "master"
   name = "golang.org/x/crypto"
   packages = [
+    "bcrypt",
+    "blowfish",
     "ed25519",
     "ed25519/internal/edwards25519"
   ]
@@ -342,6 +380,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "455411e0cd0cea622b36a7d29fa24184fb2e489c9878ab081232f06ef709142d"
+  inputs-digest = "1b7575a2a6211a531f10c581ecc6f023e16eca801cd712ac61e965bd6cdfe2bb"
   solver-name = "gps-cdcl"
   solver-version = 1

@@ -119,17 +119,41 @@ func (service *AccountService) AddAccount(ctx context.Context, req *protoAccount
 		res.Message = "keyPublic required with keySecret!"
 		return nil
 	}
-	// TODO if key public and key secret use call real exchange and retrieve balances
+
+	// if api key ask exchange for balances
 	if account.KeyPublic != "" && account.KeySecret != "" {
 		switch account.Exchange {
 		case constExch.Binance:
-			req := protoBinanceBal.BalanceRequest{
+			reqBal := protoBinanceBal.BalanceRequest{
 				UserID:    account.UserID,
 				KeyPublic: account.KeyPublic,
 				KeySecret: account.KeySecret,
 			}
-			res, _ := service.BinanceClient.GetBalances(ctx, &req)
-			fmt.Println(res)
+			resBal, _ := service.BinanceClient.GetBalances(ctx, &reqBal)
+
+			// reponse to client on invalid key
+			if resBal.Status != constRes.Success {
+				res.Status = resBal.Status
+				res.Message = resBal.Message
+				return nil
+			}
+
+			balances := make([]*protoBalance.Balance, 0)
+			for _, b := range resBal.Data.Balances {
+				total := b.Free + b.Locked
+				balance := protoBalance.Balance{
+					UserID:            account.UserID,
+					AccountID:         account.AccountID,
+					CurrencySymbol:    b.CurrencySymbol,
+					Available:         b.Free,
+					Locked:            0.0,
+					ExchangeTotal:     total,
+					ExchangeAvailable: b.Free,
+					ExchangeLocked:    b.Locked,
+				}
+				balances = append(balances, &balance)
+			}
+			account.Balances = balances
 		}
 	}
 	// if invalid reponse send back failure
