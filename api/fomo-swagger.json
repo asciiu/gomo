@@ -1317,23 +1317,71 @@
     }
   },
   "definitions": {
+    "ABalance": {
+      "type": "object",
+      "properties": {
+        "available": {
+          "type": "number",
+          "format": "double",
+          "x-go-name": "Available"
+        },
+        "createdOn": {
+          "type": "string",
+          "x-go-name": "CreatedOn"
+        },
+        "currencySymbol": {
+          "type": "string",
+          "x-go-name": "CurrencySymbol"
+        },
+        "exchangeAvailable": {
+          "type": "number",
+          "format": "double",
+          "x-go-name": "ExchangeAvailable"
+        },
+        "exchangeLocked": {
+          "type": "number",
+          "format": "double",
+          "x-go-name": "ExchangeLocked"
+        },
+        "exchangeTotal": {
+          "type": "number",
+          "format": "double",
+          "x-go-name": "ExchangeTotal"
+        },
+        "locked": {
+          "type": "number",
+          "format": "double",
+          "x-go-name": "Locked"
+        },
+        "updatedOn": {
+          "type": "string",
+          "x-go-name": "UpdatedOn"
+        }
+      },
+      "x-go-package": "github.com/asciiu/gomo/api/controllers"
+    },
     "Account": {
       "description": "This response should never return the key secret",
       "type": "object",
       "properties": {
-        "Description": {
-          "type": "string"
+        "accountID": {
+          "type": "string",
+          "x-go-name": "AccountID"
         },
         "balances": {
           "type": "array",
           "items": {
-            "$ref": "#/definitions/Balance"
+            "$ref": "#/definitions/ABalance"
           },
           "x-go-name": "Balances"
         },
         "createdOn": {
           "type": "string",
           "x-go-name": "CreatedOn"
+        },
+        "description": {
+          "type": "string",
+          "x-go-name": "Description"
         },
         "exchange": {
           "type": "string",
@@ -1342,10 +1390,6 @@
         "keyPublic": {
           "type": "string",
           "x-go-name": "KeyPublic"
-        },
-        "planID": {
-          "type": "string",
-          "x-go-name": "AccountID"
         },
         "updatedOn": {
           "type": "string",

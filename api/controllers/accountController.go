@@ -42,13 +42,24 @@ type ResponseAccountSuccess struct {
 
 // This response should never return the key secret
 type Account struct {
-	AccountID   string                  `json:"planID"`
-	Exchange    string                  `json:"exchange"`
-	KeyPublic   string                  `json:"keyPublic"`
-	Description string                  `json:description"`
-	CreatedOn   string                  `json:"createdOn"`
-	UpdatedOn   string                  `json:"updatedOn"`
-	Balances    []*protoBalance.Balance `json:"balances"`
+	AccountID   string      `json:"accountID"`
+	Exchange    string      `json:"exchange"`
+	KeyPublic   string      `json:"keyPublic"`
+	Description string      `json:"description"`
+	CreatedOn   string      `json:"createdOn"`
+	UpdatedOn   string      `json:"updatedOn"`
+	Balances    []*ABalance `json:"balances"`
+}
+
+type ABalance struct {
+	CurrencySymbol    string  `json:"currencySymbol"`
+	Available         float64 `json:"available"`
+	Locked            float64 `json:"locked"`
+	ExchangeTotal     float64 `json:"exchangeTotal"`
+	ExchangeAvailable float64 `json:"exchangeAvailable"`
+	ExchangeLocked    float64 `json:"exchangeLocked"`
+	CreatedOn         string  `json:"createdOn"`
+	UpdatedOn         string  `json:"updatedOn"`
 }
 
 func NewAccountController(db *sql.DB, service micro.Service) *AccountController {
@@ -143,6 +154,20 @@ func (controller *AccountController) HandleGetAccount(c echo.Context) error {
 		}
 	}
 	account := r.Data.Account
+	balances := make([]*ABalance, 0)
+	for _, b := range account.Balances {
+		balance := ABalance{
+			CurrencySymbol:    b.CurrencySymbol,
+			Available:         b.Available,
+			Locked:            b.Locked,
+			ExchangeTotal:     b.ExchangeTotal,
+			ExchangeLocked:    b.ExchangeLocked,
+			ExchangeAvailable: b.ExchangeAvailable,
+			CreatedOn:         b.CreatedOn,
+			UpdatedOn:         b.UpdatedOn,
+		}
+		balances = append(balances, &balance)
+	}
 
 	res := &ResponseAccountSuccess{
 		Status: constRes.Success,
@@ -153,11 +178,9 @@ func (controller *AccountController) HandleGetAccount(c echo.Context) error {
 			Description: account.Description,
 			CreatedOn:   account.CreatedOn,
 			UpdatedOn:   account.UpdatedOn,
-			Balances:    account.Balances,
+			Balances:    balances,
 		},
 	}
-
-	return c.JSON(http.StatusOK, res)
 
 	return c.JSON(http.StatusOK, res)
 }
@@ -194,6 +217,22 @@ func (controller *AccountController) HandleListAccounts(c echo.Context) error {
 
 	accounts := make([]*Account, 0)
 	for _, a := range r.Data.Accounts {
+
+		balances := make([]*ABalance, 0)
+		for _, b := range a.Balances {
+			balance := ABalance{
+				CurrencySymbol:    b.CurrencySymbol,
+				Available:         b.Available,
+				Locked:            b.Locked,
+				ExchangeTotal:     b.ExchangeTotal,
+				ExchangeLocked:    b.ExchangeLocked,
+				ExchangeAvailable: b.ExchangeAvailable,
+				CreatedOn:         b.CreatedOn,
+				UpdatedOn:         b.UpdatedOn,
+			}
+			balances = append(balances, &balance)
+		}
+
 		account := Account{
 			AccountID:   a.AccountID,
 			Exchange:    a.Exchange,
@@ -201,7 +240,7 @@ func (controller *AccountController) HandleListAccounts(c echo.Context) error {
 			Description: a.Description,
 			CreatedOn:   a.CreatedOn,
 			UpdatedOn:   a.UpdatedOn,
-			Balances:    a.Balances,
+			Balances:    balances,
 		}
 
 		accounts = append(accounts, &account)
@@ -303,6 +342,20 @@ func (controller *AccountController) HandlePostAccount(c echo.Context) error {
 		}
 	}
 	account := r.Data.Account
+	balances := make([]*ABalance, 0)
+	for _, b := range account.Balances {
+		balance := ABalance{
+			CurrencySymbol:    b.CurrencySymbol,
+			Available:         b.Available,
+			Locked:            b.Locked,
+			ExchangeTotal:     b.ExchangeTotal,
+			ExchangeLocked:    b.ExchangeLocked,
+			ExchangeAvailable: b.ExchangeAvailable,
+			CreatedOn:         b.CreatedOn,
+			UpdatedOn:         b.UpdatedOn,
+		}
+		balances = append(balances, &balance)
+	}
 
 	res := &ResponseAccountSuccess{
 		Status: constRes.Success,
@@ -313,7 +366,7 @@ func (controller *AccountController) HandlePostAccount(c echo.Context) error {
 			Description: account.Description,
 			CreatedOn:   account.CreatedOn,
 			UpdatedOn:   account.UpdatedOn,
-			Balances:    account.Balances,
+			Balances:    balances,
 		},
 	}
 
@@ -376,6 +429,20 @@ func (controller *AccountController) HandleUpdateAccount(c echo.Context) error {
 		}
 	}
 	account := r.Data.Account
+	balances := make([]*ABalance, 0)
+	for _, b := range account.Balances {
+		balance := ABalance{
+			CurrencySymbol:    b.CurrencySymbol,
+			Available:         b.Available,
+			Locked:            b.Locked,
+			ExchangeTotal:     b.ExchangeTotal,
+			ExchangeLocked:    b.ExchangeLocked,
+			ExchangeAvailable: b.ExchangeAvailable,
+			CreatedOn:         b.CreatedOn,
+			UpdatedOn:         b.UpdatedOn,
+		}
+		balances = append(balances, &balance)
+	}
 
 	res := &ResponseAccountSuccess{
 		Status: constRes.Success,
@@ -386,7 +453,7 @@ func (controller *AccountController) HandleUpdateAccount(c echo.Context) error {
 			Description: account.Description,
 			CreatedOn:   account.CreatedOn,
 			UpdatedOn:   account.UpdatedOn,
-			Balances:    account.Balances,
+			Balances:    balances,
 		},
 	}
 

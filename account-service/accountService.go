@@ -92,41 +92,44 @@ func (service *AccountService) AddAccount(ctx context.Context, req *protoAccount
 		return nil
 	}
 
-	// if api key ask exchange for balances
-	if account.KeyPublic != "" && account.KeySecret != "" {
-		switch account.Exchange {
-		case constExch.Binance:
-			reqBal := protoBinanceBal.BalanceRequest{
-				UserID:    account.UserID,
-				KeyPublic: account.KeyPublic,
-				KeySecret: account.KeySecret,
-			}
-			resBal, _ := service.BinanceClient.GetBalances(ctx, &reqBal)
-
-			// reponse to client on invalid key
-			if resBal.Status != constRes.Success {
-				res.Status = resBal.Status
-				res.Message = resBal.Message
-				return nil
-			}
-
-			balances := make([]*protoBalance.Balance, 0)
-			for _, b := range resBal.Data.Balances {
-				total := b.Free + b.Locked
-				balance := protoBalance.Balance{
-					UserID:            account.UserID,
-					AccountID:         account.AccountID,
-					CurrencySymbol:    b.CurrencySymbol,
-					Available:         b.Free,
-					Locked:            0.0,
-					ExchangeTotal:     total,
-					ExchangeAvailable: b.Free,
-					ExchangeLocked:    b.Locked,
-				}
-				balances = append(balances, &balance)
-			}
-			account.Balances = balances
+	switch account.Exchange {
+	case constExch.Binance:
+		// if api key ask exchange for balances
+		if account.KeyPublic == "" || account.KeySecret == "" {
+			res.Status = constRes.Fail
+			res.Message = "keyPublic and keySecret required!"
+			return nil
 		}
+		reqBal := protoBinanceBal.BalanceRequest{
+			UserID:    account.UserID,
+			KeyPublic: account.KeyPublic,
+			KeySecret: account.KeySecret,
+		}
+		resBal, _ := service.BinanceClient.GetBalances(ctx, &reqBal)
+
+		// reponse to client on invalid key
+		if resBal.Status != constRes.Success {
+			res.Status = resBal.Status
+			res.Message = resBal.Message
+			return nil
+		}
+
+		balances := make([]*protoBalance.Balance, 0)
+		for _, b := range resBal.Data.Balances {
+			total := b.Free + b.Locked
+			balance := protoBalance.Balance{
+				UserID:            account.UserID,
+				AccountID:         account.AccountID,
+				CurrencySymbol:    b.CurrencySymbol,
+				Available:         b.Free,
+				Locked:            0.0,
+				ExchangeTotal:     total,
+				ExchangeAvailable: b.Free,
+				ExchangeLocked:    b.Locked,
+			}
+			balances = append(balances, &balance)
+		}
+		account.Balances = balances
 	}
 
 	if err := repoAccount.InsertAccount(service.DB, &account); err != nil {
