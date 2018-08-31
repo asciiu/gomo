@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"os"
+	"strings"
 	"time"
 
 	binance "github.com/asciiu/go-binance"
@@ -38,11 +39,19 @@ func (service *BinanceService) GetBalances(ctx context.Context, req *protoBalanc
 		Timestamp:  time.Now(),
 	}
 
-	account, error := b.Account(request)
-	if error != nil {
-		res.Status = constRes.Error
-		res.Message = error.Error()
-		return nil
+	account, err := b.Account(request)
+
+	if err != nil {
+		switch {
+		case strings.Contains(err.Error(), "nvalid"):
+			res.Status = constRes.Fail
+			res.Message = "invalid keys"
+			return nil
+		default:
+			res.Status = constRes.Error
+			res.Message = err.Error()
+			return nil
+		}
 	}
 
 	balances := make([]*protoBalance.Balance, 0)
