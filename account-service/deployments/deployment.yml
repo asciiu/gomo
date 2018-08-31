@@ -1,23 +1,23 @@
 apiVersion: apps/v1beta1
 kind: Deployment
 metadata:
-  name: keys 
+  name: accounts 
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: keys 
+      app: accounts 
   template:
     metadata:
       labels:
-        app: keys 
+        app: accounts 
     spec:
         containers:
-        - name: key-service 
-          image: us.gcr.io/fomo-204904/key-service:dev
+        - name: account-service 
+          image: us.gcr.io/fomo-204904/account-service:dev
           imagePullPolicy: Always 
           command: [
-            "./key-service",
+            "./account-service",
             "--selector=static",
             "--server_address=:8080"
           ]
@@ -26,7 +26,7 @@ spec:
               name: fomo-config
           env:
           - name: UPDATED_AT
-            value: "Mon 19 Mar 2018 12:05:58 GMT"
+            value: "Thu Aug 30 22:44:43 MDT 2018" 
           ports:
           - containerPort: 8080
-            name: keys-port
+            name: accounts-port

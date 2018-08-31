@@ -40,29 +40,6 @@ func supportedExchange(a string) bool {
 	return false
 }
 
-// func (service *AccountService) HandleVerifiedKey(ctx context.Context, key *protoKey.Key) error {
-// 	log.Println("received verified key ", key.KeyID)
-
-// 	_, error := repoKey.UpdateKeyStatus(service.DB, key)
-
-// 	description := fmt.Sprintf("%s key verified", key.Exchange)
-// 	notification := protoActivity.Activity{
-// 		UserID:      key.UserID,
-// 		Type:        "key",
-// 		ObjectID:    key.KeyID,
-// 		Title:       "Exchange Setup",
-// 		Description: description,
-// 		Timestamp:   time.Now().UTC().Format(time.RFC3339),
-// 	}
-
-// 	// publish verify key event
-// 	if err := service.NotifyPub.Publish(context.Background(), &notification); err != nil {
-// 		log.Println("could not publish verified key event: ", err)
-// 	}
-
-// 	return error
-// }
-
 // Add a new account. An account may be real or paper. Paper accounts do not need to be verfied.
 func (service *AccountService) AddAccount(ctx context.Context, req *protoAccount.NewAccountRequest, res *protoAccount.AccountResponse) error {
 	// supported exchange keys check

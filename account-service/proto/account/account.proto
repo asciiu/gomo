@@ -6,14 +6,14 @@ import "github.com/asciiu/gomo/account-service/proto/balance/balance.proto";
 
 service AccountService {
   rpc AddAccount(NewAccountRequest) returns (AccountResponse) {}
-  rpc AddAccountBalance(balance.NewBalanceRequest) returns (balance.BalanceResponse) {}
+  rpc AddAccountBalance(bal.NewBalanceRequest) returns (bal.BalanceResponse) {}
   rpc DeleteAccount(AccountRequest) returns (AccountResponse) {}
   rpc GetAccounts(AccountsRequest) returns (AccountsResponse) {}
   rpc GetAccount(AccountRequest) returns (AccountResponse) {}
-  rpc GetAccountBalance(balance.BalanceRequest) returns (balance.BalanceResponse) {}
+  rpc GetAccountBalance(bal.BalanceRequest) returns (bal.BalanceResponse) {}
   rpc UpdateAccount(UpdateAccountRequest) returns (AccountResponse) {}
-  rpc UpdateAccountBalance(balance.UpdateBalanceRequest) returns (balance.BalanceResponse) {}
-  rpc ValidateAccountBalance(balance.ValidateBalanceRequest) returns (balance.ValidateBalanceResponse) {} 
+  rpc UpdateAccountBalance(bal.UpdateBalanceRequest) returns (bal.BalanceResponse) {}
+  rpc ValidateAccountBalance(bal.ValidateBalanceRequest) returns (bal.ValidateBalanceResponse) {} 
 }
 
 // Requests
@@ -23,7 +23,7 @@ message NewAccountRequest {
   string keyPublic = 3;
   string keySecret = 4;
   string description = 5;
-  repeated balance.NewBalanceRequest balances = 6; 
+  repeated bal.NewBalanceRequest balances = 6; 
 }
 
 message UpdateAccountRequest {
@@ -32,7 +32,7 @@ message UpdateAccountRequest {
   string keyPublic = 3;
   string keySecret = 4;
   string description = 5;
-  repeated balance.NewBalanceRequest balances = 6; 
+  repeated bal.NewBalanceRequest balances = 6; 
 }
 
 message AccountRequest {
@@ -56,7 +56,7 @@ message Account {
   string status = 8;
   string createdOn = 9;
   string updatedOn = 10;
-  repeated balance.Balance balances = 11;
+  repeated bal.Balance balances = 11;
 }
 
 message UserAccount {
