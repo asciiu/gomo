@@ -53,6 +53,8 @@ func (service *AccountService) AddAccount(ctx context.Context, req *protoAccount
 	now := string(pq.FormatTimestamp(time.Now().UTC()))
 	balances := make([]*protoBalance.Balance, 0, len(req.Balances))
 
+	// user specified balances will be ignored if a
+	// valid public/secret is send in with request
 	for _, b := range req.Balances {
 		balance := protoBalance.Balance{
 			UserID:         req.UserID,
@@ -117,17 +119,24 @@ func (service *AccountService) AddAccount(ctx context.Context, req *protoAccount
 		balances := make([]*protoBalance.Balance, 0)
 		for _, b := range resBal.Data.Balances {
 			total := b.Free + b.Locked
-			balance := protoBalance.Balance{
-				UserID:            account.UserID,
-				AccountID:         account.AccountID,
-				CurrencySymbol:    b.CurrencySymbol,
-				Available:         b.Free,
-				Locked:            0.0,
-				ExchangeTotal:     total,
-				ExchangeAvailable: b.Free,
-				ExchangeLocked:    b.Locked,
+
+			// only add non-zero balances
+			if total > 0 {
+				balance := protoBalance.Balance{
+					UserID:            account.UserID,
+					AccountID:         account.AccountID,
+					CurrencySymbol:    b.CurrencySymbol,
+					Available:         b.Free,
+					Locked:            0.0,
+					ExchangeTotal:     total,
+					ExchangeAvailable: b.Free,
+					ExchangeLocked:    b.Locked,
+					CreatedOn:         now,
+					UpdatedOn:         now,
+				}
+
+				balances = append(balances, &balance)
 			}
-			balances = append(balances, &balance)
 		}
 		account.Balances = balances
 	}
