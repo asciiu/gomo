@@ -5,7 +5,6 @@ import (
 	"database/sql"
 	"fmt"
 	"log"
-	"strings"
 	"time"
 
 	constAccount "github.com/asciiu/gomo/account-service/constants"
@@ -90,11 +89,7 @@ func (service *AccountService) AddAccount(ctx context.Context, req *protoAccount
 		balances = append(balances, &balance)
 	}
 
-	status := constAccount.AccountUnverified
-	if strings.Contains(req.Exchange, "paper") {
-		status = constAccount.AccountVerified
-	}
-
+	// assume account verified
 	account := protoAccount.Account{
 		AccountID:   accountID,
 		UserID:      req.UserID,
@@ -102,7 +97,7 @@ func (service *AccountService) AddAccount(ctx context.Context, req *protoAccount
 		KeyPublic:   req.KeyPublic,
 		KeySecret:   req.KeySecret,
 		Description: req.Description,
-		Status:      status,
+		Status:      constAccount.AccountVerified,
 		CreatedOn:   now,
 		UpdatedOn:   now,
 		Balances:    balances,
@@ -156,8 +151,6 @@ func (service *AccountService) AddAccount(ctx context.Context, req *protoAccount
 			account.Balances = balances
 		}
 	}
-	// if invalid reponse send back failure
-	// else proceed
 
 	if err := repoAccount.InsertAccount(service.DB, &account); err != nil {
 		msg := fmt.Sprintf("insert account failed %s", err.Error())
