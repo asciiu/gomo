@@ -37,6 +37,7 @@ message UpdateAccountRequest {
 
 message AccountRequest {
   string accountID = 1;
+  string userID = 2;
 }
 
 message AccountsRequest {
