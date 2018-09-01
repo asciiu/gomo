@@ -2,7 +2,7 @@ build:
 	dep ensure -update github.com/asciiu/gomo
 	protoc --proto_path=$(GOPATH)/src --go_out=plugins=micro:$(GOPATH)/src github.com/asciiu/gomo/account-service/proto/balance/balance.proto
 	protoc --proto_path=$(GOPATH)/src --go_out=plugins=micro:$(GOPATH)/src github.com/asciiu/gomo/account-service/proto/account/account.proto
-	docker build -t us.gcr.io/fomo-204904/account-service:dev .
+	docker build -t us.gcr.io/fomo-204904/account-service:dev -f ../account-service/Dockerfile ..
 
 update:
 	dep ensure -update github.com/asciiu/gomo
