@@ -179,6 +179,7 @@ func (controller *AccountController) HandleGetAccount(c echo.Context) error {
 			Description: account.Description,
 			CreatedOn:   account.CreatedOn,
 			UpdatedOn:   account.UpdatedOn,
+			Status:      account.Status,
 			Balances:    balances,
 		},
 	}
@@ -241,6 +242,7 @@ func (controller *AccountController) HandleListAccounts(c echo.Context) error {
 			Description: a.Description,
 			CreatedOn:   a.CreatedOn,
 			UpdatedOn:   a.UpdatedOn,
+			Status:      a.Status,
 			Balances:    balances,
 		}
 
@@ -367,6 +369,7 @@ func (controller *AccountController) HandlePostAccount(c echo.Context) error {
 			Description: account.Description,
 			CreatedOn:   account.CreatedOn,
 			UpdatedOn:   account.UpdatedOn,
+			Status:      account.Status,
 			Balances:    balances,
 		},
 	}

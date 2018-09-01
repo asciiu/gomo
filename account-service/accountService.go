@@ -185,7 +185,7 @@ func (service *AccountService) AddAccountBalance(ctx context.Context, req *proto
 }
 
 func (service *AccountService) DeleteAccount(ctx context.Context, req *protoAccount.AccountRequest, res *protoAccount.AccountResponse) error {
-	account, err := repoAccount.UpdateAccountStatus(service.DB, req.AccountID, constAccount.AccountDeleted)
+	account, err := repoAccount.UpdateAccountStatus(service.DB, req.AccountID, req.UserID, constAccount.AccountDeleted)
 
 	switch {
 	case err == sql.ErrNoRows:
@@ -224,7 +224,7 @@ func (service *AccountService) GetAccounts(ctx context.Context, req *protoAccoun
 
 // Get a specific account by ID.
 func (service *AccountService) GetAccount(ctx context.Context, req *protoAccount.AccountRequest, res *protoAccount.AccountResponse) error {
-	account, err := repoAccount.FindAccount(service.DB, req.AccountID)
+	account, err := repoAccount.FindAccount(service.DB, req.AccountID, req.UserID)
 
 	switch {
 	case err == sql.ErrNoRows:
@@ -249,7 +249,7 @@ func (service *AccountService) GetAccountBalance(ctx context.Context, req *proto
 }
 
 func (service *AccountService) UpdateAccount(ctx context.Context, req *protoAccount.UpdateAccountRequest, res *protoAccount.AccountResponse) error {
-	account, err := repoAccount.FindAccount(service.DB, req.AccountID)
+	account, err := repoAccount.FindAccount(service.DB, req.AccountID, req.UserID)
 
 	if err == sql.ErrNoRows {
 		res.Status = constRes.Nonentity
@@ -265,7 +265,7 @@ func (service *AccountService) UpdateAccount(ctx context.Context, req *protoAcco
 		return nil
 	}
 
-	if err := repoAccount.UpdateAccountTxn(txn, ctx, req.AccountID, req.KeyPublic, req.KeySecret, req.Description); err != nil {
+	if err := repoAccount.UpdateAccountTxn(txn, ctx, req.AccountID, req.UserID, req.KeyPublic, req.KeySecret, req.Description); err != nil {
 		txn.Rollback()
 		res.Status = constRes.Error
 		res.Message = "error encountered while updating account: " + err.Error()

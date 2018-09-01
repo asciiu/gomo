@@ -71,7 +71,7 @@ func InsertAccount(db *sql.DB, newAccount *protoAccount.Account) error {
 	return err
 }
 
-func FindAccount(db *sql.DB, accountID string) (*protoAccount.Account, error) {
+func FindAccount(db *sql.DB, accountID, userID string) (*protoAccount.Account, error) {
 	account := new(protoAccount.Account)
 	balances := make([]*protoBalance.Balance, 0)
 	query := `SELECT 
@@ -96,9 +96,9 @@ func FindAccount(db *sql.DB, accountID string) (*protoAccount.Account, error) {
 			b.updated_on 
 		FROM accounts a 
 		JOIN balances b on a.id = b.account_id 
-		WHERE account_id = $1`
+		WHERE account_id = $1 AND user_id = $2`
 
-	rows, err := db.Query(query, accountID)
+	rows, err := db.Query(query, accountID, userID)
 	if err != nil {
 		return nil, err
 	}
@@ -231,13 +231,13 @@ func FindAccounts(db *sql.DB, userID string) ([]*protoAccount.Account, error) {
 	return accounts, nil
 }
 
-func UpdateAccountStatus(db *sql.DB, accountID, status string) (*protoAccount.Account, error) {
+func UpdateAccountStatus(db *sql.DB, accountID, userID, status string) (*protoAccount.Account, error) {
 	stmt := `
 		UPDATE accounts 
 		SET 
 			status = $1
 		WHERE
-			id = $2
+			id = $2 AND user_id = $3
 		RETURNING 
 			id, 
 			user_id, 
@@ -250,7 +250,7 @@ func UpdateAccountStatus(db *sql.DB, accountID, status string) (*protoAccount.Ac
 			updated_on`
 
 	account := new(protoAccount.Account)
-	err := db.QueryRow(stmt, status, accountID).
+	err := db.QueryRow(stmt, status, accountID, userID).
 		Scan(
 			&account.AccountID,
 			&account.UserID,
@@ -269,7 +269,7 @@ func UpdateAccountStatus(db *sql.DB, accountID, status string) (*protoAccount.Ac
 	return account, nil
 }
 
-func UpdateAccountTxn(txn *sql.Tx, ctx context.Context, accountID, public, secret, description string) error {
+func UpdateAccountTxn(txn *sql.Tx, ctx context.Context, accountID, userID, public, secret, description string) error {
 	_, err := txn.ExecContext(ctx, `
 		UPDATE accounts 
 		SET 
@@ -277,8 +277,8 @@ func UpdateAccountTxn(txn *sql.Tx, ctx context.Context, accountID, public, secre
 			key_secret = $2, 
 			description = $3
 		WHERE
-			id = $4`,
-		public, secret, description, accountID)
+			id = $4 AND user_id = $5`,
+		public, secret, description, accountID, userID)
 
 	return err
 }
