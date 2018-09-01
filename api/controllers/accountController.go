@@ -48,6 +48,7 @@ type Account struct {
 	Description string      `json:"description"`
 	CreatedOn   string      `json:"createdOn"`
 	UpdatedOn   string      `json:"updatedOn"`
+	Status      string      `json:"status"`
 	Balances    []*ABalance `json:"balances"`
 }
 
@@ -453,6 +454,7 @@ func (controller *AccountController) HandleUpdateAccount(c echo.Context) error {
 			Description: account.Description,
 			CreatedOn:   account.CreatedOn,
 			UpdatedOn:   account.UpdatedOn,
+			Status:      account.Status,
 			Balances:    balances,
 		},
 	}

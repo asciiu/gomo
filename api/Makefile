@@ -1,6 +1,6 @@
 build:
 	dep ensure -update github.com/asciiu/gomo
-	docker build --no-cache -t us.gcr.io/fomo-204904/api:dev .
+	docker build --no-cache -t us.gcr.io/fomo-204904/api:dev -f ../api/Dockerfile ..
 
 update: 
 	dep ensure -update github.com/asciiu/gomo
