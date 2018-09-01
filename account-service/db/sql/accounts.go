@@ -96,7 +96,7 @@ func FindAccount(db *sql.DB, accountID, userID string) (*protoAccount.Account, e
 			b.updated_on 
 		FROM accounts a 
 		JOIN balances b on a.id = b.account_id 
-		WHERE account_id = $1 AND user_id = $2`
+		WHERE a.id = $1 AND a.user_id = $2`
 
 	rows, err := db.Query(query, accountID, userID)
 	if err != nil {

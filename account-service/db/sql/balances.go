@@ -1,12 +1,21 @@
 package sql
 
 import (
+	"context"
 	"database/sql"
 
 	protoBalance "github.com/asciiu/gomo/account-service/proto/balance"
 	"github.com/lib/pq"
 	uuid "github.com/satori/go.uuid"
 )
+
+/*
+All balance specific queries shall live here.
+
+This file has these functions:
+	InsertBalances
+	UpdateBalanceTxn
+*/
 
 func InsertBalances(txn *sql.Tx, balances []*protoBalance.Balance) error {
 	stmt, err := txn.Prepare(pq.CopyIn("balances",
@@ -56,4 +65,18 @@ func InsertBalances(txn *sql.Tx, balances []*protoBalance.Balance) error {
 		return err
 	}
 	return nil
+}
+
+func UpdateBalanceTxn(txn *sql.Tx, ctx context.Context, accountID, userID, currencySymbol string, total, available, locked float64) error {
+	_, err := txn.ExecContext(ctx, `
+		UPDATE balances 
+		SET 
+			exchange_total = $1, 
+			exchange_available = $2, 
+			exchange_locked = $3
+		WHERE
+			currency_symbol = $4 AND account_id = $5 AND user_id = $6`,
+		total, available, locked, currencySymbol, accountID, userID)
+
+	return err
 }

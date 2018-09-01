@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"database/sql"
+	"errors"
 	"fmt"
 	"log"
 	"strings"
@@ -249,6 +250,18 @@ func (service *AccountService) GetAccountBalance(ctx context.Context, req *proto
 }
 
 func (service *AccountService) UpdateAccount(ctx context.Context, req *protoAccount.UpdateAccountRequest, res *protoAccount.AccountResponse) error {
+	// validate request when keys are present
+	switch {
+	case req.KeyPublic != "" && req.KeySecret == "":
+		res.Status = constRes.Fail
+		res.Message = "keySecret required with keyPublic!"
+		return nil
+	case req.KeyPublic == "" && req.KeySecret != "":
+		res.Status = constRes.Fail
+		res.Message = "keyPublic required with keySecret!"
+		return nil
+	}
+
 	account, err := repoAccount.FindAccount(service.DB, req.AccountID, req.UserID)
 
 	if err == sql.ErrNoRows {
@@ -263,6 +276,78 @@ func (service *AccountService) UpdateAccount(ctx context.Context, req *protoAcco
 		res.Message = err.Error()
 		log.Println("UpdateAccount on begin transaction: ", err.Error())
 		return nil
+	}
+
+	// if new key
+	if req.KeyPublic != "" {
+		now := string(pq.FormatTimestamp(time.Now().UTC()))
+
+		switch account.Exchange {
+		case constExch.Binance:
+			reqBal := protoBinanceBal.BalanceRequest{
+				UserID:    account.UserID,
+				KeyPublic: req.KeyPublic,
+				KeySecret: req.KeySecret,
+			}
+			resBal, _ := service.BinanceClient.GetBalances(ctx, &reqBal)
+
+			// response to client on invalid key
+			if resBal.Status != constRes.Success {
+				res.Status = resBal.Status
+				res.Message = resBal.Message
+				return nil
+			}
+
+			newBalances := make([]*protoBalance.Balance, 0)
+			for _, b := range resBal.Data.Balances {
+				total := b.Free + b.Locked
+
+				// only add non-zero balances
+				if total <= 0 {
+					continue
+				}
+
+				found := false
+				for _, a := range account.Balances {
+					// if the balance already exists
+					if a.CurrencySymbol == b.CurrencySymbol {
+						// if total, locked, or available has changed on the exchange we need to update our balance for this currency
+						if a.ExchangeTotal != total || a.ExchangeLocked != b.Locked || a.ExchangeAvailable != b.Free {
+							if err := repoAccount.UpdateBalanceTxn(txn, ctx, account.AccountID, account.UserID, a.CurrencySymbol, total, b.Free, b.Locked); err != nil {
+								txn.Rollback()
+								res.Status = constRes.Error
+								res.Message = "error encountered while updating balance: " + err.Error()
+								log.Println("UpdateBalanceTxn error: ", err.Error())
+								return nil
+							}
+						}
+						found = true
+						break
+					}
+				}
+				if !found {
+					balance := protoBalance.Balance{
+						UserID:            account.UserID,
+						AccountID:         account.AccountID,
+						CurrencySymbol:    b.CurrencySymbol,
+						Available:         b.Free,
+						Locked:            0.0,
+						ExchangeTotal:     total,
+						ExchangeAvailable: b.Free,
+						ExchangeLocked:    b.Locked,
+						CreatedOn:         now,
+						UpdatedOn:         now,
+					}
+					newBalances = append(newBalances, &balance)
+				}
+			}
+			if len(newBalances) > 0 {
+				if err := repoAccount.InsertBalances(txn, newBalances); err != nil {
+					txn.Rollback()
+					return errors.New("insert new balances failed within an account update: " + err.Error())
+				}
+			}
+		}
 	}
 
 	if err := repoAccount.UpdateAccountTxn(txn, ctx, req.AccountID, req.UserID, req.KeyPublic, req.KeySecret, req.Description); err != nil {
