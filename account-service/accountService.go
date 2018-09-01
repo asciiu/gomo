@@ -249,6 +249,128 @@ func (service *AccountService) GetAccountBalance(ctx context.Context, req *proto
 	return nil
 }
 
+func (service *AccountService) ResyncBinanceBalances(ctx context.Context, account *protoAccount.Account) *protoAccount.Account {
+	reqBal := protoBinanceBal.BalanceRequest{
+		UserID:    account.UserID,
+		KeyPublic: account.KeyPublic,
+		KeySecret: account.KeySecret,
+	}
+	exBals, _ := service.BinanceClient.GetBalances(ctx, &reqBal)
+
+	// invalid exchange keys?
+	if exBals.Status == constRes.Fail {
+		_, err := repoAccount.UpdateAccountStatus(service.DB, account.AccountID, account.UserID, constAccount.AccountInvalid)
+		if err != nil {
+			log.Println("ResyncBinanceBalances on UpdateAccountStatus to invalid: ", err.Error())
+		}
+		// update status of account to invalid
+		account.Status = constAccount.AccountInvalid
+		return account
+	}
+	// not supposed to happen, but if it does log error
+	if exBals.Status == constRes.Error {
+		log.Println("ResyncBinanceBalances on GetBalances: ", exBals.Message)
+		// log error
+		return account
+	}
+
+	txn, err := service.DB.Begin()
+	if err != nil {
+		// not supposed to happen, but if it does log error
+		log.Println("ResyncBinanceBalances on begin transaction: ", err.Error())
+		// log error
+		return account
+	}
+
+	now := string(pq.FormatTimestamp(time.Now().UTC()))
+	newBalances := make([]*protoBalance.Balance, 0)
+	for _, exBal := range exBals.Data.Balances {
+		total := exBal.Free + exBal.Locked
+
+		// only add non-zero balances
+		if total <= 0 {
+			continue
+		}
+
+		found := false
+		for _, accBal := range account.Balances {
+			// if the balance already exists
+			if accBal.CurrencySymbol == exBal.CurrencySymbol {
+				// if total, locked, or available has changed on the exchange we need to update our balance for this currency
+				if accBal.ExchangeTotal != total || accBal.ExchangeLocked != exBal.Locked || accBal.ExchangeAvailable != exBal.Free {
+					// update the user's balance for this account's currency
+					if err := repoAccount.UpdateBalanceTxn(txn, ctx, account.AccountID, account.UserID, accBal.CurrencySymbol, total, exBal.Free, exBal.Locked); err != nil {
+						txn.Rollback()
+						log.Println("ResyncBinanceBalances on UpdateBalanceTxn: ", err.Error())
+						return account
+					}
+					accBal.ExchangeTotal = total
+					accBal.ExchangeLocked = exBal.Locked
+					accBal.ExchangeAvailable = exBal.Free
+				}
+				found = true
+				break
+			}
+		}
+		if !found {
+			balance := protoBalance.Balance{
+				UserID:            account.UserID,
+				AccountID:         account.AccountID,
+				CurrencySymbol:    exBal.CurrencySymbol,
+				Available:         exBal.Free,
+				Locked:            0.0,
+				ExchangeTotal:     total,
+				ExchangeAvailable: exBal.Free,
+				ExchangeLocked:    exBal.Locked,
+				CreatedOn:         now,
+				UpdatedOn:         now,
+			}
+			newBalances = append(newBalances, &balance)
+		}
+	}
+	if len(newBalances) > 0 {
+		if err := repoAccount.InsertBalances(txn, newBalances); err != nil {
+			txn.Rollback()
+			log.Println("ResyncBinanceBalances on InsertBalances: ", err.Error())
+			return account
+		}
+		// append new balances to account balances
+		account.Balances = append(account.Balances, newBalances...)
+	}
+	txn.Commit()
+
+	return account
+}
+
+func (service *AccountService) ResyncAccounts(ctx context.Context, req *protoAccount.AccountsRequest, res *protoAccount.AccountsResponse) error {
+	accounts, err := repoAccount.FindAccounts(service.DB, req.UserID)
+
+	if err != nil {
+		log.Println("ResyncAccounts error: ", err.Error())
+		res.Status = constRes.Error
+		res.Message = err.Error()
+		return nil
+	}
+
+	// loop through each account
+	for i, acc := range accounts {
+		if strings.Contains(acc.Exchange, "paper") {
+			continue
+		}
+
+		switch acc.Exchange {
+		case constExch.Binance:
+			accounts[i] = service.ResyncBinanceBalances(ctx, acc)
+		}
+	}
+	res.Status = constRes.Success
+	res.Data = &protoAccount.UserAccounts{
+		Accounts: accounts,
+	}
+
+	return nil
+}
+
 func (service *AccountService) UpdateAccount(ctx context.Context, req *protoAccount.UpdateAccountRequest, res *protoAccount.AccountResponse) error {
 	// validate request when keys are present
 	switch {
