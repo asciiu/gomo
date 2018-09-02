@@ -348,3 +348,46 @@ func TestSyncAccount(t *testing.T) {
 
 	repoUser.DeleteUserHard(service.DB, user.ID)
 }
+
+func TestGetAccountBalance(t *testing.T) {
+	service, user := setupService()
+	service.BinanceClient = testBinance.MockBinanceServiceClient()
+
+	defer service.DB.Close()
+
+	request := protoAccount.NewAccountRequest{
+		UserID:      user.ID,
+		Exchange:    "binance",
+		KeyPublic:   "public",
+		KeySecret:   "secret",
+		Description: "shit test again!",
+		Balances: []*protoBalance.NewBalanceRequest{
+			&protoBalance.NewBalanceRequest{
+				CurrencySymbol: "BTC",
+				Available:      10.0,
+			},
+		},
+	}
+
+	response := protoAccount.AccountResponse{}
+	service.AddAccount(context.Background(), &request, &response)
+
+	assert.Equal(t, "success", response.Status, response.Message)
+	assert.Equal(t, "binance", response.Data.Account.Exchange, "exchange should be binance")
+
+	getBalanceReq := protoBalance.BalanceRequest{
+		AccountID:      response.Data.Account.AccountID,
+		CurrencySymbol: "BTC",
+	}
+	balResponse := protoBalance.BalanceResponse{}
+	service.GetAccountBalance(context.Background(), &getBalanceReq, &balResponse)
+
+	balance := balResponse.Data.Balance
+	assert.Equal(t, "BTC", balance.CurrencySymbol, "currency symbol should be BTC")
+	assert.Equal(t, 1.0, balance.Available, "available should be 1.0")
+	assert.Equal(t, 0.0, balance.Locked, "locked should be 0")
+	assert.Equal(t, 1.0, balance.ExchangeAvailable, "available should be 1.0")
+	assert.Equal(t, 2.0, balance.ExchangeTotal, "exchange total after add account should be 2.0")
+
+	repoUser.DeleteUserHard(service.DB, user.ID)
+}

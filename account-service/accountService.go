@@ -246,6 +246,22 @@ func (service *AccountService) GetAccount(ctx context.Context, req *protoAccount
 }
 
 func (service *AccountService) GetAccountBalance(ctx context.Context, req *protoBalance.BalanceRequest, res *protoBalance.BalanceResponse) error {
+	balance, err := repoAccount.FindAccountBalance(service.DB, req.AccountID, req.CurrencySymbol)
+
+	switch {
+	case err == sql.ErrNoRows:
+		res.Status = constRes.Nonentity
+		res.Message = "balance not found"
+	case err != nil:
+		log.Println("FindAccountBalance error: ", err.Error())
+		res.Status = constRes.Error
+		res.Message = err.Error()
+	default:
+		res.Status = constRes.Success
+		res.Data = &protoBalance.BalanceData{
+			Balance: balance,
+		}
+	}
 	return nil
 }
 

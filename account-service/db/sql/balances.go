@@ -17,6 +17,41 @@ This file has these functions:
 	UpdateBalanceTxn
 */
 
+func FindAccountBalance(db *sql.DB, accountID, currencySymbol string) (*protoBalance.Balance, error) {
+	query := `SELECT 
+			user_id,
+			account_id,
+			currency_symbol,
+			available,
+			locked,
+			exchange_total,
+			exchange_available,
+			exchange_locked,
+			created_on,
+			updated_on 
+		FROM balances 
+		WHERE account_id = $1 AND currency_symbol = $2`
+
+	var balance protoBalance.Balance
+	err := db.QueryRow(query, accountID, currencySymbol).Scan(
+		&balance.UserID,
+		&balance.AccountID,
+		&balance.CurrencySymbol,
+		&balance.Available,
+		&balance.Locked,
+		&balance.ExchangeTotal,
+		&balance.ExchangeAvailable,
+		&balance.ExchangeLocked,
+		&balance.CreatedOn,
+		&balance.UpdatedOn)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return &balance, nil
+}
+
 func InsertBalances(txn *sql.Tx, balances []*protoBalance.Balance) error {
 	stmt, err := txn.Prepare(pq.CopyIn("balances",
 		"id",
