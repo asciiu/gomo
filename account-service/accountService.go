@@ -249,7 +249,7 @@ func (service *AccountService) GetAccountBalance(ctx context.Context, req *proto
 	return nil
 }
 
-func (service *AccountService) ResyncBinanceBalances(ctx context.Context, account *protoAccount.Account) *protoAccount.Account {
+func (service *AccountService) resyncBinanceBalances(ctx context.Context, account *protoAccount.Account) *protoAccount.Account {
 	reqBal := protoBinanceBal.BalanceRequest{
 		UserID:    account.UserID,
 		KeyPublic: account.KeyPublic,
@@ -360,7 +360,7 @@ func (service *AccountService) ResyncAccounts(ctx context.Context, req *protoAcc
 
 		switch acc.Exchange {
 		case constExch.Binance:
-			accounts[i] = service.ResyncBinanceBalances(ctx, acc)
+			accounts[i] = service.resyncBinanceBalances(ctx, acc)
 		}
 	}
 	res.Status = constRes.Success
