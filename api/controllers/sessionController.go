@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"net/http"
 
+	protoAccount "github.com/asciiu/gomo/account-service/proto/account"
 	constRes "github.com/asciiu/gomo/common/constants/response"
 	protoKey "github.com/asciiu/gomo/key-service/proto/key"
 	protoUser "github.com/asciiu/gomo/user-service/proto/user"
@@ -14,9 +15,10 @@ import (
 )
 
 type SessionController struct {
-	DB         *sql.DB
-	UserClient protoUser.UserServiceClient
-	KeyClient  protoKey.KeyServiceClient
+	DB            *sql.DB
+	UserClient    protoUser.UserServiceClient
+	KeyClient     protoKey.KeyServiceClient
+	AccountClient protoAccount.AccountServiceClient
 }
 
 type UserMetaData struct {
@@ -24,11 +26,12 @@ type UserMetaData struct {
 }
 
 type UserMeta struct {
-	UserID string     `json:"userID"`
-	First  string     `json:"first"`
-	Last   string     `json:"last"`
-	Email  string     `json:"email"`
-	Keys   []*KeyMeta `json:"keys"`
+	UserID   string     `json:"userID"`
+	First    string     `json:"first"`
+	Last     string     `json:"last"`
+	Email    string     `json:"email"`
+	Keys     []*KeyMeta `json:"keys"`
+	Accounts []*Account `json:"accounts"`
 }
 
 type KeyMeta struct {
@@ -47,9 +50,10 @@ type ResponseSessionSuccess struct {
 
 func NewSessionController(db *sql.DB, service micro.Service) *SessionController {
 	controller := SessionController{
-		DB:         db,
-		UserClient: protoUser.NewUserServiceClient("users", service.Client()),
-		KeyClient:  protoKey.NewKeyServiceClient("keys", service.Client()),
+		DB:            db,
+		UserClient:    protoUser.NewUserServiceClient("users", service.Client()),
+		KeyClient:     protoKey.NewKeyServiceClient("keys", service.Client()),
+		AccountClient: protoAccount.NewAccountServiceClient("accounts", service.Client()),
 	}
 	return &controller
 }
@@ -89,6 +93,7 @@ func (controller *SessionController) HandleSession(c echo.Context) error {
 		}
 	}
 
+	// TODO remove this after accounts is fully implemented
 	getKeysRequest := protoKey.GetUserKeysRequest{
 		UserID: userID,
 	}
@@ -104,15 +109,53 @@ func (controller *SessionController) HandleSession(c echo.Context) error {
 				KeyID:       k.KeyID})
 	}
 
+	requestAccounts := protoAccount.AccountsRequest{UserID: userID}
+	responseAccounts, _ := controller.AccountClient.ResyncAccounts(context.Background(), &requestAccounts)
+	accounts := make([]*Account, 0)
+	for _, a := range responseAccounts.Data.Accounts {
+
+		balances := make([]*ABalance, 0)
+		for _, b := range a.Balances {
+			balance := ABalance{
+				CurrencySymbol:    b.CurrencySymbol,
+				Available:         b.Available,
+				Locked:            b.Locked,
+				ExchangeTotal:     b.ExchangeTotal,
+				ExchangeLocked:    b.ExchangeLocked,
+				ExchangeAvailable: b.ExchangeAvailable,
+				CreatedOn:         b.CreatedOn,
+				UpdatedOn:         b.UpdatedOn,
+			}
+			balances = append(balances, &balance)
+		}
+
+		account := Account{
+			AccountID:   a.AccountID,
+			Exchange:    a.Exchange,
+			KeyPublic:   a.KeyPublic,
+			Description: a.Description,
+			CreatedOn:   a.CreatedOn,
+			UpdatedOn:   a.UpdatedOn,
+			Status:      a.Status,
+			Balances:    balances,
+		}
+
+		accounts = append(accounts, &account)
+	}
+
 	response := &ResponseSessionSuccess{
 		Status: constRes.Success,
 		Data: &UserMetaData{
 			UserMeta: &UserMeta{
-				UserID: r.Data.User.UserID,
-				First:  r.Data.User.First,
-				Last:   r.Data.User.Last,
-				Email:  r.Data.User.Email,
-				Keys:   leKeys}}}
+				UserID:   r.Data.User.UserID,
+				First:    r.Data.User.First,
+				Last:     r.Data.User.Last,
+				Email:    r.Data.User.Email,
+				Keys:     leKeys,
+				Accounts: accounts,
+			},
+		},
+	}
 
 	return c.JSON(http.StatusOK, response)
 }
