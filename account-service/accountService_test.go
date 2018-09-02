@@ -112,6 +112,7 @@ func TestGetAccount(t *testing.T) {
 	assert.Equal(t, "success", response1.Status, response1.Message)
 
 	getRequest := protoAccount.AccountRequest{
+		UserID:    user.ID,
 		AccountID: response1.Data.Account.AccountID,
 	}
 	response2 := protoAccount.AccountResponse{}
@@ -205,6 +206,7 @@ func TestDeleteAccount(t *testing.T) {
 	assert.Equal(t, "success", response.Status, response.Message)
 
 	delRequest := protoAccount.AccountRequest{
+		UserID:    user.ID,
 		AccountID: response.Data.Account.AccountID,
 	}
 	response2 := protoAccount.AccountResponse{}
@@ -216,11 +218,13 @@ func TestDeleteAccount(t *testing.T) {
 	repoUser.DeleteUserHard(service.DB, user.ID)
 }
 
+// The AccountService should response with nonentity status when the accountID does not exist yet.
 func TestGetAccountFailOnID(t *testing.T) {
 	service, user := setupService()
 
 	defer service.DB.Close()
 	getRequest := protoAccount.AccountRequest{
+		UserID:    user.ID,
 		AccountID: uuid.New().String(),
 	}
 	response := protoAccount.AccountResponse{}
@@ -231,12 +235,14 @@ func TestGetAccountFailOnID(t *testing.T) {
 	repoUser.DeleteUserHard(service.DB, user.ID)
 }
 
+// The AccountService should response with nonentity status when the accountID does not exist during a delete request.
 func TestDeleteAccountFailOnID(t *testing.T) {
 	service, user := setupService()
 
 	defer service.DB.Close()
 	getRequest := protoAccount.AccountRequest{
 		AccountID: uuid.New().String(),
+		UserID:    user.ID,
 	}
 	response := protoAccount.AccountResponse{}
 	service.DeleteAccount(context.Background(), &getRequest, &response)
@@ -246,6 +252,7 @@ func TestDeleteAccountFailOnID(t *testing.T) {
 	repoUser.DeleteUserHard(service.DB, user.ID)
 }
 
+// The AccountService should should succeed with a valid update account request.
 func TestAccountUpdate(t *testing.T) {
 	service, user := setupService()
 
