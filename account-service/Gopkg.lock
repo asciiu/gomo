@@ -7,13 +7,14 @@
   packages = [
     "binance-service/proto/balance",
     "binance-service/proto/binance",
+    "binance-service/test",
     "common/constants/exchange",
     "common/constants/response",
     "common/db",
     "user-service/db/sql",
     "user-service/models"
   ]
-  revision = "2efcd7d66333e19102b291435b323e1dd7b99bc1"
+  revision = "1ec740891520e00f11816598a4b0666c546af432"
 
 [[projects]]
   name = "github.com/davecgh/go-spew"
@@ -322,6 +323,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "1ff26887a9ceb789eb3cdb8a85294bb9bf2c8f4cddcea6493c9839b110671183"
+  inputs-digest = "6bf2d4b37b3843f26cf09713d2e5b892a7efe4e66f795321a96c3b38e1dd0146"
   solver-name = "gps-cdcl"
   solver-version = 1

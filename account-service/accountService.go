@@ -142,7 +142,7 @@ func (service *AccountService) AddAccount(ctx context.Context, req *protoAccount
 			return nil
 		}
 
-		balances := make([]*protoBalance.Balance, 0)
+		exBalances := make([]*protoBalance.Balance, 0)
 		for _, b := range resBal.Data.Balances {
 			total := b.Free + b.Locked
 
@@ -161,10 +161,10 @@ func (service *AccountService) AddAccount(ctx context.Context, req *protoAccount
 					UpdatedOn:         now,
 				}
 
-				balances = append(balances, &balance)
+				exBalances = append(exBalances, &balance)
 			}
 		}
-		account.Balances = balances
+		account.Balances = exBalances
 	}
 
 	if err := repoAccount.InsertAccount(service.DB, &account); err != nil {
@@ -286,11 +286,6 @@ func (service *AccountService) resyncBinanceBalances(ctx context.Context, accoun
 	newBalances := make([]*protoBalance.Balance, 0)
 	for _, exBal := range exBals.Data.Balances {
 		total := exBal.Free + exBal.Locked
-
-		// only add non-zero balances
-		if total <= 0 {
-			continue
-		}
 
 		found := false
 		for _, accBal := range account.Balances {

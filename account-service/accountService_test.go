@@ -8,6 +8,7 @@ import (
 	constAccount "github.com/asciiu/gomo/account-service/constants"
 	protoAccount "github.com/asciiu/gomo/account-service/proto/account"
 	protoBalance "github.com/asciiu/gomo/account-service/proto/balance"
+	testBinance "github.com/asciiu/gomo/binance-service/test"
 	constRes "github.com/asciiu/gomo/common/constants/response"
 	"github.com/asciiu/gomo/common/db"
 	repoUser "github.com/asciiu/gomo/user-service/db/sql"
@@ -26,7 +27,9 @@ func checkErr(err error) {
 func setupService() (*AccountService, *user.User) {
 	dbUrl := "postgres://postgres@localhost:5432/gomo_test?&sslmode=disable"
 	db, _ := db.NewDB(dbUrl)
-	service := AccountService{DB: db}
+	service := AccountService{
+		DB: db,
+	}
 
 	user := user.NewUser("first", "last", "test@email", "hash")
 	_, error := repoUser.InsertUser(db, user)
@@ -292,5 +295,56 @@ func TestAccountUpdate(t *testing.T) {
 	assert.Equal(t, response1.Data.Account.Exchange, response2.Data.Account.Exchange, "exchanges do not match")
 	assert.Equal(t, "public2", response2.Data.Account.KeyPublic, "public keys don't match")
 	assert.Equal(t, "description2", response2.Data.Account.Description, "descriptions don't match")
+	repoUser.DeleteUserHard(service.DB, user.ID)
+}
+
+func TestSyncAccount(t *testing.T) {
+	service, user := setupService()
+	service.BinanceClient = testBinance.MockBinanceServiceClient()
+
+	defer service.DB.Close()
+
+	request := protoAccount.NewAccountRequest{
+		UserID:      user.ID,
+		Exchange:    "binance",
+		KeyPublic:   "public",
+		KeySecret:   "secret",
+		Description: "shit test again!",
+		Balances: []*protoBalance.NewBalanceRequest{
+			&protoBalance.NewBalanceRequest{
+				CurrencySymbol: "BTC",
+				Available:      10.0,
+			},
+		},
+	}
+
+	response := protoAccount.AccountResponse{}
+	service.AddAccount(context.Background(), &request, &response)
+
+	btc1 := response.Data.Account.Balances[0]
+	assert.Equal(t, "success", response.Status, response.Message)
+	assert.Equal(t, "binance", response.Data.Account.Exchange, "exchange should be binance")
+
+	assert.Equal(t, "BTC", btc1.CurrencySymbol, "currency symbol should be BTC")
+	assert.Equal(t, 1.0, btc1.Available, "available should be 1.0")
+	assert.Equal(t, 1.0, btc1.ExchangeAvailable, "available should be 1.0")
+	assert.Equal(t, 2.0, btc1.ExchangeTotal, "exchange total after add account should be 2.0")
+
+	// sync the account which will result in a binance service call for balances
+	requestAccounts := protoAccount.AccountsRequest{UserID: user.ID}
+	responseAccounts := protoAccount.AccountsResponse{}
+	service.ResyncAccounts(context.Background(), &requestAccounts, &responseAccounts)
+
+	btc := responseAccounts.Data.Accounts[0].Balances[0]
+	assert.Equal(t, "BTC", btc.CurrencySymbol, "currency symbol should be BTC")
+	assert.Equal(t, 1.0, btc.Available, "available should be 1.0")
+	assert.Equal(t, 0.5, btc.ExchangeAvailable, "BTC exchange available should be 0.5")
+	assert.Equal(t, 2.0, btc.ExchangeTotal, "BTC exchange total should be 2.0")
+
+	usdt := responseAccounts.Data.Accounts[0].Balances[1]
+	assert.Equal(t, "USDT", usdt.CurrencySymbol, "currency symbol should be USDT")
+	assert.Equal(t, 100.0, usdt.Available, "usdt available should be 100.0")
+	assert.Equal(t, 0.0, usdt.ExchangeAvailable, "usdt exchange available should be 0")
+
 	repoUser.DeleteUserHard(service.DB, user.ID)
 }
