@@ -4,24 +4,15 @@ package bal;
 
 // Requests
 message NewBalanceRequest {
-  string accountID = 1;
-  string currencySymbol = 2;
-  double available = 3;
+  string userID = 1;
+  string accountID = 2;
+  string currencySymbol = 3;
+  double available = 4;
 }
 
 message BalanceRequest {
   string accountID = 1;
   string currencySymbol = 2;
-}
-
-message UpdateBalanceRequest {
-  string accountID = 1;
-  string currencySymbol = 2;
-  double available = 3;
-  double locked = 4;
-  double exchangeTotal = 5;
-  double exchangeAvailable = 6;
-  double exchangeLocked = 7; 
 }
 
 message ValidateBalanceRequest {

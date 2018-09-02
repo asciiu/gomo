@@ -181,10 +181,6 @@ func (service *AccountService) AddAccount(ctx context.Context, req *protoAccount
 	return nil
 }
 
-func (service *AccountService) AddAccountBalance(ctx context.Context, req *protoBalance.NewBalanceRequest, res *protoBalance.BalanceResponse) error {
-	return nil
-}
-
 func (service *AccountService) DeleteAccount(ctx context.Context, req *protoAccount.AccountRequest, res *protoAccount.AccountResponse) error {
 	account, err := repoAccount.UpdateAccountStatus(service.DB, req.AccountID, req.UserID, constAccount.AccountDeleted)
 
@@ -504,7 +500,32 @@ func (service *AccountService) UpdateAccount(ctx context.Context, req *protoAcco
 	return nil
 }
 
-func (service *AccountService) UpdateAccountBalance(ctx context.Context, req *protoBalance.UpdateBalanceRequest, res *protoBalance.BalanceResponse) error {
+func (service *AccountService) UpsertAccountBalance(ctx context.Context, req *protoBalance.NewBalanceRequest, res *protoBalance.BalanceResponse) error {
+	//account, err := repoAccount.FindAccount(service.DB, req.AccountID, req.UserID)
+
+	//if err != nil {
+	//	log.Println("UpsertAccountBalance error on FindAccount: ", err.Error())
+	//	res.Status = constRes.Error
+	//	res.Message = err.Error()
+	//	return nil
+	//}
+
+	//// loop through each balance and update where appropriate
+	//for i, balance := range account.Balances {
+	//	if balance.CurrencySymbol == newBalanceRequest.CurrencySymbol {
+	//		continue
+	//	}
+
+	//	switch acc.Exchange {
+	//	case constExch.Binance:
+	//		accounts[i] = service.resyncBinanceBalances(ctx, acc)
+	//	}
+	//}
+	//res.Status = constRes.Success
+	//res.Data = &protoAccount.UserAccounts{
+	//	Accounts: accounts,
+	//}
+
 	return nil
 }
 
