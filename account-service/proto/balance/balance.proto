@@ -14,7 +14,7 @@ message AdjustBalanceRequest {
   string userID = 1;
   string accountID = 2;
   string currencySymbol = 3;
-  double amount = 4;
+  double delta = 4;
 }
 
 message BalanceRequest {

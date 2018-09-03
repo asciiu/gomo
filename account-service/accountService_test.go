@@ -471,3 +471,97 @@ func TestValidateAccountBalance2(t *testing.T) {
 
 	repoUser.DeleteUserHard(service.DB, user.ID)
 }
+
+func TestAdjustAccountBalance(t *testing.T) {
+	service, user := setupService()
+
+	defer service.DB.Close()
+
+	request := protoAccount.NewAccountRequest{
+		UserID:      user.ID,
+		Exchange:    "binance paper",
+		KeyPublic:   "public",
+		KeySecret:   "secret",
+		Description: "shit test again!",
+		Balances: []*protoBalance.NewBalanceRequest{
+			&protoBalance.NewBalanceRequest{
+				CurrencySymbol: "BTC",
+				Available:      10.0,
+			},
+		},
+	}
+
+	response := protoAccount.AccountResponse{}
+	service.AddAccount(context.Background(), &request, &response)
+
+	assert.Equal(t, "success", response.Status, response.Message)
+	assert.Equal(t, "binance paper", response.Data.Account.Exchange, "exchange should be binance")
+
+	adjustReq := protoBalance.AdjustBalanceRequest{
+		UserID:         user.ID,
+		AccountID:      response.Data.Account.AccountID,
+		CurrencySymbol: "BTC",
+		Delta:          -1.0,
+	}
+	res := protoBalance.BalanceResponse{}
+	service.AdjustBalance(context.Background(), &adjustReq, &res)
+
+	balance := res.Data.Balance
+	assert.Equal(t, 9.0, balance.Available, "should be 9 btc left")
+	assert.Equal(t, 1.0, balance.Locked, "should be 1 locked")
+
+	repoUser.DeleteUserHard(service.DB, user.ID)
+}
+
+func TestAdjustAddBalance(t *testing.T) {
+	service, user := setupService()
+
+	defer service.DB.Close()
+
+	request := protoAccount.NewAccountRequest{
+		UserID:      user.ID,
+		Exchange:    "binance paper",
+		KeyPublic:   "public",
+		KeySecret:   "secret",
+		Description: "shit test again!",
+		Balances: []*protoBalance.NewBalanceRequest{
+			&protoBalance.NewBalanceRequest{
+				CurrencySymbol: "BTC",
+				Available:      10.0,
+			},
+		},
+	}
+
+	response := protoAccount.AccountResponse{}
+	service.AddAccount(context.Background(), &request, &response)
+
+	assert.Equal(t, "success", response.Status, response.Message)
+
+	addReq := protoBalance.NewBalanceRequest{
+		UserID:         user.ID,
+		AccountID:      response.Data.Account.AccountID,
+		CurrencySymbol: "USDT",
+		Available:      1000.0,
+	}
+	res := protoBalance.BalanceResponse{}
+	service.AddBalance(context.Background(), &addReq, &res)
+
+	balance := res.Data.Balance
+	assert.Equal(t, 1000.0, balance.Available, "should be 1000 usdt")
+	assert.Equal(t, 0.0, balance.Locked, "should be 0 locked")
+
+	getRequest := protoAccount.AccountRequest{
+		UserID:    user.ID,
+		AccountID: response.Data.Account.AccountID,
+	}
+	response2 := protoAccount.AccountResponse{}
+	service.GetAccount(context.Background(), &getRequest, &response2)
+
+	account := response2.Data.Account
+	balances := account.Balances
+	assert.Equal(t, "USDT", balances[1].CurrencySymbol, "currency did not match")
+	assert.Equal(t, 1000.0, balances[1].Available, "available did not match")
+	assert.Equal(t, 0.0, balances[1].Locked, "locked did not match")
+
+	repoUser.DeleteUserHard(service.DB, user.ID)
+}
