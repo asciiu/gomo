@@ -376,6 +376,7 @@ func TestGetAccountBalance(t *testing.T) {
 	assert.Equal(t, "binance", response.Data.Account.Exchange, "exchange should be binance")
 
 	getBalanceReq := protoBalance.BalanceRequest{
+		UserID:         user.ID,
 		AccountID:      response.Data.Account.AccountID,
 		CurrencySymbol: "BTC",
 	}
@@ -388,6 +389,85 @@ func TestGetAccountBalance(t *testing.T) {
 	assert.Equal(t, 0.0, balance.Locked, "locked should be 0")
 	assert.Equal(t, 1.0, balance.ExchangeAvailable, "available should be 1.0")
 	assert.Equal(t, 2.0, balance.ExchangeTotal, "exchange total after add account should be 2.0")
+
+	repoUser.DeleteUserHard(service.DB, user.ID)
+}
+
+func TestValidateAccountBalance(t *testing.T) {
+	service, user := setupService()
+
+	defer service.DB.Close()
+
+	request := protoAccount.NewAccountRequest{
+		UserID:      user.ID,
+		Exchange:    "binance paper",
+		KeyPublic:   "public",
+		KeySecret:   "secret",
+		Description: "shit test again!",
+		Balances: []*protoBalance.NewBalanceRequest{
+			&protoBalance.NewBalanceRequest{
+				CurrencySymbol: "BTC",
+				Available:      10.0,
+			},
+		},
+	}
+
+	response := protoAccount.AccountResponse{}
+	service.AddAccount(context.Background(), &request, &response)
+
+	assert.Equal(t, "success", response.Status, response.Message)
+	assert.Equal(t, "binance paper", response.Data.Account.Exchange, "exchange should be binance")
+
+	vReq := protoBalance.ValidateBalanceRequest{
+		UserID:          user.ID,
+		AccountID:       response.Data.Account.AccountID,
+		CurrencySymbol:  "BTC",
+		RequestedAmount: 9,
+	}
+	res := protoBalance.ValidateBalanceResponse{}
+	service.ValidateAccountBalance(context.Background(), &vReq, &res)
+
+	assert.Equal(t, true, res.Data, "should be false")
+
+	repoUser.DeleteUserHard(service.DB, user.ID)
+}
+
+// This test checks to see if validate returns false when the balance does not exist.
+func TestValidateAccountBalance2(t *testing.T) {
+	service, user := setupService()
+
+	defer service.DB.Close()
+
+	request := protoAccount.NewAccountRequest{
+		UserID:      user.ID,
+		Exchange:    "binance paper",
+		KeyPublic:   "public",
+		KeySecret:   "secret",
+		Description: "shit test again!",
+		Balances: []*protoBalance.NewBalanceRequest{
+			&protoBalance.NewBalanceRequest{
+				CurrencySymbol: "BTC",
+				Available:      10.0,
+			},
+		},
+	}
+
+	response := protoAccount.AccountResponse{}
+	service.AddAccount(context.Background(), &request, &response)
+
+	assert.Equal(t, "success", response.Status, response.Message)
+	assert.Equal(t, "binance paper", response.Data.Account.Exchange, "exchange should be binance")
+
+	vReq := protoBalance.ValidateBalanceRequest{
+		UserID:          user.ID,
+		AccountID:       response.Data.Account.AccountID,
+		CurrencySymbol:  "USDT",
+		RequestedAmount: 100,
+	}
+	res := protoBalance.ValidateBalanceResponse{}
+	service.ValidateAccountBalance(context.Background(), &vReq, &res)
+
+	assert.Equal(t, false, res.Data, "should be false")
 
 	repoUser.DeleteUserHard(service.DB, user.ID)
 }

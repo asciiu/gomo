@@ -14,10 +14,11 @@ All balance specific queries shall live here.
 
 This file has these functions:
 	InsertBalances
-	UpdateBalanceTxn
+	UpdateExchangeBalanceTxn
+	UpdateInternalBalance
 */
 
-func FindAccountBalance(db *sql.DB, accountID, currencySymbol string) (*protoBalance.Balance, error) {
+func FindAccountBalance(db *sql.DB, userID, accountID, currencySymbol string) (*protoBalance.Balance, error) {
 	query := `SELECT 
 			user_id,
 			account_id,
@@ -30,10 +31,10 @@ func FindAccountBalance(db *sql.DB, accountID, currencySymbol string) (*protoBal
 			created_on,
 			updated_on 
 		FROM balances 
-		WHERE account_id = $1 AND currency_symbol = $2`
+		WHERE user_id = $1 AND account_id = $2 AND currency_symbol = $3`
 
 	var balance protoBalance.Balance
-	err := db.QueryRow(query, accountID, currencySymbol).Scan(
+	err := db.QueryRow(query, userID, accountID, currencySymbol).Scan(
 		&balance.UserID,
 		&balance.AccountID,
 		&balance.CurrencySymbol,
@@ -102,7 +103,7 @@ func InsertBalances(txn *sql.Tx, balances []*protoBalance.Balance) error {
 	return nil
 }
 
-func UpdateBalanceTxn(txn *sql.Tx, ctx context.Context, accountID, userID, currencySymbol string, total, available, locked float64) error {
+func UpdateExchangeBalanceTxn(txn *sql.Tx, ctx context.Context, accountID, userID, currencySymbol string, total, available, locked float64) error {
 	_, err := txn.ExecContext(ctx, `
 		UPDATE balances 
 		SET 
@@ -114,4 +115,45 @@ func UpdateBalanceTxn(txn *sql.Tx, ctx context.Context, accountID, userID, curre
 		total, available, locked, currencySymbol, accountID, userID)
 
 	return err
+}
+
+func UpdateInternalBalance(db *sql.DB, userID, accountID, currencySymbol string, free, locked float64) (*protoBalance.Balance, error) {
+	stmt := `
+		UPDATE balances 
+		SET 
+			available = $1,
+			locked = $2
+		WHERE
+			account_id = $3 AND user_id = $4 AND currency_symbol = $5
+		RETURNING 
+			user_id,
+			account_id,
+			currency_symbol,
+			available,
+			locked,
+			exchange_total,
+			exchange_available,
+			exchange_locked,
+			created_on,
+			updated_on`
+
+	balance := new(protoBalance.Balance)
+	err := db.QueryRow(stmt, free, locked, accountID, userID, currencySymbol).
+		Scan(
+			&balance.UserID,
+			&balance.AccountID,
+			&balance.CurrencySymbol,
+			&balance.Available,
+			&balance.Locked,
+			&balance.ExchangeTotal,
+			&balance.ExchangeAvailable,
+			&balance.ExchangeLocked,
+			&balance.CreatedOn,
+			&balance.UpdatedOn)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return balance, nil
 }

@@ -290,7 +290,8 @@ type NewBalanceReq struct {
 // add new exchange account (protected)
 //
 // An exchange account is associated with balances. Paper accounts may also have optional client specified balances.
-// Real exchange accounts require the public/secret key pair to populate the account balances.
+// Real exchange accounts require the public/secret key pair to populate the account balances. All balances for each
+// account will be wrapped in an account object.
 //
 // responses:
 //  200: ResponseAccountSuccess "data" will contain account data

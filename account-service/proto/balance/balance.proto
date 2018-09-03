@@ -10,15 +10,24 @@ message NewBalanceRequest {
   double available = 4;
 }
 
+message AdjustBalanceRequest {
+  string userID = 1;
+  string accountID = 2;
+  string currencySymbol = 3;
+  double amount = 4;
+}
+
 message BalanceRequest {
-  string accountID = 1;
-  string currencySymbol = 2;
+  string userID = 1;
+  string accountID = 2;
+  string currencySymbol = 3;
 }
 
 message ValidateBalanceRequest {
-  string accountID = 1;
-  string currencySymbol = 2;
-  double available = 3;
+  string userID = 1;
+  string accountID = 2;
+  string currencySymbol = 3;
+  double requestedAmount = 4;
 }
 
 // Responses
@@ -48,4 +57,5 @@ message BalanceResponse {
 message ValidateBalanceResponse {
   string status = 1;
   string message = 2;
+  bool data = 3;
 }
