@@ -92,6 +92,7 @@ type Order struct {
 	PlanDepth                uint32                `json:"planDepth,omitempty"`
 	OrderTemplateID          string                `json:"orderTemplateID,omitempty"`
 	KeyID                    string                `json:"keyID,omitempty"`
+	AccountID                string                `json:"accountID,omitempty"`
 	KeyPublic                string                `json:"keyPublic,omitempty"`
 	KeyDescription           string                `json:"keyDescription,omitempty"`
 	OrderPriority            uint32                `json:"orderPriority,omitempty"`
@@ -610,10 +611,10 @@ type NewOrderReq struct {
 	// Optional order template ID. This is a Leo thing.
 	// in: body
 	OrderTemplateID string `json:"orderTemplateID"`
-	// Deprecated this used to be our key ID (string uuid) assigned to the user's exchange key and secret. Use accountID instead.
+	// Deprecated this used to be our key ID (string uuid) assigned to the user's exchange key and secret. Use accountID instead. DO NOT USE THIS!
 	// in: body
 	KeyID string `json:"keyID"`
-	// Required account to use in the order.
+	// Required accountID to use for this order. The account defines the exchange keys and balances.
 	// in: body
 	AccountID string `json:"accountID"`
 	// Required the root node of the decision tree should be assigned a parentOrderID of "00000000-0000-0000-0000-000000000000" .

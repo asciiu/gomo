@@ -395,6 +395,9 @@ type UpdateAccountRequest struct {
 //
 // update a account (protected)
 //
+// You can update the account's keys and description. Once an account exchange has been set you cannot change
+// the exchange.
+//
 // responses:
 //  200: responseAccountSuccess "data" will contain account deets"
 //  500: responseError the message will state what the internal server error was with "status": "error" "data" will contain order info with "status": "success"

@@ -38,7 +38,7 @@
         }
       },
       "post": {
-        "description": "An exchange account is associated with balances. Paper accounts may also have optional client specified balances.\nReal exchange accounts require the public/secret key pair to populate the account balances.",
+        "description": "An exchange account is associated with balances. Paper accounts may also have optional client specified balances.\nReal exchange accounts require the public/secret key pair to populate the account balances. All balances for each\naccount will be wrapped in an account object.",
         "tags": [
           "accounts"
         ],
@@ -140,10 +140,11 @@
         }
       },
       "put": {
-        "description": "update a account (protected)",
+        "description": "You can update the account's keys and description. Once an account exchange has been set you cannot change\nthe exchange.",
         "tags": [
           "accounts"
         ],
+        "summary": "update a account (protected)",
         "operationId": "UpdateAccountParams",
         "parameters": [
           {
@@ -277,38 +278,6 @@
         "responses": {
           "200": {
             "$ref": "#/responses/responseActivitySuccess"
-          }
-        }
-      }
-    },
-    "/balances": {
-      "get": {
-        "description": "Returns all balances for the user. Use optional query param 'symbol' as lowercase ticker symbol - e.g. ada.\nNote: This is going away once accounts is fully implemented.",
-        "tags": [
-          "balances"
-        ],
-        "summary": "get all balances (protected)",
-        "operationId": "getAllBalanceClient",
-        "parameters": [
-          {
-            "type": "string",
-            "x-go-name": "Symbol",
-            "name": "symbol",
-            "in": "query"
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "\"data\" will contain array of balances with \"status\": \"success\"",
-            "schema": {
-              "$ref": "#/definitions/ResponseBalancesSuccess"
-            }
-          },
-          "500": {
-            "description": "the message will state what the internal server error was with \"status\": \"error\"",
-            "schema": {
-              "$ref": "#/definitions/responseError"
-            }
           }
         }
       }
@@ -484,181 +453,6 @@
           },
           "500": {
             "description": "the message will state what the internal server error was with \"status\": error",
-            "schema": {
-              "$ref": "#/definitions/responseError"
-            }
-          }
-        }
-      }
-    },
-    "/keys": {
-      "get": {
-        "description": "The api secrets will not be returned in the response data.",
-        "tags": [
-          "keys"
-        ],
-        "summary": "get all user keys (protected)",
-        "operationId": "GetAllKey",
-        "responses": {
-          "200": {
-            "description": "\"data\" will contain a list of key info with \"status\": \"success\"",
-            "schema": {
-              "$ref": "#/definitions/ResponseKeyListSuccess"
-            }
-          },
-          "500": {
-            "description": "the message will state what the internal server error was with \"status\": \"error\"",
-            "schema": {
-              "$ref": "#/definitions/responseError"
-            }
-          }
-        }
-      },
-      "post": {
-        "description": "Associate a new exchange api key to a user's account. Secrets will not be returned in response data.",
-        "tags": [
-          "keys"
-        ],
-        "summary": "add an api key (protected)",
-        "operationId": "AddKey",
-        "parameters": [
-          {
-            "x-go-name": "Exchange",
-            "description": "Required.",
-            "name": "exchange",
-            "in": "body",
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "x-go-name": "Key",
-            "description": "Required.",
-            "name": "key",
-            "in": "body",
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "x-go-name": "Secret",
-            "description": "Required.",
-            "name": "secret",
-            "in": "body",
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "x-go-name": "Description",
-            "description": "Optional.",
-            "name": "description",
-            "in": "body",
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "\"data\" will contain key info with \"status\": \"success\"",
-            "schema": {
-              "$ref": "#/definitions/ResponseKeySuccess"
-            }
-          },
-          "400": {
-            "description": "missing params with \"status\": \"fail\"",
-            "schema": {
-              "$ref": "#/definitions/responseError"
-            }
-          },
-          "500": {
-            "description": "the message will state what the internal server error was with \"status\": \"error\"",
-            "schema": {
-              "$ref": "#/definitions/responseError"
-            }
-          }
-        }
-      }
-    },
-    "/keys/:keyID": {
-      "get": {
-        "description": "Gets a user's key by the key ID. The secret will not be returned in the response data.",
-        "tags": [
-          "keys"
-        ],
-        "summary": "get a key (protected)",
-        "operationId": "GetKey",
-        "responses": {
-          "200": {
-            "description": "\"data\" will contain key stuffs with \"status\": \"success\"",
-            "schema": {
-              "$ref": "#/definitions/ResponseKeySuccess"
-            }
-          },
-          "500": {
-            "description": "the message will state what the internal server error was with \"status\": \"error\"",
-            "schema": {
-              "$ref": "#/definitions/responseError"
-            }
-          }
-        }
-      },
-      "put": {
-        "description": "The user can only update the description of an added key. The secret will not be returned.",
-        "tags": [
-          "keys"
-        ],
-        "summary": "update a user api key (protected)",
-        "operationId": "UpdateKey",
-        "parameters": [
-          {
-            "x-go-name": "Description",
-            "description": "Required.",
-            "name": "description",
-            "in": "body",
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "\"data\" will contain key info with \"status\": \"success\"",
-            "schema": {
-              "$ref": "#/definitions/ResponseKeySuccess"
-            }
-          },
-          "400": {
-            "description": "missing params with \"status\": \"fail\"",
-            "schema": {
-              "$ref": "#/definitions/responseError"
-            }
-          },
-          "500": {
-            "description": "the message will state what the internal server error was with \"status\": \"error\"",
-            "schema": {
-              "$ref": "#/definitions/responseError"
-            }
-          }
-        }
-      },
-      "delete": {
-        "description": "This will remove the api key from the system.",
-        "tags": [
-          "keys"
-        ],
-        "summary": "remove user api key (protected)",
-        "operationId": "DeleteKey",
-        "responses": {
-          "200": {
-            "description": "data will be null with \"status\": \"success\"",
-            "schema": {
-              "$ref": "#/definitions/ResponseKeySuccess"
-            }
-          },
-          "500": {
-            "description": "the message will state what the internal server error was with \"status\": \"error\"",
             "schema": {
               "$ref": "#/definitions/responseError"
             }
@@ -1391,6 +1185,10 @@
           "type": "string",
           "x-go-name": "KeyPublic"
         },
+        "status": {
+          "type": "string",
+          "x-go-name": "Status"
+        },
         "updatedOn": {
           "type": "string",
           "x-go-name": "UpdatedOn"
@@ -2039,7 +1837,7 @@
       "type": "object",
       "properties": {
         "accountID": {
-          "description": "Required account to use in the order.\nin: body",
+          "description": "Required accountID to use for this order. The account defines the exchange keys and balances.\nin: body",
           "type": "string",
           "x-go-name": "AccountID"
         },
@@ -2055,7 +1853,7 @@
           "x-go-name": "InitialCurrencyBalance"
         },
         "keyID": {
-          "description": "Deprecated this used to be our key ID (string uuid) assigned to the user's exchange key and secret. Use accountID instead.\nin: body",
+          "description": "Deprecated this used to be our key ID (string uuid) assigned to the user's exchange key and secret. Use accountID instead. DO NOT USE THIS!\nin: body",
           "type": "string",
           "x-go-name": "KeyID"
         },
@@ -2115,6 +1913,10 @@
     "Order": {
       "type": "object",
       "properties": {
+        "accountID": {
+          "type": "string",
+          "x-go-name": "AccountID"
+        },
         "baseCurrencyName": {
           "type": "string",
           "x-go-name": "BaseCurrencyName"
@@ -2725,6 +2527,9 @@
     "SessionController": {
       "type": "object",
       "properties": {
+        "AccountClient": {
+          "$ref": "#/definitions/AccountServiceClient"
+        },
         "DB": {
           "$ref": "#/definitions/DB"
         },
@@ -3044,6 +2849,13 @@
     "UserMeta": {
       "type": "object",
       "properties": {
+        "accounts": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/Account"
+          },
+          "x-go-name": "Accounts"
+        },
         "email": {
           "type": "string",
           "x-go-name": "Email"

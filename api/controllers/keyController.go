@@ -80,15 +80,6 @@ func NewKeyController(db *sql.DB, service micro.Service) *KeyController {
 	return &controller
 }
 
-// swagger:route GET /keys/:keyID keys GetKey
-//
-// get a key (protected)
-//
-// Gets a user's key by the key ID. The secret will not be returned in the response data.
-//
-// responses:
-//  200: ResponseKeySuccess "data" will contain key stuffs with "status": "success"
-//  500: responseError the message will state what the internal server error was with "status": "error"
 func (controller *KeyController) HandleGetKey(c echo.Context) error {
 	token := c.Get("user").(*jwt.Token)
 	claims := token.Claims.(jwt.MapClaims)
@@ -134,15 +125,6 @@ func (controller *KeyController) HandleGetKey(c echo.Context) error {
 	return c.JSON(http.StatusOK, response)
 }
 
-// swagger:route GET /keys keys GetAllKey
-//
-// get all user keys (protected)
-//
-// The api secrets will not be returned in the response data.
-//
-// responses:
-//  200: ResponseKeyListSuccess "data" will contain a list of key info with "status": "success"
-//  500: responseError the message will state what the internal server error was with "status": "error"
 func (controller *KeyController) HandleListKeys(c echo.Context) error {
 	token := c.Get("user").(*jwt.Token)
 	claims := token.Claims.(jwt.MapClaims)
@@ -190,16 +172,6 @@ func (controller *KeyController) HandleListKeys(c echo.Context) error {
 	return c.JSON(http.StatusOK, response)
 }
 
-// swagger:route POST /keys keys AddKey
-//
-// add an api key (protected)
-//
-// Associate a new exchange api key to a user's account. Secrets will not be returned in response data.
-//
-// responses:
-//  200: ResponseKeySuccess "data" will contain key info with "status": "success"
-//  400: responseError missing params with "status": "fail"
-//  500: responseError the message will state what the internal server error was with "status": "error"
 func (controller *KeyController) HandlePostKey(c echo.Context) error {
 	token := c.Get("user").(*jwt.Token)
 	claims := token.Claims.(jwt.MapClaims)
@@ -265,16 +237,6 @@ func (controller *KeyController) HandlePostKey(c echo.Context) error {
 	return c.JSON(http.StatusOK, response)
 }
 
-// swagger:route PUT /keys/:keyID keys UpdateKey
-//
-// update a user api key (protected)
-//
-// The user can only update the description of an added key. The secret will not be returned.
-//
-// responses:
-//  200: ResponseKeySuccess "data" will contain key info with "status": "success"
-//  400: responseError missing params with "status": "fail"
-//  500: responseError the message will state what the internal server error was with "status": "error"
 func (controller *KeyController) HandleUpdateKey(c echo.Context) error {
 	token := c.Get("user").(*jwt.Token)
 	claims := token.Claims.(jwt.MapClaims)
@@ -331,15 +293,6 @@ func (controller *KeyController) HandleUpdateKey(c echo.Context) error {
 	return c.JSON(http.StatusOK, response)
 }
 
-// swagger:route DELETE /keys/:keyID keys DeleteKey
-//
-// remove user api key (protected)
-//
-// This will remove the api key from the system.
-//
-// responses:
-//  200: ResponseKeySuccess data will be null with "status": "success"
-//  500: responseError the message will state what the internal server error was with "status": "error"
 func (controller *KeyController) HandleDeleteKey(c echo.Context) error {
 	token := c.Get("user").(*jwt.Token)
 	claims := token.Claims.(jwt.MapClaims)
