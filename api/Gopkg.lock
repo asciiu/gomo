@@ -9,7 +9,6 @@
     "account-service/proto/balance",
     "activity-bulletin/proto",
     "analytics-service/proto/analytics",
-    "balance-service/proto/balance",
     "common/constants/message",
     "common/constants/response",
     "common/db",
@@ -21,7 +20,7 @@
     "user-service/models",
     "user-service/proto/user"
   ]
-  revision = "3463a5fce01983a96f054166366345ce9f1bc2d0"
+  revision = "e189bec27363ddc69843dd504ae45f750f69b3b0"
 
 [[projects]]
   name = "github.com/dgrijalva/jwt-go"
@@ -388,6 +387,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "8ae5f7186b662296c0929b8f3648d993ae919f29d6d8b7a769234228b3a81c1b"
+  inputs-digest = "6b07f31e8ef3167494d7e9f30101585d5a81574d591469b006af044658b11f4f"
   solver-name = "gps-cdcl"
   solver-version = 1

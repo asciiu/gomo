@@ -11,7 +11,6 @@
     "account-service/proto/balance",
     "account-service/test",
     "activity-bulletin/proto",
-    "balance-service/proto/balance",
     "common/constants/message",
     "common/constants/response",
     "common/db",
@@ -22,7 +21,7 @@
     "user-service/db/sql",
     "user-service/models"
   ]
-  revision = "665d7cfa557b1e626573eab68cf14633dde0daa2"
+  revision = "1cf4117c143d3f4480059e89e6589fba7075538e"
 
 [[projects]]
   name = "github.com/davecgh/go-spew"
@@ -355,6 +354,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "458c2a0cfdc94e93761b33af5ad17d8724d184392e4a436d1d03cf1c7b3e14a5"
+  inputs-digest = "6ab2928c971f4635bb8bb50f8185504a5db803717efead6e3c1a77a543f887f1"
   solver-name = "gps-cdcl"
   solver-version = 1

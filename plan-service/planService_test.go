@@ -245,6 +245,51 @@ func TestUnsortedPlan(t *testing.T) {
 	repoUser.DeleteUserHard(service.DB, user.ID)
 }
 
+// insufficient balance request
+func TestInsufficientBalancePlan(t *testing.T) {
+	service, user, acc := setupService()
+
+	defer service.DB.Close()
+
+	req := protoPlan.NewPlanRequest{
+		UserID:          user.ID,
+		Status:          "active",
+		Title:           "Testing 123",
+		CloseOnComplete: false,
+		PlanTemplateID:  "bloody_test",
+		Orders: []*protoOrder.NewOrderRequest{
+			&protoOrder.NewOrderRequest{
+				OrderID:         "4d671984-d7dd-4dce-a20f-23f25d6daf7f",
+				AccountID:       acc.AccountID,
+				OrderType:       "paper",
+				OrderTemplateID: "mokie22",
+				ParentOrderID:   "00000000-0000-0000-0000-000000000000",
+				MarketName:      "BTC-USDT",
+				Side:            "buy",
+				InitialCurrencyBalance: 170,
+				Triggers: []*protoOrder.TriggerRequest{
+					&protoOrder.TriggerRequest{
+						TriggerID:         "ab4734f7-5ab7-46eb-9972-ed632ac752f8",
+						Code:              "price <= 5",
+						Index:             0,
+						Name:              "price_trigger",
+						Title:             "Testing update",
+						TriggerTemplateID: "testtemplate",
+						Actions:           []string{"placeOrder"},
+					},
+				},
+			},
+		},
+	}
+
+	res := protoPlan.PlanResponse{}
+	service.NewPlan(context.Background(), &req, &res)
+
+	assert.Equal(t, "fail", res.Status, "return status should be fail")
+
+	repoUser.DeleteUserHard(service.DB, user.ID)
+}
+
 // Test updating a plan
 func TestOrderUpdatePlan(t *testing.T) {
 	service, user, acc := setupService()
@@ -324,7 +369,7 @@ func TestOrderUpdatePlan(t *testing.T) {
 	res := protoPlan.PlanResponse{}
 	service.NewPlan(context.Background(), &req, &res)
 
-	assert.Equal(t, "success", res.Status, "return status of inserting plan should be success")
+	assert.Equal(t, "success", res.Status, res.Message)
 
 	req2 := protoPlan.UpdatePlanRequest{
 		PlanID:             res.Data.Plan.PlanID,

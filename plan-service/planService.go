@@ -18,6 +18,7 @@ import (
 	micro "github.com/micro/go-micro"
 
 	protoAccount "github.com/asciiu/gomo/account-service/proto/account"
+	protoBalance "github.com/asciiu/gomo/account-service/proto/balance"
 	protoEngine "github.com/asciiu/gomo/execution-engine/proto/engine"
 	repoPlan "github.com/asciiu/gomo/plan-service/db/sql"
 	protoOrder "github.com/asciiu/gomo/plan-service/proto/order"
@@ -119,43 +120,37 @@ func (service *PlanService) publishPlan(ctx context.Context, plan *protoPlan.Pla
 
 // private: validateBalance
 // returns true, nil when the balance can be validated
-func (service *PlanService) validateBalance(ctx context.Context, currency string, balance float64, userID string, apikeyID string) (bool, error) {
-	// TODO
-	//balRequest := protoBalance.GetUserBalanceRequest{
-	//	UserID:   userID,
-	//	KeyID:    apikeyID,
-	//	Currency: currency,
-	//}
+func (service *PlanService) validateBalanceAmount(ctx context.Context, currency string, amount float64, userID string, accountID string) (bool, error) {
+	validateRequest := protoBalance.ValidateBalanceRequest{
+		UserID:          userID,
+		AccountID:       accountID,
+		CurrencySymbol:  currency,
+		RequestedAmount: amount,
+	}
 
-	//balResponse, err := service.BalanceClient.GetUserBalance(ctx, &balRequest)
-	//if err != nil {
-	//	return false, fmt.Errorf("ecountered error from GetUserBalance: %s", err.Error())
-	//}
+	valResponse, _ := service.AccountClient.ValidateAccountBalance(ctx, &validateRequest)
+	if valResponse.Status != constRes.Success {
+		return false, fmt.Errorf("ecountered error from ValidateAccountBalance: %s", valResponse.Message)
+	}
 
-	//if balResponse.Data.Balance.Available < balance {
-	//	return false, nil
-	//}
-	return true, nil
+	return valResponse.Data, nil
 }
 
 // LoadPlanOrder will activate an order (i.e. send a plan order) to the execution engine to process.
 func (service *PlanService) LoadPlanOrder(ctx context.Context, plan *protoPlan.Plan, isRevision bool) error {
 
-	//currency := plan.ActiveCurrencySymbol
-	//balance := plan.ActiveCurrencyBalance
-	// assume for now that all orders in the plan use the same Key ID. This may not be true in the future
-	//accountID := plan.Orders[0].AccountID
+	currency := plan.ActiveCurrencySymbol
+	balance := plan.ActiveCurrencyBalance
+	// assume for now that all orders in the plan use the same account ID. This may not be true in the future
+	accountID := plan.Orders[0].AccountID
 
-	// TODO verify balance with account
-	//if plan.Orders[0].OrderType != constPlan.PaperOrder {
-	//	valid, err := service.validateBalance(ctx, currency, balance, plan.UserID, keyID)
-	//	if err != nil {
-	//		return err
-	//	}
-	//	if !valid {
-	//		return errors.New("not enough balance")
-	//	}
-	//}
+	valid, err := service.validateBalanceAmount(ctx, currency, balance, plan.UserID, accountID)
+	if err != nil {
+		return err
+	}
+	if !valid {
+		return errors.New(fmt.Sprintf("insufficient %s balance for requested amount %.8f", currency, balance))
+	}
 
 	if err := service.publishPlan(ctx, plan, isRevision); err != nil {
 		return err
@@ -494,27 +489,25 @@ func (service *PlanService) NewPlan(ctx context.Context, req *protoPlan.NewPlanR
 		newOrders = append(newOrders, &order)
 	}
 
-	//currencySymbol := newOrders[0].InitialCurrencySymbol
-	//currencyBalance := newOrders[0].InitialCurrencyBalance
-	//accountID := newOrders[0].AccountID
+	currencySymbol := newOrders[0].InitialCurrencySymbol
+	currencyBalance := newOrders[0].InitialCurrencyBalance
+	accountID := newOrders[0].AccountID
 
-	// TODO validate account balance
-	// if newOrders[0].OrderType != constPlan.PaperOrder {
-	// 	validBalance, err := service.validateBalance(ctx, currencySymbol, currencyBalance, req.UserID, keyID)
-	// 	if err != nil {
-	// 		msg := fmt.Sprintf("failed to validate the currency balance for %s: %s", currencySymbol, err.Error())
-	// 		log.Println(msg)
+	// is the initial amount in the account balance?
+	validBalance, err := service.validateBalanceAmount(ctx, currencySymbol, currencyBalance, req.UserID, accountID)
+	if err != nil {
+		msg := fmt.Sprintf("validateBalanceAmount error %s", err.Error())
+		log.Println(msg)
 
-	// 		res.Status = constRes.Error
-	// 		res.Message = msg
-	// 		return nil
-	// 	}
-	// 	if !validBalance {
-	// 		res.Status = constRes.Fail
-	// 		res.Message = fmt.Sprintf("insufficient %s balance, %.8f requested", currencySymbol, currencyBalance)
-	// 		return nil
-	// 	}
-	// }
+		res.Status = constRes.Error
+		res.Message = msg
+		return nil
+	}
+	if !validBalance {
+		res.Status = constRes.Fail
+		res.Message = fmt.Sprintf("insufficient %s balance, requested amount %.8f exceeds available balance", currencySymbol, currencyBalance)
+		return nil
+	}
 
 	count := repoPlan.FindUserPlanCount(service.DB, req.UserID)
 	title := req.Title
@@ -581,6 +574,7 @@ func (service *PlanService) NewPlan(ctx context.Context, req *protoPlan.NewPlanR
 			res.Message = "could not publish first order: " + err.Error()
 			return nil
 		}
+		// TODO update the available balances
 	}
 
 	res.Status = constRes.Success
