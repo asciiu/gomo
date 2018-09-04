@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 
+	repoAccount "github.com/asciiu/gomo/account-service/db/sql"
 	protoAccount "github.com/asciiu/gomo/account-service/proto/account"
 	protoBalance "github.com/asciiu/gomo/account-service/proto/balance"
 	"github.com/micro/go-micro/client"
@@ -63,8 +64,13 @@ func (m *mockAccountService) GetAccount(ctx context.Context, req *protoAccount.A
 }
 
 func (m *mockAccountService) GetAccountKeys(ctx context.Context, req *protoAccount.GetAccountKeysRequest, opts ...client.CallOption) (*protoAccount.AccountKeysResponse, error) {
+	keys, _ := repoAccount.FindAccountKeys(m.db, req.AccountIDs)
+
 	return &protoAccount.AccountKeysResponse{
 		Status: "success",
+		Data: &protoAccount.KeysList{
+			Keys: keys,
+		},
 	}, nil
 }
 
