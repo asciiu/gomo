@@ -18,7 +18,6 @@ import (
 	micro "github.com/micro/go-micro"
 
 	protoAccount "github.com/asciiu/gomo/account-service/proto/account"
-	protoBalance "github.com/asciiu/gomo/balance-service/proto/balance"
 	protoEngine "github.com/asciiu/gomo/execution-engine/proto/engine"
 	repoPlan "github.com/asciiu/gomo/plan-service/db/sql"
 	protoOrder "github.com/asciiu/gomo/plan-service/proto/order"
@@ -33,7 +32,6 @@ const precision = 8
 type PlanService struct {
 	DB            *sql.DB
 	AccountClient protoAccount.AccountServiceClient
-	BalanceClient protoBalance.BalanceServiceClient
 	EngineClient  protoEngine.ExecutionEngineClient
 	NotifyPub     micro.Publisher
 }
@@ -122,20 +120,21 @@ func (service *PlanService) publishPlan(ctx context.Context, plan *protoPlan.Pla
 // private: validateBalance
 // returns true, nil when the balance can be validated
 func (service *PlanService) validateBalance(ctx context.Context, currency string, balance float64, userID string, apikeyID string) (bool, error) {
-	balRequest := protoBalance.GetUserBalanceRequest{
-		UserID:   userID,
-		KeyID:    apikeyID,
-		Currency: currency,
-	}
+	// TODO
+	//balRequest := protoBalance.GetUserBalanceRequest{
+	//	UserID:   userID,
+	//	KeyID:    apikeyID,
+	//	Currency: currency,
+	//}
 
-	balResponse, err := service.BalanceClient.GetUserBalance(ctx, &balRequest)
-	if err != nil {
-		return false, fmt.Errorf("ecountered error from GetUserBalance: %s", err.Error())
-	}
+	//balResponse, err := service.BalanceClient.GetUserBalance(ctx, &balRequest)
+	//if err != nil {
+	//	return false, fmt.Errorf("ecountered error from GetUserBalance: %s", err.Error())
+	//}
 
-	if balResponse.Data.Balance.Available < balance {
-		return false, nil
-	}
+	//if balResponse.Data.Balance.Available < balance {
+	//	return false, nil
+	//}
 	return true, nil
 }
 

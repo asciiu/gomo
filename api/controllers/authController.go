@@ -12,7 +12,6 @@ import (
 	"time"
 
 	asql "github.com/asciiu/gomo/api/db/sql"
-	protoBalance "github.com/asciiu/gomo/balance-service/proto/balance"
 	constRes "github.com/asciiu/gomo/common/constants/response"
 	protoDevice "github.com/asciiu/gomo/device-service/proto/device"
 	repoUser "github.com/asciiu/gomo/user-service/db/sql"
@@ -34,10 +33,9 @@ const jwtDuration = 20 * time.Minute
 //const jwtDuration = 30 * time.Second
 
 type AuthController struct {
-	DB            *sql.DB
-	UserClient    protoUser.UserServiceClient
-	BalanceClient protoBalance.BalanceServiceClient
-	DeviceClient  protoDevice.DeviceServiceClient
+	DB           *sql.DB
+	UserClient   protoUser.UserServiceClient
+	DeviceClient protoDevice.DeviceServiceClient
 }
 
 type JwtClaims struct {
@@ -103,10 +101,9 @@ type ResponseError struct {
 
 func NewAuthController(db *sql.DB, service micro.Service) *AuthController {
 	controller := AuthController{
-		DB:            db,
-		UserClient:    protoUser.NewUserServiceClient("users", service.Client()),
-		BalanceClient: protoBalance.NewBalanceServiceClient("balances", service.Client()),
-		DeviceClient:  protoDevice.NewDeviceServiceClient("devices", service.Client()),
+		DB:           db,
+		UserClient:   protoUser.NewUserServiceClient("users", service.Client()),
+		DeviceClient: protoDevice.NewDeviceServiceClient("devices", service.Client()),
 	}
 
 	return &controller
