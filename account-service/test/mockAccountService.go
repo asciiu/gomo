@@ -21,25 +21,24 @@ func (m *mockAccountService) AddAccount(ctx context.Context, req *protoAccount.N
 	}, nil
 }
 
-func (m *mockAccountService) AddBalance(ctx context.Context, req *protoBalance.NewBalanceRequest, opts ...client.CallOption) (*protoBalance.BalanceResponse, error) {
+func (m *mockAccountService) LockBalance(ctx context.Context, req *protoBalance.ChangeBalanceRequest, opts ...client.CallOption) (*protoBalance.BalanceResponse, error) {
+	return &protoBalance.BalanceResponse{
+		Status: "success",
+	}, nil
+}
+func (m *mockAccountService) UnlockBalance(ctx context.Context, req *protoBalance.ChangeBalanceRequest, opts ...client.CallOption) (*protoBalance.BalanceResponse, error) {
 	return &protoBalance.BalanceResponse{
 		Status: "success",
 	}, nil
 }
 
-func (m *mockAccountService) AdjustAvailableBalance(ctx context.Context, req *protoBalance.AdjustBalanceRequest, opts ...client.CallOption) (*protoBalance.BalanceResponse, error) {
+func (m *mockAccountService) ChangeAvailableBalance(ctx context.Context, req *protoBalance.ChangeBalanceRequest, opts ...client.CallOption) (*protoBalance.BalanceResponse, error) {
 	return &protoBalance.BalanceResponse{
 		Status: "success",
 	}, nil
 }
 
-func (m *mockAccountService) AdjustLockedBalance(ctx context.Context, req *protoBalance.AdjustBalanceRequest, opts ...client.CallOption) (*protoBalance.BalanceResponse, error) {
-	return &protoBalance.BalanceResponse{
-		Status: "success",
-	}, nil
-}
-
-func (m *mockAccountService) AdjustBalance(ctx context.Context, req *protoBalance.AdjustBalanceRequest, opts ...client.CallOption) (*protoBalance.BalanceResponse, error) {
+func (m *mockAccountService) ChangeLockedBalance(ctx context.Context, req *protoBalance.ChangeBalanceRequest, opts ...client.CallOption) (*protoBalance.BalanceResponse, error) {
 	return &protoBalance.BalanceResponse{
 		Status: "success",
 	}, nil
