@@ -102,7 +102,7 @@ func (service *AccountService) AddAccount(ctx context.Context, req *protoAccount
 		KeyPublic:   req.KeyPublic,
 		KeySecret:   rot32768(req.KeySecret),
 		Description: req.Description,
-		Status:      constAccount.AccountVerified,
+		Status:      constAccount.AccountValid,
 		CreatedOn:   now,
 		UpdatedOn:   now,
 		Balances:    balances,

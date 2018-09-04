@@ -74,6 +74,7 @@ message AccountKey {
   string exchange = 3;
   string keyPublic = 4;
   string keySecret = 5;
+  string status = 6;
 }
 
 message UserAccount {

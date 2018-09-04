@@ -240,7 +240,9 @@ func FindAccountKeys(db *sql.DB, accountIDs []string) ([]*protoAccount.AccountKe
 		user_id, 
 		exchange_name, 
 		key_public, 
-		key_secret FROM accounts WHERE id = Any($1)`, pq.Array(accountIDs))
+		key_secret,
+		status
+		FROM accounts WHERE id = Any($1)`, pq.Array(accountIDs))
 
 	if err != nil {
 		return nil, err
@@ -253,7 +255,9 @@ func FindAccountKeys(db *sql.DB, accountIDs []string) ([]*protoAccount.AccountKe
 			&k.UserID,
 			&k.Exchange,
 			&k.KeyPublic,
-			&k.KeySecret)
+			&k.KeySecret,
+			&k.Status,
+		)
 
 		if err != nil {
 			return nil, err

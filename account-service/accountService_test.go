@@ -601,6 +601,7 @@ func TestGetAccountKeys(t *testing.T) {
 	assert.Equal(t, "public1", keys[0].KeyPublic, "public key did not match")
 	assert.Equal(t, "secret1", rot32768(keys[0].KeySecret), "secret key did not match")
 	assert.Equal(t, "binance paper", keys[0].Exchange, "exchange did not match")
+	assert.Equal(t, "valid", keys[0].Status, "account status did not match")
 
 	repoUser.DeleteUserHard(service.DB, user.ID)
 }
