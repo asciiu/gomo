@@ -14,6 +14,15 @@ COPY . .
 # quirks in how go get works with sub-packages.
 RUN go get -u github.com/golang/dep/cmd/dep
 
+# add key so we can pull from private repo 
+ADD id_rsa /root/.ssh/id_rsa
+RUN chmod 700 /root/.ssh/id_rsa
+RUN echo "Host github.com\n\tStrictHostKeyChecking no\n" >> /root/.ssh/config
+RUN git config --global url.ssh://git@github.com/.insteadOf https://github.com/
+
+ADD account-service /go/src/github.com/asciiu/gomo/account-service
+CMD cd /go/src/github.com/asciiu/gomo/account-service && go get github.com/asciiu/gomo && go build -o /gomo
+
 # Create a dep project, and run `ensure`, which will pull in all 
 # of the dependencies within this directory.
 RUN dep ensure

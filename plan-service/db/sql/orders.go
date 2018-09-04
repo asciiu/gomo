@@ -25,7 +25,7 @@ func DeleteOrders(txn *sql.Tx, ctx context.Context, orderIDs []string) error {
 func InsertOrders(txn *sql.Tx, orders []*protoOrder.Order) error {
 	stmt, err := txn.Prepare(pq.CopyIn("orders",
 		"id",
-		"user_key_id",
+		"account_id",
 		"parent_order_id",
 		"plan_id",
 		"plan_depth",
@@ -49,7 +49,7 @@ func InsertOrders(txn *sql.Tx, orders []*protoOrder.Order) error {
 	for _, order := range orders {
 		_, err = stmt.Exec(
 			uuid.FromStringOrNil(order.OrderID),
-			uuid.FromStringOrNil(order.KeyID),
+			uuid.FromStringOrNil(order.AccountID),
 			uuid.FromStringOrNil(order.ParentOrderID),
 			uuid.FromStringOrNil(order.PlanID),
 			order.PlanDepth,

@@ -68,10 +68,10 @@ func FindPlanWithUnexecutedOrders(db *sql.DB, planID string) (*protoPlan.Plan, e
 		p.close_on_complete,
 		p.created_on,
 		p.updated_on,
-		k.id as key_id,
-		k.api_key,
-		k.secret,
-		k.description,
+		a.id as account_id,
+		a.key_public,
+		a.key_secret,
+		a.description,
 		o.id as order_id,
 		o.parent_order_id,
 		o.plan_id,
@@ -109,7 +109,7 @@ func FindPlanWithUnexecutedOrders(db *sql.DB, planID string) (*protoPlan.Plan, e
 		FROM plans p 
 		JOIN orders o on p.id = o.plan_id AND p.last_executed_plan_depth <= o.plan_depth
 		JOIN triggers t on o.id = t.order_id
-		JOIN user_keys k on o.user_key_id = k.id
+		JOIN accounts a on a.id = o.account_id
 		WHERE p.id = $1
 		ORDER BY o.plan_depth, o.order_priority, o.id, t.index`, planID)
 
@@ -152,7 +152,7 @@ func FindPlanWithUnexecutedOrders(db *sql.DB, planID string) (*protoPlan.Plan, e
 			&plan.CloseOnComplete,
 			&plan.CreatedOn,
 			&plan.UpdatedOn,
-			&order.KeyID,
+			&order.AccountID,
 			&order.KeyPublic,
 			&order.KeySecret,
 			&order.KeyDescription,
@@ -262,9 +262,9 @@ func FindActivePlans(db *sql.DB) ([]*protoPlan.Plan, error) {
 		p.close_on_complete,
 		p.user_plan_number,
 		p.status,
-		k.api_key,
-		k.secret,
-		k.description,
+		a.key_public,
+		a.key_secret,
+		a.description,
 		o.id as order_id,
 		o.parent_order_id,
 		o.plan_id,
@@ -296,7 +296,7 @@ func FindActivePlans(db *sql.DB) ([]*protoPlan.Plan, error) {
 		FROM plans p 
 		JOIN orders o on p.id = o.plan_id AND p.last_executed_order_id = o.parent_order_id
 		JOIN triggers t on o.id = t.order_id
-		JOIN user_keys k on o.user_key_id = k.id
+		JOIN accounts a on o.account_id = a.id
 		WHERE p.status = $1 AND k.status = $2 ORDER BY p.id, o.id, t.index`, constPlan.Active, constKey.Verified)
 
 	if err != nil {
@@ -442,10 +442,10 @@ func FindPlanOrders(db *sql.DB, req *protoPlan.GetUserPlanRequest) (*protoPlan.P
 		p.close_on_complete,
 		p.created_on,
 		p.updated_on,
-		k.id as key_id,
-		k.api_key,
-		k.secret,
-		k.description,
+		a.id as account_id,
+		a.key_public,
+		a.key_secret,
+		a.description,
 		o.id as order_id,
 		o.parent_order_id,
 		o.plan_id,
@@ -483,7 +483,7 @@ func FindPlanOrders(db *sql.DB, req *protoPlan.GetUserPlanRequest) (*protoPlan.P
 		FROM plans p 
 		JOIN orders o on p.id = o.plan_id
 		JOIN triggers t on o.id = t.order_id
-		JOIN user_keys k on o.user_key_id = k.id
+		JOIN accounts a on o.account_id = a.id
 		WHERE p.id = $1 AND o.plan_depth BETWEEN $2 AND $3 
 		ORDER BY o.plan_depth, o.order_priority, o.id, t.index`, req.PlanID, req.PlanDepth, req.PlanDepth+req.PlanLength)
 
@@ -527,7 +527,7 @@ func FindPlanOrders(db *sql.DB, req *protoPlan.GetUserPlanRequest) (*protoPlan.P
 			&plan.CloseOnComplete,
 			&plan.CreatedOn,
 			&plan.UpdatedOn,
-			&order.KeyID,
+			&order.AccountID,
 			&order.KeyPublic,
 			&order.KeySecret,
 			&order.KeyDescription,
@@ -638,10 +638,10 @@ func FindChildOrders(db *sql.DB, planID, parentOrderID string) (*protoPlan.Plan,
 		p.status,
 		p.created_on,
 		p.updated_on,
-		k.id as key_id,
-		k.api_key,
-		k.secret,
-		k.description,
+		a.id as account_id,
+		a.key_public,
+		a.key_secret,
+		a.description,
 		o.id as order_id,
 		o.parent_order_id,
 		o.plan_id,
@@ -678,7 +678,7 @@ func FindChildOrders(db *sql.DB, planID, parentOrderID string) (*protoPlan.Plan,
 		FROM plans p 
 		JOIN orders o on p.id = o.plan_id
 		JOIN triggers t on o.id = t.order_id
-		JOIN user_keys k on o.user_key_id = k.id
+		JOIN accounts a on o.account_id = a.id
 		WHERE p.id = $1 AND o.parent_order_id = $2 AND k.status = $3 
 		ORDER BY o.id, t.index`, planID, parentOrderID, constKey.Verified)
 
@@ -721,7 +721,7 @@ func FindChildOrders(db *sql.DB, planID, parentOrderID string) (*protoPlan.Plan,
 			&plan.Status,
 			&plan.CreatedOn,
 			&plan.UpdatedOn,
-			&order.KeyID,
+			&order.AccountID,
 			&order.KeyPublic,
 			&order.KeySecret,
 			&order.KeyDescription,
@@ -832,10 +832,10 @@ func FindParentAndChildren(db *sql.DB, planID, parentOrderID string) (*protoPlan
 		p.status,
 		p.created_on,
 		p.updated_on,
-		k.id as key_id,
-		k.api_key,
-		k.secret,
-		k.description,
+		a.id as account_id,
+		a.key_public,
+		a.key_secret,
+		a.description,
 		o.id as order_id,
 		o.parent_order_id,
 		o.plan_id,
@@ -873,7 +873,7 @@ func FindParentAndChildren(db *sql.DB, planID, parentOrderID string) (*protoPlan
 		FROM plans p 
 		JOIN orders o on p.id = o.plan_id
 		JOIN triggers t on o.id = t.order_id
-		JOIN user_keys k on o.user_key_id = k.id
+		JOIN accounts a on o.account_id = a.id
 		WHERE p.id = $1 AND (o.parent_order_id = $2 or o.id = $2)
 		ORDER BY o.plan_depth, o.order_priority, o.id, t.index`, planID, parentOrderID)
 
@@ -916,7 +916,7 @@ func FindParentAndChildren(db *sql.DB, planID, parentOrderID string) (*protoPlan
 			&plan.Status,
 			&plan.CreatedOn,
 			&plan.UpdatedOn,
-			&order.KeyID,
+			&order.AccountID,
 			&order.KeyPublic,
 			&order.KeySecret,
 			&order.KeyDescription,

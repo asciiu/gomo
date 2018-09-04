@@ -9,14 +9,15 @@ import (
 	"strings"
 	"time"
 
+	constAccount "github.com/asciiu/gomo/account-service/constants"
 	protoActivity "github.com/asciiu/gomo/activity-bulletin/proto"
 	constRes "github.com/asciiu/gomo/common/constants/response"
 	protoEvt "github.com/asciiu/gomo/common/proto/events"
 	commonUtil "github.com/asciiu/gomo/common/util"
-	constKey "github.com/asciiu/gomo/key-service/constants"
 	constPlan "github.com/asciiu/gomo/plan-service/constants"
 	micro "github.com/micro/go-micro"
 
+	protoAccount "github.com/asciiu/gomo/account-service/proto/account"
 	protoBalance "github.com/asciiu/gomo/balance-service/proto/balance"
 	protoEngine "github.com/asciiu/gomo/execution-engine/proto/engine"
 	protoKey "github.com/asciiu/gomo/key-service/proto/key"
@@ -32,6 +33,7 @@ const precision = 8
 // PlanService ...
 type PlanService struct {
 	DB            *sql.DB
+	AccountClient protoAccount.AccountServiceClient
 	BalanceClient protoBalance.BalanceServiceClient
 	KeyClient     protoKey.KeyServiceClient
 	EngineClient  protoEngine.ExecutionEngineClient
@@ -77,10 +79,10 @@ func (service *PlanService) publishPlan(ctx context.Context, plan *protoPlan.Pla
 			LimitPrice:  order.LimitPrice,
 			OrderType:   order.OrderType,
 			OrderStatus: order.Status,
-			KeyID:       order.KeyID,
-			KeyPublic:   order.KeyPublic,
-			KeySecret:   order.KeySecret,
-			Triggers:    triggers,
+			//AccountID:   order.AccountID,
+			KeyPublic: order.KeyPublic,
+			KeySecret: order.KeySecret,
+			Triggers:  triggers,
 		}
 
 		newOrders = append(newOrders, &newOrderEvt)
@@ -142,20 +144,21 @@ func (service *PlanService) validateBalance(ctx context.Context, currency string
 // LoadPlanOrder will activate an order (i.e. send a plan order) to the execution engine to process.
 func (service *PlanService) LoadPlanOrder(ctx context.Context, plan *protoPlan.Plan, isRevision bool) error {
 
-	currency := plan.ActiveCurrencySymbol
-	balance := plan.ActiveCurrencyBalance
+	//currency := plan.ActiveCurrencySymbol
+	//balance := plan.ActiveCurrencyBalance
 	// assume for now that all orders in the plan use the same Key ID. This may not be true in the future
-	keyID := plan.Orders[0].KeyID
+	//accountID := plan.Orders[0].AccountID
 
-	if plan.Orders[0].OrderType != constPlan.PaperOrder {
-		valid, err := service.validateBalance(ctx, currency, balance, plan.UserID, keyID)
-		if err != nil {
-			return err
-		}
-		if !valid {
-			return errors.New("not enough balance")
-		}
-	}
+	// TODO verify balance with account
+	//if plan.Orders[0].OrderType != constPlan.PaperOrder {
+	//	valid, err := service.validateBalance(ctx, currency, balance, plan.UserID, keyID)
+	//	if err != nil {
+	//		return err
+	//	}
+	//	if !valid {
+	//		return errors.New("not enough balance")
+	//	}
+	//}
 
 	if err := service.publishPlan(ctx, plan, isRevision); err != nil {
 		return err
@@ -164,11 +167,11 @@ func (service *PlanService) LoadPlanOrder(ctx context.Context, plan *protoPlan.P
 	return nil
 }
 
-func (service *PlanService) fetchKeys(keyIDs []string) ([]*protoKey.Key, error) {
-	request := protoKey.GetKeysRequest{
-		KeyIDs: keyIDs}
+func (service *PlanService) fetchKeys(accountIDs []string) ([]*protoAccount.AccountKey, error) {
+	request := protoAccount.GetAccountKeysRequest{
+		AccountIDs: accountIDs}
 
-	r, _ := service.KeyClient.GetKeys(context.Background(), &request)
+	r, _ := service.AccountClient.GetAccountKeys(context.Background(), &request)
 	if r.Status != constRes.Success {
 		if r.Status == constRes.Fail {
 			return nil, fmt.Errorf(r.Message)
@@ -177,7 +180,7 @@ func (service *PlanService) fetchKeys(keyIDs []string) ([]*protoKey.Key, error) 
 			return nil, fmt.Errorf(r.Message)
 		}
 		if r.Status == constRes.Nonentity {
-			return nil, fmt.Errorf("invalid keys")
+			return nil, fmt.Errorf("invalid accounts")
 		}
 	}
 
@@ -346,16 +349,17 @@ func (service *PlanService) NewPlan(ctx context.Context, req *protoPlan.NewPlanR
 		return nil
 	}
 
-	// fetch all order keys
-	keyIDs := make([]string, 0, len(req.Orders))
+	// fetch all order accounts
+	accountIDs := make([]string, 0, len(req.Orders))
 	for _, or := range req.Orders {
-		keyIDs = append(keyIDs, or.KeyID)
+		accountIDs = append(accountIDs, or.AccountID)
 	}
-	kys, err := service.fetchKeys(keyIDs)
+
+	akeys, err := service.fetchKeys(accountIDs)
 	if err != nil {
 		if strings.Contains(err.Error(), "invalid input") {
 			res.Status = constRes.Fail
-			res.Message = fmt.Sprintf("valid keyID required for each order")
+			res.Message = fmt.Sprintf("valid accountID required for each order")
 			return nil
 		}
 
@@ -378,9 +382,9 @@ func (service *PlanService) NewPlan(ctx context.Context, req *protoPlan.NewPlanR
 	for _, or := range req.Orders {
 		orderStatus := constPlan.Inactive
 
-		if or.MarketName == "" || or.KeyID == "" {
+		if or.MarketName == "" || or.AccountID == "" {
 			res.Status = constRes.Fail
-			res.Message = "missing marketName/keyID for order"
+			res.Message = "missing marketName/accountID for order"
 			return nil
 		}
 		if !strings.Contains(or.MarketName, "-") {
@@ -429,16 +433,15 @@ func (service *PlanService) NewPlan(ctx context.Context, req *protoPlan.NewPlanR
 			orderStatus = constPlan.Active
 		}
 
-		// assign exchange name from key
-		for _, ky := range kys {
-			if ky.KeyID == or.KeyID {
+		// assign exchange name from account
+		for _, ky := range akeys {
+			if ky.AccountID == or.AccountID {
 				exchange = ky.Exchange
 
-				if ky.Status != constKey.Verified {
+				if ky.Status != constAccount.AccountValid {
 					res.Status = constRes.Fail
-					res.Message = "using an unverified key!"
+					res.Message = "using an invalid account. They key for the account is no longer valid. Possibly because it changed or was removed from the exchange."
 					return nil
-
 				}
 			}
 		}
@@ -471,7 +474,7 @@ func (service *PlanService) NewPlan(ctx context.Context, req *protoPlan.NewPlanR
 		}
 
 		order := protoOrder.Order{
-			KeyID:                  or.KeyID,
+			AccountID:              or.AccountID,
 			OrderID:                or.OrderID,
 			OrderPriority:          or.OrderPriority,
 			OrderType:              or.OrderType,
@@ -494,26 +497,27 @@ func (service *PlanService) NewPlan(ctx context.Context, req *protoPlan.NewPlanR
 		newOrders = append(newOrders, &order)
 	}
 
-	currencySymbol := newOrders[0].InitialCurrencySymbol
-	currencyBalance := newOrders[0].InitialCurrencyBalance
-	keyID := newOrders[0].KeyID
+	//currencySymbol := newOrders[0].InitialCurrencySymbol
+	//currencyBalance := newOrders[0].InitialCurrencyBalance
+	//accountID := newOrders[0].AccountID
 
-	if newOrders[0].OrderType != constPlan.PaperOrder {
-		validBalance, err := service.validateBalance(ctx, currencySymbol, currencyBalance, req.UserID, keyID)
-		if err != nil {
-			msg := fmt.Sprintf("failed to validate the currency balance for %s: %s", currencySymbol, err.Error())
-			log.Println(msg)
+	// TODO validate account balance
+	// if newOrders[0].OrderType != constPlan.PaperOrder {
+	// 	validBalance, err := service.validateBalance(ctx, currencySymbol, currencyBalance, req.UserID, keyID)
+	// 	if err != nil {
+	// 		msg := fmt.Sprintf("failed to validate the currency balance for %s: %s", currencySymbol, err.Error())
+	// 		log.Println(msg)
 
-			res.Status = constRes.Error
-			res.Message = msg
-			return nil
-		}
-		if !validBalance {
-			res.Status = constRes.Fail
-			res.Message = fmt.Sprintf("insufficient %s balance, %.8f requested", currencySymbol, currencyBalance)
-			return nil
-		}
-	}
+	// 		res.Status = constRes.Error
+	// 		res.Message = msg
+	// 		return nil
+	// 	}
+	// 	if !validBalance {
+	// 		res.Status = constRes.Fail
+	// 		res.Message = fmt.Sprintf("insufficient %s balance, %.8f requested", currencySymbol, currencyBalance)
+	// 		return nil
+	// 	}
+	// }
 
 	count := repoPlan.FindUserPlanCount(service.DB, req.UserID)
 	title := req.Title
@@ -565,11 +569,11 @@ func (service *PlanService) NewPlan(ctx context.Context, req *protoPlan.NewPlanR
 		p := pln
 		p.Orders = []*protoOrder.Order{pln.Orders[0]}
 
-		// assign exchange name from key
-		for _, ky := range kys {
-			if ky.KeyID == p.Orders[0].KeyID {
-				p.Orders[0].KeyPublic = ky.Key
-				p.Orders[0].KeySecret = ky.Secret
+		// assign keys
+		for _, ky := range akeys {
+			if ky.AccountID == p.Orders[0].AccountID {
+				p.Orders[0].KeyPublic = ky.KeyPublic
+				p.Orders[0].KeySecret = ky.KeySecret
 			}
 		}
 
@@ -770,18 +774,18 @@ func (service *PlanService) UpdatePlan(ctx context.Context, req *protoPlan.Updat
 		return nil
 	}
 
-	// fetch all order keys
-	keyIDs := make([]string, 0, len(req.Orders))
+	// fetch they keys
+	accountIDs := make([]string, 0, len(req.Orders))
 	for _, or := range req.Orders {
-		keyIDs = append(keyIDs, or.KeyID)
+		accountIDs = append(accountIDs, or.AccountID)
 	}
-	kys := make([]*protoKey.Key, 0)
+	akeys := make([]*protoAccount.AccountKey, 0)
 
 	if len(req.Orders) > 0 {
-		kys, err = service.fetchKeys(keyIDs)
+		akeys, err = service.fetchKeys(accountIDs)
 		if err != nil {
 			res.Status = constRes.Error
-			res.Message = fmt.Sprintf("ecountered error when fetching keys: %s", err.Error())
+			res.Message = fmt.Sprintf("ecountered error when fetching account keys: %s", err.Error())
 			return nil
 		}
 	}
@@ -796,9 +800,9 @@ func (service *PlanService) UpdatePlan(ctx context.Context, req *protoPlan.Updat
 	for _, or := range req.Orders {
 		orderStatus := constPlan.Inactive
 
-		if or.MarketName == "" || or.KeyID == "" {
+		if or.MarketName == "" || or.AccountID == "" {
 			res.Status = constRes.Fail
-			res.Message = "missing marketName/keyID for order"
+			res.Message = "missing marketName/accountID for order"
 			return nil
 		}
 		if !strings.Contains(or.MarketName, "-") {
@@ -846,13 +850,13 @@ func (service *PlanService) UpdatePlan(ctx context.Context, req *protoPlan.Updat
 		}
 
 		// assign exchange name from key
-		for _, ky := range kys {
-			if ky.KeyID == or.KeyID {
+		for _, ky := range akeys {
+			if ky.AccountID == or.AccountID {
 				exchange = ky.Exchange
 
-				if ky.Status != constKey.Verified {
+				if ky.Status != constAccount.AccountValid {
 					res.Status = constRes.Fail
-					res.Message = "using an unverified key!"
+					res.Message = "they account key is invalid!"
 					return nil
 				}
 			}
@@ -888,23 +892,24 @@ func (service *PlanService) UpdatePlan(ctx context.Context, req *protoPlan.Updat
 			currencySymbol = symbolPair[0]
 		}
 
+		// TODO
 		// validate the balance for non paper orders that are set to use a predefined balance
-		if or.OrderType != constPlan.PaperOrder && or.InitialCurrencyBalance > 0 {
-			validBalance, err := service.validateBalance(ctx, currencySymbol, or.InitialCurrencyBalance, req.UserID, or.KeyID)
-			if err != nil {
-				res.Status = constRes.Error
-				res.Message = fmt.Sprintf("failed to validate the currency balance for %s: %s", currencySymbol, err.Error())
-				return nil
-			}
-			if !validBalance {
-				res.Status = constRes.Fail
-				res.Message = fmt.Sprintf("insufficient %s balance, %.8f requested in orderID: %s", currencySymbol, or.InitialCurrencyBalance, or.OrderID)
-				return nil
-			}
-		}
+		// if or.OrderType != constPlan.PaperOrder && or.InitialCurrencyBalance > 0 {
+		// 	validBalance, err := service.validateBalance(ctx, currencySymbol, or.InitialCurrencyBalance, req.UserID, or.KeyID)
+		// 	if err != nil {
+		// 		res.Status = constRes.Error
+		// 		res.Message = fmt.Sprintf("failed to validate the currency balance for %s: %s", currencySymbol, err.Error())
+		// 		return nil
+		// 	}
+		// 	if !validBalance {
+		// 		res.Status = constRes.Fail
+		// 		res.Message = fmt.Sprintf("insufficient %s balance, %.8f requested in orderID: %s", currencySymbol, or.InitialCurrencyBalance, or.OrderID)
+		// 		return nil
+		// 	}
+		// }
 
 		order := protoOrder.Order{
-			KeyID:                  or.KeyID,
+			AccountID:              or.AccountID,
 			OrderID:                or.OrderID,
 			OrderPriority:          or.OrderPriority,
 			OrderType:              or.OrderType,

@@ -5,6 +5,11 @@
   branch = "master"
   name = "github.com/asciiu/gomo"
   packages = [
+    "account-service/constants",
+    "account-service/db/sql",
+    "account-service/proto/account",
+    "account-service/proto/balance",
+    "account-service/test",
     "activity-bulletin/proto",
     "balance-service/proto/balance",
     "common/constants/message",
@@ -15,13 +20,11 @@
     "execution-engine/proto/engine",
     "execution-engine/test",
     "key-service/constants",
-    "key-service/db/sql",
     "key-service/proto/key",
-    "key-service/test",
     "user-service/db/sql",
     "user-service/models"
   ]
-  revision = "d84a84165585ff6712e9e18bd331a103bd5d79bd"
+  revision = "3433f929c8f99f2501ef8065947165118f025315"
 
 [[projects]]
   name = "github.com/davecgh/go-spew"
@@ -354,6 +357,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "ec182e1ec5620cc3a78a98f6a92245faea258ffae43805f27f4376b13941712f"
+  inputs-digest = "db25785149a69caf38e3de229e2c0b1c32315a34493d4fc30c58f99cec00391d"
   solver-name = "gps-cdcl"
   solver-version = 1

@@ -5,6 +5,7 @@ import (
 	"log"
 	"os"
 
+	protoAccount "github.com/asciiu/gomo/account-service/proto/account"
 	protoBalance "github.com/asciiu/gomo/balance-service/proto/balance"
 	constMessage "github.com/asciiu/gomo/common/constants/message"
 	"github.com/asciiu/gomo/common/db"
@@ -37,6 +38,7 @@ func main() {
 
 	planService := PlanService{
 		DB:            gomoDB,
+		AccountClient: protoAccount.NewAccountServiceClient("accounts", srv.Client()),
 		BalanceClient: protoBalance.NewBalanceServiceClient("balances", srv.Client()),
 		KeyClient:     protoKey.NewKeyServiceClient("keys", srv.Client()),
 		EngineClient:  protoEngine.NewExecutionEngineClient("engine", srv.Client()),

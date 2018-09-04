@@ -18,7 +18,7 @@ message NewOrderRequest {
   uint32 orderPriority = 2;
   string orderType = 3;
   string orderTemplateID = 4;
-  string keyID = 5;
+  string accountID = 5;
   string parentOrderID = 6;
   string grupo = 7;
   string marketName = 8;
@@ -48,7 +48,7 @@ message Order {
   string planID = 3;
   uint32 planDepth = 4;
   string orderTemplateID = 5;
-  string keyID = 6;
+  string accountID = 6;
   string keyPublic = 7;
   string keySecret = 8;
   string keyDescription = 9;

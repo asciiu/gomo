@@ -5,20 +5,22 @@ import (
 	"fmt"
 	"log"
 	"testing"
+	"time"
 
+	repoAccount "github.com/asciiu/gomo/account-service/db/sql"
+	protoAccount "github.com/asciiu/gomo/account-service/proto/account"
+	protoBalance "github.com/asciiu/gomo/account-service/proto/balance"
+	testAccount "github.com/asciiu/gomo/account-service/test"
 	"github.com/asciiu/gomo/common/db"
 	protoEngine "github.com/asciiu/gomo/execution-engine/proto/engine"
 	testEngine "github.com/asciiu/gomo/execution-engine/test"
-	constKey "github.com/asciiu/gomo/key-service/constants"
-	repoKey "github.com/asciiu/gomo/key-service/db/sql"
-	protoKey "github.com/asciiu/gomo/key-service/proto/key"
-	testKey "github.com/asciiu/gomo/key-service/test"
 	constPlan "github.com/asciiu/gomo/plan-service/constants"
 	repoOrder "github.com/asciiu/gomo/plan-service/db/sql"
 	protoOrder "github.com/asciiu/gomo/plan-service/proto/order"
 	protoPlan "github.com/asciiu/gomo/plan-service/proto/plan"
 	repoUser "github.com/asciiu/gomo/user-service/db/sql"
 	user "github.com/asciiu/gomo/user-service/models"
+	"github.com/lib/pq"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -29,33 +31,52 @@ func checkErr(err error) {
 	}
 }
 
-func setupService() (*PlanService, *user.User, *protoKey.Key) {
+func setupService() (*PlanService, *user.User, *protoAccount.Account) {
 	dbUrl := "postgres://postgres@localhost:5432/gomo_test?&sslmode=disable"
 	db, _ := db.NewDB(dbUrl)
 
 	planService := PlanService{
-		DB:           db,
-		KeyClient:    testKey.MockKeyServiceClient(db),
-		EngineClient: testEngine.MockEngineClient(db),
+		DB:            db,
+		AccountClient: testAccount.MockAccountServiceClient(db),
+		EngineClient:  testEngine.MockEngineClient(db),
 	}
 
 	user := user.NewUser("first", "last", "test@email", "hash")
-	_, error := repoUser.InsertUser(db, user)
-	keyRequest := protoKey.KeyRequest{
-		KeyID:       "92512e72-b7e8-49f4-bab5-271f4ba450d9",
+	_, err := repoUser.InsertUser(db, user)
+	checkErr(err)
+
+	now := string(pq.FormatTimestamp(time.Now().UTC()))
+	acc := protoAccount.Account{
+		AccountID:   "92512e72-b7e8-49f4-bab5-271f4ba450d9",
 		UserID:      user.ID,
 		Exchange:    "test",
-		Key:         "test_key",
-		Secret:      "test_secret",
+		KeyPublic:   "test_key",
+		KeySecret:   "test_secret",
+		Title:       "what?",
 		Description: "testy",
+		Status:      "valid",
+		CreatedOn:   now,
+		UpdatedOn:   now,
+		Balances: []*protoBalance.Balance{
+			&protoBalance.Balance{
+				AccountID:         "92512e72-b7e8-49f4-bab5-271f4ba450d9",
+				UserID:            user.ID,
+				CurrencySymbol:    "USDT",
+				Available:         100.00,
+				Locked:            0,
+				ExchangeTotal:     100.00,
+				ExchangeAvailable: 100.00,
+				ExchangeLocked:    0,
+				CreatedOn:         now,
+				UpdatedOn:         now,
+			},
+		},
 	}
 
-	key, error := repoKey.InsertKey(db, &keyRequest)
-	checkErr(error)
-	key.Status = constKey.Verified
-	repoKey.UpdateKeyStatus(db, key)
+	err = repoAccount.InsertAccount(db, &acc)
+	checkErr(err)
 
-	return &planService, user, key
+	return &planService, user, &acc
 }
 
 // You shouldn't be able to insert a plan with no orders. A new plan requires at least a single order.
@@ -82,7 +103,7 @@ func TestEmptyOrderPlan(t *testing.T) {
 
 // Orders must have a trigger
 func TestOrdersMustHaveTriggers(t *testing.T) {
-	service, user, key := setupService()
+	service, user, acc := setupService()
 
 	defer service.DB.Close()
 
@@ -94,7 +115,7 @@ func TestOrdersMustHaveTriggers(t *testing.T) {
 		Orders: []*protoOrder.NewOrderRequest{
 			&protoOrder.NewOrderRequest{
 				OrderID:         "4d671984-d7dd-4dce-a20f-23f25d6daf7f",
-				KeyID:           key.KeyID,
+				AccountID:       acc.AccountID,
 				OrderType:       "paper",
 				OrderTemplateID: "mokie22",
 				ParentOrderID:   "00000000-0000-0000-0000-000000000000",
@@ -114,7 +135,7 @@ func TestOrdersMustHaveTriggers(t *testing.T) {
 
 // Successfully inserting a new plan
 func TestSuccessfulOrderPlan(t *testing.T) {
-	service, user, key := setupService()
+	service, user, acc := setupService()
 
 	defer service.DB.Close()
 
@@ -127,7 +148,7 @@ func TestSuccessfulOrderPlan(t *testing.T) {
 		Orders: []*protoOrder.NewOrderRequest{
 			&protoOrder.NewOrderRequest{
 				OrderID:         "4d671984-d7dd-4dce-a20f-23f25d6daf7f",
-				KeyID:           key.KeyID,
+				AccountID:       acc.AccountID,
 				OrderType:       "paper",
 				OrderTemplateID: "mokie22",
 				ParentOrderID:   "00000000-0000-0000-0000-000000000000",
@@ -162,7 +183,7 @@ func TestSuccessfulOrderPlan(t *testing.T) {
 
 // Test failure of order when incorrect order
 func TestUnsortedPlan(t *testing.T) {
-	service, user, key := setupService()
+	service, user, acc := setupService()
 
 	defer service.DB.Close()
 
@@ -174,7 +195,7 @@ func TestUnsortedPlan(t *testing.T) {
 		Orders: []*protoOrder.NewOrderRequest{
 			&protoOrder.NewOrderRequest{
 				OrderID:         "da46997b-9d4f-45b2-9d2a-aaa404a213c5",
-				KeyID:           key.KeyID,
+				AccountID:       acc.AccountID,
 				OrderType:       "paper",
 				OrderTemplateID: "mokie22",
 				ParentOrderID:   "4d671984-d7dd-4dce-a20f-23f25d6daf7f",
@@ -195,7 +216,7 @@ func TestUnsortedPlan(t *testing.T) {
 			},
 			&protoOrder.NewOrderRequest{
 				OrderID:         "4d671984-d7dd-4dce-a20f-23f25d6daf7f",
-				KeyID:           key.KeyID,
+				AccountID:       acc.AccountID,
 				OrderType:       "paper",
 				OrderTemplateID: "mokie22",
 				ParentOrderID:   "00000000-0000-0000-0000-000000000000",
@@ -226,7 +247,7 @@ func TestUnsortedPlan(t *testing.T) {
 
 // Test updating a plan
 func TestOrderUpdatePlan(t *testing.T) {
-	service, user, key := setupService()
+	service, user, acc := setupService()
 
 	defer service.DB.Close()
 
@@ -239,7 +260,7 @@ func TestOrderUpdatePlan(t *testing.T) {
 		Orders: []*protoOrder.NewOrderRequest{
 			&protoOrder.NewOrderRequest{
 				OrderID:         "4d671984-d7dd-4dce-a20f-23f25d6daf7f",
-				KeyID:           key.KeyID,
+				AccountID:       acc.AccountID,
 				OrderType:       "paper",
 				OrderTemplateID: "mokie",
 				ParentOrderID:   "00000000-0000-0000-0000-000000000000",
@@ -260,7 +281,7 @@ func TestOrderUpdatePlan(t *testing.T) {
 			},
 			&protoOrder.NewOrderRequest{
 				OrderID:         "966fabac-8cad-11e8-9eb6-529269fb1459",
-				KeyID:           key.KeyID,
+				AccountID:       acc.AccountID,
 				OrderType:       "paper",
 				OrderTemplateID: "mokie",
 				ParentOrderID:   "4d671984-d7dd-4dce-a20f-23f25d6daf7f",
@@ -280,7 +301,7 @@ func TestOrderUpdatePlan(t *testing.T) {
 			},
 			&protoOrder.NewOrderRequest{
 				OrderID:         "3c960c68-8cb0-11e8-9eb6-529269fb1459",
-				KeyID:           key.KeyID,
+				AccountID:       acc.AccountID,
 				OrderType:       "paper",
 				OrderTemplateID: "mokie",
 				ParentOrderID:   "4d671984-d7dd-4dce-a20f-23f25d6daf7f",
@@ -315,7 +336,7 @@ func TestOrderUpdatePlan(t *testing.T) {
 		Orders: []*protoOrder.NewOrderRequest{
 			&protoOrder.NewOrderRequest{
 				OrderID:         "4d671984-d7dd-4dce-a20f-23f25d6daf7f",
-				KeyID:           key.KeyID,
+				AccountID:       acc.AccountID,
 				OrderType:       "paper",
 				OrderTemplateID: "mokie22",
 				ParentOrderID:   "00000000-0000-0000-0000-000000000000",
@@ -335,7 +356,7 @@ func TestOrderUpdatePlan(t *testing.T) {
 				},
 			}, &protoOrder.NewOrderRequest{
 				OrderID:         "4d671984-d7dd-4dce-a20f-23f25d6daf76",
-				KeyID:           key.KeyID,
+				AccountID:       acc.AccountID,
 				OrderType:       "paper",
 				OrderTemplateID: "mokie22",
 				ParentOrderID:   "4d671984-d7dd-4dce-a20f-23f25d6daf7f",
@@ -383,7 +404,7 @@ func TestOrderUpdatePlan(t *testing.T) {
 
 // Plan update should fail if the client sends in an update request on executed order.
 func TestOrderUpdatePlanFailure(t *testing.T) {
-	service, user, key := setupService()
+	service, user, acc := setupService()
 
 	defer service.DB.Close()
 
@@ -395,7 +416,7 @@ func TestOrderUpdatePlanFailure(t *testing.T) {
 		Orders: []*protoOrder.NewOrderRequest{
 			&protoOrder.NewOrderRequest{
 				OrderID:         "4d671984-d7dd-4dce-a20f-23f25d6daf7f",
-				KeyID:           key.KeyID,
+				AccountID:       acc.AccountID,
 				OrderType:       "paper",
 				OrderTemplateID: "mokie22",
 				ParentOrderID:   "00000000-0000-0000-0000-000000000000",
@@ -437,7 +458,7 @@ func TestOrderUpdatePlanFailure(t *testing.T) {
 		Orders: []*protoOrder.NewOrderRequest{
 			&protoOrder.NewOrderRequest{
 				OrderID:         "4d671984-d7dd-4dce-a20f-23f25d6daf7f",
-				KeyID:           key.KeyID,
+				AccountID:       acc.AccountID,
 				OrderType:       "paper",
 				OrderTemplateID: "mokie22",
 				ParentOrderID:   "00000000-0000-0000-0000-000000000000",
@@ -457,7 +478,7 @@ func TestOrderUpdatePlanFailure(t *testing.T) {
 				},
 			}, &protoOrder.NewOrderRequest{
 				OrderID:         "4d671984-d7dd-4dce-a20f-23f25d6daf76",
-				KeyID:           key.KeyID,
+				AccountID:       acc.AccountID,
 				OrderType:       "paper",
 				OrderTemplateID: "mokie22",
 				ParentOrderID:   "4d671984-d7dd-4dce-a20f-23f25d6daf7f",
@@ -501,7 +522,7 @@ func TestOrderUpdatePlanFailure(t *testing.T) {
 
 // This should test an update when a plan order has executed
 func TestOrderUpdatePlanFailureBecauseOfExecution(t *testing.T) {
-	service, user, key := setupService()
+	service, user, acc := setupService()
 
 	defer service.DB.Close()
 
@@ -514,7 +535,7 @@ func TestOrderUpdatePlanFailureBecauseOfExecution(t *testing.T) {
 		Orders: []*protoOrder.NewOrderRequest{
 			&protoOrder.NewOrderRequest{
 				OrderID:         "4d671984-d7dd-4dce-a20f-23f25d6daf7f",
-				KeyID:           key.KeyID,
+				AccountID:       acc.AccountID,
 				OrderType:       "paper",
 				OrderTemplateID: "mokie",
 				ParentOrderID:   "00000000-0000-0000-0000-000000000000",
@@ -535,7 +556,7 @@ func TestOrderUpdatePlanFailureBecauseOfExecution(t *testing.T) {
 			},
 			&protoOrder.NewOrderRequest{
 				OrderID:         "966fabac-8cad-11e8-9eb6-529269fb1459",
-				KeyID:           key.KeyID,
+				AccountID:       acc.AccountID,
 				OrderType:       "paper",
 				OrderTemplateID: "mokie",
 				ParentOrderID:   "4d671984-d7dd-4dce-a20f-23f25d6daf7f",
@@ -555,7 +576,7 @@ func TestOrderUpdatePlanFailureBecauseOfExecution(t *testing.T) {
 			},
 			&protoOrder.NewOrderRequest{
 				OrderID:         "3c960c68-8cb0-11e8-9eb6-529269fb1459",
-				KeyID:           key.KeyID,
+				AccountID:       acc.AccountID,
 				OrderType:       "paper",
 				OrderTemplateID: "mokie",
 				ParentOrderID:   "4d671984-d7dd-4dce-a20f-23f25d6daf7f",
@@ -596,7 +617,7 @@ func TestOrderUpdatePlanFailureBecauseOfExecution(t *testing.T) {
 		Orders: []*protoOrder.NewOrderRequest{
 			&protoOrder.NewOrderRequest{
 				OrderID:         "4d671984-d7dd-4dce-a20f-23f25d6daf7f",
-				KeyID:           key.KeyID,
+				AccountID:       acc.AccountID,
 				OrderType:       "paper",
 				OrderTemplateID: "mokie22",
 				ParentOrderID:   "00000000-0000-0000-0000-000000000000",
@@ -616,7 +637,7 @@ func TestOrderUpdatePlanFailureBecauseOfExecution(t *testing.T) {
 				},
 			}, &protoOrder.NewOrderRequest{
 				OrderID:         "4d671984-d7dd-4dce-a20f-23f25d6daf76",
-				KeyID:           key.KeyID,
+				AccountID:       acc.AccountID,
 				OrderType:       "paper",
 				OrderTemplateID: "mokie22",
 				ParentOrderID:   "4d671984-d7dd-4dce-a20f-23f25d6daf7f",
@@ -646,7 +667,7 @@ func TestOrderUpdatePlanFailureBecauseOfExecution(t *testing.T) {
 
 // Test delete plan
 func TestDeletePlan(t *testing.T) {
-	service, user, key := setupService()
+	service, user, acc := setupService()
 
 	defer service.DB.Close()
 
@@ -659,7 +680,7 @@ func TestDeletePlan(t *testing.T) {
 		Orders: []*protoOrder.NewOrderRequest{
 			&protoOrder.NewOrderRequest{
 				OrderID:         "4d671984-d7dd-4dce-a20f-23f25d6daf7f",
-				KeyID:           key.KeyID,
+				AccountID:       acc.AccountID,
 				OrderType:       "paper",
 				OrderTemplateID: "mokie",
 				ParentOrderID:   "00000000-0000-0000-0000-000000000000",
@@ -680,7 +701,7 @@ func TestDeletePlan(t *testing.T) {
 			},
 			&protoOrder.NewOrderRequest{
 				OrderID:         "966fabac-8cad-11e8-9eb6-529269fb1459",
-				KeyID:           key.KeyID,
+				AccountID:       acc.AccountID,
 				OrderType:       "paper",
 				OrderTemplateID: "mokie",
 				ParentOrderID:   "4d671984-d7dd-4dce-a20f-23f25d6daf7f",
@@ -700,7 +721,7 @@ func TestDeletePlan(t *testing.T) {
 			},
 			&protoOrder.NewOrderRequest{
 				OrderID:         "3c960c68-8cb0-11e8-9eb6-529269fb1459",
-				KeyID:           key.KeyID,
+				AccountID:       acc.AccountID,
 				OrderType:       "paper",
 				OrderTemplateID: "mokie",
 				ParentOrderID:   "4d671984-d7dd-4dce-a20f-23f25d6daf7f",
