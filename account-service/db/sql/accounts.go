@@ -7,6 +7,7 @@ import (
 
 	protoAccount "github.com/asciiu/gomo/account-service/proto/account"
 	protoBalance "github.com/asciiu/gomo/account-service/proto/balance"
+	"github.com/lib/pq"
 )
 
 /*
@@ -229,6 +230,43 @@ func FindAccounts(db *sql.DB, userID string) ([]*protoAccount.Account, error) {
 	}
 
 	return accounts, nil
+}
+
+func FindAccountKeys(db *sql.DB, accountIDs []string) ([]*protoAccount.AccountKey, error) {
+	results := make([]*protoAccount.AccountKey, 0)
+
+	rows, err := db.Query(`SELECT 
+		id, 
+		user_id, 
+		exchange_name, 
+		key_public, 
+		key_secret FROM accounts WHERE id = Any($1)`, pq.Array(accountIDs))
+
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var k protoAccount.AccountKey
+		err := rows.Scan(&k.AccountID,
+			&k.UserID,
+			&k.Exchange,
+			&k.KeyPublic,
+			&k.KeySecret)
+
+		if err != nil {
+			return nil, err
+		}
+		results = append(results, &k)
+	}
+
+	err = rows.Err()
+	if err != nil {
+		return nil, err
+	}
+
+	return results, nil
 }
 
 func UpdateAccountStatus(db *sql.DB, accountID, userID, status string) (*protoAccount.Account, error) {

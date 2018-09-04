@@ -374,6 +374,28 @@ func (service *AccountService) GetAccount(ctx context.Context, req *protoAccount
 	return nil
 }
 
+// Get a specific account by ID.
+func (service *AccountService) GetAccountKeys(ctx context.Context, req *protoAccount.GetAccountKeysRequest, res *protoAccount.AccountKeysResponse) error {
+	keys, err := repoAccount.FindAccountKeys(service.DB, req.AccountIDs)
+
+	switch {
+	case err == sql.ErrNoRows:
+		res.Status = constRes.Nonentity
+		res.Message = "no accounts by those IDs"
+	case err != nil:
+		log.Println("FindAccountKeys error: ", err.Error())
+		res.Status = constRes.Error
+		res.Message = err.Error()
+	default:
+		res.Status = constRes.Success
+		res.Data = &protoAccount.KeysList{
+			Keys: keys,
+		}
+	}
+
+	return nil
+}
+
 func (service *AccountService) GetAccountBalance(ctx context.Context, req *protoBalance.BalanceRequest, res *protoBalance.BalanceResponse) error {
 	balance, err := repoAccount.FindAccountBalance(service.DB, req.UserID, req.AccountID, req.CurrencySymbol)
 

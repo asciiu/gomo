@@ -13,6 +13,7 @@ service AccountService {
   rpc DeleteAccount(AccountRequest) returns (AccountResponse) {}
   rpc GetAccounts(AccountsRequest) returns (AccountsResponse) {}
   rpc GetAccount(AccountRequest) returns (AccountResponse) {}
+  rpc GetAccountKeys(GetAccountKeysRequest) returns (AccountKeysResponse) {}
   rpc GetAccountBalance(bal.BalanceRequest) returns (bal.BalanceResponse) {}
   rpc ResyncAccounts(AccountsRequest) returns (AccountsResponse) {}
   rpc UpdateAccount(UpdateAccountRequest) returns (AccountResponse) {}
@@ -27,6 +28,10 @@ message NewAccountRequest {
   string keySecret = 4;
   string description = 5;
   repeated bal.NewBalanceRequest balances = 6; 
+}
+
+message GetAccountKeysRequest {
+  repeated string accountIDs = 1;
 }
 
 message UpdateAccountRequest {
@@ -63,6 +68,14 @@ message Account {
   repeated bal.Balance balances = 11;
 }
 
+message AccountKey {
+  string accountID = 1;
+  string userID = 2;
+  string exchange = 3;
+  string keyPublic = 4;
+  string keySecret = 5;
+}
+
 message UserAccount {
   Account account = 1;
 }
@@ -76,8 +89,19 @@ message AccountResponse {
 message UserAccounts {
   repeated Account accounts = 1;
 }
+
 message AccountsResponse {
   string status = 1;
   string message = 2;
   UserAccounts data = 3;
+}
+
+message KeysList {
+  repeated AccountKey keys = 1;
+}
+
+message AccountKeysResponse {
+  string status = 1;
+  string message = 2;
+  KeysList data = 3;
 }
