@@ -87,11 +87,11 @@ type PlanActivitySummary struct {
 }
 
 type Order struct {
-	OrderID                  string                `json:"orderID,omitempty"`
-	ParentOrderID            string                `json:"parentOrderID,omitempty"`
-	PlanDepth                uint32                `json:"planDepth,omitempty"`
-	OrderTemplateID          string                `json:"orderTemplateID,omitempty"`
-	KeyID                    string                `json:"keyID,omitempty"`
+	OrderID         string `json:"orderID,omitempty"`
+	ParentOrderID   string `json:"parentOrderID,omitempty"`
+	PlanDepth       uint32 `json:"planDepth,omitempty"`
+	OrderTemplateID string `json:"orderTemplateID,omitempty"`
+	//KeyID                    string                `json:"keyID,omitempty"`
 	AccountID                string                `json:"accountID,omitempty"`
 	KeyPublic                string                `json:"keyPublic,omitempty"`
 	KeyDescription           string                `json:"keyDescription,omitempty"`
@@ -286,7 +286,7 @@ func (controller *PlanController) HandleGetPlan(c echo.Context) error {
 			ParentOrderID:            o.ParentOrderID,
 			PlanDepth:                o.PlanDepth,
 			OrderTemplateID:          o.OrderTemplateID,
-			KeyID:                    o.KeyID,
+			AccountID:                o.AccountID,
 			KeyPublic:                o.KeyPublic,
 			KeyDescription:           o.KeyDescription,
 			OrderPriority:            o.OrderPriority,
@@ -477,7 +477,7 @@ func (controller *PlanController) HandleListPlans(c echo.Context) error {
 				ParentOrderID:            o.ParentOrderID,
 				PlanDepth:                o.PlanDepth,
 				OrderTemplateID:          o.OrderTemplateID,
-				KeyID:                    o.KeyID,
+				AccountID:                o.AccountID,
 				KeyPublic:                o.KeyPublic,
 				KeyDescription:           o.KeyDescription,
 				OrderPriority:            o.OrderPriority,
@@ -684,7 +684,7 @@ func (controller *PlanController) HandlePostPlan(c echo.Context) error {
 			OrderPriority:          order.OrderPriority,
 			OrderType:              order.OrderType,
 			OrderTemplateID:        order.OrderTemplateID,
-			KeyID:                  order.KeyID,
+			AccountID:              order.AccountID,
 			ParentOrderID:          order.ParentOrderID,
 			MarketName:             order.MarketName,
 			Grupo:                  order.Grupo,
@@ -747,7 +747,7 @@ func (controller *PlanController) HandlePostPlan(c echo.Context) error {
 			ParentOrderID:            o.ParentOrderID,
 			PlanDepth:                o.PlanDepth,
 			OrderTemplateID:          o.OrderTemplateID,
-			KeyID:                    o.KeyID,
+			AccountID:                o.AccountID,
 			KeyPublic:                o.KeyPublic,
 			KeyDescription:           o.KeyDescription,
 			OrderPriority:            o.OrderPriority,
@@ -879,7 +879,7 @@ func (controller *PlanController) HandleUpdatePlan(c echo.Context) error {
 			OrderPriority:          order.OrderPriority,
 			OrderType:              order.OrderType,
 			OrderTemplateID:        order.OrderTemplateID,
-			KeyID:                  order.KeyID,
+			AccountID:              order.AccountID,
 			ParentOrderID:          order.ParentOrderID,
 			MarketName:             order.MarketName,
 			Side:                   order.Side,
@@ -944,7 +944,7 @@ func (controller *PlanController) HandleUpdatePlan(c echo.Context) error {
 			ParentOrderID:            o.ParentOrderID,
 			PlanDepth:                o.PlanDepth,
 			OrderTemplateID:          o.OrderTemplateID,
-			KeyID:                    o.KeyID,
+			AccountID:                o.AccountID,
 			KeyPublic:                o.KeyPublic,
 			KeyDescription:           o.KeyDescription,
 			OrderPriority:            o.OrderPriority,
