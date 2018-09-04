@@ -12,7 +12,6 @@ import (
 	protoAnalytics "github.com/asciiu/gomo/analytics-service/proto/analytics"
 	asql "github.com/asciiu/gomo/api/db/sql"
 	constRes "github.com/asciiu/gomo/common/constants/response"
-	protoKey "github.com/asciiu/gomo/key-service/proto/key"
 	protoOrder "github.com/asciiu/gomo/plan-service/proto/order"
 	protoPlan "github.com/asciiu/gomo/plan-service/proto/plan"
 	jwt "github.com/dgrijalva/jwt-go"
@@ -24,7 +23,6 @@ import (
 type PlanController struct {
 	DB              *sql.DB
 	PlanClient      protoPlan.PlanServiceClient
-	KeyClient       protoKey.KeyServiceClient
 	BulletinClient  protoActivity.ActivityBulletinClient
 	AnalyticsClient protoAnalytics.AnalyticsServiceClient
 	// map of ticker symbol to full name
@@ -136,7 +134,6 @@ func NewPlanController(db *sql.DB, service micro.Service) *PlanController {
 	controller := PlanController{
 		DB:              db,
 		PlanClient:      protoPlan.NewPlanServiceClient("plans", service.Client()),
-		KeyClient:       protoKey.NewKeyServiceClient("keys", service.Client()),
 		BulletinClient:  protoActivity.NewActivityBulletinClient("bulletin", service.Client()),
 		AnalyticsClient: protoAnalytics.NewAnalyticsServiceClient("analytics", service.Client()),
 		currencies:      make(map[string]string),

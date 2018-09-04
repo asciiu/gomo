@@ -15,14 +15,13 @@
     "common/db",
     "common/proto/events",
     "device-service/proto/device",
-    "key-service/proto/key",
     "plan-service/proto/order",
     "plan-service/proto/plan",
     "user-service/db/sql",
     "user-service/models",
     "user-service/proto/user"
   ]
-  revision = "299c010987728360d914e077ad7f56ad32154c2d"
+  revision = "3463a5fce01983a96f054166366345ce9f1bc2d0"
 
 [[projects]]
   name = "github.com/dgrijalva/jwt-go"
@@ -389,6 +388,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "f139476fb84e36e32c6f4c8e768070dde1913628c69f64d9ecd53b9d8e0b537f"
+  inputs-digest = "8ae5f7186b662296c0929b8f3648d993ae919f29d6d8b7a769234228b3a81c1b"
   solver-name = "gps-cdcl"
   solver-version = 1

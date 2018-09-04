@@ -26,7 +26,7 @@ spec:
               name: fomo-config
           env:
           - name: UPDATED_AT
-            value: "Mon Sep  3 21:19:13 MDT 2018"
+            value: "Mon Sep  3 21:59:26 MDT 2018"
           ports:
           - containerPort:  443 
             name: https-port

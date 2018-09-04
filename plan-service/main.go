@@ -10,7 +10,6 @@ import (
 	constMessage "github.com/asciiu/gomo/common/constants/message"
 	"github.com/asciiu/gomo/common/db"
 	protoEngine "github.com/asciiu/gomo/execution-engine/proto/engine"
-	protoKey "github.com/asciiu/gomo/key-service/proto/key"
 	protoPlan "github.com/asciiu/gomo/plan-service/proto/plan"
 	micro "github.com/micro/go-micro"
 	"github.com/micro/go-micro/server"
@@ -40,7 +39,6 @@ func main() {
 		DB:            gomoDB,
 		AccountClient: protoAccount.NewAccountServiceClient("accounts", srv.Client()),
 		BalanceClient: protoBalance.NewBalanceServiceClient("balances", srv.Client()),
-		KeyClient:     protoKey.NewKeyServiceClient("keys", srv.Client()),
 		EngineClient:  protoEngine.NewExecutionEngineClient("engine", srv.Client()),
 		NotifyPub:     micro.NewPublisher(constMessage.TopicNotification, srv.Client()),
 	}

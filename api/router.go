@@ -55,8 +55,6 @@ func NewRouter(db *sql.DB) *echo.Echo {
 	// controllers
 	accountController := controllers.NewAccountController(db, service)
 	authController := controllers.NewAuthController(db, service)
-	keyController := controllers.NewKeyController(db, service)
-	balanceController := controllers.NewBalanceController(db, service)
 	deviceController := controllers.NewDeviceController(db, service)
 	activityController := controllers.NewActivityController(service)
 	sessionController := controllers.NewSessionController(db, service)
@@ -94,19 +92,9 @@ func NewRouter(db *sql.DB) *echo.Echo {
 	protectedApi.PUT("/accounts/:accountID", accountController.HandleUpdateAccount)
 	protectedApi.DELETE("/accounts/:accountID", accountController.HandleDeleteAccount)
 
-	// balance endpoints
-	protectedApi.GET("/balances", balanceController.HandleGetBalances)
-
 	// user manangement endpoints
 	protectedApi.PUT("/users/:userID/changepassword", userController.HandleChangePassword)
 	protectedApi.PUT("/users/:userID", userController.HandleUpdateUser)
-
-	// api key endpoints
-	protectedApi.GET("/keys", keyController.HandleListKeys)
-	protectedApi.POST("/keys", keyController.HandlePostKey)
-	protectedApi.GET("/keys/:keyID", keyController.HandleGetKey)
-	protectedApi.PUT("/keys/:keyID", keyController.HandleUpdateKey)
-	protectedApi.DELETE("/keys/:keyID", keyController.HandleDeleteKey)
 
 	// device manage endpoints
 	protectedApi.GET("/devices", deviceController.HandleListDevices)

@@ -6,7 +6,6 @@ import (
 
 	protoAccount "github.com/asciiu/gomo/account-service/proto/account"
 	constRes "github.com/asciiu/gomo/common/constants/response"
-	protoKey "github.com/asciiu/gomo/key-service/proto/key"
 	protoUser "github.com/asciiu/gomo/user-service/proto/user"
 	jwt "github.com/dgrijalva/jwt-go"
 	"github.com/labstack/echo"
@@ -17,7 +16,6 @@ import (
 type SessionController struct {
 	DB            *sql.DB
 	UserClient    protoUser.UserServiceClient
-	KeyClient     protoKey.KeyServiceClient
 	AccountClient protoAccount.AccountServiceClient
 }
 
@@ -30,7 +28,6 @@ type UserMeta struct {
 	First    string     `json:"first"`
 	Last     string     `json:"last"`
 	Email    string     `json:"email"`
-	Keys     []*KeyMeta `json:"keys"`
 	Accounts []*Account `json:"accounts"`
 }
 
@@ -52,7 +49,6 @@ func NewSessionController(db *sql.DB, service micro.Service) *SessionController 
 	controller := SessionController{
 		DB:            db,
 		UserClient:    protoUser.NewUserServiceClient("users", service.Client()),
-		KeyClient:     protoKey.NewKeyServiceClient("keys", service.Client()),
 		AccountClient: protoAccount.NewAccountServiceClient("accounts", service.Client()),
 	}
 	return &controller
@@ -91,22 +87,6 @@ func (controller *SessionController) HandleSession(c echo.Context) error {
 		if r.Status == constRes.Error {
 			return c.JSON(http.StatusInternalServerError, response)
 		}
-	}
-
-	// TODO remove this after accounts is fully implemented
-	getKeysRequest := protoKey.GetUserKeysRequest{
-		UserID: userID,
-	}
-	r2, _ := controller.KeyClient.GetUserKeys(context.Background(), &getKeysRequest)
-	leKeys := make([]*KeyMeta, 0)
-
-	for _, k := range r2.Data.Keys {
-		leKeys = append(leKeys,
-			&KeyMeta{
-				Exchange:    k.Exchange,
-				Status:      k.Status,
-				Description: k.Description,
-				KeyID:       k.KeyID})
 	}
 
 	requestAccounts := protoAccount.AccountsRequest{UserID: userID}
@@ -151,7 +131,6 @@ func (controller *SessionController) HandleSession(c echo.Context) error {
 				First:    r.Data.User.First,
 				Last:     r.Data.User.Last,
 				Email:    r.Data.User.Email,
-				Keys:     leKeys,
 				Accounts: accounts,
 			},
 		},

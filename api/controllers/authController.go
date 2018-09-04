@@ -15,7 +15,6 @@ import (
 	protoBalance "github.com/asciiu/gomo/balance-service/proto/balance"
 	constRes "github.com/asciiu/gomo/common/constants/response"
 	protoDevice "github.com/asciiu/gomo/device-service/proto/device"
-	protoKey "github.com/asciiu/gomo/key-service/proto/key"
 	repoUser "github.com/asciiu/gomo/user-service/db/sql"
 	protoUser "github.com/asciiu/gomo/user-service/proto/user"
 	micro "github.com/micro/go-micro"
@@ -38,7 +37,6 @@ type AuthController struct {
 	DB            *sql.DB
 	UserClient    protoUser.UserServiceClient
 	BalanceClient protoBalance.BalanceServiceClient
-	KeyClient     protoKey.KeyServiceClient
 	DeviceClient  protoDevice.DeviceServiceClient
 }
 
@@ -108,7 +106,6 @@ func NewAuthController(db *sql.DB, service micro.Service) *AuthController {
 		DB:            db,
 		UserClient:    protoUser.NewUserServiceClient("users", service.Client()),
 		BalanceClient: protoBalance.NewBalanceServiceClient("balances", service.Client()),
-		KeyClient:     protoKey.NewKeyServiceClient("keys", service.Client()),
 		DeviceClient:  protoDevice.NewDeviceServiceClient("devices", service.Client()),
 	}
 

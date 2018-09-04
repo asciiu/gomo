@@ -20,7 +20,6 @@ import (
 	protoAccount "github.com/asciiu/gomo/account-service/proto/account"
 	protoBalance "github.com/asciiu/gomo/balance-service/proto/balance"
 	protoEngine "github.com/asciiu/gomo/execution-engine/proto/engine"
-	protoKey "github.com/asciiu/gomo/key-service/proto/key"
 	repoPlan "github.com/asciiu/gomo/plan-service/db/sql"
 	protoOrder "github.com/asciiu/gomo/plan-service/proto/order"
 	protoPlan "github.com/asciiu/gomo/plan-service/proto/plan"
@@ -35,7 +34,6 @@ type PlanService struct {
 	DB            *sql.DB
 	AccountClient protoAccount.AccountServiceClient
 	BalanceClient protoBalance.BalanceServiceClient
-	KeyClient     protoKey.KeyServiceClient
 	EngineClient  protoEngine.ExecutionEngineClient
 	NotifyPub     micro.Publisher
 }
