@@ -93,8 +93,13 @@ func (m *mockAccountService) UpdateAccount(ctx context.Context, req *protoAccoun
 }
 
 func (m *mockAccountService) ValidateAccountBalance(ctx context.Context, req *protoBalance.ValidateBalanceRequest, opts ...client.CallOption) (*protoBalance.ValidateBalanceResponse, error) {
+	balance, _ := repoAccount.FindAccountBalance(m.db, req.UserID, req.AccountID, req.CurrencySymbol)
+
+	valid := balance.Available > req.RequestedAmount
+
 	return &protoBalance.ValidateBalanceResponse{
 		Status: "success",
+		Data:   valid,
 	}, nil
 }
 

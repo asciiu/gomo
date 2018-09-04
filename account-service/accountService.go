@@ -660,6 +660,7 @@ func (service *AccountService) ValidateAccountBalance(ctx context.Context, req *
 
 	switch {
 	case err == sql.ErrNoRows:
+		// user does not have balance for said currency therefore not valid
 		res.Status = constRes.Success
 		res.Data = false
 	case err != nil:
