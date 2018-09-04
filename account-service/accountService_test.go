@@ -559,9 +559,16 @@ func TestAdjustAddBalance(t *testing.T) {
 
 	account := response2.Data.Account
 	balances := account.Balances
-	assert.Equal(t, "USDT", balances[1].CurrencySymbol, "currency did not match")
-	assert.Equal(t, 1000.0, balances[1].Available, "available did not match")
-	assert.Equal(t, 0.0, balances[1].Locked, "locked did not match")
+	var bal *protoBalance.Balance
+	for _, b := range balances {
+		if b.CurrencySymbol == "USDT" {
+			bal = b
+			break
+		}
+	}
+	assert.Equal(t, "USDT", bal.CurrencySymbol, "currency did not match")
+	assert.Equal(t, 1000.0, bal.Available, "available did not match")
+	assert.Equal(t, 0.0, bal.Locked, "locked did not match")
 
 	repoUser.DeleteUserHard(service.DB, user.ID)
 }
