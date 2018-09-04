@@ -75,8 +75,13 @@ func (m *mockAccountService) GetAccountKeys(ctx context.Context, req *protoAccou
 }
 
 func (m *mockAccountService) GetAccountBalance(ctx context.Context, req *protoBalance.BalanceRequest, opts ...client.CallOption) (*protoBalance.BalanceResponse, error) {
+	balance, _ := repoAccount.FindAccountBalance(m.db, req.UserID, req.AccountID, req.CurrencySymbol)
+
 	return &protoBalance.BalanceResponse{
 		Status: "success",
+		Data: &protoBalance.BalanceData{
+			Balance: balance,
+		},
 	}, nil
 }
 
