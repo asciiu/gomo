@@ -228,22 +228,40 @@ func (service *AccountService) AddBalance(ctx context.Context, req *protoBalance
 	return nil
 }
 
-func (service *AccountService) AdjustAvailableBalance(ctx context.Context, req *protoBalance.AdjustBalanceRequest, res *protoBalance.BalanceResponse) error {
+func (service *AccountService) ChangeAvailableBalance(ctx context.Context, req *protoBalance.ChangeBalanceRequest, res *protoBalance.BalanceResponse) error {
 	balance, err := repoAccount.FindAccountBalance(service.DB, req.UserID, req.AccountID, req.CurrencySymbol)
 	switch {
 	case err == sql.ErrNoRows:
-		res.Status = constRes.Nonentity
-		res.Message = "balance not found"
+		now := string(pq.FormatTimestamp(time.Now().UTC()))
+		balance := protoBalance.Balance{
+			UserID:         req.UserID,
+			AccountID:      req.AccountID,
+			CurrencySymbol: req.CurrencySymbol,
+			Available:      req.Amount,
+			Locked:         0,
+			CreatedOn:      now,
+			UpdatedOn:      now,
+		}
+		if err := repoAccount.InsertBalance(service.DB, &balance); err != nil {
+			log.Println("ChangeAvailableBalance on InsertBalance error: ", err.Error())
+			res.Status = constRes.Error
+			res.Message = err.Error()
+		}
+		res.Status = constRes.Success
+		res.Data = &protoBalance.BalanceData{
+			Balance: &balance,
+		}
+
 	case err != nil:
-		log.Println("AdjustAvailableBalance on FindAccountBalance error: ", err.Error())
+		log.Println("ChangeAvailableBalance on FindAccountBalance error: ", err.Error())
 		res.Status = constRes.Error
 		res.Message = err.Error()
 	default:
-		available := balance.Available + req.Delta
+		available := balance.Available + req.Amount
 
 		balance, err = repoAccount.UpdateAvailableBalance(service.DB, req.UserID, req.AccountID, req.CurrencySymbol, available)
 		if err != nil {
-			log.Println("AdjustAvailableBalance on UpdateAvailableBalance error: ", err.Error())
+			log.Println("ChangeAvailableBalance on UpdateAvailableBalance error: ", err.Error())
 			res.Status = constRes.Error
 			res.Message = err.Error()
 		}
@@ -256,22 +274,40 @@ func (service *AccountService) AdjustAvailableBalance(ctx context.Context, req *
 	return nil
 }
 
-func (service *AccountService) AdjustLockedBalance(ctx context.Context, req *protoBalance.AdjustBalanceRequest, res *protoBalance.BalanceResponse) error {
+func (service *AccountService) ChangeLockedBalance(ctx context.Context, req *protoBalance.ChangeBalanceRequest, res *protoBalance.BalanceResponse) error {
 	balance, err := repoAccount.FindAccountBalance(service.DB, req.UserID, req.AccountID, req.CurrencySymbol)
 	switch {
 	case err == sql.ErrNoRows:
-		res.Status = constRes.Nonentity
-		res.Message = "balance not found"
+		// currency not found yet create a balance for it
+		now := string(pq.FormatTimestamp(time.Now().UTC()))
+		balance := protoBalance.Balance{
+			UserID:         req.UserID,
+			AccountID:      req.AccountID,
+			CurrencySymbol: req.CurrencySymbol,
+			Available:      0,
+			Locked:         req.Amount,
+			CreatedOn:      now,
+			UpdatedOn:      now,
+		}
+		if err := repoAccount.InsertBalance(service.DB, &balance); err != nil {
+			log.Println("ChangeLockedBalance on InsertBalance error: ", err.Error())
+			res.Status = constRes.Error
+			res.Message = err.Error()
+		}
+		res.Status = constRes.Success
+		res.Data = &protoBalance.BalanceData{
+			Balance: &balance,
+		}
 	case err != nil:
-		log.Println("AdjustLockedBalance on FindAccountBalance error: ", err.Error())
+		log.Println("ChangeLockedBalance on FindAccountBalance error: ", err.Error())
 		res.Status = constRes.Error
 		res.Message = err.Error()
 	default:
-		locked := balance.Locked + req.Delta
+		locked := balance.Locked + req.Amount
 
 		balance, err = repoAccount.UpdateLockedBalance(service.DB, req.UserID, req.AccountID, req.CurrencySymbol, locked)
 		if err != nil {
-			log.Println("AdjustLockedBalance on UpdateLockedBalance error: ", err.Error())
+			log.Println("ChangeLockedBalance on UpdateLockedBalance error: ", err.Error())
 			res.Status = constRes.Error
 			res.Message = err.Error()
 		}
@@ -284,20 +320,84 @@ func (service *AccountService) AdjustLockedBalance(ctx context.Context, req *pro
 	return nil
 }
 
-func (service *AccountService) AdjustBalance(ctx context.Context, req *protoBalance.AdjustBalanceRequest, res *protoBalance.BalanceResponse) error {
+func (service *AccountService) LockBalance(ctx context.Context, req *protoBalance.ChangeBalanceRequest, res *protoBalance.BalanceResponse) error {
 	balance, err := repoAccount.FindAccountBalance(service.DB, req.UserID, req.AccountID, req.CurrencySymbol)
 
 	switch {
 	case err == sql.ErrNoRows:
-		res.Status = constRes.Nonentity
-		res.Message = "balance not found"
+		now := string(pq.FormatTimestamp(time.Now().UTC()))
+		balance := protoBalance.Balance{
+			UserID:         req.UserID,
+			AccountID:      req.AccountID,
+			CurrencySymbol: req.CurrencySymbol,
+			Available:      0,
+			Locked:         req.Amount,
+			CreatedOn:      now,
+			UpdatedOn:      now,
+		}
+		if err := repoAccount.InsertBalance(service.DB, &balance); err != nil {
+			log.Println("LockBalance on InsertBalance error: ", err.Error())
+			res.Status = constRes.Error
+			res.Message = err.Error()
+		}
+		res.Status = constRes.Success
+		res.Data = &protoBalance.BalanceData{
+			Balance: &balance,
+		}
+	case err != nil:
+		log.Println("LockBalance error on FindAccountBalance: ", err.Error())
+		res.Status = constRes.Error
+		res.Message = err.Error()
+	default:
+		available := balance.Available - req.Amount
+		locked := balance.Locked + req.Amount
+
+		balance, err = repoAccount.UpdateInternalBalance(service.DB, req.UserID, req.AccountID, req.CurrencySymbol, available, locked)
+		if err != nil {
+			log.Println("LockBalance error on UpdateInternalBalance: ", err.Error())
+			res.Status = constRes.Error
+			res.Message = err.Error()
+		}
+
+		res.Status = constRes.Success
+		res.Data = &protoBalance.BalanceData{
+			Balance: balance,
+		}
+	}
+	return nil
+}
+
+func (service *AccountService) UnlockBalance(ctx context.Context, req *protoBalance.ChangeBalanceRequest, res *protoBalance.BalanceResponse) error {
+	balance, err := repoAccount.FindAccountBalance(service.DB, req.UserID, req.AccountID, req.CurrencySymbol)
+
+	switch {
+	case err == sql.ErrNoRows:
+		now := string(pq.FormatTimestamp(time.Now().UTC()))
+		balance := protoBalance.Balance{
+			UserID:         req.UserID,
+			AccountID:      req.AccountID,
+			CurrencySymbol: req.CurrencySymbol,
+			Available:      req.Amount,
+			Locked:         0,
+			CreatedOn:      now,
+			UpdatedOn:      now,
+		}
+		if err := repoAccount.InsertBalance(service.DB, &balance); err != nil {
+			log.Println("UnlockBalance on InsertBalance error: ", err.Error())
+			res.Status = constRes.Error
+			res.Message = err.Error()
+		}
+		res.Status = constRes.Success
+		res.Data = &protoBalance.BalanceData{
+			Balance: &balance,
+		}
 	case err != nil:
 		log.Println("FindAccountBalance error: ", err.Error())
 		res.Status = constRes.Error
 		res.Message = err.Error()
 	default:
-		available := balance.Available + req.Delta
-		locked := balance.Locked - req.Delta
+		available := balance.Available + req.Amount
+		locked := balance.Locked - req.Amount
 
 		balance, err = repoAccount.UpdateInternalBalance(service.DB, req.UserID, req.AccountID, req.CurrencySymbol, available, locked)
 		if err != nil {

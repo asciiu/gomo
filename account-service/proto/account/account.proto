@@ -6,15 +6,15 @@ import "github.com/asciiu/gomo/account-service/proto/balance/balance.proto";
 
 service AccountService {
   rpc AddAccount(NewAccountRequest) returns (AccountResponse) {}
-  rpc AddBalance(bal.NewBalanceRequest) returns (bal.BalanceResponse) {}
-  rpc AdjustAvailableBalance(bal.AdjustBalanceRequest) returns (bal.BalanceResponse) {}
-  rpc AdjustLockedBalance(bal.AdjustBalanceRequest) returns (bal.BalanceResponse) {}
-  rpc AdjustBalance(bal.AdjustBalanceRequest) returns (bal.BalanceResponse) {}
+  rpc ChangeAvailableBalance(bal.ChangeBalanceRequest) returns (bal.BalanceResponse) {}
+  rpc ChangeLockedBalance(bal.ChangeBalanceRequest) returns (bal.BalanceResponse) {}
   rpc DeleteAccount(AccountRequest) returns (AccountResponse) {}
   rpc GetAccounts(AccountsRequest) returns (AccountsResponse) {}
   rpc GetAccount(AccountRequest) returns (AccountResponse) {}
   rpc GetAccountKeys(GetAccountKeysRequest) returns (AccountKeysResponse) {}
   rpc GetAccountBalance(bal.BalanceRequest) returns (bal.BalanceResponse) {}
+  rpc LockBalance(bal.ChangeBalanceRequest) returns (bal.BalanceResponse) {}
+  rpc UnlockBalance(bal.ChangeBalanceRequest) returns (bal.BalanceResponse) {}
   rpc ResyncAccounts(AccountsRequest) returns (AccountsResponse) {}
   rpc UpdateAccount(UpdateAccountRequest) returns (AccountResponse) {}
   rpc ValidateAccountBalance(bal.ValidateBalanceRequest) returns (bal.ValidateBalanceResponse) {} 

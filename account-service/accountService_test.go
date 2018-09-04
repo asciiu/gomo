@@ -472,7 +472,7 @@ func TestValidateAccountBalance2(t *testing.T) {
 	repoUser.DeleteUserHard(service.DB, user.ID)
 }
 
-func TestAdjustAccountBalance(t *testing.T) {
+func TestLockBalance(t *testing.T) {
 	service, user := setupService()
 
 	defer service.DB.Close()
@@ -497,14 +497,14 @@ func TestAdjustAccountBalance(t *testing.T) {
 	assert.Equal(t, "success", response.Status, response.Message)
 	assert.Equal(t, "binance paper", response.Data.Account.Exchange, "exchange should be binance")
 
-	adjustReq := protoBalance.AdjustBalanceRequest{
+	adjustReq := protoBalance.ChangeBalanceRequest{
 		UserID:         user.ID,
 		AccountID:      response.Data.Account.AccountID,
 		CurrencySymbol: "BTC",
-		Delta:          -1.0,
+		Amount:         1.0,
 	}
 	res := protoBalance.BalanceResponse{}
-	service.AdjustBalance(context.Background(), &adjustReq, &res)
+	service.LockBalance(context.Background(), &adjustReq, &res)
 
 	balance := res.Data.Balance
 	assert.Equal(t, 9.0, balance.Available, "should be 9 btc left")
@@ -513,7 +513,163 @@ func TestAdjustAccountBalance(t *testing.T) {
 	repoUser.DeleteUserHard(service.DB, user.ID)
 }
 
-func TestAdjustAddBalance(t *testing.T) {
+func TestUnlockBalance(t *testing.T) {
+	service, user := setupService()
+
+	defer service.DB.Close()
+
+	request := protoAccount.NewAccountRequest{
+		UserID:      user.ID,
+		Exchange:    "binance paper",
+		KeyPublic:   "public",
+		KeySecret:   "secret",
+		Description: "shit test again!",
+		Balances: []*protoBalance.NewBalanceRequest{
+			&protoBalance.NewBalanceRequest{
+				CurrencySymbol: "BTC",
+				Available:      10.0,
+			},
+		},
+	}
+
+	response := protoAccount.AccountResponse{}
+	service.AddAccount(context.Background(), &request, &response)
+
+	assert.Equal(t, "success", response.Status, response.Message)
+	assert.Equal(t, "binance paper", response.Data.Account.Exchange, "exchange should be binance")
+
+	changeReq := protoBalance.ChangeBalanceRequest{
+		UserID:         user.ID,
+		AccountID:      response.Data.Account.AccountID,
+		CurrencySymbol: "BTC",
+		Amount:         1.0,
+	}
+	res := protoBalance.BalanceResponse{}
+	service.LockBalance(context.Background(), &changeReq, &res)
+
+	getBalanceReq := protoBalance.BalanceRequest{
+		UserID:         user.ID,
+		AccountID:      response.Data.Account.AccountID,
+		CurrencySymbol: "BTC",
+	}
+	balResponse := protoBalance.BalanceResponse{}
+	service.GetAccountBalance(context.Background(), &getBalanceReq, &balResponse)
+
+	balance := balResponse.Data.Balance
+	assert.Equal(t, "BTC", balance.CurrencySymbol, "currency symbol should be BTC")
+	assert.Equal(t, 9.0, balance.Available, "available should be 1.0")
+	assert.Equal(t, 1.0, balance.Locked, "locked should be 0")
+
+	service.UnlockBalance(context.Background(), &changeReq, &res)
+	service.GetAccountBalance(context.Background(), &getBalanceReq, &balResponse)
+
+	balance = balResponse.Data.Balance
+	assert.Equal(t, "BTC", balance.CurrencySymbol, "currency symbol should be BTC")
+	assert.Equal(t, 10.0, balance.Available, "available should be 1.0")
+	assert.Equal(t, 0.0, balance.Locked, "locked should be 0")
+
+	repoUser.DeleteUserHard(service.DB, user.ID)
+}
+
+func TestChangeAvailableBalance(t *testing.T) {
+	service, user := setupService()
+
+	defer service.DB.Close()
+
+	request := protoAccount.NewAccountRequest{
+		UserID:      user.ID,
+		Exchange:    "binance paper",
+		KeyPublic:   "public",
+		KeySecret:   "secret",
+		Description: "shit test again!",
+		Balances: []*protoBalance.NewBalanceRequest{
+			&protoBalance.NewBalanceRequest{
+				CurrencySymbol: "BTC",
+				Available:      10.0,
+			},
+		},
+	}
+
+	response := protoAccount.AccountResponse{}
+	service.AddAccount(context.Background(), &request, &response)
+
+	assert.Equal(t, "success", response.Status, response.Message)
+
+	changeReq := protoBalance.ChangeBalanceRequest{
+		UserID:         user.ID,
+		AccountID:      response.Data.Account.AccountID,
+		CurrencySymbol: "BTC",
+		Amount:         1.0,
+	}
+	res := protoBalance.BalanceResponse{}
+	service.ChangeAvailableBalance(context.Background(), &changeReq, &res)
+
+	getBalanceReq := protoBalance.BalanceRequest{
+		UserID:         user.ID,
+		AccountID:      response.Data.Account.AccountID,
+		CurrencySymbol: "BTC",
+	}
+	balResponse := protoBalance.BalanceResponse{}
+	service.GetAccountBalance(context.Background(), &getBalanceReq, &balResponse)
+
+	balance := balResponse.Data.Balance
+	assert.Equal(t, "BTC", balance.CurrencySymbol, "currency symbol should be BTC")
+	assert.Equal(t, 11.0, balance.Available, "available should be 11.0")
+	assert.Equal(t, 0.0, balance.Locked, "locked should be 0.0")
+
+	repoUser.DeleteUserHard(service.DB, user.ID)
+}
+
+func TestChangeLockedBalance(t *testing.T) {
+	service, user := setupService()
+
+	defer service.DB.Close()
+
+	request := protoAccount.NewAccountRequest{
+		UserID:      user.ID,
+		Exchange:    "binance paper",
+		KeyPublic:   "public",
+		KeySecret:   "secret",
+		Description: "shit test again!",
+		Balances: []*protoBalance.NewBalanceRequest{
+			&protoBalance.NewBalanceRequest{
+				CurrencySymbol: "BTC",
+				Available:      10.0,
+			},
+		},
+	}
+
+	response := protoAccount.AccountResponse{}
+	service.AddAccount(context.Background(), &request, &response)
+
+	assert.Equal(t, "success", response.Status, response.Message)
+
+	changeReq := protoBalance.ChangeBalanceRequest{
+		UserID:         user.ID,
+		AccountID:      response.Data.Account.AccountID,
+		CurrencySymbol: "USDT",
+		Amount:         1.0,
+	}
+	res := protoBalance.BalanceResponse{}
+	service.ChangeLockedBalance(context.Background(), &changeReq, &res)
+
+	getBalanceReq := protoBalance.BalanceRequest{
+		UserID:         user.ID,
+		AccountID:      response.Data.Account.AccountID,
+		CurrencySymbol: "USDT",
+	}
+	balResponse := protoBalance.BalanceResponse{}
+	service.GetAccountBalance(context.Background(), &getBalanceReq, &balResponse)
+
+	balance := balResponse.Data.Balance
+	assert.Equal(t, "USDT", balance.CurrencySymbol, "currency symbol should be BTC")
+	assert.Equal(t, 0.0, balance.Available, "available should be 0.0")
+	assert.Equal(t, 1.0, balance.Locked, "locked should be 1.0")
+
+	repoUser.DeleteUserHard(service.DB, user.ID)
+}
+
+func TestMergeBalance(t *testing.T) {
 	service, user := setupService()
 
 	defer service.DB.Close()

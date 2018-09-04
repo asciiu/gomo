@@ -10,11 +10,11 @@ message NewBalanceRequest {
   double available = 4;
 }
 
-message AdjustBalanceRequest {
+message ChangeBalanceRequest {
   string userID = 1;
   string accountID = 2;
   string currencySymbol = 3;
-  double delta = 4;
+  double amount = 4;
 }
 
 message BalanceRequest {
