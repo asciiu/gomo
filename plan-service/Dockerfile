@@ -6,9 +6,6 @@ FROM golang:1.10.0 as builder
 # Set our workdir to our current service in the gopath
 WORKDIR /go/src/github.com/asciiu/gomo/plan-service
 
-# Copy the current code into our workdir
-COPY . .
-
 # Here we're pulling in godep, which is a dependency manager tool,
 # we're going to use dep instead of go get, to get around a few
 # quirks in how go get works with sub-packages.
@@ -20,8 +17,8 @@ RUN chmod 700 /root/.ssh/id_rsa
 RUN echo "Host github.com\n\tStrictHostKeyChecking no\n" >> /root/.ssh/config
 RUN git config --global url.ssh://git@github.com/.insteadOf https://github.com/
 
-ADD account-service /go/src/github.com/asciiu/gomo/account-service
-CMD cd /go/src/github.com/asciiu/gomo/account-service && go get github.com/asciiu/gomo && go build -o /gomo
+ADD plan-service /go/src/github.com/asciiu/gomo/plan-service
+CMD cd /go/src/github.com/asciiu/gomo/plan-service && go get github.com/asciiu/gomo && go build -o /gomo
 
 # Create a dep project, and run `ensure`, which will pull in all 
 # of the dependencies within this directory.
