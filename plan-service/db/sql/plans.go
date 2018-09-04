@@ -7,7 +7,7 @@ import (
 	"errors"
 	"log"
 
-	constKey "github.com/asciiu/gomo/key-service/constants"
+	constAccount "github.com/asciiu/gomo/account-service/constants"
 	constPlan "github.com/asciiu/gomo/plan-service/constants"
 	protoOrder "github.com/asciiu/gomo/plan-service/proto/order"
 	protoPlan "github.com/asciiu/gomo/plan-service/proto/plan"
@@ -297,7 +297,7 @@ func FindActivePlans(db *sql.DB) ([]*protoPlan.Plan, error) {
 		JOIN orders o on p.id = o.plan_id AND p.last_executed_order_id = o.parent_order_id
 		JOIN triggers t on o.id = t.order_id
 		JOIN accounts a on o.account_id = a.id
-		WHERE p.status = $1 AND k.status = $2 ORDER BY p.id, o.id, t.index`, constPlan.Active, constKey.Verified)
+		WHERE p.status = $1 AND a.status = $2 ORDER BY p.id, o.id, t.index`, constPlan.Active, constAccount.AccountValid)
 
 	if err != nil {
 		return nil, err
@@ -679,8 +679,8 @@ func FindChildOrders(db *sql.DB, planID, parentOrderID string) (*protoPlan.Plan,
 		JOIN orders o on p.id = o.plan_id
 		JOIN triggers t on o.id = t.order_id
 		JOIN accounts a on o.account_id = a.id
-		WHERE p.id = $1 AND o.parent_order_id = $2 AND k.status = $3 
-		ORDER BY o.id, t.index`, planID, parentOrderID, constKey.Verified)
+		WHERE p.id = $1 AND o.parent_order_id = $2 AND a.status = $3 
+		ORDER BY o.id, t.index`, planID, parentOrderID, constAccount.AccountValid)
 
 	if err != nil {
 		return nil, err

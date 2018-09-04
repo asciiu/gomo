@@ -266,7 +266,7 @@ func (service *PlanService) HandleCompletedOrder(ctx context.Context, completedO
 			}
 
 		case err != nil:
-			log.Println("completed order error on find plan -- ", err.Error())
+			log.Println("completed order error on FindChildOrders -- ", err.Error())
 
 		default:
 			// load new plan order with false - it is not a revision of an active order
