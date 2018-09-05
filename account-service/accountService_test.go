@@ -67,9 +67,10 @@ func TestNewAccount(t *testing.T) {
 
 	request := protoAccount.NewAccountRequest{
 		UserID:      user.ID,
-		Exchange:    "binance paper",
+		Exchange:    "binance",
 		KeyPublic:   "public",
 		KeySecret:   "secret",
+		AccountType: "paper",
 		Description: "shit test again!",
 		Balances: []*protoBalance.NewBalanceRequest{
 			&protoBalance.NewBalanceRequest{
@@ -85,7 +86,7 @@ func TestNewAccount(t *testing.T) {
 	assert.Equal(t, "success", response.Status, response.Message)
 	assert.Equal(t, 1.0, response.Data.Account.Balances[0].Available, "available should be 1.0")
 	assert.Equal(t, "BTC", response.Data.Account.Balances[0].CurrencySymbol, "currency symbol should be BTC")
-	assert.Equal(t, "binance paper", response.Data.Account.Exchange, "exchange should be binance paper")
+	assert.Equal(t, "binance", response.Data.Account.Exchange, "exchange should be binance")
 
 	repoUser.DeleteUserHard(service.DB, user.ID)
 }
@@ -97,7 +98,8 @@ func TestGetAccount(t *testing.T) {
 
 	request := protoAccount.NewAccountRequest{
 		UserID:      user.ID,
-		Exchange:    "binance paper",
+		Exchange:    "binance",
+		AccountType: "paper",
 		KeyPublic:   "public",
 		KeySecret:   "secret",
 		Description: "shit test again!",
@@ -138,7 +140,8 @@ func TestGetAccounts(t *testing.T) {
 
 	newRequest1 := protoAccount.NewAccountRequest{
 		UserID:      user.ID,
-		Exchange:    "binance paper",
+		Exchange:    "binance",
+		AccountType: "paper",
 		KeyPublic:   "public1",
 		KeySecret:   "secret1",
 		Description: "Test Account 1",
@@ -155,7 +158,8 @@ func TestGetAccounts(t *testing.T) {
 
 	newRequest2 := protoAccount.NewAccountRequest{
 		UserID:      user.ID,
-		Exchange:    "binance paper",
+		Exchange:    "binance",
+		AccountType: "paper",
 		KeyPublic:   "public2",
 		KeySecret:   "secret2",
 		Description: "Test Account 2",
@@ -191,8 +195,9 @@ func TestDeleteAccount(t *testing.T) {
 
 	request := protoAccount.NewAccountRequest{
 		UserID:      user.ID,
-		Exchange:    "binance paper",
+		Exchange:    "binance",
 		KeyPublic:   "public",
+		AccountType: "paper",
 		KeySecret:   "secret",
 		Description: "shit test again!",
 		Balances: []*protoBalance.NewBalanceRequest{
@@ -263,7 +268,8 @@ func TestAccountUpdate(t *testing.T) {
 
 	request := protoAccount.NewAccountRequest{
 		UserID:      user.ID,
-		Exchange:    "binance paper",
+		Exchange:    "binance",
+		AccountType: "paper",
 		KeyPublic:   "public",
 		KeySecret:   "secret",
 		Description: "shit test again!",
@@ -307,6 +313,7 @@ func TestSyncAccount(t *testing.T) {
 	request := protoAccount.NewAccountRequest{
 		UserID:      user.ID,
 		Exchange:    "binance",
+		AccountType: "real",
 		KeyPublic:   "public",
 		KeySecret:   "secret",
 		Description: "shit test again!",
@@ -355,9 +362,11 @@ func TestGetAccountBalance(t *testing.T) {
 
 	defer service.DB.Close()
 
+	// this balance should be overwritten by real balances
 	request := protoAccount.NewAccountRequest{
 		UserID:      user.ID,
 		Exchange:    "binance",
+		AccountType: "real",
 		KeyPublic:   "public",
 		KeySecret:   "secret",
 		Description: "shit test again!",
@@ -369,6 +378,7 @@ func TestGetAccountBalance(t *testing.T) {
 		},
 	}
 
+	// should result in pulling balances from mock binance client
 	response := protoAccount.AccountResponse{}
 	service.AddAccount(context.Background(), &request, &response)
 
@@ -384,6 +394,8 @@ func TestGetAccountBalance(t *testing.T) {
 	service.GetAccountBalance(context.Background(), &getBalanceReq, &balResponse)
 
 	balance := balResponse.Data.Balance
+
+	// these values should match the mock binance client
 	assert.Equal(t, "BTC", balance.CurrencySymbol, "currency symbol should be BTC")
 	assert.Equal(t, 1.0, balance.Available, "available should be 1.0")
 	assert.Equal(t, 0.0, balance.Locked, "locked should be 0")
@@ -400,7 +412,8 @@ func TestValidateAccountBalance(t *testing.T) {
 
 	request := protoAccount.NewAccountRequest{
 		UserID:      user.ID,
-		Exchange:    "binance paper",
+		Exchange:    "binance",
+		AccountType: "paper",
 		KeyPublic:   "public",
 		KeySecret:   "secret",
 		Description: "shit test again!",
@@ -416,7 +429,7 @@ func TestValidateAccountBalance(t *testing.T) {
 	service.AddAccount(context.Background(), &request, &response)
 
 	assert.Equal(t, "success", response.Status, response.Message)
-	assert.Equal(t, "binance paper", response.Data.Account.Exchange, "exchange should be binance")
+	assert.Equal(t, "binance", response.Data.Account.Exchange, "exchange should be binance")
 
 	vReq := protoBalance.ValidateBalanceRequest{
 		UserID:          user.ID,
@@ -440,7 +453,8 @@ func TestValidateAccountBalance2(t *testing.T) {
 
 	request := protoAccount.NewAccountRequest{
 		UserID:      user.ID,
-		Exchange:    "binance paper",
+		Exchange:    "binance",
+		AccountType: "paper",
 		KeyPublic:   "public",
 		KeySecret:   "secret",
 		Description: "shit test again!",
@@ -456,7 +470,7 @@ func TestValidateAccountBalance2(t *testing.T) {
 	service.AddAccount(context.Background(), &request, &response)
 
 	assert.Equal(t, "success", response.Status, response.Message)
-	assert.Equal(t, "binance paper", response.Data.Account.Exchange, "exchange should be binance")
+	assert.Equal(t, "binance", response.Data.Account.Exchange, "exchange should be binance")
 
 	vReq := protoBalance.ValidateBalanceRequest{
 		UserID:          user.ID,
@@ -479,7 +493,8 @@ func TestLockBalance(t *testing.T) {
 
 	request := protoAccount.NewAccountRequest{
 		UserID:      user.ID,
-		Exchange:    "binance paper",
+		Exchange:    "binance",
+		AccountType: "paper",
 		KeyPublic:   "public",
 		KeySecret:   "secret",
 		Description: "shit test again!",
@@ -495,7 +510,6 @@ func TestLockBalance(t *testing.T) {
 	service.AddAccount(context.Background(), &request, &response)
 
 	assert.Equal(t, "success", response.Status, response.Message)
-	assert.Equal(t, "binance paper", response.Data.Account.Exchange, "exchange should be binance")
 
 	adjustReq := protoBalance.ChangeBalanceRequest{
 		UserID:         user.ID,
@@ -520,7 +534,8 @@ func TestUnlockBalance(t *testing.T) {
 
 	request := protoAccount.NewAccountRequest{
 		UserID:      user.ID,
-		Exchange:    "binance paper",
+		Exchange:    "binance",
+		AccountType: "paper",
 		KeyPublic:   "public",
 		KeySecret:   "secret",
 		Description: "shit test again!",
@@ -536,7 +551,6 @@ func TestUnlockBalance(t *testing.T) {
 	service.AddAccount(context.Background(), &request, &response)
 
 	assert.Equal(t, "success", response.Status, response.Message)
-	assert.Equal(t, "binance paper", response.Data.Account.Exchange, "exchange should be binance")
 
 	changeReq := protoBalance.ChangeBalanceRequest{
 		UserID:         user.ID,
@@ -578,7 +592,8 @@ func TestChangeAvailableBalance(t *testing.T) {
 
 	request := protoAccount.NewAccountRequest{
 		UserID:      user.ID,
-		Exchange:    "binance paper",
+		Exchange:    "binance",
+		AccountType: "paper",
 		KeyPublic:   "public",
 		KeySecret:   "secret",
 		Description: "shit test again!",
@@ -627,7 +642,8 @@ func TestChangeLockedBalance(t *testing.T) {
 
 	request := protoAccount.NewAccountRequest{
 		UserID:      user.ID,
-		Exchange:    "binance paper",
+		Exchange:    "binance",
+		AccountType: "paper",
 		KeyPublic:   "public",
 		KeySecret:   "secret",
 		Description: "shit test again!",
@@ -676,7 +692,8 @@ func TestMergeBalance(t *testing.T) {
 
 	request := protoAccount.NewAccountRequest{
 		UserID:      user.ID,
-		Exchange:    "binance paper",
+		Exchange:    "binance",
+		AccountType: "paper",
 		KeyPublic:   "public",
 		KeySecret:   "secret",
 		Description: "shit test again!",
@@ -736,7 +753,8 @@ func TestGetAccountKeys(t *testing.T) {
 
 	request := protoAccount.NewAccountRequest{
 		UserID:      user.ID,
-		Exchange:    "binance paper",
+		Exchange:    "binance",
+		AccountType: "paper",
 		KeyPublic:   "public1",
 		KeySecret:   "secret1",
 		Description: "shit test again!",
@@ -763,7 +781,7 @@ func TestGetAccountKeys(t *testing.T) {
 	assert.Equal(t, 1, len(keys), "should be 1 key")
 	assert.Equal(t, "public1", keys[0].KeyPublic, "public key did not match")
 	assert.Equal(t, "secret1", rot32768(keys[0].KeySecret), "secret key did not match")
-	assert.Equal(t, "binance paper", keys[0].Exchange, "exchange did not match")
+	assert.Equal(t, "binance", keys[0].Exchange, "exchange did not match")
 	assert.Equal(t, "valid", keys[0].Status, "account status did not match")
 
 	repoUser.DeleteUserHard(service.DB, user.ID)

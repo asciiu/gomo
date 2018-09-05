@@ -139,8 +139,8 @@ func (service *AccountService) AddAccount(ctx context.Context, req *protoAccount
 		return nil
 	}
 
-	switch account.Exchange {
-	case constExch.Binance:
+	switch {
+	case account.Exchange == constExch.Binance && account.AccountType == constAccount.AccountReal:
 		// if api key ask exchange for balances
 		if account.KeyPublic == "" || account.KeySecret == "" {
 			res.Status = constRes.Fail
@@ -635,7 +635,7 @@ func (service *AccountService) ResyncAccounts(ctx context.Context, req *protoAcc
 
 	// loop through each account
 	for i, acc := range accounts {
-		if strings.Contains(acc.Exchange, "paper") {
+		if acc.AccountType == constAccount.AccountPaper {
 			continue
 		}
 
@@ -685,8 +685,8 @@ func (service *AccountService) UpdateAccount(ctx context.Context, req *protoAcco
 	if req.KeyPublic != "" {
 		now := string(pq.FormatTimestamp(time.Now().UTC()))
 
-		switch account.Exchange {
-		case constExch.Binance:
+		switch {
+		case account.Exchange == constExch.Binance && account.AccountType == constAccount.AccountReal:
 			reqBal := protoBinanceBal.BalanceRequest{
 				UserID:    account.UserID,
 				KeyPublic: req.KeyPublic,
