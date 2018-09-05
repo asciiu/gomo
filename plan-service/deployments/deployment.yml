@@ -26,7 +26,7 @@ spec:
               name: fomo-config
           env:
           - name: UPDATED_AT
-            value: "Tue Sep  4 16:35:40 MDT 2018" 
+            value: "Tue Sep  4 18:47:47 MDT 2018" 
           ports:
           - containerPort: 8080
             name: plans-port

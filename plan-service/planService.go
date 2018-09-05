@@ -46,6 +46,7 @@ type PlanService struct {
 func (service *PlanService) publishPlan(ctx context.Context, plan *protoPlan.Plan, isRevision bool) error {
 	newOrders := make([]*protoEngine.Order, 0)
 	activeDepth := plan.LastExecutedPlanDepth + 1
+	accountIDs := make([]string, 0)
 
 	for _, order := range plan.Orders {
 
@@ -76,42 +77,69 @@ func (service *PlanService) publishPlan(ctx context.Context, plan *protoPlan.Pla
 			LimitPrice:  order.LimitPrice,
 			OrderType:   order.OrderType,
 			OrderStatus: order.Status,
-			//AccountID:   order.AccountID,
-			KeyPublic: order.KeyPublic,
-			KeySecret: order.KeySecret,
-			Triggers:  triggers,
+			AccountID:   order.AccountID,
+			KeyPublic:   order.KeyPublic,
+			KeySecret:   order.KeySecret,
+			Triggers:    triggers,
+		}
+
+		// gather unique account ids here
+		found := false
+		for _, a := range accountIDs {
+			if a == order.AccountID {
+				found = true
+			}
+		}
+		if !found {
+			accountIDs = append(accountIDs, order.AccountID)
 		}
 
 		newOrders = append(newOrders, &newOrderEvt)
 	}
 
-	// only proceed if there are new orders to publish
-	if len(newOrders) > 0 {
-		newPlan := protoEngine.NewPlanRequest{
-			PlanID:                plan.PlanID,
-			UserID:                plan.UserID,
-			ActiveCurrencyBalance: plan.ActiveCurrencyBalance,
-			ActiveCurrencySymbol:  plan.ActiveCurrencySymbol,
-			CloseOnComplete:       plan.CloseOnComplete,
-			Orders:                newOrders,
-		}
+	// no orders to publish
+	if len(newOrders) == 0 {
+		return nil
+	}
 
-		response, err := service.EngineClient.AddPlan(ctx, &newPlan)
-		if err != nil {
-			return fmt.Errorf("could not publish the plan %s %s", newPlan.PlanID, err.Error())
-		}
+	newPlan := protoEngine.NewPlanRequest{
+		PlanID:                plan.PlanID,
+		UserID:                plan.UserID,
+		ActiveCurrencyBalance: plan.ActiveCurrencyBalance,
+		ActiveCurrencySymbol:  plan.ActiveCurrencySymbol,
+		CloseOnComplete:       plan.CloseOnComplete,
+		Orders:                newOrders,
+	}
 
-		if isRevision {
-			log.Printf("published updated plan -- %s\n", response.Data.Plans[0].PlanID)
-		} else {
-			log.Printf("published new plan -- %s\n", response.Data.Plans[0].PlanID)
-		}
+	response, err := service.EngineClient.AddPlan(ctx, &newPlan)
+	if err != nil {
+		return fmt.Errorf("could not publish the plan %s %s", newPlan.PlanID, err.Error())
+	}
 
-		// update the order status
-		for _, o := range newOrders {
-			if _, _, err := repoPlan.UpdateOrderStatusAndBalance(service.DB, o.OrderID, constPlan.Active, plan.ActiveCurrencyBalance); err != nil {
-				log.Println("could not update order status to active -- ", err.Error())
-			}
+	if isRevision {
+		log.Printf("published updated plan -- %s\n", response.Data.Plans[0].PlanID)
+	} else {
+		log.Printf("published new plan -- %s\n", response.Data.Plans[0].PlanID)
+	}
+
+	// update the order status
+	for _, o := range newOrders {
+		if _, _, err := repoPlan.UpdateOrderStatusAndBalance(service.DB, o.OrderID, constPlan.Active, plan.ActiveCurrencyBalance); err != nil {
+			log.Println("could not update order status to active -- ", err.Error())
+		}
+	}
+
+	// lock the active balance for each account
+	for _, accountID := range accountIDs {
+		changeReq := protoBalance.ChangeBalanceRequest{
+			UserID:         plan.UserID,
+			AccountID:      accountID,
+			CurrencySymbol: plan.ActiveCurrencySymbol,
+			Amount:         plan.ActiveCurrencyBalance,
+		}
+		r, _ := service.AccountClient.LockBalance(ctx, &changeReq)
+		if r.Status != constRes.Success {
+			log.Println("could not lock the active balance -- ", err.Error())
 		}
 	}
 
@@ -181,7 +209,6 @@ func (service *PlanService) fetchKeys(accountIDs []string) ([]*protoAccount.Acco
 
 // Handle a completed order event
 func (service *PlanService) HandleCompletedOrder(ctx context.Context, completedOrderEvent *protoEvt.CompletedOrderEvent) error {
-
 	now := string(pq.FormatTimestamp(time.Now().UTC()))
 
 	notification := protoActivity.Activity{
@@ -209,6 +236,29 @@ func (service *PlanService) HandleCompletedOrder(ctx context.Context, completedO
 	}
 
 	if completedOrderEvent.Status == constPlan.Filled {
+
+		// TODO error check these in case the account service is unreachable
+		// remove lock on initial balance
+		changeReq := protoBalance.ChangeBalanceRequest{
+			UserID:         completedOrderEvent.UserID,
+			AccountID:      completedOrderEvent.AccountID,
+			CurrencySymbol: completedOrderEvent.InitialCurrencySymbol,
+			Amount:         completedOrderEvent.InitialCurrencyBalance,
+		}
+		service.AccountClient.ChangeLockedBalance(ctx, &changeReq)
+
+		// add remainder to initial balance
+		if completedOrderEvent.InitialCurrencyRemainder > 0 {
+			changeReq.Amount = completedOrderEvent.InitialCurrencyRemainder
+			service.AccountClient.ChangeAvailableBalance(ctx, &changeReq)
+		}
+
+		// lock the final available balance, this balance should be locked
+		// until this plan uses it or when the plan closes
+		changeReq.CurrencySymbol = completedOrderEvent.FinalCurrencySymbol
+		changeReq.Amount = completedOrderEvent.FinalCurrencyBalance
+		service.AccountClient.LockBalance(ctx, &changeReq)
+
 		now := string(pq.FormatTimestamp(time.Now().UTC()))
 		if err := repoPlan.UpdateTriggerResults(service.DB,
 			completedOrderEvent.TriggerID,
@@ -255,8 +305,19 @@ func (service *PlanService) HandleCompletedOrder(ctx context.Context, completedO
 		switch {
 		case err == sql.ErrNoRows:
 			// close status of plan when no more orders and CloseOnComplete is true
-			if completedOrderEvent.CloseOnComplete && repoPlan.UpdatePlanStatus(service.DB, planID, constPlan.Closed) != nil {
-				log.Printf("could not close plan -- %s\n", planID)
+			if completedOrderEvent.CloseOnComplete {
+				if repoPlan.UpdatePlanStatus(service.DB, planID, constPlan.Closed) != nil {
+					log.Printf("could not close plan -- %s\n", planID)
+				}
+
+				// plan was closed, release the locked funds
+				changeReq := protoBalance.ChangeBalanceRequest{
+					UserID:         completedOrderEvent.UserID,
+					AccountID:      completedOrderEvent.AccountID,
+					CurrencySymbol: completedOrderEvent.FinalCurrencySymbol,
+					Amount:         completedOrderEvent.FinalCurrencyBalance,
+				}
+				service.AccountClient.UnlockBalance(ctx, &changeReq)
 			}
 
 		case err != nil:
@@ -574,7 +635,6 @@ func (service *PlanService) NewPlan(ctx context.Context, req *protoPlan.NewPlanR
 			res.Message = "could not publish first order: " + err.Error()
 			return nil
 		}
-		// TODO update the available balances
 	}
 
 	res.Status = constRes.Success
@@ -694,9 +754,6 @@ func (service *PlanService) DeletePlan(ctx context.Context, req *protoPlan.Delet
 // Can't return an error with a response object - response object is returned as nil when error is non nil.
 // Therefore, return error in response object.
 func (service *PlanService) UpdatePlan(ctx context.Context, req *protoPlan.UpdatePlanRequest, res *protoPlan.PlanResponse) error {
-
-	// TODO pause the plan here before going any further
-
 	// load current state of plan
 	// the plan should be paused long before UpdatePlan is called
 	// this function assumes that the plan is inactive
@@ -883,21 +940,20 @@ func (service *PlanService) UpdatePlan(ctx context.Context, req *protoPlan.Updat
 			currencySymbol = symbolPair[0]
 		}
 
-		// TODO
 		// validate the balance for non paper orders that are set to use a predefined balance
-		// if or.OrderType != constPlan.PaperOrder && or.InitialCurrencyBalance > 0 {
-		// 	validBalance, err := service.validateBalance(ctx, currencySymbol, or.InitialCurrencyBalance, req.UserID, or.KeyID)
-		// 	if err != nil {
-		// 		res.Status = constRes.Error
-		// 		res.Message = fmt.Sprintf("failed to validate the currency balance for %s: %s", currencySymbol, err.Error())
-		// 		return nil
-		// 	}
-		// 	if !validBalance {
-		// 		res.Status = constRes.Fail
-		// 		res.Message = fmt.Sprintf("insufficient %s balance, %.8f requested in orderID: %s", currencySymbol, or.InitialCurrencyBalance, or.OrderID)
-		// 		return nil
-		// 	}
-		// }
+		if or.InitialCurrencyBalance > 0 {
+			validBalance, err := service.validateBalanceAmount(ctx, currencySymbol, or.InitialCurrencyBalance, req.UserID, or.AccountID)
+			if err != nil {
+				res.Status = constRes.Error
+				res.Message = fmt.Sprintf("failed to validate the currency balance for %s: %s", currencySymbol, err.Error())
+				return nil
+			}
+			if !validBalance {
+				res.Status = constRes.Fail
+				res.Message = fmt.Sprintf("insufficient %s balance, %.8f requested in orderID: %s", currencySymbol, or.InitialCurrencyBalance, or.OrderID)
+				return nil
+			}
+		}
 
 		order := protoOrder.Order{
 			AccountID:              or.AccountID,
@@ -981,6 +1037,7 @@ func (service *PlanService) UpdatePlan(ctx context.Context, req *protoPlan.Updat
 			res.Message = "error encountered while updating the plan status: " + err.Error()
 			return nil
 		}
+		// TODO unlock the active currency? when close
 	}
 	if pln.InitialTimestamp != req.InitialTimestamp && req.InitialTimestamp != "" {
 		pln.InitialTimestamp = req.InitialTimestamp
@@ -1026,6 +1083,16 @@ func (service *PlanService) UpdatePlan(ctx context.Context, req *protoPlan.Updat
 				res.Message = "error encountered while closing the plan: " + err.Error()
 				return nil
 			}
+
+			// TODO
+			// plan was closed, release the locked funds
+			//changeReq := protoBalance.ChangeBalanceRequest{
+			//	UserID:         pln.UserID,
+			//	AccountID:      completedOrderEvent.AccountID,
+			//	CurrencySymbol: completedOrderEvent.FinalCurrencySymbol,
+			//	Amount:         completedOrderEvent.FinalCurrencyBalance,
+			//}
+			//service.AccountClient.UnlockBalance(ctx, &changeReq)
 		}
 	}
 
@@ -1084,8 +1151,6 @@ func (service *PlanService) UpdatePlan(ctx context.Context, req *protoPlan.Updat
 
 	// activate first plan order if plan is active
 	if pln.Status == constPlan.Active {
-		// TODO send the keys with the orders so they can execute the live orders against the exchanges
-
 		// this is a new plan
 		if err := service.publishPlan(ctx, pln, true); err != nil {
 			res.Status = constRes.Error
