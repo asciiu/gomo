@@ -92,6 +92,15 @@
                 "$ref": "#/definitions/NewBalanceReq"
               }
             }
+          },
+          {
+            "x-go-name": "AccountType",
+            "description": "Required type",
+            "name": "type",
+            "in": "body",
+            "schema": {
+              "type": "string"
+            }
           }
         ],
         "responses": {
@@ -1111,49 +1120,6 @@
     }
   },
   "definitions": {
-    "ABalance": {
-      "type": "object",
-      "properties": {
-        "available": {
-          "type": "number",
-          "format": "double",
-          "x-go-name": "Available"
-        },
-        "createdOn": {
-          "type": "string",
-          "x-go-name": "CreatedOn"
-        },
-        "currencySymbol": {
-          "type": "string",
-          "x-go-name": "CurrencySymbol"
-        },
-        "exchangeAvailable": {
-          "type": "number",
-          "format": "double",
-          "x-go-name": "ExchangeAvailable"
-        },
-        "exchangeLocked": {
-          "type": "number",
-          "format": "double",
-          "x-go-name": "ExchangeLocked"
-        },
-        "exchangeTotal": {
-          "type": "number",
-          "format": "double",
-          "x-go-name": "ExchangeTotal"
-        },
-        "locked": {
-          "type": "number",
-          "format": "double",
-          "x-go-name": "Locked"
-        },
-        "updatedOn": {
-          "type": "string",
-          "x-go-name": "UpdatedOn"
-        }
-      },
-      "x-go-package": "github.com/asciiu/gomo/api/controllers"
-    },
     "Account": {
       "description": "This response should never return the key secret",
       "type": "object",
@@ -1165,7 +1131,7 @@
         "balances": {
           "type": "array",
           "items": {
-            "$ref": "#/definitions/ABalance"
+            "$ref": "#/definitions/Balance"
           },
           "x-go-name": "Balances"
         },
@@ -1189,22 +1155,13 @@
           "type": "string",
           "x-go-name": "Status"
         },
+        "type": {
+          "type": "string",
+          "x-go-name": "AccountType"
+        },
         "updatedOn": {
           "type": "string",
           "x-go-name": "UpdatedOn"
-        }
-      },
-      "x-go-package": "github.com/asciiu/gomo/api/controllers"
-    },
-    "AccountBalances": {
-      "type": "object",
-      "properties": {
-        "balances": {
-          "type": "array",
-          "items": {
-            "$ref": "#/definitions/Balance"
-          },
-          "x-go-name": "Balances"
         }
       },
       "x-go-package": "github.com/asciiu/gomo/api/controllers"
@@ -1264,6 +1221,11 @@
           "description": "Optional init timestamp for plan RFC3339 formatted (e.g. 2018-08-26T22:49:10.168652Z). This timestamp will be used to measure initial user currency balance (valuation in user preferred currency)\nin: body",
           "type": "string",
           "x-go-name": "KeySecret"
+        },
+        "type": {
+          "description": "Required type\nin: body",
+          "type": "string",
+          "x-go-name": "AccountType"
         }
       },
       "x-go-package": "github.com/asciiu/gomo/api/controllers"
@@ -1374,17 +1336,11 @@
     "AuthController": {
       "type": "object",
       "properties": {
-        "BalanceClient": {
-          "$ref": "#/definitions/BalanceServiceClient"
-        },
         "DB": {
           "$ref": "#/definitions/DB"
         },
         "DeviceClient": {
           "$ref": "#/definitions/DeviceServiceClient"
-        },
-        "KeyClient": {
-          "$ref": "#/definitions/KeyServiceClient"
         },
         "UserClient": {
           "$ref": "#/definitions/UserServiceClient"
@@ -1400,17 +1356,13 @@
           "format": "double",
           "x-go-name": "Available"
         },
-        "balanceID": {
+        "createdOn": {
           "type": "string",
-          "x-go-name": "BalanceID"
+          "x-go-name": "CreatedOn"
         },
-        "currencyName": {
+        "currencySymbol": {
           "type": "string",
-          "x-go-name": "CurrencyName"
-        },
-        "exchange": {
-          "type": "string",
-          "x-go-name": "ExchangeName"
+          "x-go-name": "CurrencySymbol"
         },
         "exchangeAvailable": {
           "type": "number",
@@ -1427,33 +1379,17 @@
           "format": "double",
           "x-go-name": "ExchangeTotal"
         },
-        "keyID": {
-          "type": "string",
-          "x-go-name": "KeyID"
-        },
         "locked": {
           "type": "number",
           "format": "double",
           "x-go-name": "Locked"
-        }
-      },
-      "x-go-package": "github.com/asciiu/gomo/api/controllers"
-    },
-    "BalanceController": {
-      "type": "object",
-      "properties": {
-        "BalanceClient": {
-          "$ref": "#/definitions/BalanceServiceClient"
         },
-        "DB": {
-          "$ref": "#/definitions/DB"
+        "updatedOn": {
+          "type": "string",
+          "x-go-name": "UpdatedOn"
         }
       },
       "x-go-package": "github.com/asciiu/gomo/api/controllers"
-    },
-    "BalanceServiceClient": {
-      "type": "object",
-      "x-go-package": "github.com/asciiu/gomo/api/vendor/github.com/asciiu/gomo/balance-service/proto/balance"
     },
     "DB": {
       "description": "The sql package creates and frees connections automatically; it\nalso maintains a free pool of idle connections. If the database has\na concept of per-connection state, such state can only be reliably\nobserved within a transaction. Once DB.Begin is called, the\nreturned Tx is bound to a single connection. Once Commit or\nRollback is called on the transaction, that transaction's\nconnection is returned to DB's idle connection pool. The pool size\ncan be controlled with SetMaxIdleConns.",
@@ -1620,57 +1556,6 @@
       },
       "x-go-package": "github.com/asciiu/gomo/api/controllers"
     },
-    "Key": {
-      "type": "object",
-      "properties": {
-        "description": {
-          "type": "string",
-          "x-go-name": "Description"
-        },
-        "exchange": {
-          "type": "string",
-          "x-go-name": "Exchange"
-        },
-        "key": {
-          "type": "string",
-          "x-go-name": "Key"
-        },
-        "keyID": {
-          "type": "string",
-          "x-go-name": "KeyID"
-        },
-        "status": {
-          "type": "string",
-          "x-go-name": "Status"
-        }
-      },
-      "x-go-package": "github.com/asciiu/gomo/api/controllers"
-    },
-    "KeyController": {
-      "type": "object",
-      "properties": {
-        "DB": {
-          "$ref": "#/definitions/DB"
-        },
-        "KeyClient": {
-          "$ref": "#/definitions/KeyServiceClient"
-        }
-      },
-      "x-go-package": "github.com/asciiu/gomo/api/controllers"
-    },
-    "KeyList": {
-      "type": "object",
-      "properties": {
-        "keys": {
-          "type": "array",
-          "items": {
-            "$ref": "#/definitions/Key"
-          },
-          "x-go-name": "Keys"
-        }
-      },
-      "x-go-package": "github.com/asciiu/gomo/api/controllers"
-    },
     "KeyMeta": {
       "type": "object",
       "properties": {
@@ -1692,36 +1577,6 @@
         }
       },
       "x-go-package": "github.com/asciiu/gomo/api/controllers"
-    },
-    "KeyRequest": {
-      "type": "object",
-      "properties": {
-        "description": {
-          "description": "Optional.\nin: body",
-          "type": "string",
-          "x-go-name": "Description"
-        },
-        "exchange": {
-          "description": "Required.\nin: body",
-          "type": "string",
-          "x-go-name": "Exchange"
-        },
-        "key": {
-          "description": "Required.\nin: body",
-          "type": "string",
-          "x-go-name": "Key"
-        },
-        "secret": {
-          "description": "Required.\nin: body",
-          "type": "string",
-          "x-go-name": "Secret"
-        }
-      },
-      "x-go-package": "github.com/asciiu/gomo/api/controllers"
-    },
-    "KeyServiceClient": {
-      "type": "object",
-      "x-go-package": "github.com/asciiu/gomo/api/vendor/github.com/asciiu/gomo/key-service/proto/key"
     },
     "LoginRequest": {
       "type": "object",
@@ -1914,6 +1769,7 @@
       "type": "object",
       "properties": {
         "accountID": {
+          "description": "KeyID                    string                `json:\"keyID,omitempty\"`",
           "type": "string",
           "x-go-name": "AccountID"
         },
@@ -1990,10 +1846,6 @@
         "keyDescription": {
           "type": "string",
           "x-go-name": "KeyDescription"
-        },
-        "keyID": {
-          "type": "string",
-          "x-go-name": "KeyID"
         },
         "keyPublic": {
           "type": "string",
@@ -2206,9 +2058,6 @@
         "DB": {
           "$ref": "#/definitions/DB"
         },
-        "KeyClient": {
-          "$ref": "#/definitions/KeyServiceClient"
-        },
         "PlanClient": {
           "$ref": "#/definitions/PlanServiceClient"
         }
@@ -2348,20 +2197,6 @@
       },
       "x-go-package": "github.com/asciiu/gomo/api/controllers"
     },
-    "ResponseBalancesSuccess": {
-      "type": "object",
-      "title": "A ResponseBalancesSuccess will always contain a status of \"successful\".",
-      "properties": {
-        "data": {
-          "$ref": "#/definitions/AccountBalances"
-        },
-        "status": {
-          "type": "string",
-          "x-go-name": "Status"
-        }
-      },
-      "x-go-package": "github.com/asciiu/gomo/api/controllers"
-    },
     "ResponseDeviceSuccess": {
       "type": "object",
       "title": "A ResponseDeviceSuccess will always contain a status of \"successful\".",
@@ -2382,34 +2217,6 @@
       "properties": {
         "data": {
           "$ref": "#/definitions/DeviceList"
-        },
-        "status": {
-          "type": "string",
-          "x-go-name": "Status"
-        }
-      },
-      "x-go-package": "github.com/asciiu/gomo/api/controllers"
-    },
-    "ResponseKeyListSuccess": {
-      "type": "object",
-      "title": "A ResponseKeyListSuccess will always contain a status of \"successful\".",
-      "properties": {
-        "data": {
-          "$ref": "#/definitions/KeyList"
-        },
-        "status": {
-          "type": "string",
-          "x-go-name": "Status"
-        }
-      },
-      "x-go-package": "github.com/asciiu/gomo/api/controllers"
-    },
-    "ResponseKeySuccess": {
-      "type": "object",
-      "title": "A ResponseKeySuccess will always contain a status of \"successful\".",
-      "properties": {
-        "data": {
-          "$ref": "#/definitions/UserKeyData"
         },
         "status": {
           "type": "string",
@@ -2500,18 +2307,6 @@
       "type": "object",
       "x-go-package": "github.com/asciiu/gomo/api/controllers"
     },
-    "SearchSymbol": {
-      "description": "and it is not used anywhere.",
-      "type": "object",
-      "title": "This struct is used in the generated swagger docs,",
-      "properties": {
-        "symbol": {
-          "type": "string",
-          "x-go-name": "Symbol"
-        }
-      },
-      "x-go-package": "github.com/asciiu/gomo/api/controllers"
-    },
     "SearchTerm": {
       "description": "and it is not used anywhere.",
       "type": "object",
@@ -2532,9 +2327,6 @@
         },
         "DB": {
           "$ref": "#/definitions/DB"
-        },
-        "KeyClient": {
-          "$ref": "#/definitions/KeyServiceClient"
         },
         "UserClient": {
           "$ref": "#/definitions/UserServiceClient"
@@ -2707,17 +2499,6 @@
       },
       "x-go-package": "github.com/asciiu/gomo/api/controllers"
     },
-    "UpdateKeyRequest": {
-      "type": "object",
-      "properties": {
-        "description": {
-          "description": "Required.\nin: body",
-          "type": "string",
-          "x-go-name": "Description"
-        }
-      },
-      "x-go-package": "github.com/asciiu/gomo/api/controllers"
-    },
     "UpdatePlanRequest": {
       "type": "object",
       "properties": {
@@ -2837,15 +2618,6 @@
       },
       "x-go-package": "github.com/asciiu/gomo/api/vendor/github.com/asciiu/gomo/user-service/models"
     },
-    "UserKeyData": {
-      "type": "object",
-      "properties": {
-        "key": {
-          "$ref": "#/definitions/Key"
-        }
-      },
-      "x-go-package": "github.com/asciiu/gomo/api/controllers"
-    },
     "UserMeta": {
       "type": "object",
       "properties": {
@@ -2863,13 +2635,6 @@
         "first": {
           "type": "string",
           "x-go-name": "First"
-        },
-        "keys": {
-          "type": "array",
-          "items": {
-            "$ref": "#/definitions/KeyMeta"
-          },
-          "x-go-name": "Keys"
         },
         "last": {
           "type": "string",
