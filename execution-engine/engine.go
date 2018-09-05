@@ -39,7 +39,7 @@ type Order struct {
 	LimitPrice  float64
 	OrderType   string
 	OrderStatus string
-	KeyID       string
+	AccountID   string
 	KeyPublic   string
 	KeySecret   string
 	TriggerExs  []*TriggerEx
@@ -88,12 +88,13 @@ func (engine *Engine) ProcessTradeEvents(ctx context.Context, payload *protoEvt.
 
 							if order.OrderType == constPlan.PaperOrder {
 								completedEvent := protoEvt.CompletedOrderEvent{
-									UserID:     plan.UserID,
-									PlanID:     plan.PlanID,
-									OrderID:    order.OrderID,
-									Exchange:   order.Exchange,
-									MarketName: order.MarketName,
-									Side:       order.Side,
+									UserID:                 plan.UserID,
+									PlanID:                 plan.PlanID,
+									OrderID:                order.OrderID,
+									Exchange:               order.Exchange,
+									MarketName:             order.MarketName,
+									Side:                   order.Side,
+									AccountID:              order.AccountID,
 									InitialCurrencyBalance: plan.ActiveCurrencyBalance,
 									InitialCurrencySymbol:  plan.ActiveCurrencySymbol,
 									TriggerID:              trigger.TriggerID,
@@ -152,7 +153,7 @@ func (engine *Engine) ProcessTradeEvents(ctx context.Context, payload *protoEvt.
 									OrderID:            order.OrderID,
 									PlanID:             plan.PlanID,
 									UserID:             plan.UserID,
-									KeyID:              order.KeyID,
+									AccountID:          order.AccountID,
 									Key:                order.KeyPublic,
 									Secret:             order.KeySecret,
 									MarketName:         order.MarketName,
@@ -238,7 +239,7 @@ func (engine *Engine) AddPlan(ctx context.Context, req *protoEngine.NewPlanReque
 						InitialCurrencySymbol:  req.ActiveCurrencySymbol,
 						TriggerID:              trigger.TriggerID,
 						TriggeredPrice:         lastPrice,
-						TriggeredCondition:     "Jordan!",
+						TriggeredCondition:     "do it NOW!",
 						ExchangeOrderID:        constPlan.PaperOrder,
 						ExchangeMarketName:     constPlan.PaperOrder,
 						Status:                 constPlan.Filled,
@@ -318,7 +319,7 @@ func (engine *Engine) AddPlan(ctx context.Context, req *protoEngine.NewPlanReque
 				LimitPrice:  order.LimitPrice,
 				OrderType:   order.OrderType,
 				OrderStatus: order.OrderStatus,
-				KeyID:       order.KeyID,
+				AccountID:   order.AccountID,
 				KeyPublic:   order.KeyPublic,
 				KeySecret:   order.KeySecret,
 				TriggerExs:  expressions,

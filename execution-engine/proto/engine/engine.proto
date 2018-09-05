@@ -40,7 +40,7 @@ message Order {
   double limitPrice = 5;
   string orderType = 6;
   string orderStatus = 7; 
-  string keyID = 8;
+  string accountID = 8;
   string keyPublic = 9;
   string keySecret = 10; 
   repeated Trigger triggers = 11;
