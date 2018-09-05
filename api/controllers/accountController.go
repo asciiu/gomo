@@ -175,6 +175,7 @@ func (controller *AccountController) HandleGetAccount(c echo.Context) error {
 		Status: constRes.Success,
 		Data: &Account{
 			AccountID:   account.AccountID,
+			AccountType: account.AccountType,
 			Exchange:    account.Exchange,
 			KeyPublic:   account.KeyPublic,
 			Description: account.Description,
@@ -238,6 +239,7 @@ func (controller *AccountController) HandleListAccounts(c echo.Context) error {
 
 		account := Account{
 			AccountID:   a.AccountID,
+			AccountType: a.AccountType,
 			Exchange:    a.Exchange,
 			KeyPublic:   a.KeyPublic,
 			Description: a.Description,
@@ -331,6 +333,7 @@ func (controller *AccountController) HandlePostAccount(c echo.Context) error {
 		KeyPublic:   newAccount.KeyPublic,
 		KeySecret:   newAccount.KeySecret,
 		Description: newAccount.Description,
+		AccountType: newAccount.AccountType,
 		Balances:    newBalRequests,
 	}
 
@@ -369,6 +372,7 @@ func (controller *AccountController) HandlePostAccount(c echo.Context) error {
 		Status: constRes.Success,
 		Data: &Account{
 			AccountID:   account.AccountID,
+			AccountType: account.AccountType,
 			Exchange:    account.Exchange,
 			KeyPublic:   account.KeyPublic,
 			Description: account.Description,
@@ -460,6 +464,7 @@ func (controller *AccountController) HandleUpdateAccount(c echo.Context) error {
 		Status: constRes.Success,
 		Data: &Account{
 			AccountID:   account.AccountID,
+			AccountType: account.AccountType,
 			Exchange:    account.Exchange,
 			KeyPublic:   account.KeyPublic,
 			Description: account.Description,
