@@ -111,6 +111,7 @@ func (controller *SessionController) HandleSession(c echo.Context) error {
 
 		account := Account{
 			AccountID:   a.AccountID,
+			AccountType: a.AccountType,
 			Exchange:    a.Exchange,
 			KeyPublic:   a.KeyPublic,
 			Description: a.Description,
