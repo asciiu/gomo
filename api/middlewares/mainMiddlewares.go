@@ -30,7 +30,7 @@ func SetMainMiddlewares(e *echo.Echo) {
 
 func serverHeader(next echo.HandlerFunc) echo.HandlerFunc {
 	return func(c echo.Context) error {
-		c.Response().Header().Set(echo.HeaderServer, "Gomo/0.1")
+		c.Response().Header().Set(echo.HeaderServer, "gomo/0.2.1")
 		return next(c)
 	}
 }

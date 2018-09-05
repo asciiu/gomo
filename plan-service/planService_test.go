@@ -48,6 +48,7 @@ func setupService() (*PlanService, *user.User, *protoAccount.Account) {
 	now := string(pq.FormatTimestamp(time.Now().UTC()))
 	acc := protoAccount.Account{
 		AccountID:   "92512e72-b7e8-49f4-bab5-271f4ba450d9",
+		AccountType: "paper",
 		UserID:      user.ID,
 		Exchange:    "test",
 		KeyPublic:   "test_key",

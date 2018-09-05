@@ -487,8 +487,10 @@ func (service *PlanService) NewPlan(ctx context.Context, req *protoPlan.NewPlanR
 		}
 
 		// assign exchange name from account
+		foundKey := false
 		for _, ky := range akeys {
 			if ky.AccountID == or.AccountID {
+				foundKey = true
 				exchange = ky.Exchange
 
 				if ky.Status != constAccount.AccountValid {
@@ -497,6 +499,12 @@ func (service *PlanService) NewPlan(ctx context.Context, req *protoPlan.NewPlanR
 					return nil
 				}
 			}
+		}
+		// if no match on account ID, then the request sent in an account ID that does not exist
+		if !foundKey {
+			res.Status = constRes.Fail
+			res.Message = fmt.Sprintf("the requested account %s does not exist", or.AccountID)
+			return nil
 		}
 
 		// collect triggers for this order
@@ -822,7 +830,7 @@ func (service *PlanService) UpdatePlan(ctx context.Context, req *protoPlan.Updat
 		return nil
 	}
 
-	// fetch they keys
+	// fetch the keys
 	accountIDs := make([]string, 0, len(req.Orders))
 	for _, or := range req.Orders {
 		accountIDs = append(accountIDs, or.AccountID)
@@ -898,16 +906,24 @@ func (service *PlanService) UpdatePlan(ctx context.Context, req *protoPlan.Updat
 		}
 
 		// assign exchange name from key
+		foundKey := false
 		for _, ky := range akeys {
 			if ky.AccountID == or.AccountID {
 				exchange = ky.Exchange
+				foundKey = true
 
 				if ky.Status != constAccount.AccountValid {
 					res.Status = constRes.Fail
-					res.Message = "they account key is invalid!"
+					res.Message = fmt.Sprintf("the key for account %s is invalid.", ky.AccountID)
 					return nil
 				}
 			}
+		}
+		// if no match on account ID, then the request sent in an account ID that does not exist
+		if !foundKey {
+			res.Status = constRes.Fail
+			res.Message = fmt.Sprintf("the requested account %s does not exist", or.AccountID)
+			return nil
 		}
 
 		// collect triggers for this order
