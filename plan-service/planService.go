@@ -1084,15 +1084,19 @@ func (service *PlanService) UpdatePlan(ctx context.Context, req *protoPlan.Updat
 				return nil
 			}
 
-			// TODO
-			// plan was closed, release the locked funds
-			//changeReq := protoBalance.ChangeBalanceRequest{
-			//	UserID:         pln.UserID,
-			//	AccountID:      completedOrderEvent.AccountID,
-			//	CurrencySymbol: completedOrderEvent.FinalCurrencySymbol,
-			//	Amount:         completedOrderEvent.FinalCurrencyBalance,
-			//}
-			//service.AccountClient.UnlockBalance(ctx, &changeReq)
+			for _, order := range pln.Orders {
+				if order.OrderID == pln.LastExecutedOrderID {
+					// release the locked funds from the last executed order
+					changeReq := protoBalance.ChangeBalanceRequest{
+						UserID:         pln.UserID,
+						AccountID:      order.AccountID,
+						CurrencySymbol: pln.ActiveCurrencySymbol,
+						Amount:         pln.ActiveCurrencyBalance,
+					}
+					service.AccountClient.UnlockBalance(ctx, &changeReq)
+					break
+				}
+			}
 		}
 	}
 
