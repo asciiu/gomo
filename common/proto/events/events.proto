@@ -46,7 +46,7 @@ message Order {
   double limitPrice = 5;
   string orderType = 6;
   string orderStatus = 7; 
-  string keyID = 8;
+  string accountID = 8;
   string keyPublic = 9;
   string keySecret = 10; 
   repeated Trigger triggers = 11;
@@ -70,7 +70,7 @@ message TriggeredOrderEvent {
   double baseBalance = 6;
   double currencyBalance = 7;
   double quantity = 8;
-  string keyID = 9;
+  string accountID = 9;
   string key = 10;
   string secret = 11;
   string marketName = 12;
@@ -89,20 +89,21 @@ message CompletedOrderEvent {
   string exchange = 5;
   string marketName = 6;
   string side = 7;
-  string initialCurrencySymbol = 8;
-  double initialCurrencyBalance = 9; 
-  double initialCurrencyTraded = 10;
-  double initialCurrencyRemainder = 11; 
-  string finalCurrencySymbol = 12;
-  double finalCurrencyBalance = 13; 
-  string triggerID = 14;
-  double triggeredPrice = 15; 
-  string triggeredCondition = 16;
-  string exchangeOrderID = 17;
-  string exchangeMarketName = 18;
-  string status = 19;
-  string details = 20; 
-  bool closeOnComplete = 21;
+  string accountID = 8;
+  string initialCurrencySymbol = 9;
+  double initialCurrencyBalance = 10; 
+  double initialCurrencyTraded = 11;
+  double initialCurrencyRemainder = 12; 
+  string finalCurrencySymbol = 13;
+  double finalCurrencyBalance = 14; 
+  string triggerID = 15;
+  double triggeredPrice = 16; 
+  string triggeredCondition = 17;
+  string exchangeOrderID = 18;
+  string exchangeMarketName = 19;
+  string status = 20;
+  string details = 21; 
+  bool closeOnComplete = 22;
 }
 
 message AbortedOrderEvent {
