@@ -27,7 +27,8 @@ message NewAccountRequest {
   string keyPublic = 3;
   string keySecret = 4;
   string description = 5;
-  repeated bal.NewBalanceRequest balances = 6; 
+  string accountType = 6;
+  repeated bal.NewBalanceRequest balances = 7; 
 }
 
 message GetAccountKeysRequest {
@@ -56,6 +57,7 @@ message AccountsRequest {
 // Responses
 message Account {
   string accountID = 1;
+  string accountType = 12;
   string userID = 2;
   string exchange = 3;
   string keyPublic = 4;
@@ -70,11 +72,12 @@ message Account {
 
 message AccountKey {
   string accountID = 1;
-  string userID = 2;
-  string exchange = 3;
-  string keyPublic = 4;
-  string keySecret = 5;
-  string status = 6;
+  string accountType = 2;
+  string userID = 3;
+  string exchange = 4;
+  string keyPublic = 5;
+  string keySecret = 6;
+  string status = 7;
 }
 
 message UserAccount {

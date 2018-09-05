@@ -42,17 +42,18 @@ type ResponseAccountSuccess struct {
 
 // This response should never return the key secret
 type Account struct {
-	AccountID   string      `json:"accountID"`
-	Exchange    string      `json:"exchange"`
-	KeyPublic   string      `json:"keyPublic"`
-	Description string      `json:"description"`
-	CreatedOn   string      `json:"createdOn"`
-	UpdatedOn   string      `json:"updatedOn"`
-	Status      string      `json:"status"`
-	Balances    []*ABalance `json:"balances"`
+	AccountID   string     `json:"accountID"`
+	AccountType string     `json:"type"`
+	Exchange    string     `json:"exchange"`
+	KeyPublic   string     `json:"keyPublic"`
+	Description string     `json:"description"`
+	CreatedOn   string     `json:"createdOn"`
+	UpdatedOn   string     `json:"updatedOn"`
+	Status      string     `json:"status"`
+	Balances    []*Balance `json:"balances"`
 }
 
-type ABalance struct {
+type Balance struct {
 	CurrencySymbol    string  `json:"currencySymbol"`
 	Available         float64 `json:"available"`
 	Locked            float64 `json:"locked"`
@@ -155,9 +156,9 @@ func (controller *AccountController) HandleGetAccount(c echo.Context) error {
 		}
 	}
 	account := r.Data.Account
-	balances := make([]*ABalance, 0)
+	balances := make([]*Balance, 0)
 	for _, b := range account.Balances {
-		balance := ABalance{
+		balance := Balance{
 			CurrencySymbol:    b.CurrencySymbol,
 			Available:         b.Available,
 			Locked:            b.Locked,
@@ -220,9 +221,9 @@ func (controller *AccountController) HandleListAccounts(c echo.Context) error {
 	accounts := make([]*Account, 0)
 	for _, a := range r.Data.Accounts {
 
-		balances := make([]*ABalance, 0)
+		balances := make([]*Balance, 0)
 		for _, b := range a.Balances {
-			balance := ABalance{
+			balance := Balance{
 				CurrencySymbol:    b.CurrencySymbol,
 				Available:         b.Available,
 				Locked:            b.Locked,
@@ -274,6 +275,9 @@ type AccountRequest struct {
 	// Optional balances for a paper account
 	// in: body
 	Balances []*NewBalanceReq `json:"balances"`
+	// Required type
+	// in: body
+	AccountType string `json:"type"`
 }
 
 type NewBalanceReq struct {
@@ -346,9 +350,9 @@ func (controller *AccountController) HandlePostAccount(c echo.Context) error {
 		}
 	}
 	account := r.Data.Account
-	balances := make([]*ABalance, 0)
+	balances := make([]*Balance, 0)
 	for _, b := range account.Balances {
-		balance := ABalance{
+		balance := Balance{
 			CurrencySymbol:    b.CurrencySymbol,
 			Available:         b.Available,
 			Locked:            b.Locked,
@@ -437,9 +441,9 @@ func (controller *AccountController) HandleUpdateAccount(c echo.Context) error {
 		}
 	}
 	account := r.Data.Account
-	balances := make([]*ABalance, 0)
+	balances := make([]*Balance, 0)
 	for _, b := range account.Balances {
-		balance := ABalance{
+		balance := Balance{
 			CurrencySymbol:    b.CurrencySymbol,
 			Available:         b.Available,
 			Locked:            b.Locked,

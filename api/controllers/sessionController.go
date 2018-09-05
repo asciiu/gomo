@@ -94,9 +94,9 @@ func (controller *SessionController) HandleSession(c echo.Context) error {
 	accounts := make([]*Account, 0)
 	for _, a := range responseAccounts.Data.Accounts {
 
-		balances := make([]*ABalance, 0)
+		balances := make([]*Balance, 0)
 		for _, b := range a.Balances {
-			balance := ABalance{
+			balance := Balance{
 				CurrencySymbol:    b.CurrencySymbol,
 				Available:         b.Available,
 				Locked:            b.Locked,

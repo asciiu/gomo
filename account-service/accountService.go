@@ -35,8 +35,22 @@ var supported = [...]string{
 	constExch.BinancePaper,
 }
 
+var types = [...]string{
+	constAccount.AccountReal,
+	constAccount.AccountPaper,
+}
+
 func supportedExchange(a string) bool {
 	for _, b := range supported {
+		if b == a {
+			return true
+		}
+	}
+	return false
+}
+
+func supportedType(a string) bool {
+	for _, b := range types {
 		if b == a {
 			return true
 		}
@@ -74,6 +88,11 @@ func (service *AccountService) AddAccount(ctx context.Context, req *protoAccount
 		res.Message = fmt.Sprintf("%s is not supported", req.Exchange)
 		return nil
 	}
+	if !supportedType(req.AccountType) {
+		res.Status = constRes.Fail
+		res.Message = fmt.Sprintf("accountType must be paper or real")
+		return nil
+	}
 
 	accountID := uuid.New().String()
 	now := string(pq.FormatTimestamp(time.Now().UTC()))
@@ -97,6 +116,7 @@ func (service *AccountService) AddAccount(ctx context.Context, req *protoAccount
 	// assume account verified
 	account := protoAccount.Account{
 		AccountID:   accountID,
+		AccountType: req.AccountType,
 		UserID:      req.UserID,
 		Exchange:    req.Exchange,
 		KeyPublic:   req.KeyPublic,

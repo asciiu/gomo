@@ -35,9 +35,10 @@ func InsertAccount(db *sql.DB, newAccount *protoAccount.Account) error {
 		key_secret, 
 		description, 
 		status,
+		account_type,
 		created_on,
 		updated_on) 
-		values ($1, $2, $3, $4, $5, $6, $7, $8, $9)`)
+		values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)`)
 
 	if err != nil {
 		txn.Rollback()
@@ -51,6 +52,7 @@ func InsertAccount(db *sql.DB, newAccount *protoAccount.Account) error {
 		newAccount.KeySecret,
 		newAccount.Description,
 		newAccount.Status,
+		newAccount.AccountType,
 		newAccount.CreatedOn,
 		newAccount.UpdatedOn,
 	)
@@ -83,6 +85,7 @@ func FindAccount(db *sql.DB, accountID, userID string) (*protoAccount.Account, e
 			a.key_secret, 
 			a.description, 
 			a.status,
+			a.account_type,
 			a.created_on,
 			a.updated_on,
 			b.user_id,
@@ -114,6 +117,7 @@ func FindAccount(db *sql.DB, accountID, userID string) (*protoAccount.Account, e
 			&account.KeySecret,
 			&account.Description,
 			&account.Status,
+			&account.AccountType,
 			&account.CreatedOn,
 			&account.UpdatedOn,
 			&balance.UserID,
@@ -157,6 +161,7 @@ func FindAccounts(db *sql.DB, userID string) ([]*protoAccount.Account, error) {
 			a.key_secret, 
 			a.description, 
 			a.status,
+			a.account_type,
 			a.created_on,
 			a.updated_on,
 			b.user_id,
@@ -190,6 +195,7 @@ func FindAccounts(db *sql.DB, userID string) ([]*protoAccount.Account, error) {
 			&account.KeySecret,
 			&account.Description,
 			&account.Status,
+			&account.AccountType,
 			&account.CreatedOn,
 			&account.UpdatedOn,
 			&balance.UserID,
@@ -241,6 +247,7 @@ func FindAccountKeys(db *sql.DB, accountIDs []string) ([]*protoAccount.AccountKe
 		exchange_name, 
 		key_public, 
 		key_secret,
+		account_type,
 		status
 		FROM accounts WHERE id = Any($1)`, pq.Array(accountIDs))
 
@@ -256,6 +263,7 @@ func FindAccountKeys(db *sql.DB, accountIDs []string) ([]*protoAccount.AccountKe
 			&k.Exchange,
 			&k.KeyPublic,
 			&k.KeySecret,
+			&k.AccountType,
 			&k.Status,
 		)
 
@@ -288,6 +296,7 @@ func UpdateAccountStatus(db *sql.DB, accountID, userID, status string) (*protoAc
 			key_secret, 
 			description, 
 			status,
+			account_type,
 			created_on,
 			updated_on`
 
@@ -301,6 +310,7 @@ func UpdateAccountStatus(db *sql.DB, accountID, userID, status string) (*protoAc
 			&account.KeySecret,
 			&account.Description,
 			&account.Status,
+			&account.AccountType,
 			&account.CreatedOn,
 			&account.UpdatedOn)
 
