@@ -32,7 +32,6 @@ type AccountService struct {
 // TODO: read these from a config or from the DB
 var supported = [...]string{
 	constExch.Binance,
-	constExch.BinancePaper,
 }
 
 var types = [...]string{
