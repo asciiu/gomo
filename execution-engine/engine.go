@@ -229,12 +229,13 @@ func (engine *Engine) AddPlan(ctx context.Context, req *protoEngine.NewPlanReque
 				// for the market in question
 				if order.OrderType == constPlan.PaperOrder && lastPrice != 0 {
 					completedEvent := protoEvt.CompletedOrderEvent{
-						UserID:     req.UserID,
-						PlanID:     req.PlanID,
-						OrderID:    order.OrderID,
-						Exchange:   order.Exchange,
-						MarketName: order.MarketName,
-						Side:       order.Side,
+						UserID:                 req.UserID,
+						PlanID:                 req.PlanID,
+						OrderID:                order.OrderID,
+						Exchange:               order.Exchange,
+						MarketName:             order.MarketName,
+						Side:                   order.Side,
+						AccountID:              order.AccountID,
 						InitialCurrencyBalance: req.ActiveCurrencyBalance,
 						InitialCurrencySymbol:  req.ActiveCurrencySymbol,
 						TriggerID:              trigger.TriggerID,
