@@ -125,20 +125,6 @@ func (service *PlanService) publishPlan(ctx context.Context, plan *protoPlan.Pla
 		}
 	}
 
-	// lock the active balance for each account
-	for _, accountID := range accountIDs {
-		changeReq := protoBalance.ChangeBalanceRequest{
-			UserID:         plan.UserID,
-			AccountID:      accountID,
-			CurrencySymbol: plan.ActiveCurrencySymbol,
-			Amount:         plan.ActiveCurrencyBalance,
-		}
-		r, _ := service.AccountClient.LockBalance(ctx, &changeReq)
-		if r.Status != constRes.Success {
-			log.Println("could not lock the active balance -- ", err.Error())
-		}
-	}
-
 	return nil
 }
 
@@ -590,6 +576,13 @@ func (service *PlanService) NewPlan(ctx context.Context, req *protoPlan.NewPlanR
 		return nil
 	}
 
+	lockRequest := protoBalance.ChangeBalanceRequest{
+		AccountID:      accountID,
+		UserID:         req.UserID,
+		CurrencySymbol: currencySymbol,
+		Amount:         currencyBalance,
+	}
+
 	count := repoPlan.FindUserPlanCount(service.DB, req.UserID)
 	title := req.Title
 	if title == "" {
@@ -655,6 +648,11 @@ func (service *PlanService) NewPlan(ctx context.Context, req *protoPlan.NewPlanR
 			res.Message = "could not publish first order: " + err.Error()
 			return nil
 		}
+	}
+
+	r, _ := service.AccountClient.LockBalance(ctx, &lockRequest)
+	if r.Status != constRes.Success {
+		log.Println("could not lock the initial balance within update -- ", err.Error())
 	}
 
 	res.Status = constRes.Success
@@ -864,6 +862,7 @@ func (service *PlanService) UpdatePlan(ctx context.Context, req *protoPlan.Updat
 	exchange := ""
 	depth := pln.LastExecutedPlanDepth
 	totalDepth := depth
+	lockRequest := new(protoBalance.ChangeBalanceRequest)
 
 	for _, or := range req.Orders {
 		orderStatus := constPlan.Inactive
@@ -981,6 +980,11 @@ func (service *PlanService) UpdatePlan(ctx context.Context, req *protoPlan.Updat
 				res.Message = fmt.Sprintf("insufficient %s balance, %.8f requested in orderID: %s", currencySymbol, or.InitialCurrencyBalance, or.OrderID)
 				return nil
 			}
+
+			lockRequest.AccountID = or.AccountID
+			lockRequest.UserID = req.UserID
+			lockRequest.CurrencySymbol = currencySymbol
+			lockRequest.Amount = or.InitialCurrencyBalance
 		}
 
 		order := protoOrder.Order{
@@ -1188,6 +1192,13 @@ func (service *PlanService) UpdatePlan(ctx context.Context, req *protoPlan.Updat
 			res.Status = constRes.Error
 			res.Message = "could not fully set this plan active, error was: " + err.Error()
 			return nil
+		}
+	}
+
+	if lockRequest.AccountID != "" {
+		r, _ := service.AccountClient.LockBalance(ctx, lockRequest)
+		if r.Status != constRes.Success {
+			log.Println("could not lock the initial balance within update -- ", err.Error())
 		}
 	}
 
