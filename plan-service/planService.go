@@ -266,11 +266,10 @@ func (service *PlanService) HandleCompletedOrder(ctx context.Context, completedO
 			service.AccountClient.ChangeAvailableBalance(ctx, &changeReq)
 		}
 
-		// lock the final available balance, this balance should be locked
-		// until this plan uses it or when the plan closes
+		// add the final currency balance to the locked balance
 		changeReq.CurrencySymbol = completedOrderEvent.FinalCurrencySymbol
 		changeReq.Amount = completedOrderEvent.FinalCurrencyBalance
-		service.AccountClient.LockBalance(ctx, &changeReq)
+		service.AccountClient.ChangeLockedBalance(ctx, &changeReq)
 
 		now := string(pq.FormatTimestamp(time.Now().UTC()))
 		if err := repoPlan.UpdateTriggerResults(service.DB,
