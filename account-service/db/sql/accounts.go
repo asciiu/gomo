@@ -15,6 +15,7 @@ All account specific queries shall live here.
 
 This file has these functions:
 	FindAccount
+	FindAccountBalance
 	FindAccounts
 	InsertAccount
 	UpdateAccountStatus
@@ -103,6 +104,83 @@ func FindAccount(db *sql.DB, accountID, userID string) (*protoAccount.Account, e
 		WHERE a.id = $1 AND a.user_id = $2`
 
 	rows, err := db.Query(query, accountID, userID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	for rows.Next() {
+		balance := new(protoBalance.Balance)
+		err := rows.Scan(
+			&account.AccountID,
+			&account.UserID,
+			&account.Exchange,
+			&account.KeyPublic,
+			&account.KeySecret,
+			&account.Description,
+			&account.Status,
+			&account.AccountType,
+			&account.CreatedOn,
+			&account.UpdatedOn,
+			&balance.UserID,
+			&balance.AccountID,
+			&balance.CurrencySymbol,
+			&balance.Available,
+			&balance.Locked,
+			&balance.ExchangeTotal,
+			&balance.ExchangeAvailable,
+			&balance.ExchangeLocked,
+			&balance.CreatedOn,
+			&balance.UpdatedOn,
+		)
+
+		if err != nil {
+			return nil, err
+		}
+
+		balances = append(balances, balance)
+	}
+	err = rows.Err()
+	if err != nil {
+		return nil, err
+	}
+	account.Balances = balances
+
+	if account.AccountID == "" {
+		return nil, sql.ErrNoRows
+	}
+
+	return account, nil
+}
+
+func FindAccountBalance(db *sql.DB, userID, accountID, currencySymbol string) (*protoAccount.Account, error) {
+	account := new(protoAccount.Account)
+	balances := make([]*protoBalance.Balance, 0)
+	query := `SELECT 
+			a.id, 
+			a.user_id, 
+			a.exchange_name, 
+			a.key_public, 
+			a.key_secret, 
+			a.description, 
+			a.status,
+			a.account_type,
+			a.created_on,
+			a.updated_on,
+			b.user_id,
+			b.account_id,
+			b.currency_symbol,
+			b.available,
+			b.locked,
+			b.exchange_total,
+			b.exchange_available,
+			b.exchange_locked,
+			b.created_on,
+			b.updated_on 
+		FROM accounts a 
+		JOIN balances b on a.id = b.account_id 
+		WHERE a.id = $1 AND a.user_id = $2 and b.currency_symbol = $3`
+
+	rows, err := db.Query(query, accountID, userID, currencySymbol)
 	if err != nil {
 		return nil, err
 	}

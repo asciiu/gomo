@@ -22,7 +22,7 @@ This file has these functions:
 	UpdateLockedBalance
 */
 
-func FindAccountBalance(db *sql.DB, userID, accountID, currencySymbol string) (*protoBalance.Balance, error) {
+func FindBalance(db *sql.DB, userID, accountID, currencySymbol string) (*protoBalance.Balance, error) {
 	query := `SELECT 
 			user_id,
 			account_id,

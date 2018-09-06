@@ -17,7 +17,8 @@ service AccountService {
   rpc UnlockBalance(bal.ChangeBalanceRequest) returns (bal.BalanceResponse) {}
   rpc ResyncAccounts(AccountsRequest) returns (AccountsResponse) {}
   rpc UpdateAccount(UpdateAccountRequest) returns (AccountResponse) {}
-  rpc ValidateAccountBalance(bal.ValidateBalanceRequest) returns (bal.ValidateBalanceResponse) {} 
+  rpc ValidateAvailableBalance(bal.ValidateBalanceRequest) returns (bal.ValidateBalanceResponse) {} 
+  rpc ValidateLockedBalance(bal.ValidateBalanceRequest) returns (bal.ValidateBalanceResponse) {} 
 }
 
 // Requests

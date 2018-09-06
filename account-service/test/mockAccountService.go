@@ -96,10 +96,23 @@ func (m *mockAccountService) UpdateAccount(ctx context.Context, req *protoAccoun
 	}, nil
 }
 
-func (m *mockAccountService) ValidateAccountBalance(ctx context.Context, req *protoBalance.ValidateBalanceRequest, opts ...client.CallOption) (*protoBalance.ValidateBalanceResponse, error) {
-	balance, _ := repoAccount.FindAccountBalance(m.db, req.UserID, req.AccountID, req.CurrencySymbol)
+func (m *mockAccountService) ValidateAvailableBalance(ctx context.Context, req *protoBalance.ValidateBalanceRequest, opts ...client.CallOption) (*protoBalance.ValidateBalanceResponse, error) {
+	accBal, _ := repoAccount.FindAccountBalance(m.db, req.UserID, req.AccountID, req.CurrencySymbol)
+	balance := accBal.Balances[0]
 
 	valid := balance.Available >= req.RequestedAmount
+
+	return &protoBalance.ValidateBalanceResponse{
+		Status: "success",
+		Data:   valid,
+	}, nil
+}
+
+func (m *mockAccountService) ValidateLockedBalance(ctx context.Context, req *protoBalance.ValidateBalanceRequest, opts ...client.CallOption) (*protoBalance.ValidateBalanceResponse, error) {
+	accBal, _ := repoAccount.FindAccountBalance(m.db, req.UserID, req.AccountID, req.CurrencySymbol)
+	balance := accBal.Balances[0]
+
+	valid := balance.Locked >= req.RequestedAmount
 
 	return &protoBalance.ValidateBalanceResponse{
 		Status: "success",

@@ -435,12 +435,12 @@ func TestValidateAccountBalance(t *testing.T) {
 		UserID:          user.ID,
 		AccountID:       response.Data.Account.AccountID,
 		CurrencySymbol:  "BTC",
-		RequestedAmount: 9,
+		RequestedAmount: 9.0,
 	}
 	res := protoBalance.ValidateBalanceResponse{}
-	service.ValidateAccountBalance(context.Background(), &vReq, &res)
+	service.ValidateAvailableBalance(context.Background(), &vReq, &res)
 
-	assert.Equal(t, true, res.Data, "should be false")
+	assert.Equal(t, true, res.Data, "should be true")
 
 	repoUser.DeleteUserHard(service.DB, user.ID)
 }
@@ -479,7 +479,7 @@ func TestValidateAccountBalance2(t *testing.T) {
 		RequestedAmount: 100,
 	}
 	res := protoBalance.ValidateBalanceResponse{}
-	service.ValidateAccountBalance(context.Background(), &vReq, &res)
+	service.ValidateAvailableBalance(context.Background(), &vReq, &res)
 
 	assert.Equal(t, false, res.Data, "should be false")
 
