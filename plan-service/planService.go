@@ -43,7 +43,7 @@ type PlanService struct {
 // system.
 //
 // VERY IMPORTANT: In theory, this should never be used to republish filled orders.
-func (service *PlanService) publishPlan(ctx context.Context, plan *protoPlan.Plan, isRevision bool) error {
+func (service *PlanService) publishPlan(ctx context.Context, plan *protoPlan.Plan) error {
 	newOrders := make([]*protoEngine.Order, 0)
 	activeDepth := plan.LastExecutedPlanDepth + 1
 	accountIDs := make([]string, 0)
@@ -116,11 +116,7 @@ func (service *PlanService) publishPlan(ctx context.Context, plan *protoPlan.Pla
 		return fmt.Errorf("could not publish the plan %s %s", newPlan.PlanID, err.Error())
 	}
 
-	if isRevision {
-		log.Printf("published updated plan -- %s\n", response.Data.Plans[0].PlanID)
-	} else {
-		log.Printf("published new plan -- %s\n", response.Data.Plans[0].PlanID)
-	}
+	log.Printf("published plan -- %s\n", response.Data.Plans[0].PlanID)
 
 	// update the order status
 	for _, o := range newOrders {
@@ -148,7 +144,7 @@ func (service *PlanService) publishPlan(ctx context.Context, plan *protoPlan.Pla
 
 // private: validateBalance
 // returns true, nil when the balance can be validated
-func (service *PlanService) validateBalanceAmount(ctx context.Context, currency string, amount float64, userID string, accountID string) (bool, error) {
+func (service *PlanService) validateAvailableBalance(ctx context.Context, currency string, amount float64, userID string, accountID string) (bool, error) {
 	validateRequest := protoBalance.ValidateBalanceRequest{
 		UserID:          userID,
 		AccountID:       accountID,
@@ -156,7 +152,7 @@ func (service *PlanService) validateBalanceAmount(ctx context.Context, currency 
 		RequestedAmount: amount,
 	}
 
-	valResponse, _ := service.AccountClient.ValidateAccountBalance(ctx, &validateRequest)
+	valResponse, _ := service.AccountClient.ValidateAvailableBalance(ctx, &validateRequest)
 	if valResponse.Status != constRes.Success {
 		return false, fmt.Errorf("ecountered error from ValidateAccountBalance: %s", valResponse.Message)
 	}
@@ -164,15 +160,32 @@ func (service *PlanService) validateBalanceAmount(ctx context.Context, currency 
 	return valResponse.Data, nil
 }
 
-// LoadPlanOrder will activate an order (i.e. send a plan order) to the execution engine to process.
-func (service *PlanService) LoadPlanOrder(ctx context.Context, plan *protoPlan.Plan, isRevision bool) error {
+// is the available on exchange less than the active currency balance
+func (service *PlanService) validateLockedBalance(ctx context.Context, currency string, amount float64, userID string, accountID string) (bool, error) {
+	validateRequest := protoBalance.ValidateBalanceRequest{
+		UserID:          userID,
+		AccountID:       accountID,
+		CurrencySymbol:  currency,
+		RequestedAmount: amount,
+	}
+
+	valResponse, _ := service.AccountClient.ValidateLockedBalance(ctx, &validateRequest)
+	if valResponse.Status != constRes.Success {
+		return false, fmt.Errorf("ecountered error from ValidateAccountBalance: %s", valResponse.Message)
+	}
+
+	return valResponse.Data, nil
+}
+
+// ContinuePlan will activate an order (i.e. send a plan order) to the execution engine to process.
+func (service *PlanService) ContinuePlan(ctx context.Context, plan *protoPlan.Plan) error {
 
 	currency := plan.ActiveCurrencySymbol
 	balance := plan.ActiveCurrencyBalance
 	// assume for now that all orders in the plan use the same account ID. This may not be true in the future
 	accountID := plan.Orders[0].AccountID
 
-	valid, err := service.validateBalanceAmount(ctx, currency, balance, plan.UserID, accountID)
+	valid, err := service.validateLockedBalance(ctx, currency, balance, plan.UserID, accountID)
 	if err != nil {
 		return err
 	}
@@ -180,7 +193,7 @@ func (service *PlanService) LoadPlanOrder(ctx context.Context, plan *protoPlan.P
 		return errors.New(fmt.Sprintf("insufficient %s balance for requested amount %.8f", currency, balance))
 	}
 
-	if err := service.publishPlan(ctx, plan, isRevision); err != nil {
+	if err := service.publishPlan(ctx, plan); err != nil {
 		return err
 	}
 
@@ -234,6 +247,7 @@ func (service *PlanService) HandleCompletedOrder(ctx context.Context, completedO
 		log.Println("could not update order status -- ", err.Error())
 		return nil
 	}
+	fmt.Printf("%+v\n", completedOrderEvent)
 
 	if completedOrderEvent.Status == constPlan.Filled {
 
@@ -325,7 +339,7 @@ func (service *PlanService) HandleCompletedOrder(ctx context.Context, completedO
 
 		default:
 			// load new plan order with false - it is not a revision of an active order
-			if err := service.LoadPlanOrder(ctx, nextPlanOrders, false); err != nil {
+			if err := service.ContinuePlan(ctx, nextPlanOrders); err != nil {
 				log.Println("could not load the plan orders -- ", err.Error())
 			}
 		}
@@ -349,8 +363,8 @@ func (service *PlanService) HandleStartEngine(ctx context.Context, engine *proto
 	// TODO we need to explore a different approach here that is more efficient.
 	for _, plan := range plans {
 		// load the active orders - these are not revisions of active orders since it is assumed
-		// the the engine is asking to reload them from the DB
-		if err = service.LoadPlanOrder(ctx, plan, false); err != nil {
+		// the engine is asking to reload them from the DB
+		if err = service.ContinuePlan(ctx, plan); err != nil {
 			log.Println("load plan error -- ", err)
 		}
 	}
@@ -563,9 +577,9 @@ func (service *PlanService) NewPlan(ctx context.Context, req *protoPlan.NewPlanR
 	accountID := newOrders[0].AccountID
 
 	// is the initial amount in the account balance?
-	validBalance, err := service.validateBalanceAmount(ctx, currencySymbol, currencyBalance, req.UserID, accountID)
+	validBalance, err := service.validateAvailableBalance(ctx, currencySymbol, currencyBalance, req.UserID, accountID)
 	if err != nil {
-		msg := fmt.Sprintf("validateBalanceAmount error %s", err.Error())
+		msg := fmt.Sprintf("validateAvailableBalance error %s", err.Error())
 		log.Println(msg)
 
 		res.Status = constRes.Error
@@ -637,7 +651,7 @@ func (service *PlanService) NewPlan(ctx context.Context, req *protoPlan.NewPlanR
 		}
 
 		// publish this plan to the engine
-		if err := service.publishPlan(ctx, &p, false); err != nil {
+		if err := service.publishPlan(ctx, &p); err != nil {
 			// TODO return a warning here
 			res.Status = constRes.Error
 			res.Message = "could not publish first order: " + err.Error()
@@ -958,7 +972,7 @@ func (service *PlanService) UpdatePlan(ctx context.Context, req *protoPlan.Updat
 
 		// validate the balance for non paper orders that are set to use a predefined balance
 		if or.InitialCurrencyBalance > 0 {
-			validBalance, err := service.validateBalanceAmount(ctx, currencySymbol, or.InitialCurrencyBalance, req.UserID, or.AccountID)
+			validBalance, err := service.validateAvailableBalance(ctx, currencySymbol, or.InitialCurrencyBalance, req.UserID, or.AccountID)
 			if err != nil {
 				res.Status = constRes.Error
 				res.Message = fmt.Sprintf("failed to validate the currency balance for %s: %s", currencySymbol, err.Error())
@@ -1171,8 +1185,8 @@ func (service *PlanService) UpdatePlan(ctx context.Context, req *protoPlan.Updat
 
 	// activate first plan order if plan is active
 	if pln.Status == constPlan.Active {
-		// this is a new plan
-		if err := service.publishPlan(ctx, pln, true); err != nil {
+		// pub new plan for execution
+		if err := service.publishPlan(ctx, pln); err != nil {
 			res.Status = constRes.Error
 			res.Message = "could not fully set this plan active, error was: " + err.Error()
 			return nil
