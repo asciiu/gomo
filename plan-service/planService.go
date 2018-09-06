@@ -247,7 +247,6 @@ func (service *PlanService) HandleCompletedOrder(ctx context.Context, completedO
 		log.Println("could not update order status -- ", err.Error())
 		return nil
 	}
-	fmt.Printf("%+v\n", completedOrderEvent)
 
 	if completedOrderEvent.Status == constPlan.Filled {
 
@@ -257,7 +256,7 @@ func (service *PlanService) HandleCompletedOrder(ctx context.Context, completedO
 			UserID:         completedOrderEvent.UserID,
 			AccountID:      completedOrderEvent.AccountID,
 			CurrencySymbol: completedOrderEvent.InitialCurrencySymbol,
-			Amount:         completedOrderEvent.InitialCurrencyBalance,
+			Amount:         -completedOrderEvent.InitialCurrencyBalance,
 		}
 		service.AccountClient.ChangeLockedBalance(ctx, &changeReq)
 
