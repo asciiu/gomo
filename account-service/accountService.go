@@ -593,7 +593,8 @@ func (service *AccountService) resyncBinanceBalances(ctx context.Context, accoun
 				break
 			}
 		}
-		if !found {
+		// only take positive balances
+		if !found && total > 0 {
 			balance := protoBalance.Balance{
 				UserID:            account.UserID,
 				AccountID:         account.AccountID,
