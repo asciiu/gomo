@@ -539,7 +539,7 @@ func (service *AccountService) resyncBinanceBalances(ctx context.Context, accoun
 	reqBal := protoBinanceBal.BalanceRequest{
 		UserID:    account.UserID,
 		KeyPublic: account.KeyPublic,
-		KeySecret: account.KeySecret,
+		KeySecret: rot32768(account.KeySecret),
 	}
 	exBals, _ := service.BinanceClient.GetBalances(ctx, &reqBal)
 
@@ -690,7 +690,7 @@ func (service *AccountService) UpdateAccount(ctx context.Context, req *protoAcco
 			reqBal := protoBinanceBal.BalanceRequest{
 				UserID:    account.UserID,
 				KeyPublic: req.KeyPublic,
-				KeySecret: req.KeySecret,
+				KeySecret: rot32768(req.KeySecret),
 			}
 			resBal, _ := service.BinanceClient.GetBalances(ctx, &reqBal)
 
