@@ -4,7 +4,7 @@ build:
 	protoc --proto_path=$(GOPATH)/src --go_out=plugins=micro:$(GOPATH)/src github.com/asciiu/gomo/binance-service/proto/binance/binance.proto
 	find . -name 'binance.pb.go' | xargs -n1 -IX bash -c 'sed s/,omitempty// X > X.tmp && mv X{.tmp,}'
 	find . -name 'balance.pb.go' | xargs -n1 -IX bash -c 'sed s/,omitempty// X > X.tmp && mv X{.tmp,}'
-	docker build --no-cache -t us.gcr.io/fomo-204904/binance-service:dev .
+	docker build --no-cache -t us.gcr.io/fomo-204904/binance-service:dev -f ../binance-service/Dockerfile ..
 
 update:
 	dep ensure -update github.com/asciiu/gomo
