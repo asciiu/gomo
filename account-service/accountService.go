@@ -571,21 +571,33 @@ func (service *AccountService) resyncBinanceBalances(ctx context.Context, accoun
 	now := string(pq.FormatTimestamp(time.Now().UTC()))
 	newBalances := make([]*protoBalance.Balance, 0)
 	for _, exBal := range exBals.Data.Balances {
-		total := exBal.Free + exBal.Locked
+		exTotal := exBal.Free + exBal.Locked
 
 		found := false
 		for _, accBal := range account.Balances {
 			// if the balance already exists
 			if accBal.CurrencySymbol == exBal.CurrencySymbol {
 				// if total, locked, or available has changed on the exchange we need to update our balance for this currency
-				if accBal.ExchangeTotal != total || accBal.ExchangeLocked != exBal.Locked || accBal.ExchangeAvailable != exBal.Free {
+				if accBal.ExchangeTotal != exTotal || accBal.ExchangeLocked != exBal.Locked || accBal.ExchangeAvailable != exBal.Free {
+					// the sum of available and locked should in theory be equal to the exhanges free balance
+					// if there is a difference add it to available
+					deltaFree := exBal.Free - (accBal.Available + accBal.Locked)
+					// if the user has altered the exchange's free balance the difference
+					// will be added/subtracted here. When the available balance goes negative
+					// it means the user commited the balance in the app then removed the balance
+					// on the exchange. Report to he user negative balance to show how much they need
+					// to add to put things in good standing. Otherwise, a plan order may fail at
+					// exchange execution time due to insufficient balance
+					accBal.Available += deltaFree
+
 					// update the user's balance for this account's currency
-					if err := repoAccount.UpdateExchangeBalanceTxn(txn, ctx, account.AccountID, account.UserID, accBal.CurrencySymbol, total, exBal.Free, exBal.Locked); err != nil {
+					if err := repoAccount.UpdateExchangeBalanceTxn(txn, ctx, account.AccountID, account.UserID, accBal.CurrencySymbol, accBal.Available, exTotal, exBal.Free, exBal.Locked); err != nil {
 						txn.Rollback()
 						log.Println("ResyncBinanceBalances on UpdateExchangeBalanceTxn: ", err.Error())
 						return account
 					}
-					accBal.ExchangeTotal = total
+
+					accBal.ExchangeTotal = exTotal
 					accBal.ExchangeLocked = exBal.Locked
 					accBal.ExchangeAvailable = exBal.Free
 				}
@@ -594,14 +606,14 @@ func (service *AccountService) resyncBinanceBalances(ctx context.Context, accoun
 			}
 		}
 		// only take positive balances
-		if !found && total > 0 {
+		if !found && exTotal > 0 {
 			balance := protoBalance.Balance{
 				UserID:            account.UserID,
 				AccountID:         account.AccountID,
 				CurrencySymbol:    exBal.CurrencySymbol,
 				Available:         exBal.Free,
 				Locked:            0.0,
-				ExchangeTotal:     total,
+				ExchangeTotal:     exTotal,
 				ExchangeAvailable: exBal.Free,
 				ExchangeLocked:    exBal.Locked,
 				CreatedOn:         now,
@@ -688,6 +700,7 @@ func (service *AccountService) UpdateAccount(ctx context.Context, req *protoAcco
 
 		switch {
 		case account.Exchange == constExch.Binance && account.AccountType == constAccount.AccountReal:
+			// read binance balances
 			reqBal := protoBinanceBal.BalanceRequest{
 				UserID:    account.UserID,
 				KeyPublic: req.KeyPublic,
@@ -703,8 +716,9 @@ func (service *AccountService) UpdateAccount(ctx context.Context, req *protoAcco
 			}
 
 			newBalances := make([]*protoBalance.Balance, 0)
-			for _, b := range resBal.Data.Balances {
-				total := b.Free + b.Locked
+			// loop through each binance balance
+			for _, binBal := range resBal.Data.Balances {
+				total := binBal.Free + binBal.Locked
 
 				// only add non-zero balances
 				if total <= 0 {
@@ -712,18 +726,24 @@ func (service *AccountService) UpdateAccount(ctx context.Context, req *protoAcco
 				}
 
 				found := false
-				for _, a := range account.Balances {
+				for _, accBal := range account.Balances {
 					// if the balance already exists
-					if a.CurrencySymbol == b.CurrencySymbol {
+					if accBal.CurrencySymbol == binBal.CurrencySymbol {
 						// if total, locked, or available has changed on the exchange we need to update our balance for this currency
-						if a.ExchangeTotal != total || a.ExchangeLocked != b.Locked || a.ExchangeAvailable != b.Free {
-							if err := repoAccount.UpdateExchangeBalanceTxn(txn, ctx, account.AccountID, account.UserID, a.CurrencySymbol, total, b.Free, b.Locked); err != nil {
+						if accBal.ExchangeTotal != total || accBal.ExchangeLocked != binBal.Locked || accBal.ExchangeAvailable != binBal.Free {
+							deltaFree := binBal.Free - (accBal.Available + accBal.Locked)
+							accBal.Available += deltaFree
+
+							if err := repoAccount.UpdateExchangeBalanceTxn(txn, ctx, account.AccountID, account.UserID, accBal.CurrencySymbol, accBal.Available, total, binBal.Free, binBal.Locked); err != nil {
 								txn.Rollback()
 								res.Status = constRes.Error
 								res.Message = "error encountered while updating balance: " + err.Error()
 								log.Println("UpdateExchangeBalanceTxn error: ", err.Error())
 								return nil
 							}
+							accBal.ExchangeTotal = total
+							accBal.ExchangeLocked = binBal.Locked
+							accBal.ExchangeAvailable = binBal.Free
 						}
 						found = true
 						break
@@ -733,12 +753,12 @@ func (service *AccountService) UpdateAccount(ctx context.Context, req *protoAcco
 					balance := protoBalance.Balance{
 						UserID:            account.UserID,
 						AccountID:         account.AccountID,
-						CurrencySymbol:    b.CurrencySymbol,
-						Available:         b.Free,
+						CurrencySymbol:    binBal.CurrencySymbol,
+						Available:         binBal.Free,
 						Locked:            0.0,
 						ExchangeTotal:     total,
-						ExchangeAvailable: b.Free,
-						ExchangeLocked:    b.Locked,
+						ExchangeAvailable: binBal.Free,
+						ExchangeLocked:    binBal.Locked,
 						CreatedOn:         now,
 						UpdatedOn:         now,
 					}

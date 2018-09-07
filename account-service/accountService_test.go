@@ -344,13 +344,13 @@ func TestSyncAccount(t *testing.T) {
 
 	btc := responseAccounts.Data.Accounts[0].Balances[0]
 	assert.Equal(t, "BTC", btc.CurrencySymbol, "currency symbol should be BTC")
-	assert.Equal(t, 1.0, btc.Available, "available should be 1.0")
+	assert.Equal(t, 0.5, btc.Available, "available should be 1.0")
 	assert.Equal(t, 0.5, btc.ExchangeAvailable, "BTC exchange available should be 0.5")
 	assert.Equal(t, 2.0, btc.ExchangeTotal, "BTC exchange total should be 2.0")
 
 	usdt := responseAccounts.Data.Accounts[0].Balances[1]
 	assert.Equal(t, "USDT", usdt.CurrencySymbol, "currency symbol should be USDT")
-	assert.Equal(t, 100.0, usdt.Available, "usdt available should be 100.0")
+	assert.Equal(t, 0.0, usdt.Available, "usdt available should be 100.0")
 	assert.Equal(t, 0.0, usdt.ExchangeAvailable, "usdt exchange available should be 0")
 
 	repoUser.DeleteUserHard(service.DB, user.ID)

@@ -138,16 +138,17 @@ func InsertBalances(txn *sql.Tx, balances []*protoBalance.Balance) error {
 	return nil
 }
 
-func UpdateExchangeBalanceTxn(txn *sql.Tx, ctx context.Context, accountID, userID, currencySymbol string, total, available, locked float64) error {
+func UpdateExchangeBalanceTxn(txn *sql.Tx, ctx context.Context, accountID, userID, currencySymbol string, available, exTotal, exAvailable, exLocked float64) error {
 	_, err := txn.ExecContext(ctx, `
 		UPDATE balances 
 		SET 
-			exchange_total = $1, 
-			exchange_available = $2, 
-			exchange_locked = $3
+			available = $1,
+			exchange_total = $2, 
+			exchange_available = $3, 
+			exchange_locked = $4
 		WHERE
-			currency_symbol = $4 AND account_id = $5 AND user_id = $6`,
-		total, available, locked, currencySymbol, accountID, userID)
+			currency_symbol = $5 AND account_id = $6 AND user_id = $7`,
+		available, exTotal, exAvailable, exLocked, currencySymbol, accountID, userID)
 
 	return err
 }
