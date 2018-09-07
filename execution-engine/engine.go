@@ -240,7 +240,7 @@ func (engine *Engine) AddPlan(ctx context.Context, req *protoEngine.NewPlanReque
 						InitialCurrencySymbol:  req.ActiveCurrencySymbol,
 						TriggerID:              trigger.TriggerID,
 						TriggeredPrice:         lastPrice,
-						TriggeredCondition:     "do it NOW!",
+						TriggeredCondition:     "Immeadiate!",
 						ExchangeOrderID:        constPlan.PaperOrder,
 						ExchangeMarketName:     constPlan.PaperOrder,
 						Status:                 constPlan.Filled,

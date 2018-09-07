@@ -11,6 +11,7 @@ import (
 	testBinance "github.com/asciiu/gomo/binance-service/test"
 	constRes "github.com/asciiu/gomo/common/constants/response"
 	"github.com/asciiu/gomo/common/db"
+	"github.com/asciiu/gomo/common/util"
 	repoUser "github.com/asciiu/gomo/user-service/db/sql"
 	user "github.com/asciiu/gomo/user-service/models"
 	"github.com/google/uuid"
@@ -780,7 +781,7 @@ func TestGetAccountKeys(t *testing.T) {
 	keys := res.Data.Keys
 	assert.Equal(t, 1, len(keys), "should be 1 key")
 	assert.Equal(t, "public1", keys[0].KeyPublic, "public key did not match")
-	assert.Equal(t, "secret1", rot32768(keys[0].KeySecret), "secret key did not match")
+	assert.Equal(t, "secret1", util.Rot32768(keys[0].KeySecret), "secret key did not match")
 	assert.Equal(t, "binance", keys[0].Exchange, "exchange did not match")
 	assert.Equal(t, "valid", keys[0].Status, "account status did not match")
 

@@ -6,10 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"log"
-	"strings"
 	"time"
-	"unicode"
-	"unicode/utf8"
 
 	constAccount "github.com/asciiu/gomo/account-service/constants"
 	repoAccount "github.com/asciiu/gomo/account-service/db/sql"
@@ -19,6 +16,7 @@ import (
 	protoBinance "github.com/asciiu/gomo/binance-service/proto/binance"
 	constExch "github.com/asciiu/gomo/common/constants/exchange"
 	constRes "github.com/asciiu/gomo/common/constants/response"
+	"github.com/asciiu/gomo/common/util"
 	"github.com/google/uuid"
 	"github.com/lib/pq"
 )
@@ -55,28 +53,6 @@ func supportedType(a string) bool {
 		}
 	}
 	return false
-}
-
-// rot32768 rotates utf8 string
-// rot5map rotates digits
-func rot32768(input string) string {
-	var result []string
-	rot5map := map[rune]rune{'0': '5', '1': '6', '2': '7', '3': '8', '4': '9', '5': '0', '6': '1', '7': '2', '8': '3', '9': '4'}
-
-	for _, i := range input {
-		switch {
-		case unicode.IsSpace(i):
-			result = append(result, " ")
-		case i >= '0' && i <= '9':
-			result = append(result, string(rot5map[i]))
-		case utf8.ValidRune(i):
-			//result = append(result, string(rune(i) ^ 0x80))
-			result = append(result, string(rune(i)^utf8.RuneSelf))
-		}
-
-	}
-
-	return strings.Join(result, "")
 }
 
 // Add a new account. An account may be real or paper. Paper accounts do not need to be verfied.
@@ -119,7 +95,7 @@ func (service *AccountService) AddAccount(ctx context.Context, req *protoAccount
 		UserID:      req.UserID,
 		Exchange:    req.Exchange,
 		KeyPublic:   req.KeyPublic,
-		KeySecret:   rot32768(req.KeySecret),
+		KeySecret:   util.Rot32768(req.KeySecret),
 		Description: req.Description,
 		Status:      constAccount.AccountValid,
 		CreatedOn:   now,
@@ -150,7 +126,7 @@ func (service *AccountService) AddAccount(ctx context.Context, req *protoAccount
 		reqBal := protoBinanceBal.BalanceRequest{
 			UserID:    account.UserID,
 			KeyPublic: account.KeyPublic,
-			KeySecret: rot32768(account.KeySecret),
+			KeySecret: util.Rot32768(account.KeySecret),
 		}
 		resBal, _ := service.BinanceClient.GetBalances(ctx, &reqBal)
 
@@ -539,7 +515,7 @@ func (service *AccountService) resyncBinanceBalances(ctx context.Context, accoun
 	reqBal := protoBinanceBal.BalanceRequest{
 		UserID:    account.UserID,
 		KeyPublic: account.KeyPublic,
-		KeySecret: rot32768(account.KeySecret),
+		KeySecret: util.Rot32768(account.KeySecret),
 	}
 	exBals, _ := service.BinanceClient.GetBalances(ctx, &reqBal)
 
@@ -704,7 +680,7 @@ func (service *AccountService) UpdateAccount(ctx context.Context, req *protoAcco
 			reqBal := protoBinanceBal.BalanceRequest{
 				UserID:    account.UserID,
 				KeyPublic: req.KeyPublic,
-				KeySecret: rot32768(req.KeySecret),
+				KeySecret: util.Rot32768(req.KeySecret),
 			}
 			resBal, _ := service.BinanceClient.GetBalances(ctx, &reqBal)
 
