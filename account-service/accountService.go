@@ -751,12 +751,32 @@ func (service *AccountService) UpdateAccount(ctx context.Context, req *protoAcco
 		}
 	}
 
-	if err := repoAccount.UpdateAccountTxn(txn, ctx, req.AccountID, req.UserID, req.KeyPublic, req.KeySecret, req.Title, req.Description); err != nil {
-		txn.Rollback()
-		res.Status = constRes.Error
-		res.Message = "error encountered while updating account: " + err.Error()
-		log.Println("UpdateAccountTxn error: ", err.Error())
-		return nil
+	if req.Description != "" && account.Description != req.Description {
+		if err := repoAccount.UpdateAccountDescriptionTxn(txn, ctx, req.AccountID, req.UserID, req.Description); err != nil {
+			txn.Rollback()
+			res.Status = constRes.Error
+			res.Message = "error encountered while updating account description: " + err.Error()
+			log.Println("UpdateAccountDescriptionTxn error: ", err.Error())
+			return nil
+		}
+	}
+	if req.Title != "" && account.Title != req.Title {
+		if err := repoAccount.UpdateAccountTitleTxn(txn, ctx, req.AccountID, req.UserID, req.Title); err != nil {
+			txn.Rollback()
+			res.Status = constRes.Error
+			res.Message = "error encountered while updating account title: " + err.Error()
+			log.Println("UpdateAccountTitleTxn error: ", err.Error())
+			return nil
+		}
+	}
+	if req.KeyPublic != "" && account.KeyPublic != req.KeyPublic {
+		if err := repoAccount.UpdateAccountSecretTxn(txn, ctx, req.AccountID, req.UserID, req.KeyPublic, req.KeySecret); err != nil {
+			txn.Rollback()
+			res.Status = constRes.Error
+			res.Message = "error encountered while updating account secret: " + err.Error()
+			log.Println("UpdateAccountTxn error: ", err.Error())
+			return nil
+		}
 	}
 
 	txn.Commit()

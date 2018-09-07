@@ -276,6 +276,7 @@ func TestAccountUpdate(t *testing.T) {
 		KeyPublic:   "public",
 		KeySecret:   "secret",
 		Description: "shit test again!",
+		Title:       "title",
 		Balances: []*protoBalance.NewBalanceRequest{
 			&protoBalance.NewBalanceRequest{
 				CurrencySymbol: "USDT",
@@ -295,6 +296,7 @@ func TestAccountUpdate(t *testing.T) {
 		KeyPublic:   "public2",
 		KeySecret:   "secret2",
 		Description: "description2",
+		Title:       "new",
 	}
 
 	response2 := protoAccount.AccountResponse{}
@@ -304,6 +306,7 @@ func TestAccountUpdate(t *testing.T) {
 	assert.Equal(t, response1.Data.Account.Exchange, response2.Data.Account.Exchange, "exchanges do not match")
 	assert.Equal(t, "public2", response2.Data.Account.KeyPublic, "public keys don't match")
 	assert.Equal(t, "description2", response2.Data.Account.Description, "descriptions don't match")
+	assert.Equal(t, "new", response2.Data.Account.Title, "title's don't match")
 	repoUser.DeleteUserHard(service.DB, user.ID)
 }
 

@@ -409,17 +409,39 @@ func UpdateAccountStatus(db *sql.DB, accountID, userID, status string) (*protoAc
 	return account, nil
 }
 
-func UpdateAccountTxn(txn *sql.Tx, ctx context.Context, accountID, userID, public, secret, title, description string) error {
+func UpdateAccountSecretTxn(txn *sql.Tx, ctx context.Context, accountID, userID, public, secret string) error {
 	_, err := txn.ExecContext(ctx, `
 		UPDATE accounts 
 		SET 
 			key_public = $1, 
-			key_secret = $2, 
-			title = $3,
-			description = $4
+			key_secret = $2 
 		WHERE
-			id = $5 AND user_id = $6`,
-		public, secret, title, description, accountID, userID)
+			id = $3 AND user_id = $4`,
+		public, secret, accountID, userID)
+
+	return err
+}
+
+func UpdateAccountTitleTxn(txn *sql.Tx, ctx context.Context, accountID, userID, title string) error {
+	_, err := txn.ExecContext(ctx, `
+		UPDATE accounts 
+		SET 
+			title = $1
+		WHERE
+			id = $2 AND user_id = $3`,
+		title, accountID, userID)
+
+	return err
+}
+
+func UpdateAccountDescriptionTxn(txn *sql.Tx, ctx context.Context, accountID, userID, description string) error {
+	_, err := txn.ExecContext(ctx, `
+		UPDATE accounts 
+		SET 
+			description = $1
+		WHERE
+			id = $2 AND user_id = $3`,
+		description, accountID, userID)
 
 	return err
 }
