@@ -29,7 +29,8 @@ message NewAccountRequest {
   string keySecret = 4;
   string description = 5;
   string accountType = 6;
-  repeated bal.NewBalanceRequest balances = 7; 
+  string title = 7;
+  repeated bal.NewBalanceRequest balances = 8; 
 }
 
 message GetAccountKeysRequest {
@@ -42,7 +43,8 @@ message UpdateAccountRequest {
   string keyPublic = 3;
   string keySecret = 4;
   string description = 5;
-  repeated bal.NewBalanceRequest balances = 6; 
+  string title = 6;
+  repeated bal.NewBalanceRequest balances = 7; 
 }
 
 message AccountRequest {

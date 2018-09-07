@@ -72,6 +72,7 @@ func TestNewAccount(t *testing.T) {
 		KeyPublic:   "public",
 		KeySecret:   "secret",
 		AccountType: "paper",
+		Title:       "New Testament",
 		Description: "shit test again!",
 		Balances: []*protoBalance.NewBalanceRequest{
 			&protoBalance.NewBalanceRequest{
@@ -88,6 +89,7 @@ func TestNewAccount(t *testing.T) {
 	assert.Equal(t, 1.0, response.Data.Account.Balances[0].Available, "available should be 1.0")
 	assert.Equal(t, "BTC", response.Data.Account.Balances[0].CurrencySymbol, "currency symbol should be BTC")
 	assert.Equal(t, "binance", response.Data.Account.Exchange, "exchange should be binance")
+	assert.Equal(t, "New Testament", response.Data.Account.Title, "title does not match")
 
 	repoUser.DeleteUserHard(service.DB, user.ID)
 }

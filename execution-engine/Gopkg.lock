@@ -12,7 +12,7 @@
     "common/util",
     "plan-service/constants"
   ]
-  revision = "8d059730a098ac174e22bff0e9a4c8dd207d245d"
+  revision = "b6169afe2710f701902c2464f4f1a6891228e9c8"
 
 [[projects]]
   name = "github.com/davecgh/go-spew"

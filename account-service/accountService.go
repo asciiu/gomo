@@ -96,6 +96,7 @@ func (service *AccountService) AddAccount(ctx context.Context, req *protoAccount
 		Exchange:    req.Exchange,
 		KeyPublic:   req.KeyPublic,
 		KeySecret:   util.Rot32768(req.KeySecret),
+		Title:       req.Title,
 		Description: req.Description,
 		Status:      constAccount.AccountValid,
 		CreatedOn:   now,
@@ -750,7 +751,7 @@ func (service *AccountService) UpdateAccount(ctx context.Context, req *protoAcco
 		}
 	}
 
-	if err := repoAccount.UpdateAccountTxn(txn, ctx, req.AccountID, req.UserID, req.KeyPublic, req.KeySecret, req.Description); err != nil {
+	if err := repoAccount.UpdateAccountTxn(txn, ctx, req.AccountID, req.UserID, req.KeyPublic, req.KeySecret, req.Title, req.Description); err != nil {
 		txn.Rollback()
 		res.Status = constRes.Error
 		res.Message = "error encountered while updating account: " + err.Error()
@@ -759,6 +760,7 @@ func (service *AccountService) UpdateAccount(ctx context.Context, req *protoAcco
 	}
 
 	txn.Commit()
+	account.Title = req.Title
 	account.KeyPublic = req.KeyPublic
 	account.KeySecret = req.KeySecret
 	account.Description = req.Description

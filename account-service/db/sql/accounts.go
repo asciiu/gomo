@@ -34,12 +34,13 @@ func InsertAccount(db *sql.DB, newAccount *protoAccount.Account) error {
 		exchange_name, 
 		key_public, 
 		key_secret, 
+		title,
 		description, 
 		status,
 		account_type,
 		created_on,
 		updated_on) 
-		values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)`)
+		values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)`)
 
 	if err != nil {
 		txn.Rollback()
@@ -51,6 +52,7 @@ func InsertAccount(db *sql.DB, newAccount *protoAccount.Account) error {
 		newAccount.Exchange,
 		newAccount.KeyPublic,
 		newAccount.KeySecret,
+		newAccount.Title,
 		newAccount.Description,
 		newAccount.Status,
 		newAccount.AccountType,
@@ -84,6 +86,7 @@ func FindAccount(db *sql.DB, accountID, userID string) (*protoAccount.Account, e
 			a.exchange_name, 
 			a.key_public, 
 			a.key_secret, 
+			a.title,
 			a.description, 
 			a.status,
 			a.account_type,
@@ -116,6 +119,7 @@ func FindAccount(db *sql.DB, accountID, userID string) (*protoAccount.Account, e
 			&account.Exchange,
 			&account.KeyPublic,
 			&account.KeySecret,
+			&account.Title,
 			&account.Description,
 			&account.Status,
 			&account.AccountType,
@@ -161,6 +165,7 @@ func FindAccountBalance(db *sql.DB, userID, accountID, currencySymbol string) (*
 			a.exchange_name, 
 			a.key_public, 
 			a.key_secret, 
+			a.title,
 			a.description, 
 			a.status,
 			a.account_type,
@@ -193,6 +198,7 @@ func FindAccountBalance(db *sql.DB, userID, accountID, currencySymbol string) (*
 			&account.Exchange,
 			&account.KeyPublic,
 			&account.KeySecret,
+			&account.Title,
 			&account.Description,
 			&account.Status,
 			&account.AccountType,
@@ -237,6 +243,7 @@ func FindAccounts(db *sql.DB, userID string) ([]*protoAccount.Account, error) {
 			a.exchange_name, 
 			a.key_public, 
 			a.key_secret, 
+			a.title,
 			a.description, 
 			a.status,
 			a.account_type,
@@ -271,6 +278,7 @@ func FindAccounts(db *sql.DB, userID string) ([]*protoAccount.Account, error) {
 			&account.Exchange,
 			&account.KeyPublic,
 			&account.KeySecret,
+			&account.Title,
 			&account.Description,
 			&account.Status,
 			&account.AccountType,
@@ -372,6 +380,7 @@ func UpdateAccountStatus(db *sql.DB, accountID, userID, status string) (*protoAc
 			exchange_name, 
 			key_public, 
 			key_secret, 
+			title,
 			description, 
 			status,
 			account_type,
@@ -386,6 +395,7 @@ func UpdateAccountStatus(db *sql.DB, accountID, userID, status string) (*protoAc
 			&account.Exchange,
 			&account.KeyPublic,
 			&account.KeySecret,
+			&account.Title,
 			&account.Description,
 			&account.Status,
 			&account.AccountType,
@@ -399,16 +409,17 @@ func UpdateAccountStatus(db *sql.DB, accountID, userID, status string) (*protoAc
 	return account, nil
 }
 
-func UpdateAccountTxn(txn *sql.Tx, ctx context.Context, accountID, userID, public, secret, description string) error {
+func UpdateAccountTxn(txn *sql.Tx, ctx context.Context, accountID, userID, public, secret, title, description string) error {
 	_, err := txn.ExecContext(ctx, `
 		UPDATE accounts 
 		SET 
 			key_public = $1, 
 			key_secret = $2, 
-			description = $3
+			title = $3,
+			description = $4
 		WHERE
-			id = $4 AND user_id = $5`,
-		public, secret, description, accountID, userID)
+			id = $5 AND user_id = $6`,
+		public, secret, title, description, accountID, userID)
 
 	return err
 }
