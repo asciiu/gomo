@@ -114,6 +114,7 @@ func (controller *SessionController) HandleSession(c echo.Context) error {
 			AccountType: a.AccountType,
 			Exchange:    a.Exchange,
 			KeyPublic:   a.KeyPublic,
+			Title:       a.Title,
 			Description: a.Description,
 			CreatedOn:   a.CreatedOn,
 			UpdatedOn:   a.UpdatedOn,
