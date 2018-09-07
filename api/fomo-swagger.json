@@ -73,6 +73,15 @@
             }
           },
           {
+            "x-go-name": "Title",
+            "description": "Required title",
+            "name": "title",
+            "in": "body",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
             "x-go-name": "Description",
             "description": "Optional defaults to 'active' status. Valid input status is 'active', 'inactive', or 'historic'",
             "name": "description",
@@ -178,6 +187,15 @@
             "x-go-name": "Description",
             "description": "Optional defaults to 'active' status. Valid input status is 'active', 'inactive', or 'historic'",
             "name": "description",
+            "in": "body",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "x-go-name": "Title",
+            "description": "Optional title",
+            "name": "title",
             "in": "body",
             "schema": {
               "type": "string"
@@ -1155,6 +1173,10 @@
           "type": "string",
           "x-go-name": "Status"
         },
+        "title": {
+          "type": "string",
+          "x-go-name": "Title"
+        },
         "type": {
           "type": "string",
           "x-go-name": "AccountType"
@@ -1221,6 +1243,11 @@
           "description": "Optional init timestamp for plan RFC3339 formatted (e.g. 2018-08-26T22:49:10.168652Z). This timestamp will be used to measure initial user currency balance (valuation in user preferred currency)\nin: body",
           "type": "string",
           "x-go-name": "KeySecret"
+        },
+        "title": {
+          "description": "Required title\nin: body",
+          "type": "string",
+          "x-go-name": "Title"
         },
         "type": {
           "description": "Required type\nin: body",
@@ -2479,6 +2506,11 @@
           "description": "Optional init timestamp for plan RFC3339 formatted (e.g. 2018-08-26T22:49:10.168652Z). This timestamp will be used to measure initial user currency balance (valuation in user preferred currency)\nin: body",
           "type": "string",
           "x-go-name": "KeySecret"
+        },
+        "title": {
+          "description": "Optional title\nin: body",
+          "type": "string",
+          "x-go-name": "Title"
         }
       },
       "x-go-package": "github.com/asciiu/gomo/api/controllers"

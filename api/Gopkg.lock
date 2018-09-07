@@ -20,7 +20,7 @@
     "user-service/models",
     "user-service/proto/user"
   ]
-  revision = "88e95b5960a57c6e859d128e21d6bd70cab6afe7"
+  revision = "5f122240242d47053f0453fdb1cefa590d61aa0b"
 
 [[projects]]
   name = "github.com/dgrijalva/jwt-go"
