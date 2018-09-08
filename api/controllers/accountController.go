@@ -280,7 +280,7 @@ type AccountRequest struct {
 	// Required title
 	// in: body
 	Title string `json:"title"`
-	// Optional color
+	// Required color
 	// in: body
 	Color string `json:"color"`
 	// Optional defaults to 'active' status. Valid input status is 'active', 'inactive', or 'historic'

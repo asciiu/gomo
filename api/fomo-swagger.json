@@ -82,6 +82,15 @@
             }
           },
           {
+            "x-go-name": "Color",
+            "description": "Required color",
+            "name": "color",
+            "in": "body",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
             "x-go-name": "Description",
             "description": "Optional defaults to 'active' status. Valid input status is 'active', 'inactive', or 'historic'",
             "name": "description",
@@ -178,6 +187,15 @@
             "x-go-name": "KeySecret",
             "description": "Optional init timestamp for plan RFC3339 formatted (e.g. 2018-08-26T22:49:10.168652Z). This timestamp will be used to measure initial user currency balance (valuation in user preferred currency)",
             "name": "keySecret",
+            "in": "body",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "x-go-name": "Color",
+            "description": "Optional color",
+            "name": "color",
             "in": "body",
             "schema": {
               "type": "string"
@@ -1153,6 +1171,10 @@
           },
           "x-go-name": "Balances"
         },
+        "color": {
+          "type": "string",
+          "x-go-name": "Color"
+        },
         "createdOn": {
           "type": "string",
           "x-go-name": "CreatedOn"
@@ -1223,6 +1245,11 @@
             "$ref": "#/definitions/NewBalanceReq"
           },
           "x-go-name": "Balances"
+        },
+        "color": {
+          "description": "Required color\nin: body",
+          "type": "string",
+          "x-go-name": "Color"
         },
         "description": {
           "description": "Optional defaults to 'active' status. Valid input status is 'active', 'inactive', or 'historic'\nin: body",
@@ -2492,6 +2519,11 @@
     "UpdateAccountRequest": {
       "type": "object",
       "properties": {
+        "color": {
+          "description": "Optional color\nin: body",
+          "type": "string",
+          "x-go-name": "Color"
+        },
         "description": {
           "description": "Optional defaults to 'active' status. Valid input status is 'active', 'inactive', or 'historic'\nin: body",
           "type": "string",

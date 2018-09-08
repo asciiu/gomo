@@ -115,6 +115,10 @@ func (service *AccountService) AddAccount(ctx context.Context, req *protoAccount
 		res.Status = constRes.Fail
 		res.Message = "keyPublic required with keySecret!"
 		return nil
+	case account.Color == "":
+		res.Status = constRes.Fail
+		res.Message = "color required"
+		return nil
 	}
 
 	switch {
