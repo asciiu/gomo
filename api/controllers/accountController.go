@@ -47,6 +47,7 @@ type Account struct {
 	Exchange    string     `json:"exchange"`
 	KeyPublic   string     `json:"keyPublic"`
 	Title       string     `json:"title"`
+	Color       string     `json:"color"`
 	Description string     `json:"description"`
 	CreatedOn   string     `json:"createdOn"`
 	UpdatedOn   string     `json:"updatedOn"`
@@ -180,6 +181,7 @@ func (controller *AccountController) HandleGetAccount(c echo.Context) error {
 			Exchange:    account.Exchange,
 			KeyPublic:   account.KeyPublic,
 			Title:       account.Title,
+			Color:       account.Color,
 			Description: account.Description,
 			CreatedOn:   account.CreatedOn,
 			UpdatedOn:   account.UpdatedOn,
@@ -245,6 +247,7 @@ func (controller *AccountController) HandleListAccounts(c echo.Context) error {
 			Exchange:    a.Exchange,
 			KeyPublic:   a.KeyPublic,
 			Title:       a.Title,
+			Color:       a.Color,
 			Description: a.Description,
 			CreatedOn:   a.CreatedOn,
 			UpdatedOn:   a.UpdatedOn,
@@ -277,6 +280,9 @@ type AccountRequest struct {
 	// Required title
 	// in: body
 	Title string `json:"title"`
+	// Optional color
+	// in: body
+	Color string `json:"color"`
 	// Optional defaults to 'active' status. Valid input status is 'active', 'inactive', or 'historic'
 	// in: body
 	Description string `json:"description"`
@@ -339,6 +345,7 @@ func (controller *AccountController) HandlePostAccount(c echo.Context) error {
 		KeyPublic:   newAccount.KeyPublic,
 		KeySecret:   newAccount.KeySecret,
 		Title:       newAccount.Title,
+		Color:       newAccount.Color,
 		Description: newAccount.Description,
 		AccountType: newAccount.AccountType,
 		Balances:    newBalRequests,
@@ -383,6 +390,7 @@ func (controller *AccountController) HandlePostAccount(c echo.Context) error {
 			Exchange:    account.Exchange,
 			KeyPublic:   account.KeyPublic,
 			Title:       account.Title,
+			Color:       account.Color,
 			Description: account.Description,
 			CreatedOn:   account.CreatedOn,
 			UpdatedOn:   account.UpdatedOn,
@@ -402,6 +410,9 @@ type UpdateAccountRequest struct {
 	// Optional init timestamp for plan RFC3339 formatted (e.g. 2018-08-26T22:49:10.168652Z). This timestamp will be used to measure initial user currency balance (valuation in user preferred currency)
 	// in: body
 	KeySecret string `json:"keySecret"`
+	// Optional color
+	// in: body
+	Color string `json:"color"`
 	// Optional defaults to 'active' status. Valid input status is 'active', 'inactive', or 'historic'
 	// in: body
 	Description string `json:"description"`
@@ -439,6 +450,7 @@ func (controller *AccountController) HandleUpdateAccount(c echo.Context) error {
 		KeyPublic:   updateAccount.KeyPublic,
 		KeySecret:   updateAccount.KeySecret,
 		Title:       updateAccount.Title,
+		Color:       updateAccount.Color,
 		Description: updateAccount.Description,
 	}
 
@@ -480,6 +492,7 @@ func (controller *AccountController) HandleUpdateAccount(c echo.Context) error {
 			Exchange:    account.Exchange,
 			KeyPublic:   account.KeyPublic,
 			Title:       account.Title,
+			Color:       account.Color,
 			Description: account.Description,
 			CreatedOn:   account.CreatedOn,
 			UpdatedOn:   account.UpdatedOn,
