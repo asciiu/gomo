@@ -19,9 +19,10 @@ func SetMainMiddlewares(e *echo.Echo) {
 
 	// CORS
 	e.Use(middleware.CORSWithConfig(middleware.CORSConfig{
-		AllowOrigins: []string{"*", "http://dev.fomo.exchange"},
-		AllowMethods: []string{echo.GET, echo.HEAD, echo.PUT, echo.PATCH, echo.POST, echo.DELETE},
-		AllowHeaders: []string{echo.HeaderOrigin, echo.HeaderContentType, echo.HeaderAccept},
+		AllowOrigins:  []string{"*", "http://dev.fomo.exchange"},
+		AllowMethods:  []string{echo.GET, echo.HEAD, echo.PUT, echo.PATCH, echo.POST, echo.DELETE},
+		AllowHeaders:  []string{echo.HeaderOrigin, echo.HeaderContentType, echo.HeaderAccept},
+		ExposeHeaders: []string{"set-authorization", "set-refresh"},
 	}))
 
 	// don't crash on exceptions
