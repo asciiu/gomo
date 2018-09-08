@@ -31,3 +31,6 @@ const TopicNotification = "Notification"
 
 // used to notify other services that an engine was started
 const TopicEngineStart = "EngineStart"
+
+// when the user deletes a key we must tell the plan service to kill the plans belonging to that account id
+const TopicAccountDeleted = "KillAccountPlans"
