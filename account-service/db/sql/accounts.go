@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"errors"
 
+	constAccount "github.com/asciiu/gomo/account-service/constants"
 	protoAccount "github.com/asciiu/gomo/account-service/proto/account"
 	protoBalance "github.com/asciiu/gomo/account-service/proto/balance"
 	"github.com/lib/pq"
@@ -19,7 +20,10 @@ This file has these functions:
 	FindAccounts
 	InsertAccount
 	UpdateAccountStatus
-	UpdateAccountTxn
+	UpdateAccountColorTxn
+	UpdateAccountDescriptionTxn
+	UpdateAccountSecretTxn
+	UpdateAccountTitleTxn
 */
 
 func InsertAccount(db *sql.DB, newAccount *protoAccount.Account) error {
@@ -35,12 +39,13 @@ func InsertAccount(db *sql.DB, newAccount *protoAccount.Account) error {
 		key_public, 
 		key_secret, 
 		title,
+		color,
 		description, 
 		status,
 		account_type,
 		created_on,
 		updated_on) 
-		values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)`)
+		values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)`)
 
 	if err != nil {
 		txn.Rollback()
@@ -53,6 +58,7 @@ func InsertAccount(db *sql.DB, newAccount *protoAccount.Account) error {
 		newAccount.KeyPublic,
 		newAccount.KeySecret,
 		newAccount.Title,
+		newAccount.Color,
 		newAccount.Description,
 		newAccount.Status,
 		newAccount.AccountType,
@@ -87,6 +93,7 @@ func FindAccount(db *sql.DB, accountID, userID string) (*protoAccount.Account, e
 			a.key_public, 
 			a.key_secret, 
 			a.title,
+			a.color,
 			a.description, 
 			a.status,
 			a.account_type,
@@ -120,6 +127,7 @@ func FindAccount(db *sql.DB, accountID, userID string) (*protoAccount.Account, e
 			&account.KeyPublic,
 			&account.KeySecret,
 			&account.Title,
+			&account.Color,
 			&account.Description,
 			&account.Status,
 			&account.AccountType,
@@ -166,6 +174,7 @@ func FindAccountBalance(db *sql.DB, userID, accountID, currencySymbol string) (*
 			a.key_public, 
 			a.key_secret, 
 			a.title,
+			a.color,
 			a.description, 
 			a.status,
 			a.account_type,
@@ -199,6 +208,7 @@ func FindAccountBalance(db *sql.DB, userID, accountID, currencySymbol string) (*
 			&account.KeyPublic,
 			&account.KeySecret,
 			&account.Title,
+			&account.Color,
 			&account.Description,
 			&account.Status,
 			&account.AccountType,
@@ -244,6 +254,7 @@ func FindAccounts(db *sql.DB, userID string) ([]*protoAccount.Account, error) {
 			a.key_public, 
 			a.key_secret, 
 			a.title,
+			a.color,
 			a.description, 
 			a.status,
 			a.account_type,
@@ -261,9 +272,9 @@ func FindAccounts(db *sql.DB, userID string) ([]*protoAccount.Account, error) {
 			b.updated_on 
 		FROM accounts a 
 		JOIN balances b on a.id = b.account_id 
-		WHERE a.user_id = $1 ORDER BY a.created_on`
+		WHERE a.user_id = $1 AND a.status != $2 ORDER BY a.created_on`
 
-	rows, err := db.Query(query, userID)
+	rows, err := db.Query(query, userID, constAccount.AccountDeleted)
 	if err != nil {
 		return nil, err
 	}
@@ -279,6 +290,7 @@ func FindAccounts(db *sql.DB, userID string) ([]*protoAccount.Account, error) {
 			&account.KeyPublic,
 			&account.KeySecret,
 			&account.Title,
+			&account.Color,
 			&account.Description,
 			&account.Status,
 			&account.AccountType,
@@ -381,6 +393,7 @@ func UpdateAccountStatus(db *sql.DB, accountID, userID, status string) (*protoAc
 			key_public, 
 			key_secret, 
 			title,
+			color,
 			description, 
 			status,
 			account_type,
@@ -396,6 +409,7 @@ func UpdateAccountStatus(db *sql.DB, accountID, userID, status string) (*protoAc
 			&account.KeyPublic,
 			&account.KeySecret,
 			&account.Title,
+			&account.Color,
 			&account.Description,
 			&account.Status,
 			&account.AccountType,
@@ -442,6 +456,18 @@ func UpdateAccountDescriptionTxn(txn *sql.Tx, ctx context.Context, accountID, us
 		WHERE
 			id = $2 AND user_id = $3`,
 		description, accountID, userID)
+
+	return err
+}
+
+func UpdateAccountColorTxn(txn *sql.Tx, ctx context.Context, accountID, userID, color string) error {
+	_, err := txn.ExecContext(ctx, `
+		UPDATE accounts 
+		SET 
+			color = $1
+		WHERE
+			id = $2 AND user_id = $3`,
+		color, accountID, userID)
 
 	return err
 }

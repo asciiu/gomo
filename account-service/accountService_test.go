@@ -73,6 +73,7 @@ func TestNewAccount(t *testing.T) {
 		KeySecret:   "secret",
 		AccountType: "paper",
 		Title:       "New Testament",
+		Color:       "blue",
 		Description: "shit test again!",
 		Balances: []*protoBalance.NewBalanceRequest{
 			&protoBalance.NewBalanceRequest{
@@ -90,6 +91,7 @@ func TestNewAccount(t *testing.T) {
 	assert.Equal(t, "BTC", response.Data.Account.Balances[0].CurrencySymbol, "currency symbol should be BTC")
 	assert.Equal(t, "binance", response.Data.Account.Exchange, "exchange should be binance")
 	assert.Equal(t, "New Testament", response.Data.Account.Title, "title does not match")
+	assert.Equal(t, "blue", response.Data.Account.Color, "color does not match")
 
 	repoUser.DeleteUserHard(service.DB, user.ID)
 }
@@ -275,6 +277,7 @@ func TestAccountUpdate(t *testing.T) {
 		AccountType: "paper",
 		KeyPublic:   "public",
 		KeySecret:   "secret",
+		Color:       "yellow",
 		Description: "shit test again!",
 		Title:       "title",
 		Balances: []*protoBalance.NewBalanceRequest{
@@ -295,6 +298,7 @@ func TestAccountUpdate(t *testing.T) {
 		UserID:      user.ID,
 		KeyPublic:   "public2",
 		KeySecret:   "secret2",
+		Color:       "green",
 		Description: "description2",
 		Title:       "new",
 	}
@@ -307,6 +311,7 @@ func TestAccountUpdate(t *testing.T) {
 	assert.Equal(t, "public2", response2.Data.Account.KeyPublic, "public keys don't match")
 	assert.Equal(t, "description2", response2.Data.Account.Description, "descriptions don't match")
 	assert.Equal(t, "new", response2.Data.Account.Title, "title's don't match")
+	assert.Equal(t, "green", response2.Data.Account.Color, "colors don't match")
 	repoUser.DeleteUserHard(service.DB, user.ID)
 }
 

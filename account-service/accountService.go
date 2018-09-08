@@ -88,7 +88,7 @@ func (service *AccountService) AddAccount(ctx context.Context, req *protoAccount
 		balances = append(balances, &balance)
 	}
 
-	// assume account verified
+	// assume account valid
 	account := protoAccount.Account{
 		AccountID:   accountID,
 		AccountType: req.AccountType,
@@ -97,6 +97,7 @@ func (service *AccountService) AddAccount(ctx context.Context, req *protoAccount
 		KeyPublic:   req.KeyPublic,
 		KeySecret:   util.Rot32768(req.KeySecret),
 		Title:       req.Title,
+		Color:       req.Color,
 		Description: req.Description,
 		Status:      constAccount.AccountValid,
 		CreatedOn:   now,
@@ -759,6 +760,7 @@ func (service *AccountService) UpdateAccount(ctx context.Context, req *protoAcco
 			log.Println("UpdateAccountDescriptionTxn error: ", err.Error())
 			return nil
 		}
+		account.Description = req.Description
 	}
 	if req.Title != "" && account.Title != req.Title {
 		if err := repoAccount.UpdateAccountTitleTxn(txn, ctx, req.AccountID, req.UserID, req.Title); err != nil {
@@ -768,22 +770,30 @@ func (service *AccountService) UpdateAccount(ctx context.Context, req *protoAcco
 			log.Println("UpdateAccountTitleTxn error: ", err.Error())
 			return nil
 		}
+		account.Title = req.Title
 	}
 	if req.KeyPublic != "" && account.KeyPublic != req.KeyPublic {
 		if err := repoAccount.UpdateAccountSecretTxn(txn, ctx, req.AccountID, req.UserID, req.KeyPublic, req.KeySecret); err != nil {
 			txn.Rollback()
 			res.Status = constRes.Error
 			res.Message = "error encountered while updating account secret: " + err.Error()
-			log.Println("UpdateAccountTxn error: ", err.Error())
+			log.Println("UpdateAccountSecretTxn error: ", err.Error())
 			return nil
 		}
+		account.KeyPublic = req.KeyPublic
+	}
+	if req.Color != "" && account.Color != req.Color {
+		if err := repoAccount.UpdateAccountColorTxn(txn, ctx, req.AccountID, req.UserID, req.Color); err != nil {
+			txn.Rollback()
+			res.Status = constRes.Error
+			res.Message = "error encountered while updating account color: " + err.Error()
+			log.Println("UpdateAccountColorTxn error: ", err.Error())
+			return nil
+		}
+		account.Color = req.Color
 	}
 
 	txn.Commit()
-	account.Title = req.Title
-	account.KeyPublic = req.KeyPublic
-	account.KeySecret = req.KeySecret
-	account.Description = req.Description
 
 	res.Status = constRes.Success
 	res.Data = &protoAccount.UserAccount{
