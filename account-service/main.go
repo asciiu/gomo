@@ -7,6 +7,7 @@ import (
 
 	protoAccount "github.com/asciiu/gomo/account-service/proto/account"
 	protoBinance "github.com/asciiu/gomo/binance-service/proto/binance"
+	constMessage "github.com/asciiu/gomo/common/constants/message"
 	"github.com/asciiu/gomo/common/db"
 	micro "github.com/micro/go-micro"
 	k8s "github.com/micro/kubernetes/go/micro"
@@ -28,8 +29,9 @@ func main() {
 	}
 
 	accountService := AccountService{
-		DB:            gomoDB,
-		BinanceClient: protoBinance.NewBinanceServiceClient("binance", srv.Client()),
+		DB:             gomoDB,
+		BinanceClient:  protoBinance.NewBinanceServiceClient("binance", srv.Client()),
+		AccountDeleted: micro.NewPublisher(constMessage.TopicAccountDeleted, srv.Client()),
 	}
 
 	protoAccount.RegisterAccountServiceHandler(srv.Server(), &accountService)

@@ -9,13 +9,14 @@
     "binance-service/proto/binance",
     "binance-service/test",
     "common/constants/exchange",
+    "common/constants/message",
     "common/constants/response",
     "common/db",
     "common/util",
     "user-service/db/sql",
     "user-service/models"
   ]
-  revision = "4f01eb4a4a482fc1201140af66c26823bec8dec7"
+  revision = "b8b8adb9197a6e187cf892eb03e2dd543caee2f2"
 
 [[projects]]
   name = "github.com/davecgh/go-spew"
@@ -324,6 +325,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "95b0ae3537ed899afe1c70e2dee7c4c2a59a5f5f34b5dc10ddcc5eb8f8d2efe5"
+  inputs-digest = "a56f4567d5c1bda2a5369a9e0700f24fe18acf463b19e265b796770901081b1c"
   solver-name = "gps-cdcl"
   solver-version = 1

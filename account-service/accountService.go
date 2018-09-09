@@ -19,11 +19,13 @@ import (
 	"github.com/asciiu/gomo/common/util"
 	"github.com/google/uuid"
 	"github.com/lib/pq"
+	micro "github.com/micro/go-micro"
 )
 
 type AccountService struct {
-	DB            *sql.DB
-	BinanceClient protoBinance.BinanceServiceClient
+	DB             *sql.DB
+	BinanceClient  protoBinance.BinanceServiceClient
+	AccountDeleted micro.Publisher
 }
 
 // IMPORTANT! When adding support for new exchanges we must add there names here!
@@ -427,6 +429,15 @@ func (service *AccountService) DeleteAccount(ctx context.Context, req *protoAcco
 		res.Status = constRes.Error
 		res.Message = err.Error()
 	default:
+
+		// avoid this in test cases
+		if service.AccountDeleted != nil {
+			// publish accountID that was deleted so we can gracefully stop any active orders associated with the account ID
+			if err := service.AccountDeleted.Publish(ctx, &account.AccountID); err != nil {
+				log.Println("publish delete warning: ", err)
+			}
+		}
+
 		res.Status = constRes.Success
 		res.Data = &protoAccount.UserAccount{
 			Account: account,

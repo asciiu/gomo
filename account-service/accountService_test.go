@@ -107,6 +107,7 @@ func TestGetAccount(t *testing.T) {
 		AccountType: "paper",
 		KeyPublic:   "public",
 		KeySecret:   "secret",
+		Color:       "blue",
 		Description: "shit test again!",
 		Balances: []*protoBalance.NewBalanceRequest{
 			&protoBalance.NewBalanceRequest{
@@ -149,6 +150,7 @@ func TestGetAccounts(t *testing.T) {
 		AccountType: "paper",
 		KeyPublic:   "public1",
 		KeySecret:   "secret1",
+		Color:       "blue",
 		Description: "Test Account 1",
 		Balances: []*protoBalance.NewBalanceRequest{
 			&protoBalance.NewBalanceRequest{
@@ -167,6 +169,7 @@ func TestGetAccounts(t *testing.T) {
 		AccountType: "paper",
 		KeyPublic:   "public2",
 		KeySecret:   "secret2",
+		Color:       "blue",
 		Description: "Test Account 2",
 		Balances: []*protoBalance.NewBalanceRequest{
 			&protoBalance.NewBalanceRequest{
@@ -204,6 +207,7 @@ func TestDeleteAccount(t *testing.T) {
 		KeyPublic:   "public",
 		AccountType: "paper",
 		KeySecret:   "secret",
+		Color:       "blue",
 		Description: "shit test again!",
 		Balances: []*protoBalance.NewBalanceRequest{
 			&protoBalance.NewBalanceRequest{
@@ -327,6 +331,7 @@ func TestSyncAccount(t *testing.T) {
 		AccountType: "real",
 		KeyPublic:   "public",
 		KeySecret:   "secret",
+		Color:       "default",
 		Description: "shit test again!",
 		Balances: []*protoBalance.NewBalanceRequest{
 			&protoBalance.NewBalanceRequest{
@@ -380,6 +385,7 @@ func TestGetAccountBalance(t *testing.T) {
 		AccountType: "real",
 		KeyPublic:   "public",
 		KeySecret:   "secret",
+		Color:       "blue",
 		Description: "shit test again!",
 		Balances: []*protoBalance.NewBalanceRequest{
 			&protoBalance.NewBalanceRequest{
@@ -427,6 +433,7 @@ func TestValidateAccountBalance(t *testing.T) {
 		AccountType: "paper",
 		KeyPublic:   "public",
 		KeySecret:   "secret",
+		Color:       "blue",
 		Description: "shit test again!",
 		Balances: []*protoBalance.NewBalanceRequest{
 			&protoBalance.NewBalanceRequest{
@@ -468,6 +475,7 @@ func TestValidateAccountBalance2(t *testing.T) {
 		AccountType: "paper",
 		KeyPublic:   "public",
 		KeySecret:   "secret",
+		Color:       "white",
 		Description: "shit test again!",
 		Balances: []*protoBalance.NewBalanceRequest{
 			&protoBalance.NewBalanceRequest{
@@ -508,6 +516,7 @@ func TestLockBalance(t *testing.T) {
 		AccountType: "paper",
 		KeyPublic:   "public",
 		KeySecret:   "secret",
+		Color:       "blue",
 		Description: "shit test again!",
 		Balances: []*protoBalance.NewBalanceRequest{
 			&protoBalance.NewBalanceRequest{
@@ -549,6 +558,7 @@ func TestUnlockBalance(t *testing.T) {
 		AccountType: "paper",
 		KeyPublic:   "public",
 		KeySecret:   "secret",
+		Color:       "blue",
 		Description: "shit test again!",
 		Balances: []*protoBalance.NewBalanceRequest{
 			&protoBalance.NewBalanceRequest{
@@ -607,6 +617,7 @@ func TestChangeAvailableBalance(t *testing.T) {
 		AccountType: "paper",
 		KeyPublic:   "public",
 		KeySecret:   "secret",
+		Color:       "blue",
 		Description: "shit test again!",
 		Balances: []*protoBalance.NewBalanceRequest{
 			&protoBalance.NewBalanceRequest{
@@ -657,6 +668,7 @@ func TestChangeLockedBalance(t *testing.T) {
 		AccountType: "paper",
 		KeyPublic:   "public",
 		KeySecret:   "secret",
+		Color:       "blue",
 		Description: "shit test again!",
 		Balances: []*protoBalance.NewBalanceRequest{
 			&protoBalance.NewBalanceRequest{
@@ -707,6 +719,7 @@ func TestMergeBalance(t *testing.T) {
 		AccountType: "paper",
 		KeyPublic:   "public",
 		KeySecret:   "secret",
+		Color:       "blue",
 		Description: "shit test again!",
 		Balances: []*protoBalance.NewBalanceRequest{
 			&protoBalance.NewBalanceRequest{
@@ -768,6 +781,7 @@ func TestGetAccountKeys(t *testing.T) {
 		AccountType: "paper",
 		KeyPublic:   "public1",
 		KeySecret:   "secret1",
+		Color:       "blue",
 		Description: "shit test again!",
 		Balances: []*protoBalance.NewBalanceRequest{
 			&protoBalance.NewBalanceRequest{
