@@ -26,22 +26,22 @@ type ResponseMarkets struct {
 }
 
 type Market struct {
-	BaseCurrency       string `json:"baseCurrency"`
-	BaseCurrencyLong   string `json:"baseCurrencyLong"`
-	BasePrecision      int32  `json:"basePrecision"`
-	Exchange           string `json:"exchange"`
-	ExchangeMarketName string `json:"exchangeMarketName"`
-	MarketCurrency     string `json:"marketCurrency"`
-	MarketCurrencyLong string `json:"marketCurrencyLong"`
-	MarketPrecision    int32  `json:"marketPrecision"`
-	MarketName         string `json:"marketName"`
-	MinTradeSize       string `json:"minTradeSize"`
-	MaxTradeSize       string `json:"maxTradeSize"`
-	TradeSizeStep      string `json:"tradeSizeStep"`
-	MinMarketPrice     string `json:"minMarketPrice"`
-	MaxMarketPrice     string `json:"maxMarketPrice"`
-	MarketPriceStep    string `json:"marketPriceStep"`
-	Price              string `json:"price"`
+	BaseCurrencySymbol   string `json:"baseCurrencySymbol"`
+	BaseCurrencyName     string `json:"baseCurrencyName"`
+	BasePrecision        int32  `json:"basePrecision"`
+	Exchange             string `json:"exchange"`
+	ExchangeMarketName   string `json:"exchangeMarketName"`
+	MarketCurrencySymbol string `json:"marketCurrencySymbol"`
+	MarketCurrencyName   string `json:"marketCurrencyName"`
+	MarketPrecision      int32  `json:"marketPrecision"`
+	MarketName           string `json:"marketName"`
+	MinTradeSize         string `json:"minTradeSize"`
+	MaxTradeSize         string `json:"maxTradeSize"`
+	TradeSizeStep        string `json:"tradeSizeStep"`
+	MinMarketPrice       string `json:"minMarketPrice"`
+	MaxMarketPrice       string `json:"maxMarketPrice"`
+	MarketPriceStep      string `json:"marketPriceStep"`
+	Price                string `json:"price"`
 }
 
 // This struct is used in the generated swagger docs,
@@ -97,9 +97,9 @@ func (controller *SearchController) Search(c echo.Context) error {
 		switch {
 		case strings.Contains(strings.ToLower(k), strings.ToLower(term)):
 			m = append(m, v)
-		case strings.Contains(strings.ToLower(v.BaseCurrency), strings.ToLower(term)):
+		case strings.Contains(strings.ToLower(v.BaseCurrencySymbol), strings.ToLower(term)):
 			m = append(m, v)
-		case strings.Contains(strings.ToLower(v.MarketCurrency), strings.ToLower(term)):
+		case strings.Contains(strings.ToLower(v.MarketCurrencySymbol), strings.ToLower(term)):
 			m = append(m, v)
 		default:
 		}
@@ -124,20 +124,20 @@ func (controller *SearchController) CacheEvents(tradeEvents *protoEvt.TradeEvent
 
 		// shorten trade event
 		tevent := Market{
-			BaseCurrency:       baseCurrency,
-			BaseCurrencyLong:   baseCurrencyName,
-			Exchange:           event.Exchange,
-			ExchangeMarketName: names[0] + names[1],
-			MarketCurrency:     marketCurrency,
-			MarketCurrencyLong: marketCurrencyName,
-			MarketName:         event.MarketName,
-			Price:              fmt.Sprintf("%.8f", event.Price),
-			BasePrecision:      8,
-			MarketPrecision:    8,
-			MarketPriceStep:    "0.00000001",
-			MaxTradeSize:       "1000000000.0",
-			MinTradeSize:       "0.00000001",
-			TradeSizeStep:      "0.00000001"}
+			BaseCurrencySymbol:   baseCurrency,
+			BaseCurrencyName:     baseCurrencyName,
+			Exchange:             event.Exchange,
+			ExchangeMarketName:   names[0] + names[1],
+			MarketCurrencySymbol: marketCurrency,
+			MarketCurrencyName:   marketCurrencyName,
+			MarketName:           event.MarketName,
+			Price:                fmt.Sprintf("%.8f", event.Price),
+			BasePrecision:        8,
+			MarketPrecision:      8,
+			MarketPriceStep:      "0.00000001",
+			MaxTradeSize:         "1000000000.0",
+			MinTradeSize:         "0.00000001",
+			TradeSizeStep:        "0.00000001"}
 
 		key := fmt.Sprintf("%s-%s", event.Exchange, event.MarketName)
 		//key = key
