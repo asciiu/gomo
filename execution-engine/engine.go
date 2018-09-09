@@ -68,7 +68,21 @@ type Engine struct {
 }
 
 func (engine *Engine) HandleAccountDeleted(ctx context.Context, evt *protoEvt.DeletedAccountEvent) error {
-	log.Println("account deleted: ", evt.AccountID)
+	plans := engine.Plans
+
+	for i, plan := range plans {
+		orders := plan.Orders
+		for j, order := range orders {
+			if order.AccountID == evt.AccountID {
+				// remove this order
+				orders = append(orders[:j], orders[j+1:]...)
+			}
+		}
+		if len(orders) == 0 {
+			engine.Plans = append(plans[:i], plans[i+1:]...)
+		}
+	}
+
 	return nil
 }
 
