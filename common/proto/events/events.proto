@@ -114,3 +114,7 @@ message AbortedOrderEvent {
 message EngineStartEvent {
   string engineID = 1;
 }
+
+message DeletedAccountEvent {
+  string accountID = 1;
+}
