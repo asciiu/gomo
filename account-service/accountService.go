@@ -16,6 +16,7 @@ import (
 	protoBinance "github.com/asciiu/gomo/binance-service/proto/binance"
 	constExch "github.com/asciiu/gomo/common/constants/exchange"
 	constRes "github.com/asciiu/gomo/common/constants/response"
+	protoEvt "github.com/asciiu/gomo/common/proto/events"
 	"github.com/asciiu/gomo/common/util"
 	"github.com/google/uuid"
 	"github.com/lib/pq"
@@ -433,7 +434,7 @@ func (service *AccountService) DeleteAccount(ctx context.Context, req *protoAcco
 		// avoid this in test cases
 		if service.AccountDeleted != nil {
 			// publish accountID that was deleted so we can gracefully stop any active orders associated with the account ID
-			if err := service.AccountDeleted.Publish(ctx, &account.AccountID); err != nil {
+			if err := service.AccountDeleted.Publish(ctx, &protoEvt.DeletedAccountEvent{account.AccountID}); err != nil {
 				log.Println("publish delete warning: ", err)
 			}
 		}

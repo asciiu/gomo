@@ -46,7 +46,8 @@ func main() {
 	protoEngine.RegisterExecutionEngineHandler(srv.Server(), &engine)
 
 	// subscribe to trade events from the exchanges
-	micro.RegisterSubscriber(constMessage.TopicAggTrade, srv.Server(), engine.ProcessTradeEvents, server.SubscriberQueue("trade.event"))
+	micro.RegisterSubscriber(constMessage.TopicAggTrade, srv.Server(), engine.HandleTradeEvents, server.SubscriberQueue("trade.event"))
+	micro.RegisterSubscriber(constMessage.TopicAccountDeleted, srv.Server(), engine.HandleAccountDeleted, server.SubscriberQueue("account.deleted"))
 
 	// fire this event on startup to tell the plan service to feed the engine active plans
 	starter := micro.NewPublisher(constMessage.TopicEngineStart, srv.Client())

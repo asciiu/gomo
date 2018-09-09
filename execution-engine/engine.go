@@ -67,9 +67,14 @@ type Engine struct {
 	Plans     []*Plan
 }
 
+func (engine *Engine) HandleAccountDeleted(ctx context.Context, evt *protoEvt.DeletedAccountEvent) error {
+	log.Println("account deleted: ", evt.AccountID)
+	return nil
+}
+
 // ProcessEvent will process TradeEvents. These events are published from the exchange sockets.
 // Whether or not a trigger for an order will execute will be deteremined here.
-func (engine *Engine) ProcessTradeEvents(ctx context.Context, payload *protoEvt.TradeEvents) error {
+func (engine *Engine) HandleTradeEvents(ctx context.Context, payload *protoEvt.TradeEvents) error {
 	plans := engine.Plans
 
 	// TODO this implementation is fine for prototype but needs to be more efficient for production!
