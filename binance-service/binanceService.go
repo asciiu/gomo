@@ -12,6 +12,7 @@ import (
 	constExt "github.com/asciiu/gomo/common/constants/exchange"
 	constRes "github.com/asciiu/gomo/common/constants/response"
 	protoEvt "github.com/asciiu/gomo/common/proto/events"
+	"github.com/asciiu/gomo/common/util"
 	constPlan "github.com/asciiu/gomo/plan-service/constants"
 	kitLog "github.com/go-kit/kit/log"
 	micro "github.com/micro/go-micro"
@@ -36,7 +37,7 @@ func (service *BinanceService) HandleFillOrder(ctx context.Context, triggerEvent
 		logger = kitLog.With(logger, "time", kitLog.DefaultTimestampUTC, "caller", kitLog.DefaultCaller)
 
 		hmacSigner := &binance.HmacSigner{
-			Key: []byte(triggerEvent.Secret),
+			Key: []byte(util.Rot32768(triggerEvent.Secret)),
 		}
 
 		binanceService := binance.NewAPIService(
