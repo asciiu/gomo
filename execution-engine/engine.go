@@ -10,6 +10,7 @@ import (
 	"strconv"
 	"strings"
 
+	constAccount "github.com/asciiu/gomo/account-service/constants"
 	constExt "github.com/asciiu/gomo/common/constants/exchange"
 	constRes "github.com/asciiu/gomo/common/constants/response"
 	protoEvt "github.com/asciiu/gomo/common/proto/events"
@@ -41,6 +42,7 @@ type Order struct {
 	OrderType   string
 	OrderStatus string
 	AccountID   string
+	AccountType string
 	KeyPublic   string
 	KeySecret   string
 	TriggerExs  []*TriggerEx
@@ -106,7 +108,9 @@ func (engine *Engine) HandleTradeEvents(ctx context.Context, payload *protoEvt.T
 							// remove this order from the processor
 							engine.Plans = append(plans[:p], plans[p+1:]...)
 
-							if order.OrderType == constPlan.PaperOrder {
+							// assume if there is no key that it is paper
+							// paper accounts should NOT have a public key.
+							if order.AccountType == constAccount.AccountPaper {
 								completedEvent := protoEvt.CompletedOrderEvent{
 									UserID:                 plan.UserID,
 									PlanID:                 plan.PlanID,
@@ -345,6 +349,7 @@ func (engine *Engine) AddPlan(ctx context.Context, req *protoEngine.NewPlanReque
 				OrderType:   order.OrderType,
 				OrderStatus: order.OrderStatus,
 				AccountID:   order.AccountID,
+				AccountType: order.AccountType,
 				KeyPublic:   order.KeyPublic,
 				KeySecret:   order.KeySecret,
 				TriggerExs:  expressions,

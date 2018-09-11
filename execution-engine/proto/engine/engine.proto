@@ -41,9 +41,10 @@ message Order {
   string orderType = 6;
   string orderStatus = 7; 
   string accountID = 8;
-  string keyPublic = 9;
-  string keySecret = 10; 
-  repeated Trigger triggers = 11;
+  string accountType = 9;
+  string keyPublic = 10;
+  string keySecret = 11; 
+  repeated Trigger triggers = 12;
 }
 
 message Trigger {

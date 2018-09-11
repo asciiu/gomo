@@ -76,7 +76,7 @@ func (service *BinanceService) HandleFillOrder(ctx context.Context, triggerEvent
 		}
 		// https://github.com/binance-exchange/binance-official-api-docs/blob/master/rest-api.md
 		// Limit type orders require a price
-		newOrder, err := b.NewOrder(binance.NewOrderRequest{
+		processedOrder, err := b.NewOrder(binance.NewOrderRequest{
 			Symbol:      symbol,
 			Quantity:    triggerEvent.Quantity,
 			Side:        ellado,
@@ -87,7 +87,7 @@ func (service *BinanceService) HandleFillOrder(ctx context.Context, triggerEvent
 		})
 
 		if err != nil {
-			log.Printf("failed binance order call -- orderID: %s, market: %s\n", triggerEvent.OrderID, triggerEvent.MarketName)
+			log.Printf("failed binance order call -- event: %+v\n", triggerEvent)
 			completedEvent.Status = constPlan.Failed
 			completedEvent.Details = err.Error()
 		}
@@ -95,10 +95,10 @@ func (service *BinanceService) HandleFillOrder(ctx context.Context, triggerEvent
 		completedEvent.Status = constPlan.Filled
 
 		if err := service.CompletedPub.Publish(ctx, &completedEvent); err != nil {
-			log.Println("publish warning: ", err, completedEvent)
+			log.Println("publish err: ", err.Error())
 		}
 
-		log.Printf("processed order -- orderID: %s, details: %+v\n", triggerEvent.OrderID, newOrder)
+		log.Printf("processed order -- %+v\n", processedOrder)
 	}()
 	return nil
 }
