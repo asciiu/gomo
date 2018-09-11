@@ -78,6 +78,7 @@ func (service *PlanService) publishPlan(ctx context.Context, plan *protoPlan.Pla
 			OrderType:   order.OrderType,
 			OrderStatus: order.Status,
 			AccountID:   order.AccountID,
+			AccountType: order.AccountType,
 			KeyPublic:   order.KeyPublic,
 			KeySecret:   order.KeySecret,
 			Triggers:    triggers,
@@ -486,10 +487,12 @@ func (service *PlanService) NewPlan(ctx context.Context, req *protoPlan.NewPlanR
 
 		// assign exchange name from account
 		foundKey := false
+		accType := constAccount.AccountPaper
 		for _, ky := range akeys {
 			if ky.AccountID == or.AccountID {
 				foundKey = true
 				exchange = ky.Exchange
+				accType = ky.AccountType
 
 				if ky.Status != constAccount.AccountValid {
 					res.Status = constRes.Fail
@@ -534,6 +537,7 @@ func (service *PlanService) NewPlan(ctx context.Context, req *protoPlan.NewPlanR
 
 		order := protoOrder.Order{
 			AccountID:              or.AccountID,
+			AccountType:            accType,
 			OrderID:                or.OrderID,
 			OrderPriority:          or.OrderPriority,
 			OrderType:              or.OrderType,
@@ -918,10 +922,12 @@ func (service *PlanService) UpdatePlan(ctx context.Context, req *protoPlan.Updat
 
 		// assign exchange name from key
 		foundKey := false
+		accType := constAccount.AccountPaper
 		for _, ky := range akeys {
 			if ky.AccountID == or.AccountID {
 				exchange = ky.Exchange
 				foundKey = true
+				accType = ky.AccountType
 
 				if ky.Status != constAccount.AccountValid {
 					res.Status = constRes.Fail
@@ -989,6 +995,7 @@ func (service *PlanService) UpdatePlan(ctx context.Context, req *protoPlan.Updat
 
 		order := protoOrder.Order{
 			AccountID:              or.AccountID,
+			AccountType:            accType,
 			OrderID:                or.OrderID,
 			OrderPriority:          or.OrderPriority,
 			OrderType:              or.OrderType,

@@ -49,6 +49,7 @@ message Order {
   uint32 planDepth = 4;
   string orderTemplateID = 5;
   string accountID = 6;
+  string accountType = 28;
   string keyPublic = 7;
   string keySecret = 8;
   string keyDescription = 9;
