@@ -22,7 +22,7 @@ func main() {
 	}
 
 	// subscribe to new key topic with a key validator
-	micro.RegisterSubscriber(constMessage.TopicTriggeredOrder, srv.Server(), bservice.HandleTriggeredOrderEvent, server.SubscriberQueue("triggered.order"))
+	micro.RegisterSubscriber(constMessage.TopicFillBinanceOrder, srv.Server(), bservice.HandleFillOrder, server.SubscriberQueue("fill.order"))
 	//micro.RegisterSubscriber(constMessage.TopicCandleDataRequest, srv.Server(), &candleRetriever)
 
 	protoBinance.RegisterBinanceServiceHandler(srv.Server(), &bservice)

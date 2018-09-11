@@ -21,7 +21,7 @@ type BinanceService struct {
 	CompletedPub micro.Publisher
 }
 
-func (service *BinanceService) HandleTriggeredOrderEvent(ctx context.Context, triggerEvent *protoEvt.TriggeredOrderEvent) error {
+func (service *BinanceService) HandleFillOrder(ctx context.Context, triggerEvent *protoEvt.TriggeredOrderEvent) error {
 	// ignore events not binance
 	// perhaps we can have this handler only receive binance triggers but for the sake of
 	// simplicity when adding new exchanges let's just have each exchange service do a check
@@ -65,6 +65,15 @@ func (service *BinanceService) HandleTriggeredOrderEvent(ctx context.Context, tr
 		if triggerEvent.OrderType == constPlan.LimitOrder {
 			orderType = binance.TypeLimit
 		}
+
+		completedEvent := protoEvt.CompletedOrderEvent{
+			UserID:             triggerEvent.UserID,
+			PlanID:             triggerEvent.PlanID,
+			OrderID:            triggerEvent.OrderID,
+			Side:               triggerEvent.Side,
+			TriggeredPrice:     triggerEvent.TriggeredPrice,
+			TriggeredCondition: triggerEvent.TriggeredCondition,
+		}
 		// https://github.com/binance-exchange/binance-official-api-docs/blob/master/rest-api.md
 		// Limit type orders require a price
 		newOrder, err := b.NewOrder(binance.NewOrderRequest{
@@ -76,45 +85,20 @@ func (service *BinanceService) HandleTriggeredOrderEvent(ctx context.Context, tr
 			Type:        orderType,
 			Timestamp:   time.Now(),
 		})
+
 		if err != nil {
-			log.Printf("failed new order binance call -- orderID: %s, market: %s\n", triggerEvent.OrderID, triggerEvent.MarketName)
-			//title := fmt.Sprintf("%s %s ordered failed", triggerEvent.MarketName, triggerEvent.Side)
-			// notification := notifications.Notification{
-			// 	UserID:           triggerEvent.UserID,
-			// 	NotificationType: "order",
-			// 	ObjectID:         triggerEvent.OrderID,
-			// 	Title:            title,
-			// 	Description:      err.Error(),
-			// 	Timestamp:        time.Now().UTC().Format(time.RFC3339),
-			// }
-
-			// // publish verify key event
-			// if err := filler.FailedPub.Publish(context.Background(), &notification); err != nil {
-			// 	log.Println("could not publish failed order: ", err)
-			// }
-
-			completedEvent := protoEvt.CompletedOrderEvent{
-				UserID:             triggerEvent.UserID,
-				PlanID:             triggerEvent.PlanID,
-				OrderID:            triggerEvent.OrderID,
-				Side:               triggerEvent.Side,
-				TriggeredPrice:     triggerEvent.TriggeredPrice,
-				TriggeredCondition: triggerEvent.TriggeredCondition,
-				Status:             constPlan.Failed,
-				Details:            err.Error(),
-			}
-
-			if err := service.CompletedPub.Publish(ctx, &completedEvent); err != nil {
-				log.Println("publish warning: ", err, completedEvent)
-			}
-
-		} else {
-			//if err := filler.FilledPub.Publish(ctx, orderEvent); err != nil {
-			//	log.Println("publish warning: ", err, orderEvent)
-			//}
-
-			log.Printf("processed order -- orderID: %s, details: %+v\n", triggerEvent.OrderID, newOrder)
+			log.Printf("failed binance order call -- orderID: %s, market: %s\n", triggerEvent.OrderID, triggerEvent.MarketName)
+			completedEvent.Status = constPlan.Failed
+			completedEvent.Details = err.Error()
 		}
+
+		completedEvent.Status = constPlan.Filled
+
+		if err := service.CompletedPub.Publish(ctx, &completedEvent); err != nil {
+			log.Println("publish warning: ", err, completedEvent)
+		}
+
+		log.Printf("processed order -- orderID: %s, details: %+v\n", triggerEvent.OrderID, newOrder)
 	}()
 	return nil
 }
