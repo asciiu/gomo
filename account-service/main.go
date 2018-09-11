@@ -36,9 +36,6 @@ func main() {
 
 	protoAccount.RegisterAccountServiceHandler(srv.Server(), &accountService)
 
-	// handles key verified events
-	//micro.RegisterSubscriber(constMessage.TopicKeyVerified, srv.Server(), accountService.HandleVerifiedKey, server.SubscriberQueue("verified.key"))
-
 	if err := srv.Run(); err != nil {
 		log.Fatal(err)
 	}
