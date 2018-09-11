@@ -5,6 +5,7 @@
   branch = "master"
   name = "github.com/asciiu/gomo"
   packages = [
+    "common/constants/exchange",
     "common/constants/message",
     "common/constants/response",
     "common/db",
@@ -12,7 +13,7 @@
     "common/util",
     "plan-service/constants"
   ]
-  revision = "d43388e4fd9c76cec944ddeeeb3a17c8cdb9a33a"
+  revision = "aaabfc605708b2eb7673ff5f99d03a3d6166f44a"
 
 [[projects]]
   name = "github.com/davecgh/go-spew"
@@ -319,6 +320,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "eec1995c53ba80732030e53e8665b73e34fb5d4b5e8b809654e32013f8babf2f"
+  inputs-digest = "7b48cf1b25371f4d0a1fd83798012c978c4fe2ce1fede9311fcfe1dfffe23360"
   solver-name = "gps-cdcl"
   solver-version = 1

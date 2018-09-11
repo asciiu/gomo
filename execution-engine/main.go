@@ -35,13 +35,12 @@ func main() {
 	core.Import(env)
 
 	engine := Engine{
-		DB:        gomoDB,
-		Env:       env,
-		Aborted:   micro.NewPublisher(constMessage.TopicAbortedOrder, srv.Client()),
-		Completed: micro.NewPublisher(constMessage.TopicCompletedOrder, srv.Client()),
-		Triggered: micro.NewPublisher(constMessage.TopicTriggeredOrder, srv.Client()),
-		PriceLine: make(map[string]float64),
-		Plans:     make([]*Plan, 0),
+		DB:          gomoDB,
+		Env:         env,
+		Completed:   micro.NewPublisher(constMessage.TopicCompletedOrder, srv.Client()),
+		FillBinance: micro.NewPublisher(constMessage.TopicFillBinanceOrder, srv.Client()),
+		PriceLine:   make(map[string]float64),
+		Plans:       make([]*Plan, 0),
 	}
 	protoEngine.RegisterExecutionEngineHandler(srv.Server(), &engine)
 

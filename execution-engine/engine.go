@@ -10,6 +10,7 @@ import (
 	"strconv"
 	"strings"
 
+	constExt "github.com/asciiu/gomo/common/constants/exchange"
 	constRes "github.com/asciiu/gomo/common/constants/response"
 	protoEvt "github.com/asciiu/gomo/common/proto/events"
 	commonUtil "github.com/asciiu/gomo/common/util"
@@ -59,9 +60,9 @@ type Engine struct {
 	DB  *sql.DB
 	Env *vm.Env
 
-	Aborted   micro.Publisher
-	Completed micro.Publisher
-	Triggered micro.Publisher
+	Completed   micro.Publisher
+	Triggered   micro.Publisher
+	FillBinance micro.Publisher
 
 	PriceLine map[string]float64
 	Plans     []*Plan
@@ -185,10 +186,14 @@ func (engine *Engine) HandleTradeEvents(ctx context.Context, payload *protoEvt.T
 								}
 
 								// Never log the secrets contained in the event
-								log.Printf("triggered order -- orderID: %s, market: %s\n", order.OrderID, order.MarketName)
-								// if non simulated trigger buy event - exchange service subscribes to these events
-								if err := engine.Triggered.Publish(ctx, &triggeredEvent); err != nil {
-									log.Println("publish warning: ", err)
+								log.Printf("triggered order -- %+v\n", triggeredEvent)
+
+								switch triggeredEvent.Exchange {
+								case constExt.Binance:
+									// send out fill request to binance subscribers
+									if err := engine.FillBinance.Publish(ctx, &triggeredEvent); err != nil {
+										log.Println("publish warning: ", err)
+									}
 								}
 							}
 						}
