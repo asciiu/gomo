@@ -88,12 +88,12 @@ func (service *BinanceService) HandleFillOrder(ctx context.Context, triggerEvent
 		})
 
 		if err != nil {
-			log.Printf("failed binance order call -- event: %+v\n", triggerEvent)
+			log.Printf("failed binance order call -- orderID: %s\n", triggerEvent.OrderID)
 			completedEvent.Status = constPlan.Failed
 			completedEvent.Details = err.Error()
+		} else {
+			completedEvent.Status = constPlan.Filled
 		}
-
-		completedEvent.Status = constPlan.Filled
 
 		if err := service.CompletedPub.Publish(ctx, &completedEvent); err != nil {
 			log.Println("publish err: ", err.Error())

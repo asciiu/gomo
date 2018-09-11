@@ -5,7 +5,7 @@
   branch = "master"
   name = "github.com/asciiu/go-binance"
   packages = ["."]
-  revision = "a246d09fe23ac19e9ad70ecd41f144ab5c1fffe1"
+  revision = "9211193009df3c263c70a1d46c892290843b232d"
 
 [[projects]]
   branch = "master"
@@ -21,7 +21,7 @@
     "user-service/db/sql",
     "user-service/models"
   ]
-  revision = "2bd1bee45684984da45ac72a7d3a8ba0a9a0b634"
+  revision = "a337b6600b70a926c7471d787ca477bdb0a74b0c"
 
 [[projects]]
   name = "github.com/davecgh/go-spew"

@@ -255,7 +255,7 @@ func (engine *Engine) AddPlan(ctx context.Context, req *protoEngine.NewPlanReque
 
 				// execute this order right NOW! It's FOMO TIME! but only when we have the last price
 				// for the market in question
-				if order.OrderType == constPlan.PaperOrder && lastPrice != 0 {
+				if order.AccountType == constAccount.AccountPaper && lastPrice != 0 {
 					completedEvent := protoEvt.CompletedOrderEvent{
 						UserID:                 req.UserID,
 						PlanID:                 req.PlanID,
