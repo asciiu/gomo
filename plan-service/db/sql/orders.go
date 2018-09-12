@@ -22,6 +22,79 @@ func DeleteOrders(txn *sql.Tx, ctx context.Context, orderIDs []string) error {
 	return nil
 }
 
+func FindAccountOrders(db *sql.DB, accountID string) ([]*protoOrder.Order, error) {
+	rows, err := db.Query(`SELECT 
+		id as order_id,
+		account_id,
+		parent_order_id,
+		plan_id,
+		plan_depth,
+		exchange_name,
+		market_name,
+		initial_currency_symbol,
+		initial_currency_balance,
+		initial_currency_traded,
+		order_template_id,
+		order_type,
+		side,
+		limit_price, 
+		status,
+		grupo,
+		created_on,
+		updated_on
+		FROM orders 
+		WHERE account_id = $1`, accountID)
+
+	if err != nil {
+		return nil, err
+	}
+
+	defer rows.Close()
+
+	orders := make([]*protoOrder.Order, 0)
+
+	for rows.Next() {
+		var price sql.NullFloat64
+		var order protoOrder.Order
+
+		err := rows.Scan(
+			&order.OrderID,
+			&order.AccountID,
+			&order.ParentOrderID,
+			&order.PlanID,
+			&order.PlanDepth,
+			&order.Exchange,
+			&order.MarketName,
+			&order.InitialCurrencySymbol,
+			&order.InitialCurrencyBalance,
+			&order.InitialCurrencyTraded,
+			&order.OrderTemplateID,
+			&order.OrderType,
+			&order.Side,
+			&price,
+			&order.Status,
+			&order.Grupo,
+			&order.CreatedOn,
+			&order.UpdatedOn)
+
+		if err != nil {
+			return nil, err
+		}
+		if price.Valid {
+			order.LimitPrice = price.Float64
+		}
+
+		orders = append(orders, &order)
+	}
+
+	err = rows.Err()
+	if err != nil {
+		return nil, err
+	}
+
+	return orders, nil
+}
+
 func InsertOrders(txn *sql.Tx, orders []*protoOrder.Order) error {
 	stmt, err := txn.Prepare(pq.CopyIn("orders",
 		"id",

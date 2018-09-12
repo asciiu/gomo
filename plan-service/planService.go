@@ -207,6 +207,44 @@ func (service *PlanService) fetchKeys(accountIDs []string) ([]*protoAccount.Acco
 	return r.Data.Keys, nil
 }
 
+func (service *PlanService) HandleAccountDeleted(ctx context.Context, evt *protoEvt.DeletedAccountEvent) error {
+	// Flowy's Gospel: 20180912
+	// Our first version will be using the same account per plan.
+	// However, the intended design allows for multiple accounts.
+	// The account is associated at the order.
+
+	orders, err := repoPlan.FindAccountOrders(service.DB, evt.AccountID)
+	if err != nil {
+		log.Println("HandleAccountDeleted error on FindAccountOrders: ", err.Error())
+	}
+
+	// gather all unique plan IDs
+	planIDs := make([]string, 0)
+	for _, order := range orders {
+
+		found := false
+		for _, id := range planIDs {
+			if id == order.PlanID {
+				found = true
+				break
+			}
+		}
+
+		if !found {
+			planIDs = append(planIDs, order.PlanID)
+		}
+	}
+
+	// close these plans
+	for _, planID := range planIDs {
+		if repoPlan.UpdatePlanStatus(service.DB, planID, constPlan.Closed) != nil {
+			log.Printf("could not close plan -- %s\n", planID)
+		}
+	}
+
+	return nil
+}
+
 // Handle a completed order event
 func (service *PlanService) HandleCompletedOrder(ctx context.Context, completedOrderEvent *protoEvt.CompletedOrderEvent) error {
 	now := string(pq.FormatTimestamp(time.Now().UTC()))
@@ -328,6 +366,24 @@ func (service *PlanService) HandleCompletedOrder(ctx context.Context, completedO
 				log.Println("could not load the plan orders -- ", err.Error())
 			}
 		}
+	} else if completedOrderEvent.Status == constPlan.Failed {
+		// in theory this should not be required because the plan should close
+		// to free the locked funds
+
+		// unlock the initial balance
+		//changeReq := protoBalance.ChangeBalanceRequest{
+		//	UserID:         completedOrderEvent.UserID,
+		//	AccountID:      completedOrderEvent.AccountID,
+		//	CurrencySymbol: completedOrderEvent.InitialCurrencySymbol,
+		//	Amount:         -completedOrderEvent.InitialCurrencyBalance,
+		//}
+		//service.AccountClient.ChangeLockedBalance(ctx, &changeReq)
+
+		//// add remainder to initial balance
+		//if completedOrderEvent.InitialCurrencyRemainder > 0 {
+		//	changeReq.Amount = completedOrderEvent.InitialCurrencyRemainder
+		//	service.AccountClient.ChangeAvailableBalance(ctx, &changeReq)
+		//}
 	}
 
 	return nil

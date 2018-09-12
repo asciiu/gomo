@@ -43,6 +43,7 @@ func main() {
 
 	micro.RegisterSubscriber(constMessage.TopicCompletedOrder, srv.Server(), planService.HandleCompletedOrder, server.SubscriberQueue("complete.order"))
 	micro.RegisterSubscriber(constMessage.TopicEngineStart, srv.Server(), planService.HandleStartEngine, server.SubscriberQueue("pop.engine"))
+	micro.RegisterSubscriber(constMessage.TopicAccountDeleted, srv.Server(), planService.HandleAccountDeleted, server.SubscriberQueue("delete.account"))
 
 	// Register our service with the gRPC server, this will tie our
 	// implementation into the auto-generated interface code for our
