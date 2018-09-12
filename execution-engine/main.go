@@ -50,6 +50,8 @@ func main() {
 
 	// fire this event on startup to tell the plan service to feed the engine active plans
 	starter := micro.NewPublisher(constMessage.TopicEngineStart, srv.Client())
+	// TODO when the engine is load balanced we need to know what the id of the engine is
+	// as well as the plans that belong to the engine's id so we can reload the engine state
 	starter.Publish(context.Background(), &protoEvt.EngineStartEvent{"replaceIDHERE"})
 
 	if err := srv.Run(); err != nil {

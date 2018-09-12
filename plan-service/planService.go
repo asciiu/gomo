@@ -212,33 +212,21 @@ func (service *PlanService) HandleAccountDeleted(ctx context.Context, evt *proto
 	// Our first version will be using the same account per plan.
 	// However, the intended design allows for multiple accounts.
 	// The account is associated at the order.
+	// since you currently cannot use different accounts within a plan
+	// close the plan if the account was deleted. Close only if the plan status is active or inactive
 
-	orders, err := repoPlan.FindAccountOrders(service.DB, evt.AccountID)
+	plans, err := repoPlan.FindAccountPlans(service.DB, evt.AccountID)
 	if err != nil {
 		log.Println("HandleAccountDeleted error on FindAccountOrders: ", err.Error())
 	}
 
-	// gather all unique plan IDs
-	planIDs := make([]string, 0)
-	for _, order := range orders {
-
-		found := false
-		for _, id := range planIDs {
-			if id == order.PlanID {
-				found = true
-				break
-			}
-		}
-
-		if !found {
-			planIDs = append(planIDs, order.PlanID)
-		}
-	}
-
 	// close these plans
-	for _, planID := range planIDs {
-		if repoPlan.UpdatePlanStatus(service.DB, planID, constPlan.Closed) != nil {
-			log.Printf("could not close plan -- %s\n", planID)
+	for _, plan := range plans {
+		if plan.Status == constPlan.Active || plan.Status == constPlan.Inactive {
+			// close plans that are active or inactive only
+			if repoPlan.UpdatePlanStatus(service.DB, plan.PlanID, constPlan.Closed) != nil {
+				log.Printf("could not close plan -- %s\n", plan.PlanID)
+			}
 		}
 	}
 

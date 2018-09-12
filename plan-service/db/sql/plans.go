@@ -1100,6 +1100,85 @@ func FindUserPlans(db *sql.DB, userID string, page, pageSize uint32) (*protoPlan
 	return &result, nil
 }
 
+// This was needed to pull the plans that have orders with an account ID.
+// The status of these plans need to be set to closed if active, or inactive
+func FindAccountPlans(db *sql.DB, accountID string) ([]*protoPlan.Plan, error) {
+	plans := make([]*protoPlan.Plan, 0)
+	query := `SELECT
+			distinct
+			p.id,
+			p.title,
+			p.total_depth,
+			p.exchange_name,
+			p.base_currency_symbol,
+			p.active_currency_symbol,
+			p.active_currency_balance,
+			p.initial_currency_symbol,
+			p.initial_currency_balance,
+			p.initial_timestamp,
+			p.last_executed_plan_depth,
+			p.last_executed_order_id,
+			p.plan_template_id,
+			p.close_on_complete,
+			p.user_plan_number,
+			p.status,
+			p.created_on,
+			p.updated_on
+		FROM plans p 
+		JOIN orders o on o.plan_id = p.id
+ 		WHERE o.account_id = $1`
+
+	rows, err := db.Query(query, accountID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	for rows.Next() {
+		var plan protoPlan.Plan
+		var planTemplateID sql.NullString
+		var initialTimestamp sql.NullString
+
+		err := rows.Scan(
+			&plan.PlanID,
+			&plan.Title,
+			&plan.TotalDepth,
+			&plan.Exchange,
+			&plan.BaseCurrencySymbol,
+			&plan.ActiveCurrencySymbol,
+			&plan.ActiveCurrencyBalance,
+			&plan.InitialCurrencySymbol,
+			&plan.InitialCurrencyBalance,
+			&initialTimestamp,
+			&plan.LastExecutedPlanDepth,
+			&plan.LastExecutedOrderID,
+			&planTemplateID,
+			&plan.CloseOnComplete,
+			&plan.UserPlanNumber,
+			&plan.Status,
+			&plan.CreatedOn,
+			&plan.UpdatedOn)
+
+		if err != nil {
+			return nil, err
+		}
+		if initialTimestamp.Valid {
+			plan.InitialTimestamp = initialTimestamp.String
+		}
+		if planTemplateID.Valid {
+			plan.PlanTemplateID = planTemplateID.String
+		}
+
+		plans = append(plans, &plan)
+	}
+	err = rows.Err()
+	if err != nil {
+		log.Fatal(err)
+		return nil, err
+	}
+
+	return plans, nil
+}
+
 func FindUserPlansWithStatus(db *sql.DB, userID, status string, page, pageSize uint32) (*protoPlan.PlansPage, error) {
 
 	var count uint32
