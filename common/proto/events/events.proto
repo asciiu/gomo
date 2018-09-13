@@ -76,8 +76,9 @@ message TriggeredOrderEvent {
   string side = 12;
   string orderType = 13;
   double limitPrice = 14;
-  double triggeredPrice = 15;
-  string triggeredCondition = 16;
+  string triggerID = 15;
+  double triggeredPrice = 16;
+  string triggeredCondition = 17;
 }
 
 message CompletedOrderEvent {
