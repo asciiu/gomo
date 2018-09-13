@@ -66,19 +66,18 @@ message TriggeredOrderEvent {
   string orderID = 2;
   string planID = 3;
   string userID = 4;
-  string nextOrderID = 5;
-  double baseBalance = 6;
-  double currencyBalance = 7;
+  string accountID = 5;
+  string activeCurrencySymbol = 6;
+  double activeCurrencyBalance = 7;
   double quantity = 8;
-  string accountID = 9;
-  string key = 10;
-  string secret = 11;
-  string marketName = 12;
-  string side = 13;
-  string orderType = 14;
-  double price = 15;
-  double triggeredPrice = 16;
-  string triggeredCondition = 17;
+  string keyPublic = 9;
+  string keySecret = 10;
+  string marketName = 11;
+  string side = 12;
+  string orderType = 13;
+  double limitPrice = 14;
+  double triggeredPrice = 15;
+  string triggeredCondition = 16;
 }
 
 message CompletedOrderEvent {
