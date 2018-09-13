@@ -173,20 +173,23 @@ func (engine *Engine) HandleTradeEvents(ctx context.Context, payload *protoEvt.T
 
 								// convert this active order event to a triggered order event
 								triggeredEvent := protoEvt.TriggeredOrderEvent{
-									Exchange:           order.Exchange,
-									OrderID:            order.OrderID,
-									PlanID:             plan.PlanID,
-									UserID:             plan.UserID,
-									AccountID:          order.AccountID,
-									Key:                order.KeyPublic,
-									Secret:             order.KeySecret,
-									MarketName:         order.MarketName,
-									Side:               order.Side,
-									OrderType:          order.OrderType,
-									Price:              order.LimitPrice,
-									Quantity:           quantity,
-									TriggeredPrice:     tradeEvent.Price,
-									TriggeredCondition: desc,
+									Exchange:              order.Exchange,
+									OrderID:               order.OrderID,
+									PlanID:                plan.PlanID,
+									UserID:                plan.UserID,
+									AccountID:             order.AccountID,
+									ActiveCurrencySymbol:  plan.ActiveCurrencySymbol,
+									ActiveCurrencyBalance: plan.ActiveCurrencyBalance,
+									KeyPublic:             order.KeyPublic,
+									KeySecret:             order.KeySecret,
+									MarketName:            order.MarketName,
+									Side:                  order.Side,
+									OrderType:             order.OrderType,
+									LimitPrice:            order.LimitPrice,
+									Quantity:              quantity,
+									TriggerID:             trigger.TriggerID,
+									TriggeredPrice:        tradeEvent.Price,
+									TriggeredCondition:    desc,
 								}
 
 								// Never log the secrets contained in the event
