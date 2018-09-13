@@ -37,8 +37,10 @@ type BinanceExchangeInfo struct {
 	Markets map[string]*Symbol
 }
 
-// pulls exchange info from binance
-func (binance *BinanceExchangeInfo) Init() {
+func NewBinanceExchangeInfo() *BinanceExchangeInfo {
+	bexinfo := BinanceExchangeInfo{
+		Markets: make(map[string]*Symbol),
+	}
 	resp, err := http.Get("https://api.binance.com/api/v1/exchangeInfo")
 	if err != nil {
 		// handle error
@@ -53,8 +55,9 @@ func (binance *BinanceExchangeInfo) Init() {
 
 	for _, symbol := range info.Symbols {
 		marketName := symbol.BaseAsset + "-" + symbol.QuoteAsset
-		binance.Markets[marketName] = symbol
+		bexinfo.Markets[marketName] = symbol
 	}
+	return &bexinfo
 }
 
 type LotSize struct {

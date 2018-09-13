@@ -34,10 +34,7 @@ func setupService() (*BinanceService, *sql.DB, *user.User) {
 }
 
 func TestExchangeInfo(t *testing.T) {
-	bexinfo := BinanceExchangeInfo{
-		Markets: make(map[string]*Symbol),
-	}
-	bexinfo.Init()
+	bexinfo := NewBinanceExchangeInfo()
 	marketName := "ADA-BTC"
 	lotSize := bexinfo.LotSize(marketName)
 	priceFilter := bexinfo.PriceFilter(marketName)
