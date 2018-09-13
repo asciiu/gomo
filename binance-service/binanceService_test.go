@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"database/sql"
+	"fmt"
 	"log"
 	"testing"
 
@@ -30,6 +31,25 @@ func setupService() (*BinanceService, *sql.DB, *user.User) {
 	checkErr(error)
 
 	return service, db, user
+}
+
+func TestExchangeInfo(t *testing.T) {
+	bexinfo := BinanceExchangeInfo{
+		Markets: make(map[string]*Symbol),
+	}
+	bexinfo.Init()
+	marketName := "ADA-BTC"
+	lotSize := bexinfo.LotSize(marketName)
+	priceFilter := bexinfo.PriceFilter(marketName)
+	minNotional := bexinfo.MinNotional(marketName)
+	icebergParts := bexinfo.IcebergParts(marketName)
+	maxAlg := bexinfo.MaxAlgoOrders(marketName)
+
+	fmt.Println(priceFilter)
+	fmt.Println(lotSize)
+	fmt.Println(minNotional)
+	fmt.Println(icebergParts)
+	fmt.Println(maxAlg)
 }
 
 func TestInvalidKey1(t *testing.T) {
