@@ -19,6 +19,7 @@ func main() {
 	//candleRetriever := CandleRetriever{}
 	bservice := BinanceService{
 		CompletedPub: micro.NewPublisher(constMessage.TopicCompletedOrder, srv.Client()),
+		Info:         NewBinanceExchangeInfo(),
 	}
 
 	// subscribe to new key topic with a key validator
