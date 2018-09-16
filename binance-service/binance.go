@@ -38,6 +38,7 @@ type BinanceExchangeInfo struct {
 }
 
 func NewBinanceExchangeInfo() *BinanceExchangeInfo {
+	// TODO this data should be updated periodically
 	bexinfo := BinanceExchangeInfo{
 		Markets: make(map[string]*Symbol),
 	}

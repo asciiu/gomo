@@ -2,7 +2,9 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"log"
+	"math"
 	"os"
 	"strings"
 	"time"
@@ -20,6 +22,7 @@ import (
 
 type BinanceService struct {
 	CompletedPub micro.Publisher
+	Info         *BinanceExchangeInfo
 }
 
 func (service *BinanceService) HandleFillOrder(ctx context.Context, triggerEvent *protoEvt.TriggeredOrderEvent) error {
@@ -37,12 +40,12 @@ func (service *BinanceService) HandleFillOrder(ctx context.Context, triggerEvent
 		logger = kitLog.With(logger, "time", kitLog.DefaultTimestampUTC, "caller", kitLog.DefaultCaller)
 
 		hmacSigner := &binance.HmacSigner{
-			Key: []byte(util.Rot32768(triggerEvent.Secret)),
+			Key: []byte(util.Rot32768(triggerEvent.KeySecret)),
 		}
 
 		binanceService := binance.NewAPIService(
 			"https://www.binance.com",
-			triggerEvent.Key,
+			triggerEvent.KeyPublic,
 			hmacSigner,
 			logger,
 			ctx,
@@ -55,10 +58,13 @@ func (service *BinanceService) HandleFillOrder(ctx context.Context, triggerEvent
 		// Sell-market: currencyBalance
 
 		// binance expects the symbol to be formatted as a single word: e.g. BNBBTC
-		symbol := strings.Replace(triggerEvent.MarketName, "-", "", 1)
+		symbols := strings.Split(triggerEvent.MarketName, "-")
+		marketName := strings.Replace(triggerEvent.MarketName, "-", "", 1)
 		// buy or sell
 		ellado := binance.SideBuy
+		finalCurrency := symbols[0]
 		if triggerEvent.Side == constPlan.Sell {
+			finalCurrency = symbols[1]
 			ellado = binance.SideSell
 		}
 		// order type can be market or limit
@@ -68,20 +74,69 @@ func (service *BinanceService) HandleFillOrder(ctx context.Context, triggerEvent
 		}
 
 		completedEvent := protoEvt.CompletedOrderEvent{
-			UserID:             triggerEvent.UserID,
-			PlanID:             triggerEvent.PlanID,
-			OrderID:            triggerEvent.OrderID,
-			Side:               triggerEvent.Side,
-			TriggeredPrice:     triggerEvent.TriggeredPrice,
-			TriggeredCondition: triggerEvent.TriggeredCondition,
+			UserID:                 triggerEvent.UserID,
+			PlanID:                 triggerEvent.PlanID,
+			OrderID:                triggerEvent.OrderID,
+			Exchange:               constExt.Binance,
+			MarketName:             triggerEvent.MarketName,
+			Side:                   triggerEvent.Side,
+			AccountID:              triggerEvent.AccountID,
+			InitialCurrencyBalance: triggerEvent.ActiveCurrencyBalance,
+			InitialCurrencySymbol:  triggerEvent.ActiveCurrencySymbol,
+			FinalCurrencySymbol:    finalCurrency,
+			TriggerID:              triggerEvent.TriggerID,
+			TriggeredPrice:         triggerEvent.TriggeredPrice,
+			TriggeredCondition:     triggerEvent.TriggeredCondition,
 		}
+
+		// qauntity must be of step size
+		lotSize := service.Info.LotSize(triggerEvent.MarketName)
+
+		var qauntity float64
+		switch {
+		case triggerEvent.Side == constPlan.Buy && triggerEvent.OrderType == constPlan.LimitOrder:
+			// buy limit order should use limit price to compute final currency qty
+			qauntity := triggerEvent.ActiveCurrencyBalance / triggerEvent.LimitPrice
+			qauntity = math.Floor(qauntity/lotSize.StepSize) * lotSize.StepSize
+
+			completedEvent.InitialCurrencyTraded = qauntity * triggerEvent.LimitPrice
+			completedEvent.InitialCurrencyRemainder = completedEvent.InitialCurrencyBalance - completedEvent.InitialCurrencyTraded
+			//completedEvent.FinalCurrencyBalance = qauntity
+
+		case triggerEvent.Side == constPlan.Buy && triggerEvent.OrderType == constPlan.MarketOrder:
+			// buy market should use the triggered price in the event
+			qauntity := triggerEvent.ActiveCurrencyBalance / triggerEvent.TriggeredPrice
+			qauntity = math.Floor(qauntity/lotSize.StepSize) * lotSize.StepSize
+
+			completedEvent.InitialCurrencyTraded = qauntity * triggerEvent.TriggeredPrice
+			completedEvent.InitialCurrencyRemainder = completedEvent.InitialCurrencyBalance - completedEvent.InitialCurrencyTraded
+			//completedEvent.FinalCurrencyBalance = finalCurrencyQty
+
+		default:
+			// assume sell entire active balance
+			qauntity := triggerEvent.ActiveCurrencyBalance
+			qauntity = math.Floor(qauntity/lotSize.StepSize) * lotSize.StepSize
+
+			completedEvent.InitialCurrencyTraded = qauntity
+			completedEvent.InitialCurrencyRemainder = completedEvent.InitialCurrencyBalance - completedEvent.InitialCurrencyTraded
+			// assume limit order
+			//completedEvent.FinalCurrencyBalance = finalCurrencyQty * triggerEvent.LimitPrice
+
+			//if triggerEvent.OrderType == constPlan.MarketOrder {
+			//	// when not limit order compute the final balance as triggered price * qty
+			//	completedEvent.FinalCurrencyBalance = finalCurrencyQty * triggerEvent.TriggeredPrice
+			//}
+		}
+
+		fmt.Println(completedEvent)
+
 		// https://github.com/binance-exchange/binance-official-api-docs/blob/master/rest-api.md
 		// Limit type orders require a price
 		processedOrder, err := b.NewOrder(binance.NewOrderRequest{
-			Symbol:      symbol,
-			Quantity:    triggerEvent.Quantity,
+			Symbol:      marketName,
+			Quantity:    qauntity,
 			Side:        ellado,
-			Price:       triggerEvent.Price,
+			Price:       triggerEvent.LimitPrice,
 			TimeInForce: binance.GTC,
 			Type:        orderType,
 			Timestamp:   time.Now(),
