@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"fmt"
 	"log"
 	"math"
 	"os"
@@ -91,12 +90,13 @@ func (service *BinanceService) HandleFillOrder(ctx context.Context, triggerEvent
 
 		// qauntity must be of step size
 		lotSize := service.Info.LotSize(triggerEvent.MarketName)
+		//minNotional := service.Info.MinNotional(triggerEvent.MarketName)
 
 		var qauntity float64
 		switch {
 		case triggerEvent.Side == constPlan.Buy && triggerEvent.OrderType == constPlan.LimitOrder:
 			// buy limit order should use limit price to compute final currency qty
-			qauntity := triggerEvent.ActiveCurrencyBalance / triggerEvent.LimitPrice
+			qauntity = triggerEvent.ActiveCurrencyBalance / triggerEvent.LimitPrice
 			qauntity = math.Floor(qauntity/lotSize.StepSize) * lotSize.StepSize
 
 			completedEvent.InitialCurrencyTraded = qauntity * triggerEvent.LimitPrice
@@ -105,7 +105,7 @@ func (service *BinanceService) HandleFillOrder(ctx context.Context, triggerEvent
 
 		case triggerEvent.Side == constPlan.Buy && triggerEvent.OrderType == constPlan.MarketOrder:
 			// buy market should use the triggered price in the event
-			qauntity := triggerEvent.ActiveCurrencyBalance / triggerEvent.TriggeredPrice
+			qauntity = triggerEvent.ActiveCurrencyBalance / triggerEvent.TriggeredPrice
 			qauntity = math.Floor(qauntity/lotSize.StepSize) * lotSize.StepSize
 
 			completedEvent.InitialCurrencyTraded = qauntity * triggerEvent.TriggeredPrice
@@ -114,7 +114,7 @@ func (service *BinanceService) HandleFillOrder(ctx context.Context, triggerEvent
 
 		default:
 			// assume sell entire active balance
-			qauntity := triggerEvent.ActiveCurrencyBalance
+			qauntity = triggerEvent.ActiveCurrencyBalance
 			qauntity = math.Floor(qauntity/lotSize.StepSize) * lotSize.StepSize
 
 			completedEvent.InitialCurrencyTraded = qauntity
@@ -127,8 +127,10 @@ func (service *BinanceService) HandleFillOrder(ctx context.Context, triggerEvent
 			//	completedEvent.FinalCurrencyBalance = finalCurrencyQty * triggerEvent.TriggeredPrice
 			//}
 		}
+		//fmt.Println(minNotional)
+		//qauntity = util.ToFixed(quantity, minNotional.MinNotional)
 
-		fmt.Println(completedEvent)
+		//fmt.Printf("%+v\n", completedEvent)
 
 		// https://github.com/binance-exchange/binance-official-api-docs/blob/master/rest-api.md
 		// Limit type orders require a price
