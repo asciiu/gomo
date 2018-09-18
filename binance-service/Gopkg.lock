@@ -21,7 +21,7 @@
     "user-service/db/sql",
     "user-service/models"
   ]
-  revision = "dd916d621db853caca2ffd3c7df3b456fe5e8874"
+  revision = "77e1a5df0d0f456ecfdee5d41287b05f31c01321"
 
 [[projects]]
   name = "github.com/davecgh/go-spew"

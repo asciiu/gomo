@@ -77,7 +77,6 @@ func (service *BinanceService) HandleFillOrder(ctx context.Context, triggerEvent
 			PlanID:                 triggerEvent.PlanID,
 			OrderID:                triggerEvent.OrderID,
 			Exchange:               constExt.Binance,
-			ExchangeOrderID: 
 			MarketName:             triggerEvent.MarketName,
 			Side:                   triggerEvent.Side,
 			AccountID:              triggerEvent.AccountID,
@@ -136,13 +135,14 @@ func (service *BinanceService) HandleFillOrder(ctx context.Context, triggerEvent
 		// https://github.com/binance-exchange/binance-official-api-docs/blob/master/rest-api.md
 		// Limit type orders require a price
 		processedOrder, err := b.NewOrder(binance.NewOrderRequest{
-			Symbol:      marketName,
-			Quantity:    qauntity,
-			Side:        ellado,
-			Price:       triggerEvent.LimitPrice,
-			TimeInForce: binance.GTC,
-			Type:        orderType,
-			Timestamp:   time.Now(),
+			Symbol:           marketName,
+			Quantity:         qauntity,
+			Side:             ellado,
+			Price:            triggerEvent.LimitPrice,
+			NewClientOrderID: triggerEvent.OrderID,
+			TimeInForce:      binance.GTC,
+			Type:             orderType,
+			Timestamp:        time.Now(),
 		})
 
 		if err != nil {
@@ -154,11 +154,11 @@ func (service *BinanceService) HandleFillOrder(ctx context.Context, triggerEvent
 			log.Printf("processed order -- %+v\n", processedOrder)
 
 			executedOrder, err := b.QueryOrder(binance.QueryOrderRequest{
-				Symbol: marketName,
-				OrderID: processedOrder.OrderID,
-				OrigClientOrderID: processedOrder.ClientOrderID,
-				RecvWindow: time.Duration(2) * time.Second,
-				Timestamp:  time.Now(),
+				Symbol:            marketName,
+				OrderID:           processedOrder.OrderID,
+				OrigClientOrderID: triggerEvent.OrderID,
+				RecvWindow:        time.Duration(2) * time.Second,
+				Timestamp:         time.Now(),
 			})
 
 			log.Printf("order results -- %+v\n", executedOrder)
