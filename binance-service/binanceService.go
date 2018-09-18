@@ -77,6 +77,7 @@ func (service *BinanceService) HandleFillOrder(ctx context.Context, triggerEvent
 			PlanID:                 triggerEvent.PlanID,
 			OrderID:                triggerEvent.OrderID,
 			Exchange:               constExt.Binance,
+			ExchangeOrderID: 
 			MarketName:             triggerEvent.MarketName,
 			Side:                   triggerEvent.Side,
 			AccountID:              triggerEvent.AccountID,
@@ -149,14 +150,29 @@ func (service *BinanceService) HandleFillOrder(ctx context.Context, triggerEvent
 			completedEvent.Status = constPlan.Failed
 			completedEvent.Details = err.Error()
 		} else {
-			completedEvent.Status = constPlan.Filled
+
+			log.Printf("processed order -- %+v\n", processedOrder)
+
+			executedOrder, err := b.QueryOrder(binance.QueryOrderRequest{
+				Symbol: marketName,
+				OrderID: processedOrder.OrderID,
+				OrigClientOrderID: processedOrder.ClientOrderID,
+				RecvWindow: time.Duration(2) * time.Second,
+				Timestamp:  time.Now(),
+			})
+
+			log.Printf("order results -- %+v\n", executedOrder)
+
+			if err != nil {
+				completedEvent.Status = constPlan.Filled
+				completedEvent.ExchangeOrderID = processedOrder.OrderID
+				completedEvent.FinalCurrencyBalance = executedOrder.ExecutedQty
+			}
 		}
 
 		if err := service.CompletedPub.Publish(ctx, &completedEvent); err != nil {
 			log.Println("publish err: ", err.Error())
 		}
-
-		log.Printf("processed order -- %+v\n", processedOrder)
 	}()
 	return nil
 }
