@@ -99,7 +99,7 @@ message CompletedOrderEvent {
   string triggerID = 15;
   double triggeredPrice = 16; 
   string triggeredCondition = 17;
-  double exchangeOrderID = 18;
+  int64 exchangeOrderID = 18;
   string exchangeMarketName = 19;
   string status = 20;
   string details = 21; 
