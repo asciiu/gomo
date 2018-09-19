@@ -85,25 +85,27 @@ message CompletedOrderEvent {
   string orderID = 1;
   string planID = 2;
   string userID = 3;
-  string nextOrderID = 4;
-  string exchange = 5;
-  string marketName = 6;
-  string side = 7;
-  string accountID = 8;
-  string initialCurrencySymbol = 9;
-  double initialCurrencyBalance = 10; 
-  double initialCurrencyTraded = 11;
-  double initialCurrencyRemainder = 12; 
+  string exchange = 4;
+  string marketName = 5;
+  string side = 6;
+  string accountID = 7;
+  string initialCurrencySymbol = 8;
+  double initialCurrencyBalance = 9; 
+  double initialCurrencyTraded = 10;
+  double initialCurrencyRemainder = 11; 
+  string initialCurrencyPrice = 12;
   string finalCurrencySymbol = 13;
   double finalCurrencyBalance = 14; 
-  string triggerID = 15;
-  double triggeredPrice = 16; 
-  string triggeredCondition = 17;
-  int64 exchangeOrderID = 18;
-  string exchangeMarketName = 19;
-  string status = 20;
-  string details = 21; 
-  bool closeOnComplete = 22;
+  string feeCurrencySymbol = 15;
+  double feeCurrencyAmount = 16;
+  string triggerID = 17;
+  double triggeredPrice = 18; 
+  string triggeredCondition = 19;
+  int64 exchangeOrderID = 20;
+  string exchangeMarketName = 21;
+  string status = 22;
+  string details = 23; 
+  bool closeOnComplete = 24;
 }
 
 message AbortedOrderEvent {
