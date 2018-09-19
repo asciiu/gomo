@@ -5,12 +5,17 @@ import (
 	"database/sql"
 	"fmt"
 	"log"
+	"os"
 	"testing"
+	"time"
 
+	binance "github.com/asciiu/go-binance"
 	protoBalance "github.com/asciiu/gomo/binance-service/proto/balance"
 	"github.com/asciiu/gomo/common/db"
+	"github.com/asciiu/gomo/common/util"
 	repoUser "github.com/asciiu/gomo/user-service/db/sql"
 	user "github.com/asciiu/gomo/user-service/models"
+	kitLog "github.com/go-kit/kit/log"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -47,6 +52,57 @@ func TestExchangeInfo(t *testing.T) {
 	fmt.Println(minNotional)
 	fmt.Println(icebergParts)
 	fmt.Println(maxAlg)
+}
+
+func TestOrderQuery(t *testing.T) {
+	var logger kitLog.Logger
+	logger = kitLog.NewLogfmtLogger(os.Stdout)
+	logger = kitLog.With(logger, "time", kitLog.DefaultTimestampUTC, "caller", kitLog.DefaultCaller)
+
+	hmacSigner := &binance.HmacSigner{
+		Key: []byte(util.Rot32768("secret")),
+	}
+
+	binanceService := binance.NewAPIService(
+		"https://www.binance.com",
+		"public",
+		hmacSigner,
+		logger,
+		context.Background(),
+	)
+	b := binance.NewBinance(binanceService)
+	marketName := "ADABTC"
+	//orders, _ := b.AllOrders(binance.AllOrdersRequest{
+	//	Symbol:     marketName,
+	//	OrderID:    59016988,
+	//	Limit:      1,
+	//	RecvWindow: time.Duration(2) * time.Second,
+	//	Timestamp:  time.Now(),
+	//})
+
+	trades, _ := b.MyTrades(binance.MyTradesRequest{
+		Symbol: marketName,
+		//FromID:     18887917,
+		Limit:      200,
+		RecvWindow: time.Duration(2) * time.Second,
+		Timestamp:  time.Now(),
+	})
+
+	//if err != nil {
+	//	fmt.Println(err)
+	//}
+
+	//executedOrder, _ := b.QueryOrder(binance.QueryOrderRequest{
+	//	Symbol:            marketName,
+	//	OrderID:           59016988,
+	//	OrigClientOrderID: "1d2b57a8-a695-11e8-98d0-529269fb1459",
+	//	RecvWindow:        time.Duration(2) * time.Second,
+	//	Timestamp:         time.Now(),
+	//})
+
+	for _, t := range trades {
+		fmt.Printf("%+v\n", t)
+	}
 }
 
 func TestInvalidKey1(t *testing.T) {

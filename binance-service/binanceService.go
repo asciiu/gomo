@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"log"
 	"math"
 	"os"
@@ -153,20 +154,43 @@ func (service *BinanceService) HandleFillOrder(ctx context.Context, triggerEvent
 
 			log.Printf("processed order -- %+v\n", processedOrder)
 
-			executedOrder, err := b.QueryOrder(binance.QueryOrderRequest{
-				Symbol:            marketName,
-				OrderID:           processedOrder.OrderID,
-				OrigClientOrderID: triggerEvent.OrderID,
-				RecvWindow:        time.Duration(2) * time.Second,
-				Timestamp:         time.Now(),
+			// ask for most recent 200
+			trades, err := b.MyTrades(binance.MyTradesRequest{
+				Symbol:     marketName,
+				Limit:      200,
+				RecvWindow: time.Duration(2) * time.Second,
+				Timestamp:  time.Now(),
 			})
 
-			log.Printf("order results -- %+v\n", executedOrder)
-
 			if err != nil {
-				completedEvent.Status = constPlan.Filled
-				completedEvent.ExchangeOrderID = processedOrder.OrderID
-				completedEvent.FinalCurrencyBalance = executedOrder.ExecutedQty
+				log.Printf("could not retrieve recent trades after processed order %+v\n", processedOrder)
+			} else {
+
+				for _, trade := range trades {
+					if trade.OrderID == processedOrder.OrderID {
+						completedEvent.Status = constPlan.Filled
+						completedEvent.ExchangeTime = trade.Time.String()
+						completedEvent.ExchangeOrderID = processedOrder.OrderID
+						completedEvent.FinalCurrencyBalance = trade.Qty
+						completedEvent.FeeCurrencySymbol = trade.CommissionAsset
+						completedEvent.FeeCurrencyAmount = trade.Commission
+						completedEvent.InitialCurrencyPrice = trade.Price
+						completedEvent.Details = fmt.Sprintf("%s %.8f %s", triggerEvent.Side, trade.Qty, completedEvent.FinalCurrencySymbol)
+
+						log.Printf("trade results -- %+v\n", trade)
+						break
+					}
+				}
+
+				// I'd prefer to just call this but binance doesn't return the price in
+				// the response, so I had to resort to pulling the most recent trades
+				//executedOrder, err := b.QueryOrder(binance.QueryOrderRequest{
+				//	Symbol:            marketName,
+				//	OrderID:           processedOrder.OrderID,
+				//	OrigClientOrderID: triggerEvent.OrderID,
+				//	RecvWindow:        time.Duration(2) * time.Second,
+				//	Timestamp:         time.Now(),
+				//})
 			}
 		}
 
