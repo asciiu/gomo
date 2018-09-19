@@ -103,9 +103,10 @@ message CompletedOrderEvent {
   string triggeredCondition = 19;
   int64 exchangeOrderID = 20;
   string exchangeMarketName = 21;
-  string status = 22;
-  string details = 23; 
-  bool closeOnComplete = 24;
+  string exchangeTime = 22;
+  string status = 23;
+  string details = 24; 
+  bool closeOnComplete = 25;
 }
 
 message AbortedOrderEvent {
