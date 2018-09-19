@@ -17,6 +17,7 @@ import (
 	"github.com/asciiu/gomo/common/util"
 	constPlan "github.com/asciiu/gomo/plan-service/constants"
 	kitLog "github.com/go-kit/kit/log"
+	"github.com/lib/pq"
 	micro "github.com/micro/go-micro"
 )
 
@@ -169,7 +170,7 @@ func (service *BinanceService) HandleFillOrder(ctx context.Context, triggerEvent
 				for _, trade := range trades {
 					if trade.OrderID == processedOrder.OrderID {
 						completedEvent.Status = constPlan.Filled
-						completedEvent.ExchangeTime = trade.Time.String()
+						completedEvent.ExchangeTime = string(pq.FormatTimestamp(trade.Time))
 						completedEvent.ExchangeOrderID = string(processedOrder.OrderID)
 						completedEvent.FinalCurrencyBalance = trade.Qty
 						completedEvent.FeeCurrencySymbol = trade.CommissionAsset
