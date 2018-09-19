@@ -1,0 +1,21 @@
+syntax = "proto3";
+
+package trade;
+
+message Trade {
+  string tradeID = 1;
+  string orderID = 2;
+  string initialCurrencySymbol = 3;     // e.g. BTC
+  double initialCurrencyBalance = 4;     
+  double initialCurrencyTraded = 5;     
+  double initialCurrencyRemainder = 6;  
+  double initialCurrencyPrice = 7;      
+  string finalCurrencySymbol = 8;       
+  double finalCurrencyBalance = 9;      
+  string feeCurrencySymbol = 10;        
+  double feeCurrencyAmount = 11;        
+  string exchangeTime = 12;
+  string side = 13;
+  string createdOn = 14;
+  string updatedOn = 15;
+}

@@ -23,6 +23,7 @@ import (
 	repoPlan "github.com/asciiu/gomo/plan-service/db/sql"
 	protoOrder "github.com/asciiu/gomo/plan-service/proto/order"
 	protoPlan "github.com/asciiu/gomo/plan-service/proto/plan"
+	protoTrade "github.com/asciiu/gomo/plan-service/proto/trade"
 	"github.com/google/uuid"
 	"github.com/lib/pq"
 )
@@ -255,6 +256,11 @@ func (service *PlanService) HandleCompletedOrder(ctx context.Context, completedO
 		log.Println("could not publish notification: ", err)
 	}
 
+	//completedOrderEvent.InitialCurrencyPrice
+	//completedOrderEvent.FeeCurrencySymbol
+	//completedOrderEvent.FeeCurrencySymbol
+	//completedOrderEvent.FeeCurrencySymbol
+
 	planID, depth, err := repoPlan.UpdateOrderStatus(service.DB, completedOrderEvent.OrderID, completedOrderEvent.Status)
 	if err != nil {
 		log.Println("could not update order status -- ", err.Error())
@@ -262,6 +268,25 @@ func (service *PlanService) HandleCompletedOrder(ctx context.Context, completedO
 	}
 
 	if completedOrderEvent.Status == constPlan.Filled {
+		if err := repoPlan.InsertTradeResult(service.DB, &protoTrade.Trade{
+			TradeID:                  uuid.New().String(),
+			OrderID:                  completedOrderEvent.OrderID,
+			InitialCurrencySymbol:    completedOrderEvent.InitialCurrencySymbol,
+			InitialCurrencyBalance:   completedOrderEvent.InitialCurrencyBalance,
+			InitialCurrencyTraded:    completedOrderEvent.InitialCurrencyTraded,
+			InitialCurrencyRemainder: completedOrderEvent.InitialCurrencyRemainder,
+			InitialCurrencyPrice:     completedOrderEvent.InitialCurrencyPrice,
+			FinalCurrencySymbol:      completedOrderEvent.FinalCurrencySymbol,
+			FinalCurrencyBalance:     completedOrderEvent.FinalCurrencyBalance,
+			FeeCurrencySymbol:        completedOrderEvent.FeeCurrencySymbol,
+			FeeCurrencyAmount:        completedOrderEvent.FeeCurrencyAmount,
+			ExchangeTime:             completedOrderEvent.ExchangeTime,
+			Side:                     completedOrderEvent.Side,
+			CreatedOn:                now,
+			UpdatedOn:                now,
+		}); err != nil {
+			log.Println("could not log trade results -- ", err.Error())
+		}
 
 		// TODO error check these in case the account service is unreachable
 		// remove lock on initial balance
@@ -284,12 +309,12 @@ func (service *PlanService) HandleCompletedOrder(ctx context.Context, completedO
 		changeReq.Amount = completedOrderEvent.FinalCurrencyBalance
 		service.AccountClient.ChangeLockedBalance(ctx, &changeReq)
 
-		now := string(pq.FormatTimestamp(time.Now().UTC()))
+		//now := string(pq.FormatTimestamp(time.Now().UTC()))
 		if err := repoPlan.UpdateTriggerResults(service.DB,
 			completedOrderEvent.TriggerID,
 			completedOrderEvent.TriggeredPrice,
 			completedOrderEvent.TriggeredCondition,
-			now); err != nil {
+			completedOrderEvent.ExchangeTime); err != nil {
 			log.Println("completed order error trying to update the trigger -- ", err.Error())
 			return nil
 		}
