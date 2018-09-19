@@ -168,21 +168,42 @@ func (service *BinanceService) HandleFillOrder(ctx context.Context, triggerEvent
 				log.Printf("could not retrieve recent trades after processed order %+v\n", processedOrder)
 			} else {
 
+				var quantity float64
+				var commission float64
 				for _, trade := range trades {
 					if trade.OrderID == processedOrder.OrderID {
-
-						completedEvent.Status = constPlan.Filled
-						completedEvent.ExchangeTime = string(pq.FormatTimestamp(trade.Time))
-						completedEvent.ExchangeOrderID = strconv.FormatInt(trade.OrderID, 10)
-						completedEvent.FinalCurrencyBalance = trade.Qty
-						completedEvent.FeeCurrencySymbol = trade.CommissionAsset
-						completedEvent.FeeCurrencyAmount = trade.Commission
-						completedEvent.InitialCurrencyPrice = trade.Price
-						completedEvent.Details = fmt.Sprintf("%s %.8f %s", triggerEvent.Side, trade.Qty, completedEvent.FinalCurrencySymbol)
-
 						log.Printf("trade results -- %+v\n", trade)
-						break
+
+						if triggerEvent.Side == constPlan.Sell {
+							quantity += trade.Price * trade.Qty
+						} else {
+							quantity += trade.Qty
+						}
+
+						completedEvent.ExchangeTime = string(pq.FormatTimestamp(trade.Time))
+						completedEvent.FeeCurrencySymbol = trade.CommissionAsset
+						completedEvent.InitialCurrencyPrice = trade.Price
+						commission += trade.Commission
 					}
+				}
+
+				completedEvent.Status = constPlan.Filled
+				completedEvent.ExchangeOrderID = strconv.FormatInt(processedOrder.OrderID, 10)
+				completedEvent.FinalCurrencyBalance = quantity
+				completedEvent.FeeCurrencyAmount = commission
+
+				if triggerEvent.Side == constPlan.Sell {
+					completedEvent.Details = fmt.Sprintf("sold %.8f %s in exchange for %.8f %s",
+						completedEvent.InitialCurrencyBalance,
+						completedEvent.InitialCurrencySymbol,
+						completedEvent.FinalCurrencyBalance,
+						completedEvent.FinalCurrencySymbol)
+				} else {
+					completedEvent.Details = fmt.Sprintf("bought %.8f %s and traded %.8f %s",
+						completedEvent.FinalCurrencyBalance,
+						completedEvent.FinalCurrencySymbol,
+						completedEvent.InitialCurrencyTraded,
+						completedEvent.InitialCurrencySymbol)
 				}
 
 				// I'd prefer to just call this but binance doesn't return the price in
