@@ -93,7 +93,7 @@ message CompletedOrderEvent {
   double initialCurrencyBalance = 9; 
   double initialCurrencyTraded = 10;
   double initialCurrencyRemainder = 11; 
-  string initialCurrencyPrice = 12;
+  double initialCurrencyPrice = 12;
   string finalCurrencySymbol = 13;
   double finalCurrencyBalance = 14; 
   string feeCurrencySymbol = 15;
