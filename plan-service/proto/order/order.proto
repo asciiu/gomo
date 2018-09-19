@@ -49,7 +49,7 @@ message Order {
   uint32 planDepth = 4;
   string orderTemplateID = 5;
   string accountID = 6;
-  string accountType = 28;
+  string accountType = 29;
   string keyPublic = 7;
   string keySecret = 8;
   string keyDescription = 9;
@@ -58,19 +58,20 @@ message Order {
   string side = 12;                     // buy, sell
   double limitPrice = 13;               // limit price is required for 'limit' order type
   string exchange = 14;
-  string exchangeMarketName = 15;
-  string marketName = 16;               // e.g. ADA-BTC
-  string initialCurrencySymbol = 17;     // e.g. BTC
-  double initialCurrencyBalance = 18;    // e.g. 1.0 
-  double initialCurrencyTraded = 19;     // e.g. 0.0
-  double initialCurrencyRemainder = 20;     // e.g. 0.0
-  string finalCurrencySymbol = 21;     // e.g. 0.0
-  double finalCurrencyBalance = 22;     // e.g. 0.0
-  string status = 23;
-  string grupo = 24;
-  string createdOn = 25;
-  string updatedOn = 26;
-  repeated Trigger triggers = 27;
+  string exchangeOrderID = 15;
+  string exchangeMarketName = 16;
+  string marketName = 17;               // e.g. ADA-BTC
+  string initialCurrencySymbol = 18;     // e.g. BTC
+  double initialCurrencyBalance = 19;    // e.g. 1.0 
+  double initialCurrencyTraded = 20;     // e.g. 0.0
+  double initialCurrencyRemainder = 21;     // e.g. 0.0
+  string finalCurrencySymbol = 22;     // e.g. 0.0
+  double finalCurrencyBalance = 23;     // e.g. 0.0
+  string status = 24;
+  string grupo = 25;
+  string createdOn = 26;
+  string updatedOn = 27;
+  repeated Trigger triggers = 28;
 }
 
 message Trigger {

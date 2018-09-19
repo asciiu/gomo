@@ -98,6 +98,7 @@ type Order struct {
 	Side                     string                `json:"side,omitempty"`
 	LimitPrice               float64               `json:"limitPrice,omitempty"`
 	Exchange                 string                `json:"exchange,omitempty"`
+	ExchangeOrderID          string                `json:"exchangeOrderID"`
 	ExchangeMarketName       string                `json:"exchangeMarketName,omitempty"`
 	MarketName               string                `json:"marketName,omitempty"`
 	BaseCurrencySymbol       string                `json:"baseCurrencySymbol"`
@@ -291,6 +292,7 @@ func (controller *PlanController) HandleGetPlan(c echo.Context) error {
 			Side:                     o.Side,
 			LimitPrice:               o.LimitPrice,
 			Exchange:                 o.Exchange,
+			ExchangeOrderID:          o.ExchangeOrderID,
 			ExchangeMarketName:       o.ExchangeMarketName,
 			MarketName:               o.MarketName,
 			BaseCurrencySymbol:       baseCurrencySymbol,
