@@ -256,11 +256,6 @@ func (service *PlanService) HandleCompletedOrder(ctx context.Context, completedO
 		log.Println("could not publish notification: ", err)
 	}
 
-	//completedOrderEvent.InitialCurrencyPrice
-	//completedOrderEvent.FeeCurrencySymbol
-	//completedOrderEvent.FeeCurrencySymbol
-	//completedOrderEvent.FeeCurrencySymbol
-
 	planID, depth, err := repoPlan.UpdateOrderStatus(service.DB, completedOrderEvent.OrderID, completedOrderEvent.Status)
 	if err != nil {
 		log.Println("could not update order status -- ", err.Error())
@@ -321,6 +316,7 @@ func (service *PlanService) HandleCompletedOrder(ctx context.Context, completedO
 
 		if err := repoPlan.UpdateOrderResults(service.DB,
 			completedOrderEvent.OrderID,
+			completedOrderEvent.ExchangeOrderID,
 			completedOrderEvent.InitialCurrencyTraded,
 			completedOrderEvent.InitialCurrencyRemainder,
 			completedOrderEvent.FinalCurrencyBalance,
