@@ -170,7 +170,7 @@ func (service *BinanceService) HandleFillOrder(ctx context.Context, triggerEvent
 					if trade.OrderID == processedOrder.OrderID {
 						completedEvent.Status = constPlan.Filled
 						completedEvent.ExchangeTime = trade.Time.String()
-						completedEvent.ExchangeOrderID = processedOrder.OrderID
+						completedEvent.ExchangeOrderID = string(processedOrder.OrderID)
 						completedEvent.FinalCurrencyBalance = trade.Qty
 						completedEvent.FeeCurrencySymbol = trade.CommissionAsset
 						completedEvent.FeeCurrencyAmount = trade.Commission
