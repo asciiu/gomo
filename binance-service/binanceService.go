@@ -6,6 +6,7 @@ import (
 	"log"
 	"math"
 	"os"
+	"strconv"
 	"strings"
 	"time"
 
@@ -169,9 +170,10 @@ func (service *BinanceService) HandleFillOrder(ctx context.Context, triggerEvent
 
 				for _, trade := range trades {
 					if trade.OrderID == processedOrder.OrderID {
+
 						completedEvent.Status = constPlan.Filled
 						completedEvent.ExchangeTime = string(pq.FormatTimestamp(trade.Time))
-						completedEvent.ExchangeOrderID = string(processedOrder.OrderID)
+						completedEvent.ExchangeOrderID = strconv.FormatInt(trade.OrderID, 10)
 						completedEvent.FinalCurrencyBalance = trade.Qty
 						completedEvent.FeeCurrencySymbol = trade.CommissionAsset
 						completedEvent.FeeCurrencyAmount = trade.Commission
