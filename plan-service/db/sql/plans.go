@@ -688,13 +688,24 @@ func FindPlanOrders(db *sql.DB, req *protoPlan.GetUserPlanRequest) (*protoPlan.P
 			if o.OrderID == order.OrderID {
 
 				// loop through and add the trades to the triggers
+				var foundTrade = false
+				for _, tr := range o.Trades {
+					if tr.OrderID == trade.OrderID {
+						o.Trades = append(o.Trades, &trade)
+						foundTrade = true
+						break
+					}
+				}
+				if !foundTrade {
+					o.Trades = append(o.Trades, &trade)
+				}
+
+				// do the same for the triggers
 				var foundTrigger = false
 				for _, t := range o.Triggers {
-					if t.OrderID == trade.OrderID {
-						t.Trades = append(t.Trades, &trade)
-					}
 					if t.TriggerID == trigger.TriggerID {
 						foundTrigger = true
+						break
 					}
 				}
 
@@ -702,13 +713,15 @@ func FindPlanOrders(db *sql.DB, req *protoPlan.GetUserPlanRequest) (*protoPlan.P
 				if !foundTrigger {
 					o.Triggers = append(o.Triggers, &trigger)
 				}
+
 				foundOrder = true
 				break
 			}
 		}
+
 		if !foundOrder {
-			if trigger.OrderID == trade.OrderID {
-				trigger.Trades = append(trigger.Trades, &trade)
+			if order.OrderID == trade.OrderID {
+				order.Trades = append(order.Trades, &trade)
 			}
 			order.Triggers = append(order.Triggers, &trigger)
 			plan.Orders = append(plan.Orders, &order)

@@ -74,6 +74,7 @@ message Order {
   string createdOn = 26;
   string updatedOn = 27;
   repeated Trigger triggers = 28;
+  repeated trade.Trade trades = 30; 
 }
 
 message Trigger {
@@ -91,7 +92,6 @@ message Trigger {
   string createdOn = 12;
   string updatedOn = 13;
   repeated string actions = 14;
-  repeated trade.Trade trades = 15; 
 }
 
 // Responses

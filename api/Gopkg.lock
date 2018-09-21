@@ -16,11 +16,12 @@
     "device-service/proto/device",
     "plan-service/proto/order",
     "plan-service/proto/plan",
+    "plan-service/proto/trade",
     "user-service/db/sql",
     "user-service/models",
     "user-service/proto/user"
   ]
-  revision = "21bfc29029cb5a87c97e0d29f3dd4f97dec43742"
+  revision = "9f005159cee72df3b0da66773ca74c6b29409ba4"
 
 [[projects]]
   name = "github.com/dgrijalva/jwt-go"
