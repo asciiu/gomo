@@ -11,6 +11,7 @@ import (
 	constPlan "github.com/asciiu/gomo/plan-service/constants"
 	protoOrder "github.com/asciiu/gomo/plan-service/proto/order"
 	protoPlan "github.com/asciiu/gomo/plan-service/proto/plan"
+	protoTrade "github.com/asciiu/gomo/plan-service/proto/trade"
 )
 
 /*
@@ -496,11 +497,26 @@ func FindPlanOrders(db *sql.DB, req *protoPlan.GetUserPlanRequest) (*protoPlan.P
 		t.triggered_timestamp,
 		t.trigger_template_id,
 		t.created_on,
-		t.updated_on
+		t.updated_on,
+		tr.id as trade_id, 
+		tr.initial_currency_symbol,
+		tr.initial_currency_balance,
+		tr.initial_currency_traded,
+		tr.initial_currency_remainder,
+		tr.initial_currency_price,
+		tr.final_currency_symbol,
+		tr.final_currency_balance,
+		tr.fee_currency_symbol,
+		tr.fee_currency_amount,
+		tr.exchange_time,
+		tr.side,
+		tr.created_on,
+		tr.updated_on
 		FROM plans p 
 		JOIN orders o on p.id = o.plan_id
 		JOIN triggers t on o.id = t.order_id
 		JOIN accounts a on o.account_id = a.id
+		LEFT JOIN trades tr on tr.order_id = o.id
 		WHERE p.id = $1 AND o.plan_depth BETWEEN $2 AND $3 
 		ORDER BY o.plan_depth, o.order_priority, o.id, t.index`, req.PlanID, req.PlanDepth, req.PlanDepth+req.PlanLength)
 
@@ -524,6 +540,21 @@ func FindPlanOrders(db *sql.DB, req *protoPlan.GetUserPlanRequest) (*protoPlan.P
 		var exchangeOrderID sql.NullString
 		var actionsStr string
 		var order protoOrder.Order
+		var trade protoTrade.Trade
+		var tradeID sql.NullString
+		var initialCurrencySymbol sql.NullString
+		var initialCurrencyBalance sql.NullFloat64
+		var initialCurrencyTraded sql.NullFloat64
+		var initialCurrencyRemainder sql.NullFloat64
+		var initialCurrencyPrice sql.NullFloat64
+		//var finalCurrencySymbol2 sql.NullString
+		var finalCurrencyBalance sql.NullFloat64
+		var feeCurrencySymbol sql.NullString
+		var feeCurrencyAmount sql.NullFloat64
+		var exchangeTime sql.NullString
+		var side sql.NullString
+		var createdOn sql.NullString
+		var updatedOn sql.NullString
 
 		err := rows.Scan(
 			&plan.PlanID,
@@ -583,7 +614,22 @@ func FindPlanOrders(db *sql.DB, req *protoPlan.GetUserPlanRequest) (*protoPlan.P
 			&triggeredTimestamp,
 			&triggerTemplateID,
 			&trigger.CreatedOn,
-			&trigger.UpdatedOn)
+			&trigger.UpdatedOn,
+			&tradeID,
+			&initialCurrencySymbol,
+			&initialCurrencyBalance,
+			&initialCurrencyTraded,
+			&initialCurrencyRemainder,
+			&initialCurrencyPrice,
+			&finalCurrencySymbol,
+			&finalCurrencyBalance,
+			&feeCurrencySymbol,
+			&feeCurrencyAmount,
+			&exchangeTime,
+			&side,
+			&createdOn,
+			&updatedOn,
+		)
 
 		if err != nil {
 			return nil, err
@@ -612,21 +658,58 @@ func FindPlanOrders(db *sql.DB, req *protoPlan.GetUserPlanRequest) (*protoPlan.P
 		if triggerTemplateID.Valid {
 			trigger.TriggerTemplateID = triggerTemplateID.String
 		}
+		// assume all trade columns are populated
+		if tradeID.Valid {
+			trade.TradeID = tradeID.String
+			trade.OrderID = order.OrderID
+			trade.InitialCurrencySymbol = initialCurrencySymbol.String
+			trade.InitialCurrencyBalance = initialCurrencyBalance.Float64
+			trade.InitialCurrencyTraded = initialCurrencyTraded.Float64
+			trade.InitialCurrencyRemainder = initialCurrencyRemainder.Float64
+			trade.InitialCurrencyPrice = initialCurrencyPrice.Float64
+			trade.FinalCurrencySymbol = finalCurrencySymbol.String
+			trade.FinalCurrencyBalance = finalCurrencyBalance.Float64
+			trade.FeeCurrencySymbol = feeCurrencySymbol.String
+			trade.FeeCurrencyAmount = feeCurrencyAmount.Float64
+			trade.ExchangeTime = exchangeTime.String
+			trade.Side = side.String
+			trade.CreatedOn = createdOn.String
+			trade.UpdatedOn = updatedOn.String
+		}
+
 		if err := json.Unmarshal([]byte(actionsStr), &trigger.Actions); err != nil {
 			return nil, err
 		}
 		trigger.OrderID = order.OrderID
 
 		// loop through the orders and append trigger to existing
-		var found = false
+		var foundOrder = false
 		for _, o := range plan.Orders {
 			if o.OrderID == order.OrderID {
-				o.Triggers = append(o.Triggers, &trigger)
-				found = true
+
+				// loop through and add the trades to the triggers
+				var foundTrigger = false
+				for _, t := range o.Triggers {
+					if t.OrderID == trade.OrderID {
+						t.Trades = append(t.Trades, &trade)
+					}
+					if t.TriggerID == trigger.TriggerID {
+						foundTrigger = true
+					}
+				}
+
+				// new trigger for this order append it!
+				if !foundTrigger {
+					o.Triggers = append(o.Triggers, &trigger)
+				}
+				foundOrder = true
 				break
 			}
 		}
-		if !found {
+		if !foundOrder {
+			if trigger.OrderID == trade.OrderID {
+				trigger.Trades = append(trigger.Trades, &trade)
+			}
 			order.Triggers = append(order.Triggers, &trigger)
 			plan.Orders = append(plan.Orders, &order)
 		}
