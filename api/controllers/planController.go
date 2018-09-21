@@ -14,6 +14,7 @@ import (
 	constRes "github.com/asciiu/gomo/common/constants/response"
 	protoOrder "github.com/asciiu/gomo/plan-service/proto/order"
 	protoPlan "github.com/asciiu/gomo/plan-service/proto/plan"
+	protoTrade "github.com/asciiu/gomo/plan-service/proto/trade"
 	jwt "github.com/dgrijalva/jwt-go"
 	"github.com/labstack/echo"
 	micro "github.com/micro/go-micro"
@@ -120,6 +121,7 @@ type Order struct {
 	CreatedOn                string                `json:"createdOn,omitempty"`
 	UpdatedOn                string                `json:"updatedOn,omitempty"`
 	Triggers                 []*protoOrder.Trigger `json:"triggers,omitempty"`
+	Trades                   []*protoTrade.Trade   `json:"trades,omitempty"`
 }
 
 func fail(c echo.Context, msg string) error {
@@ -312,6 +314,7 @@ func (controller *PlanController) HandleGetPlan(c echo.Context) error {
 			CreatedOn:                o.CreatedOn,
 			UpdatedOn:                o.UpdatedOn,
 			Triggers:                 o.Triggers,
+			Trades:                   o.Trades,
 		}
 		newOrders = append(newOrders, &newo)
 	}

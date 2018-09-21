@@ -21,7 +21,7 @@
     "user-service/models",
     "user-service/proto/user"
   ]
-  revision = "9f005159cee72df3b0da66773ca74c6b29409ba4"
+  revision = "35f22146a5a3ef009e3dedf5ed96648843b25474"
 
 [[projects]]
   name = "github.com/dgrijalva/jwt-go"
@@ -388,6 +388,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "6b07f31e8ef3167494d7e9f30101585d5a81574d591469b006af044658b11f4f"
+  inputs-digest = "4d215382f78cfbb40a916542806f9e385ead38ca5d42b45833966d1132e512e9"
   solver-name = "gps-cdcl"
   solver-version = 1
