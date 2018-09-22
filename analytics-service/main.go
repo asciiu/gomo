@@ -43,10 +43,8 @@ func main() {
 
 	go priceTicker.Ticker()
 
-	service := AnalyticsService{
-		DB: gomoDB,
-	}
-	protoAnalytics.RegisterAnalyticsServiceHandler(srv.Server(), &service)
+	service := NewAnalyticsService(gomoDB)
+	protoAnalytics.RegisterAnalyticsServiceHandler(srv.Server(), service)
 
 	if err := srv.Run(); err != nil {
 		log.Fatal(err)

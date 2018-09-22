@@ -4,6 +4,8 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"log"
+	"strings"
 	"sync"
 	"time"
 
@@ -21,9 +23,32 @@ type AnalyticsService struct {
 	DB               *sql.DB
 	MarketClosePrice map[Market]float64
 
+	currencies    map[string]string
 	MarketCandles map[Market]string
 	ProcessQueue  map[Market]float64
 	CandlePub     micro.Publisher
+	Directory     map[string]*protoAnalytics.MarketInfo
+}
+
+func NewAnalyticsService(db *sql.DB) *AnalyticsService {
+	service := AnalyticsService{
+		DB:         db,
+		Directory:  make(map[string]*protoAnalytics.MarketInfo),
+		currencies: make(map[string]string),
+	}
+
+	currencies, err := repoAnalytics.GetCurrencyNames(db)
+	switch {
+	case err == sql.ErrNoRows:
+		log.Println("Quaid, start the reactor!")
+	case err != nil:
+	default:
+		for _, c := range currencies {
+			service.currencies[c.TickerSymbol] = c.CurrencyName
+		}
+	}
+
+	return &service
 }
 
 func remove(s []string, i int) []string {
@@ -77,6 +102,28 @@ func (service *AnalyticsService) HandleTradeEvent(payload *evt.TradeEvents) erro
 			service.ProcessQueue[market] = event.Price
 			service.Unlock()
 		}
+
+		names := strings.Split(event.MarketName, "-")
+		baseCurrency := names[1]
+		baseCurrencyName := service.currencies[baseCurrency]
+		marketCurrency := names[0]
+		marketCurrencyName := service.currencies[marketCurrency]
+
+		// shorten trade event
+		marketPrice := protoAnalytics.MarketInfo{
+			BaseCurrencySymbol:   baseCurrency,
+			BaseCurrencyName:     baseCurrencyName,
+			Exchange:             event.Exchange,
+			ExchangeMarketName:   names[0] + names[1],
+			MarketCurrencySymbol: marketCurrency,
+			MarketCurrencyName:   marketCurrencyName,
+			MarketName:           event.MarketName,
+			Price:                fmt.Sprintf("%.8f", event.Price)}
+
+		key := fmt.Sprintf("%s-%s", event.Exchange, event.MarketName)
+		service.Lock()
+		service.Directory[key] = &marketPrice
+		service.Unlock()
 
 		//found := false
 		// for _, m := range processor.MarketQueue {
