@@ -9,6 +9,7 @@ import (
 	repoAnalytics "github.com/asciiu/gomo/analytics-service/db/sql"
 	protoAnalytics "github.com/asciiu/gomo/analytics-service/proto/analytics"
 	"github.com/asciiu/gomo/common/db"
+	protoEvt "github.com/asciiu/gomo/common/proto/events"
 	commonUtil "github.com/asciiu/gomo/common/util"
 	repoUser "github.com/asciiu/gomo/user-service/db/sql"
 	user "github.com/asciiu/gomo/user-service/models"
@@ -26,14 +27,33 @@ func setupService() (*AnalyticsService, *user.User) {
 	dbUrl := "postgres://postgres@localhost:5432/gomo_test?&sslmode=disable"
 	db, _ := db.NewDB(dbUrl)
 
-	analyticsService := AnalyticsService{
-		DB: db,
+	// analytics assumes currencies exist already upon startup
+	currencies := []*repoAnalytics.Currency{
+		&repoAnalytics.Currency{
+			Name:   "Bitcoin",
+			Symbol: "BTC",
+		},
+		&repoAnalytics.Currency{
+			Name:   "EOS",
+			Symbol: "EOS",
+		},
+		&repoAnalytics.Currency{
+			Name:   "Ethereum",
+			Symbol: "ETH",
+		},
+		&repoAnalytics.Currency{
+			Name:   "Bitcoin Cash",
+			Symbol: "BCH",
+		},
 	}
+	repoAnalytics.InsertCurrencyNames(db, currencies)
+
+	analyticsService := NewAnalyticsService(db)
 
 	user := user.NewUser("first", "last", "test@email", "hash")
 	repoUser.InsertUser(db, user)
 
-	return &analyticsService, user
+	return analyticsService, user
 }
 
 func TestDirectConversion(t *testing.T) {
@@ -122,5 +142,41 @@ func TestIndirectConversion(t *testing.T) {
 	assert.Equal(t, 9.5704, commonUtil.ToFixed(res.Data.ConvertedAmount, 4), "converted amount is not correct")
 
 	repoAnalytics.DeleteExchangeRates(service.DB)
+	repoUser.DeleteUserHard(service.DB, user.ID)
+}
+
+func TestMarketSearch(t *testing.T) {
+	service, user := setupService()
+
+	defer service.DB.Close()
+
+	trades := protoEvt.TradeEvents{
+		Events: []*protoEvt.TradeEvent{
+			&protoEvt.TradeEvent{
+				Exchange:   "bingo",
+				MarketName: "BCH-BTC",
+				Price:      0.001,
+			},
+			&protoEvt.TradeEvent{
+				Exchange:   "bingo",
+				MarketName: "EOS-BTC",
+				Price:      0.002,
+			},
+		},
+	}
+	service.HandleTradeEvent(&trades)
+
+	req := protoAnalytics.SearchMarketsRequest{
+		Term: "btc",
+	}
+	res := protoAnalytics.MarketsResponse{}
+	service.GetMarketInfo(context.Background(), &req, &res)
+
+	assert.Equal(t, "success", res.Status, fmt.Sprintf("return status should be success got: %s", res.Message))
+	assert.Equal(t, 2, len(res.Data.MarketInfo), "should be 2 markets in the results")
+	assert.Equal(t, 2, len(res.Data.MarketInfo), "should be 2 markets in the results")
+	assert.Equal(t, "Bitcoin", res.Data.MarketInfo[0].BaseCurrencyName, "base currency should be bitcion")
+
+	repoAnalytics.DeleteCurrencyNames(service.DB)
 	repoUser.DeleteUserHard(service.DB, user.ID)
 }

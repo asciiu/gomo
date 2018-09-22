@@ -123,6 +123,60 @@ func InsertPrices(db *sql.DB, exchangeRates []*protoPrice.MarketPrice) error {
 	return err
 }
 
+type Currency struct {
+	Name   string
+	Symbol string
+}
+
+// Flowy's Gospel: 20180922
+// currency names were inserted using the Python script to pull the names from coinmarketcap
+// this query and the delete were needed for tests. A process is needed
+// to pull from coinmarketcap and update the currency names periodicially.
+func InsertCurrencyNames(db *sql.DB, currencies []*Currency) error {
+	txn, err := db.Begin()
+	if err != nil {
+		return err
+	}
+
+	stmt, err := txn.Prepare(pq.CopyIn("currency_names",
+		"currency_name",
+		"currency_symbol",
+	))
+	if err != nil {
+		return err
+	}
+
+	for _, currency := range currencies {
+		_, err = stmt.Exec(
+			currency.Name,
+			currency.Symbol,
+		)
+
+		if err != nil {
+			return err
+		}
+	}
+
+	_, err = stmt.Exec()
+	if err != nil {
+		return err
+	}
+
+	err = stmt.Close()
+	if err != nil {
+		return err
+	}
+
+	err = txn.Commit()
+
+	return err
+}
+
+func DeleteCurrencyNames(db *sql.DB) error {
+	_, err := db.Exec("DELETE FROM currency_names")
+	return err
+}
+
 func GetCurrencyNames(db *sql.DB) ([]*models.Currency, error) {
 	results := make([]*models.Currency, 0)
 

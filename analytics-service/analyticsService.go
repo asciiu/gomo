@@ -14,7 +14,6 @@ import (
 	constRes "github.com/asciiu/gomo/common/constants/response"
 	evt "github.com/asciiu/gomo/common/proto/events"
 	"github.com/lib/pq"
-	micro "github.com/micro/go-micro"
 )
 
 // Processor will process orders
@@ -23,11 +22,11 @@ type AnalyticsService struct {
 	DB               *sql.DB
 	MarketClosePrice map[Market]float64
 
-	currencies    map[string]string
-	MarketCandles map[Market]string
-	ProcessQueue  map[Market]float64
-	CandlePub     micro.Publisher
-	Directory     map[string]*protoAnalytics.MarketInfo
+	currencies map[string]string
+	//MarketCandles map[Market]string
+	//ProcessQueue  map[Market]float64
+	//CandlePub     micro.Publisher
+	Directory map[string]*protoAnalytics.MarketInfo
 }
 
 func NewAnalyticsService(db *sql.DB) *AnalyticsService {
@@ -48,6 +47,8 @@ func NewAnalyticsService(db *sql.DB) *AnalyticsService {
 		}
 	}
 
+	fmt.Println(currencies)
+
 	return &service
 }
 
@@ -61,16 +62,16 @@ func (service *AnalyticsService) Ticker() error {
 	for {
 		time.Sleep(2 * time.Second)
 
-		for k := range service.ProcessQueue {
-			service.Lock()
+		// for k := range service.ProcessQueue {
+		// 	service.Lock()
 
-			service.MarketCandles[k] = "ding"
-			delete(service.ProcessQueue, k)
+		// 	service.MarketCandles[k] = "ding"
+		// 	delete(service.ProcessQueue, k)
 
-			service.Unlock()
-			fmt.Println(k)
-			break
-		}
+		// 	service.Unlock()
+		// 	fmt.Println(k)
+		// 	break
+		// }
 
 		// get market from collection
 		// send out candle request if no candles
@@ -85,23 +86,25 @@ func (service *AnalyticsService) Ticker() error {
 
 // ProcessEvent will process ExchangeEvents. These events are published from the exchange sockets.
 func (service *AnalyticsService) HandleTradeEvent(payload *evt.TradeEvents) error {
+	fmt.Println(service.currencies)
+
 	// record close price for the market
 	for _, event := range payload.Events {
-		market := Market{
-			Exchange: event.Exchange,
-			Name:     event.MarketName,
-		}
+		// market := Market{
+		// 	Exchange: event.Exchange,
+		// 	Name:     event.MarketName,
+		// }
 
-		service.RLock()
-		_, ok1 := service.MarketCandles[market]
-		_, ok2 := service.ProcessQueue[market]
-		service.RUnlock()
+		// service.RLock()
+		// _, ok1 := service.MarketCandles[market]
+		// _, ok2 := service.ProcessQueue[market]
+		// service.RUnlock()
 
-		if !ok1 && !ok2 {
-			service.Lock()
-			service.ProcessQueue[market] = event.Price
-			service.Unlock()
-		}
+		// if !ok1 && !ok2 {
+		// 	service.Lock()
+		// 	service.ProcessQueue[market] = event.Price
+		// 	service.Unlock()
+		// }
 
 		names := strings.Split(event.MarketName, "-")
 		baseCurrency := names[1]
@@ -231,8 +234,5 @@ func (service *AnalyticsService) GetMarketInfo(ctx context.Context, req *protoAn
 	res.Data = &protoAnalytics.MarketInfoResponse{
 		MarketInfo: m,
 	}
-	//res.Data = &protoAnalytics.ConversionAmount{
-	//	ConvertedAmount: rate * req.FromAmount,
-	//}
 	return nil
 }
