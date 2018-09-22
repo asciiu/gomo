@@ -47,8 +47,6 @@ func NewAnalyticsService(db *sql.DB) *AnalyticsService {
 		}
 	}
 
-	fmt.Println(currencies)
-
 	return &service
 }
 
@@ -86,8 +84,6 @@ func (service *AnalyticsService) Ticker() error {
 
 // ProcessEvent will process ExchangeEvents. These events are published from the exchange sockets.
 func (service *AnalyticsService) HandleTradeEvent(payload *evt.TradeEvents) error {
-	fmt.Println(service.currencies)
-
 	// record close price for the market
 	for _, event := range payload.Events {
 		// market := Market{
@@ -112,8 +108,7 @@ func (service *AnalyticsService) HandleTradeEvent(payload *evt.TradeEvents) erro
 		marketCurrency := names[0]
 		marketCurrencyName := service.currencies[marketCurrency]
 
-		// shorten trade event
-		marketPrice := protoAnalytics.MarketInfo{
+		market := protoAnalytics.MarketInfo{
 			BaseCurrencySymbol:   baseCurrency,
 			BaseCurrencyName:     baseCurrencyName,
 			Exchange:             event.Exchange,
@@ -124,8 +119,15 @@ func (service *AnalyticsService) HandleTradeEvent(payload *evt.TradeEvents) erro
 			Price:                fmt.Sprintf("%.8f", event.Price)}
 
 		key := fmt.Sprintf("%s-%s", event.Exchange, event.MarketName)
+
 		service.Lock()
-		service.Directory[key] = &marketPrice
+		if m, ok := service.Directory[key]; ok {
+			// update the price only
+			m.Price = fmt.Sprintf("%.8f", event.Price)
+		} else {
+			// assign new market entry
+			service.Directory[key] = &market
+		}
 		service.Unlock()
 
 		//found := false
