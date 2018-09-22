@@ -6,8 +6,14 @@ FROM golang:1.10.0 as builder
 # Set our workdir to our current service in the gopath
 WORKDIR /go/src/github.com/asciiu/gomo/analytics-service
 
-# Copy the current code into our workdir
-COPY . .
+# add key so we can pull from private repo 
+ADD id_rsa /root/.ssh/id_rsa
+RUN chmod 700 /root/.ssh/id_rsa
+RUN echo "Host github.com\n\tStrictHostKeyChecking no\n" >> /root/.ssh/config
+RUN git config --global url.ssh://git@github.com/.insteadOf https://github.com/
+
+ADD analytics-service /go/src/github.com/asciiu/gomo/analytics-service
+CMD cd /go/src/github.com/asciiu/gomo/analytics-service && go get github.com/asciiu/gomo && go build -o /gomo
 
 # Here we're pulling in godep, which is a dependency manager tool,
 # we're going to use dep instead of go get, to get around a few

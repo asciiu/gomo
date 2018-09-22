@@ -162,3 +162,11 @@ func (service *AnalyticsService) ConvertCurrency(ctx context.Context, req *proto
 	}
 	return nil
 }
+
+func (service *AnalyticsService) GetMarketInfo(ctx context.Context, req *protoAnalytics.SearchMarketsRequest, res *protoAnalytics.MarketsResponse) error {
+	res.Status = constRes.Success
+	//res.Data = &protoAnalytics.ConversionAmount{
+	//	ConvertedAmount: rate * req.FromAmount,
+	//}
+	return nil
+}

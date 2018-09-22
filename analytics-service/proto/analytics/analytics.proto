@@ -4,6 +4,7 @@ package analytics;
 
 service AnalyticsService {
   rpc ConvertCurrency(ConversionRequest) returns (ConversionResponse) {}
+  rpc GetMarketInfo(SearchMarketsRequest) returns (MarketsResponse) {}
 }
 
 // Requests
@@ -15,6 +16,11 @@ message ConversionRequest {
   string atTimestamp = 5;
 }
 
+message SearchMarketsRequest {
+  string term = 1;
+}
+
+
 // Responses
 message MarketPrice {
   string exchange = 1;
@@ -23,26 +29,41 @@ message MarketPrice {
   double closedAtPrice = 4;
 }
 
+message MarketInfo {
+  string exchange = 1;
+  string exchangeMarketName = 2;
+  string baseCurrencySymbol = 3;
+  string baseCurrencyName = 4;
+  int32 basePrecision = 5;
+  string marketCurrencySymbol = 6;
+  string marketCurrencyName = 7;
+  int32 marketPrecision = 8;
+  string marketName = 9;
+  string minTradeSize = 10;
+  string maxtradeSize = 11;
+  string tradeSizeStep = 12;
+  string minMarketPrice = 13;
+  string maxMarketPrice = 14;
+  string marketPriceStep = 15;
+  string price = 16;
+}
+
 message ConversionAmount {
   double convertedAmount = 1;
 }
-//
-//message PriceResponse {
-//  string status = 1;
-//  string message = 2;
-//  PlanData data = 3;
-//}
-//
 
 message ConversionResponse {
   string status = 1;
   string message = 2;
   ConversionAmount data = 3;
 }
-//
-//message PlansPage {
-//  uint32 page = 1;
-//  uint32 pageSize = 2; 
-//  uint32 total = 3;
-//  repeated Plan plans = 4; 
-//}
+
+message MarketInfoResponse {
+  repeated MarketInfo marketInfo = 1;
+}
+
+message MarketsResponse {
+  string status = 1;
+  string message = 2;
+  MarketInfoResponse data = 3;
+}
