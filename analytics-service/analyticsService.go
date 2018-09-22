@@ -212,6 +212,25 @@ func (service *AnalyticsService) ConvertCurrency(ctx context.Context, req *proto
 
 func (service *AnalyticsService) GetMarketInfo(ctx context.Context, req *protoAnalytics.SearchMarketsRequest, res *protoAnalytics.MarketsResponse) error {
 	res.Status = constRes.Success
+	m := make([]*protoAnalytics.MarketInfo, 0)
+	term := req.Term
+
+	for k, v := range service.Directory {
+		switch {
+		case strings.Contains(strings.ToLower(k), strings.ToLower(term)):
+			m = append(m, v)
+		case strings.Contains(strings.ToLower(v.BaseCurrencySymbol), strings.ToLower(term)):
+			m = append(m, v)
+		case strings.Contains(strings.ToLower(v.MarketCurrencySymbol), strings.ToLower(term)):
+			m = append(m, v)
+		default:
+		}
+	}
+
+	res.Status = constRes.Success
+	res.Data = &protoAnalytics.MarketInfoResponse{
+		MarketInfo: m,
+	}
 	//res.Data = &protoAnalytics.ConversionAmount{
 	//	ConvertedAmount: rate * req.FromAmount,
 	//}
