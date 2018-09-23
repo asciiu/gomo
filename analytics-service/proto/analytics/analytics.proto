@@ -59,7 +59,7 @@ message ConversionResponse {
 }
 
 message MarketInfoResponse {
-  repeated MarketInfo marketInfo = 1;
+  repeated MarketInfo markets = 1;
 }
 
 message MarketsResponse {

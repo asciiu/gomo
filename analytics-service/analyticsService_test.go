@@ -174,7 +174,7 @@ func TestMarketSearch(t *testing.T) {
 			},
 		},
 	}
-	service.HandleTradeEvent(&trades)
+	service.HandleExchangeEvent(&trades)
 
 	req := protoAnalytics.SearchMarketsRequest{
 		Term: "btc",

@@ -35,15 +35,16 @@ func main() {
 		TimePeriod:   time.Duration(5) * time.Minute, // 5 minute period
 	}
 
+	service := NewAnalyticsService(gomoDB, srv)
 	// subscribe to the exchange events here
 	micro.RegisterSubscriber(constMessage.TopicAggTrade, srv.Server(), func(ctx context.Context, tradeEvents *protoEvt.TradeEvents) error {
 		priceTicker.HandleExchangeEvent(tradeEvents)
+		service.HandleExchangeEvent(tradeEvents)
 		return nil
 	})
 
 	go priceTicker.Ticker()
 
-	service := NewAnalyticsService(gomoDB, srv)
 	protoAnalytics.RegisterAnalyticsServiceHandler(srv.Server(), service)
 
 	if err := srv.Run(); err != nil {

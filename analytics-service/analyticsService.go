@@ -88,7 +88,7 @@ func (service *AnalyticsService) Ticker() error {
 }
 
 // ProcessEvent will process ExchangeEvents. These events are published from the exchange sockets.
-func (service *AnalyticsService) HandleTradeEvent(payload *evt.TradeEvents) error {
+func (service *AnalyticsService) HandleExchangeEvent(payload *evt.TradeEvents) error {
 	// record close price for the market
 	for _, event := range payload.Events {
 		// market := Market{
@@ -141,6 +141,8 @@ func (service *AnalyticsService) HandleTradeEvent(payload *evt.TradeEvents) erro
 					market.MinMarketPrice = fmt.Sprintf("%.8f", rules.Data.Restrictions.MinMarketPrice)
 					market.MaxMarketPrice = fmt.Sprintf("%.8f", rules.Data.Restrictions.MaxMarketPrice)
 					market.MarketPriceStep = fmt.Sprintf("%.8f", rules.Data.Restrictions.MarketPriceStep)
+				} else {
+					log.Println("could not get rules for ", event.MarketName)
 				}
 			}
 			service.Directory[key] = &market
@@ -234,25 +236,22 @@ func (service *AnalyticsService) ConvertCurrency(ctx context.Context, req *proto
 }
 
 func (service *AnalyticsService) GetMarketInfo(ctx context.Context, req *protoAnalytics.SearchMarketsRequest, res *protoAnalytics.MarketsResponse) error {
-	res.Status = constRes.Success
 	m := make([]*protoAnalytics.MarketInfo, 0)
 	term := req.Term
 
 	for k, v := range service.Directory {
-		switch {
-		case strings.Contains(strings.ToLower(k), strings.ToLower(term)):
+		// if the key contains the term or base or market currency
+		// append to results
+		if strings.Contains(strings.ToLower(k), strings.ToLower(term)) ||
+			strings.Contains(strings.ToLower(v.BaseCurrencySymbol), strings.ToLower(term)) ||
+			strings.Contains(strings.ToLower(v.MarketCurrencySymbol), strings.ToLower(term)) {
 			m = append(m, v)
-		case strings.Contains(strings.ToLower(v.BaseCurrencySymbol), strings.ToLower(term)):
-			m = append(m, v)
-		case strings.Contains(strings.ToLower(v.MarketCurrencySymbol), strings.ToLower(term)):
-			m = append(m, v)
-		default:
 		}
 	}
 
 	res.Status = constRes.Success
 	res.Data = &protoAnalytics.MarketInfoResponse{
-		MarketInfo: m,
+		Markets: m,
 	}
 	return nil
 }
