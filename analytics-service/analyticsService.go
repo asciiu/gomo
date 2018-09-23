@@ -141,6 +141,8 @@ func (service *AnalyticsService) HandleExchangeEvent(payload *evt.TradeEvents) e
 					market.MinMarketPrice = fmt.Sprintf("%.8f", rules.Data.Restrictions.MinMarketPrice)
 					market.MaxMarketPrice = fmt.Sprintf("%.8f", rules.Data.Restrictions.MaxMarketPrice)
 					market.MarketPriceStep = fmt.Sprintf("%.8f", rules.Data.Restrictions.MarketPriceStep)
+					market.BasePrecision = rules.Data.Restrictions.BasePrecision
+					market.MarketPrecision = rules.Data.Restrictions.MarketPrecision
 				} else {
 					log.Println("could not get rules for ", event.MarketName)
 				}
