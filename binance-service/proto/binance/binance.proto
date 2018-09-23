@@ -20,6 +20,8 @@ message MarketRestriction {
 	double minMarketPrice = 4;     
 	double maxMarketPrice = 5;   
 	double marketPriceStep = 6;   
+  int32 basePrecision = 7;
+  int32 marketPrecision = 8;
 }
 
 message RestrictionData {

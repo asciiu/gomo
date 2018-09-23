@@ -301,6 +301,8 @@ func (service *BinanceService) GetMarketRestrictions(ctx context.Context, req *p
 			MinMarketPrice:  priceFilter.Min,
 			MaxMarketPrice:  priceFilter.Max,
 			MarketPriceStep: priceFilter.TickSize,
+			BasePrecision:   8,
+			MarketPrecision: 8,
 		},
 	}
 
