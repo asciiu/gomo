@@ -8,10 +8,12 @@ import (
 	"strings"
 	"sync"
 
+	protoAnalytics "github.com/asciiu/gomo/analytics-service/proto/analytics"
 	repoToken "github.com/asciiu/gomo/api/db/sql"
-	constRes "github.com/asciiu/gomo/common/constants/response"
 	protoEvt "github.com/asciiu/gomo/common/proto/events"
 	"github.com/labstack/echo"
+	micro "github.com/micro/go-micro"
+	"golang.org/x/net/context"
 )
 
 // A ResponseSearchSuccess will always contain a status of "successful".
@@ -57,13 +59,15 @@ type SearchController struct {
 	markets map[string]*Market
 	mux     sync.Mutex
 	// map of ticker symbol to full name
-	currencies map[string]string
+	currencies      map[string]string
+	AnalyticsClient protoAnalytics.AnalyticsServiceClient
 }
 
-func NewSearchController(db *sql.DB) *SearchController {
+func NewSearchController(db *sql.DB, service micro.Service) *SearchController {
 	controller := SearchController{
-		markets:    make(map[string]*Market),
-		currencies: make(map[string]string),
+		markets:         make(map[string]*Market),
+		currencies:      make(map[string]string),
+		AnalyticsClient: protoAnalytics.NewAnalyticsServiceClient("analytics", service.Client()),
 	}
 
 	currencies, err := repoToken.GetCurrencyNames(db)
@@ -91,24 +95,26 @@ func NewSearchController(db *sql.DB) *SearchController {
 func (controller *SearchController) Search(c echo.Context) error {
 
 	term := c.QueryParam("term")
-	m := make([]*Market, 0)
 
-	for k, v := range controller.markets {
-		switch {
-		case strings.Contains(strings.ToLower(k), strings.ToLower(term)):
-			m = append(m, v)
-		case strings.Contains(strings.ToLower(v.BaseCurrencySymbol), strings.ToLower(term)):
-			m = append(m, v)
-		case strings.Contains(strings.ToLower(v.MarketCurrencySymbol), strings.ToLower(term)):
-			m = append(m, v)
-		default:
-		}
-	}
+	response, _ := controller.AnalyticsClient.GetMarketInfo(context.Background(), &protoAnalytics.SearchMarketsRequest{term})
+	//m := make([]*Market, 0)
 
-	response := &ResponseSearchSuccess{
-		Status: constRes.Success,
-		Data:   ResponseMarkets{m},
-	}
+	//for k, v := range controller.markets {
+	//	switch {
+	//	case strings.Contains(strings.ToLower(k), strings.ToLower(term)):
+	//		m = append(m, v)
+	//	case strings.Contains(strings.ToLower(v.BaseCurrencySymbol), strings.ToLower(term)):
+	//		m = append(m, v)
+	//	case strings.Contains(strings.ToLower(v.MarketCurrencySymbol), strings.ToLower(term)):
+	//		m = append(m, v)
+	//	default:
+	//	}
+	//}
+
+	//response := &ResponseSearchSuccess{
+	//	Status: constRes.Success,
+	//	Data:   ResponseMarkets{m},
+	//}
 
 	return c.JSON(http.StatusOK, response)
 }
