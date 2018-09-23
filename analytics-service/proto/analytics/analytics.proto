@@ -40,7 +40,7 @@ message MarketInfo {
   int32 marketPrecision = 8;
   string marketName = 9;
   string minTradeSize = 10;
-  string maxtradeSize = 11;
+  string maxTradeSize = 11;
   string tradeSizeStep = 12;
   string minMarketPrice = 13;
   string maxMarketPrice = 14;

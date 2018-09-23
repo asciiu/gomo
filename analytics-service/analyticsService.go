@@ -11,9 +11,12 @@ import (
 
 	repoAnalytics "github.com/asciiu/gomo/analytics-service/db/sql"
 	protoAnalytics "github.com/asciiu/gomo/analytics-service/proto/analytics"
+	protoBinance "github.com/asciiu/gomo/binance-service/proto/binance"
+	constExch "github.com/asciiu/gomo/common/constants/exchange"
 	constRes "github.com/asciiu/gomo/common/constants/response"
 	evt "github.com/asciiu/gomo/common/proto/events"
 	"github.com/lib/pq"
+	micro "github.com/micro/go-micro"
 )
 
 // Processor will process orders
@@ -22,18 +25,20 @@ type AnalyticsService struct {
 	DB               *sql.DB
 	MarketClosePrice map[Market]float64
 
-	currencies map[string]string
+	BinanceClient protoBinance.BinanceServiceClient
+	currencies    map[string]string
 	//MarketCandles map[Market]string
 	//ProcessQueue  map[Market]float64
 	//CandlePub     micro.Publisher
 	Directory map[string]*protoAnalytics.MarketInfo
 }
 
-func NewAnalyticsService(db *sql.DB) *AnalyticsService {
+func NewAnalyticsService(db *sql.DB, srv micro.Service) *AnalyticsService {
 	service := AnalyticsService{
-		DB:         db,
-		Directory:  make(map[string]*protoAnalytics.MarketInfo),
-		currencies: make(map[string]string),
+		DB:            db,
+		Directory:     make(map[string]*protoAnalytics.MarketInfo),
+		currencies:    make(map[string]string),
+		BinanceClient: protoBinance.NewBinanceServiceClient("binance", srv.Client()),
 	}
 
 	currencies, err := repoAnalytics.GetCurrencyNames(db)
@@ -125,8 +130,21 @@ func (service *AnalyticsService) HandleTradeEvent(payload *evt.TradeEvents) erro
 			// update the price only
 			m.Price = fmt.Sprintf("%.8f", event.Price)
 		} else {
-			// assign new market entry
+			// grab exchange rules for this market here
+			switch event.Exchange {
+			case constExch.Binance:
+				rules, _ := service.BinanceClient.GetMarketRestrictions(context.Background(), &protoBinance.MarketRestrictionRequest{MarketName: event.MarketName})
+				if rules.Status == constRes.Success {
+					market.MinTradeSize = fmt.Sprintf("%.8f", rules.Data.Restrictions.MinTradeSize)
+					market.MaxTradeSize = fmt.Sprintf("%.8f", rules.Data.Restrictions.MaxTradeSize)
+					market.TradeSizeStep = fmt.Sprintf("%.8f", rules.Data.Restrictions.TradeSizeStep)
+					market.MinMarketPrice = fmt.Sprintf("%.8f", rules.Data.Restrictions.MinMarketPrice)
+					market.MaxMarketPrice = fmt.Sprintf("%.8f", rules.Data.Restrictions.MaxMarketPrice)
+					market.MarketPriceStep = fmt.Sprintf("%.8f", rules.Data.Restrictions.MarketPriceStep)
+				}
+			}
 			service.Directory[key] = &market
+
 		}
 		service.Unlock()
 

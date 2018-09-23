@@ -28,6 +28,7 @@ func main() {
 		log.Fatalf(err.Error())
 	}
 
+	// the account service depends on the binance service
 	accountService := AccountService{
 		DB:             gomoDB,
 		BinanceClient:  protoBinance.NewBinanceServiceClient("binance", srv.Client()),

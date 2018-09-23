@@ -8,6 +8,7 @@ import (
 
 	repoAnalytics "github.com/asciiu/gomo/analytics-service/db/sql"
 	protoAnalytics "github.com/asciiu/gomo/analytics-service/proto/analytics"
+	testBinance "github.com/asciiu/gomo/binance-service/test"
 	"github.com/asciiu/gomo/common/db"
 	protoEvt "github.com/asciiu/gomo/common/proto/events"
 	commonUtil "github.com/asciiu/gomo/common/util"
@@ -47,13 +48,22 @@ func setupService() (*AnalyticsService, *user.User) {
 		},
 	}
 	repoAnalytics.InsertCurrencyNames(db, currencies)
+	service := AnalyticsService{
+		DB:            db,
+		Directory:     make(map[string]*protoAnalytics.MarketInfo),
+		currencies:    make(map[string]string),
+		BinanceClient: testBinance.MockBinanceServiceClient(),
+	}
 
-	analyticsService := NewAnalyticsService(db)
+	curr, _ := repoAnalytics.GetCurrencyNames(db)
+	for _, c := range curr {
+		service.currencies[c.TickerSymbol] = c.CurrencyName
+	}
 
 	user := user.NewUser("first", "last", "test@email", "hash")
 	repoUser.InsertUser(db, user)
 
-	return analyticsService, user
+	return &service, user
 }
 
 func TestDirectConversion(t *testing.T) {
@@ -153,12 +163,12 @@ func TestMarketSearch(t *testing.T) {
 	trades := protoEvt.TradeEvents{
 		Events: []*protoEvt.TradeEvent{
 			&protoEvt.TradeEvent{
-				Exchange:   "bingo",
+				Exchange:   "binance",
 				MarketName: "BCH-BTC",
 				Price:      0.001,
 			},
 			&protoEvt.TradeEvent{
-				Exchange:   "bingo",
+				Exchange:   "binance",
 				MarketName: "EOS-BTC",
 				Price:      0.002,
 			},
@@ -176,6 +186,12 @@ func TestMarketSearch(t *testing.T) {
 	assert.Equal(t, 2, len(res.Data.MarketInfo), "should be 2 markets in the results")
 	assert.Equal(t, 2, len(res.Data.MarketInfo), "should be 2 markets in the results")
 	assert.Equal(t, "Bitcoin", res.Data.MarketInfo[0].BaseCurrencyName, "base currency should be bitcion")
+	assert.Equal(t, "1.00000000", res.Data.MarketInfo[0].MinTradeSize, "min trade size should be 1")
+	assert.Equal(t, "10.00000000", res.Data.MarketInfo[0].MaxTradeSize, "max trade size should be 10")
+	assert.Equal(t, "0.10000000", res.Data.MarketInfo[0].TradeSizeStep, "trade size step should be 0.1")
+	assert.Equal(t, "1.00000000", res.Data.MarketInfo[0].MinMarketPrice, "min market price should be 1")
+	assert.Equal(t, "100.00000000", res.Data.MarketInfo[0].MaxMarketPrice, "max price should be 100")
+	assert.Equal(t, "1.00000000", res.Data.MarketInfo[0].MarketPriceStep, "market price step should be 1")
 
 	repoAnalytics.DeleteCurrencyNames(service.DB)
 	repoUser.DeleteUserHard(service.DB, user.ID)
