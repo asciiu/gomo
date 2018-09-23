@@ -2370,6 +2370,11 @@
     },
     "SearchController": {
       "type": "object",
+      "properties": {
+        "AnalyticsClient": {
+          "$ref": "#/definitions/AnalyticsServiceClient"
+        }
+      },
       "x-go-package": "github.com/asciiu/gomo/api/controllers"
     },
     "SearchTerm": {

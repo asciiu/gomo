@@ -64,6 +64,5 @@ message MarketInfoResponse {
 
 message MarketsResponse {
   string status = 1;
-  string message = 2;
-  MarketInfoResponse data = 3;
+  MarketInfoResponse data = 2;
 }
