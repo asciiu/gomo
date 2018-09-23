@@ -6,4 +6,29 @@ import "github.com/asciiu/gomo/binance-service/proto/balance/balance.proto";
 
 service BinanceService {
   rpc GetBalances(balance.BalanceRequest) returns (balance.BalancesResponse) {}
+  rpc GetMarketRestrictions(MarketRestrictionRequest) returns (MarketRestrictionResponse) {}
 }
+
+message MarketRestrictionRequest {
+  string marketName = 1;
+}
+
+message MarketRestriction {
+  double minTradeSize = 1;
+	double maxTradeSize = 2;
+	double tradeSizeStep = 3;    
+	double minMarketPrice = 4;     
+	double maxMarketPrice = 5;   
+	double marketPriceStep = 6;   
+}
+
+message RestrictionData {
+  MarketRestriction restrictions = 1;
+}
+
+message MarketRestrictionResponse {
+  string status = 1;
+  string message = 2;
+  RestrictionData data = 3;
+}
+

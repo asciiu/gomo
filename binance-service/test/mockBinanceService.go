@@ -52,6 +52,22 @@ func (m *mockBinanceService) GetBalances(ctx context.Context, in *protoBalance.B
 	}, nil
 }
 
+func (m *mockBinanceService) GetMarketRestrictions(ctx context.Context, in *protoBinance.MarketRestrictionRequest, opts ...client.CallOption) (*protoBinance.MarketRestrictionResponse, error) {
+	return &protoBinance.MarketRestrictionResponse{
+		Status: "success",
+		Data: &protoBinance.RestrictionData{
+			Restrictions: &protoBinance.MarketRestriction{
+				MinTradeSize:    1,
+				MaxTradeSize:    10,
+				TradeSizeStep:   0.1,
+				MinMarketPrice:  1,
+				MaxMarketPrice:  100,
+				MarketPriceStep: 1,
+			},
+		},
+	}, nil
+}
+
 func MockBinanceServiceClient() protoBinance.BinanceServiceClient {
 	return new(mockBinanceService)
 }

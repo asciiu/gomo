@@ -12,6 +12,7 @@ import (
 
 	binance "github.com/asciiu/go-binance"
 	protoBalance "github.com/asciiu/gomo/binance-service/proto/balance"
+	protoBinance "github.com/asciiu/gomo/binance-service/proto/binance"
 	constExt "github.com/asciiu/gomo/common/constants/exchange"
 	constRes "github.com/asciiu/gomo/common/constants/response"
 	protoEvt "github.com/asciiu/gomo/common/proto/events"
@@ -280,5 +281,28 @@ func (service *BinanceService) GetBalances(ctx context.Context, req *protoBalanc
 	}
 
 	return nil
+}
 
+func (service *BinanceService) GetMarketRestrictions(ctx context.Context, req *protoBinance.MarketRestrictionRequest, res *protoBinance.MarketRestrictionResponse) error {
+	priceFilter := service.Info.PriceFilter(req.MarketName)
+	lotFilter := service.Info.LotSize(req.MarketName)
+
+	if priceFilter == nil || lotFilter == nil {
+		res.Status = constRes.Nonentity
+		return nil
+	}
+
+	res.Status = constRes.Success
+	res.Data = &protoBinance.RestrictionData{
+		Restrictions: &protoBinance.MarketRestriction{
+			MinTradeSize:    lotFilter.MinQty,
+			MaxTradeSize:    lotFilter.MaxQty,
+			TradeSizeStep:   lotFilter.StepSize,
+			MinMarketPrice:  priceFilter.Min,
+			MaxMarketPrice:  priceFilter.Max,
+			MarketPriceStep: priceFilter.TickSize,
+		},
+	}
+
+	return nil
 }
