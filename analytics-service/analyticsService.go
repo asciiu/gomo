@@ -249,12 +249,13 @@ func (service *AnalyticsService) GetMarketInfo(ctx context.Context, req *protoAn
 	m := make([]*protoAnalytics.MarketInfo, 0)
 	term := req.Term
 
-	for k, v := range service.Directory {
+	for _, v := range service.Directory {
 		// if the key contains the term or base or market currency
 		// append to results
-		if strings.Contains(strings.ToLower(k), strings.ToLower(term)) ||
-			strings.Contains(strings.ToLower(v.BaseCurrencySymbol), strings.ToLower(term)) ||
-			strings.Contains(strings.ToLower(v.MarketCurrencySymbol), strings.ToLower(term)) {
+		if strings.Contains(strings.ToLower(v.BaseCurrencySymbol), strings.ToLower(term)) ||
+			strings.Contains(strings.ToLower(v.BaseCurrencyName), strings.ToLower(term)) ||
+			strings.Contains(strings.ToLower(v.MarketCurrencySymbol), strings.ToLower(term)) ||
+			strings.Contains(strings.ToLower(v.MarketCurrencyName), strings.ToLower(term)) {
 			m = append(m, v)
 		}
 	}
