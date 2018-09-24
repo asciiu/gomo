@@ -31,20 +31,29 @@ func setupService() (*AnalyticsService, *user.User) {
 	// analytics assumes currencies exist already upon startup
 	currencies := []*repoAnalytics.Currency{
 		&repoAnalytics.Currency{
-			Name:   "Bitcoin",
-			Symbol: "BTC",
+			Name:     "Bitcoin",
+			Symbol:   "BTC",
+			Exchange: "*",
 		},
 		&repoAnalytics.Currency{
-			Name:   "EOS",
-			Symbol: "EOS",
+			Name:     "EOS",
+			Symbol:   "EOS",
+			Exchange: "*",
 		},
 		&repoAnalytics.Currency{
-			Name:   "Ethereum",
-			Symbol: "ETH",
+			Name:     "Ethereum",
+			Symbol:   "ETH",
+			Exchange: "*",
 		},
 		&repoAnalytics.Currency{
-			Name:   "Bitcoin Cash",
-			Symbol: "BCH",
+			Name:     "Bitcoin Cash",
+			Symbol:   "BCH",
+			Exchange: "*",
+		},
+		&repoAnalytics.Currency{
+			Name:     "Bitcoin Cash",
+			Symbol:   "BCC",
+			Exchange: "binance",
 		},
 	}
 	repoAnalytics.InsertCurrencyNames(db, currencies)
@@ -57,7 +66,8 @@ func setupService() (*AnalyticsService, *user.User) {
 
 	curr, _ := repoAnalytics.GetCurrencyNames(db)
 	for _, c := range curr {
-		service.currencies[c.TickerSymbol] = c.CurrencyName
+		key := fmt.Sprintf("%s-%s", c.Exchange, c.Symbol)
+		service.currencies[key] = c.Name
 	}
 
 	user := user.NewUser("first", "last", "test@email", "hash")
@@ -164,7 +174,7 @@ func TestMarketSearch(t *testing.T) {
 		Events: []*protoEvt.TradeEvent{
 			&protoEvt.TradeEvent{
 				Exchange:   "binance",
-				MarketName: "BCH-BTC",
+				MarketName: "BCC-BTC",
 				Price:      0.001,
 			},
 			&protoEvt.TradeEvent{
@@ -182,16 +192,18 @@ func TestMarketSearch(t *testing.T) {
 	res := protoAnalytics.MarketsResponse{}
 	service.GetMarketInfo(context.Background(), &req, &res)
 
-	assert.Equal(t, "success", res.Status, fmt.Sprintf("return status should be success got: %s", res.Message))
-	assert.Equal(t, 2, len(res.Data.MarketInfo), "should be 2 markets in the results")
-	assert.Equal(t, 2, len(res.Data.MarketInfo), "should be 2 markets in the results")
-	assert.Equal(t, "Bitcoin", res.Data.MarketInfo[0].BaseCurrencyName, "base currency should be bitcion")
-	assert.Equal(t, "1.00000000", res.Data.MarketInfo[0].MinTradeSize, "min trade size should be 1")
-	assert.Equal(t, "10.00000000", res.Data.MarketInfo[0].MaxTradeSize, "max trade size should be 10")
-	assert.Equal(t, "0.10000000", res.Data.MarketInfo[0].TradeSizeStep, "trade size step should be 0.1")
-	assert.Equal(t, "1.00000000", res.Data.MarketInfo[0].MinMarketPrice, "min market price should be 1")
-	assert.Equal(t, "100.00000000", res.Data.MarketInfo[0].MaxMarketPrice, "max price should be 100")
-	assert.Equal(t, "1.00000000", res.Data.MarketInfo[0].MarketPriceStep, "market price step should be 1")
+	//fmt.Println(res.Data.Markets)
+
+	assert.Equal(t, "success", res.Status, fmt.Sprintf("return status should be success"))
+	assert.Equal(t, 2, len(res.Data.Markets), "should be 2 markets in the results")
+	assert.Equal(t, 2, len(res.Data.Markets), "should be 2 markets in the results")
+	assert.Equal(t, "Bitcoin", res.Data.Markets[0].BaseCurrencyName, "base currency should be bitcion")
+	assert.Equal(t, "1.00000000", res.Data.Markets[0].MinTradeSize, "min trade size should be 1")
+	assert.Equal(t, "10.00000000", res.Data.Markets[0].MaxTradeSize, "max trade size should be 10")
+	assert.Equal(t, "0.10000000", res.Data.Markets[0].TradeSizeStep, "trade size step should be 0.1")
+	assert.Equal(t, "1.00000000", res.Data.Markets[0].MinMarketPrice, "min market price should be 1")
+	assert.Equal(t, "100.00000000", res.Data.Markets[0].MaxMarketPrice, "max price should be 100")
+	assert.Equal(t, "1.00000000", res.Data.Markets[0].MarketPriceStep, "market price step should be 1")
 
 	repoAnalytics.DeleteCurrencyNames(service.DB)
 	repoUser.DeleteUserHard(service.DB, user.ID)

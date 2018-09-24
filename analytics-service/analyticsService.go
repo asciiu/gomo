@@ -47,8 +47,9 @@ func NewAnalyticsService(db *sql.DB, srv micro.Service) *AnalyticsService {
 		log.Println("Quaid, start the reactor!")
 	case err != nil:
 	default:
+
 		for _, c := range currencies {
-			service.currencies[c.TickerSymbol] = c.CurrencyName
+			service.currencies[fmt.Sprintf("%s-%s", c.Exchange, c.Symbol)] = c.Name
 		}
 	}
 
@@ -109,9 +110,16 @@ func (service *AnalyticsService) HandleExchangeEvent(payload *evt.TradeEvents) e
 
 		names := strings.Split(event.MarketName, "-")
 		baseCurrency := names[1]
-		baseCurrencyName := service.currencies[baseCurrency]
+		baseCurrencyName, ok := service.currencies[fmt.Sprintf("%s-%s", event.Exchange, baseCurrency)]
+		if !ok {
+			baseCurrencyName = service.currencies[fmt.Sprintf("*-%s", baseCurrency)]
+		}
+
 		marketCurrency := names[0]
-		marketCurrencyName := service.currencies[marketCurrency]
+		marketCurrencyName, ok := service.currencies[fmt.Sprintf("%s-%s", event.Exchange, marketCurrency)]
+		if !ok {
+			marketCurrencyName = service.currencies[fmt.Sprintf("*-%s", marketCurrency)]
+		}
 
 		market := protoAnalytics.MarketInfo{
 			BaseCurrencySymbol:   baseCurrency,

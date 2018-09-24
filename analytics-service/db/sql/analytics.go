@@ -5,7 +5,6 @@ import (
 	"log"
 
 	protoPrice "github.com/asciiu/gomo/analytics-service/proto/analytics"
-	"github.com/asciiu/gomo/api/models"
 	"github.com/lib/pq"
 )
 
@@ -124,8 +123,9 @@ func InsertPrices(db *sql.DB, exchangeRates []*protoPrice.MarketPrice) error {
 }
 
 type Currency struct {
-	Name   string
-	Symbol string
+	Name     string
+	Symbol   string
+	Exchange string
 }
 
 // Flowy's Gospel: 20180922
@@ -141,6 +141,7 @@ func InsertCurrencyNames(db *sql.DB, currencies []*Currency) error {
 	stmt, err := txn.Prepare(pq.CopyIn("currency_names",
 		"currency_name",
 		"currency_symbol",
+		"exchange_name",
 	))
 	if err != nil {
 		return err
@@ -150,6 +151,7 @@ func InsertCurrencyNames(db *sql.DB, currencies []*Currency) error {
 		_, err = stmt.Exec(
 			currency.Name,
 			currency.Symbol,
+			currency.Exchange,
 		)
 
 		if err != nil {
@@ -177,18 +179,18 @@ func DeleteCurrencyNames(db *sql.DB) error {
 	return err
 }
 
-func GetCurrencyNames(db *sql.DB) ([]*models.Currency, error) {
-	results := make([]*models.Currency, 0)
+func GetCurrencyNames(db *sql.DB) ([]*Currency, error) {
+	results := make([]*Currency, 0)
 
-	rows, err := db.Query("SELECT currency_name, currency_symbol FROM currency_names")
+	rows, err := db.Query("SELECT currency_name, currency_symbol, exchange_name FROM currency_names")
 	if err != nil {
 		log.Fatal(err)
 		return nil, err
 	}
 	defer rows.Close()
 	for rows.Next() {
-		var c models.Currency
-		err := rows.Scan(&c.CurrencyName, &c.TickerSymbol)
+		var c Currency
+		err := rows.Scan(&c.Name, &c.Symbol, &c.Exchange)
 		if err != nil {
 			log.Fatal(err)
 			return nil, err
