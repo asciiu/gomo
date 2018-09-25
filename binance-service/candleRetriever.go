@@ -60,15 +60,6 @@ func (service *CandleRetriever) ProcessGetCandle(ctx context.Context, request *e
 			panic(err)
 		}
 		fmt.Printf("%#v\n", kl)
-
-		//accountBalances := bp.AccountBalances{
-		//	Balances: balances,
-		//}
-
-		// publish account balances
-		//if err := service.BalancePub.Publish(context.Background(), &accountBalances); err != nil {
-		//	logger.Log("could not publish account balances event: ", err)
-		//}
 	}()
 	return nil
 }

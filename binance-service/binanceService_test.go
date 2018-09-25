@@ -11,6 +11,7 @@ import (
 
 	binance "github.com/asciiu/go-binance"
 	protoBalance "github.com/asciiu/gomo/binance-service/proto/balance"
+	protoBinance "github.com/asciiu/gomo/binance-service/proto/binance"
 	"github.com/asciiu/gomo/common/db"
 	"github.com/asciiu/gomo/common/util"
 	repoUser "github.com/asciiu/gomo/user-service/db/sql"
@@ -158,6 +159,24 @@ func TestInvalidKey3(t *testing.T) {
 	service.GetBalances(context.Background(), &request, &response)
 
 	assert.Equal(t, "fail", response.Status, response.Message)
+
+	repoUser.DeleteUserHard(db, user.ID)
+}
+
+func TestGetCandle(t *testing.T) {
+	service, db, user := setupService()
+
+	defer db.Close()
+
+	request := protoBinance.MarketRequest{
+		MarketName: "ADA-BTC",
+	}
+
+	response := protoBinance.CandlesResponse{}
+	service.GetCandles(context.Background(), &request, &response)
+
+	assert.Equal(t, "success", response.Status, response.Message)
+	fmt.Println(response.Data)
 
 	repoUser.DeleteUserHard(db, user.ID)
 }

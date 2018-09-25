@@ -2,9 +2,12 @@ package main
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
+	"io/ioutil"
 	"log"
 	"math"
+	"net/http"
 	"os"
 	"strconv"
 	"strings"
@@ -21,6 +24,7 @@ import (
 	kitLog "github.com/go-kit/kit/log"
 	"github.com/lib/pq"
 	micro "github.com/micro/go-micro"
+	"github.com/pkg/errors"
 )
 
 type BinanceService struct {
@@ -306,5 +310,98 @@ func (service *BinanceService) GetMarketRestrictions(ctx context.Context, req *p
 		},
 	}
 
+	return nil
+}
+
+func (service *BinanceService) GetCandles(ctx context.Context, req *protoBinance.MarketRequest, res *protoBinance.CandlesResponse) error {
+
+	symbol := strings.Replace(req.MarketName, "-", "", 1)
+
+	url := fmt.Sprintf("https://api.binance.com/api/v1/klines?symbol=%s&interval=%s", symbol, "1m")
+
+	request, _ := http.NewRequest("GET", url, nil)
+
+	response, _ := http.DefaultClient.Do(request)
+
+	defer response.Body.Close()
+
+	textRes, err := ioutil.ReadAll(response.Body)
+	if err != nil {
+		return errors.Wrap(err, "unable to read response from Klines")
+	}
+
+	//if res.StatusCode != 200 {
+	//	as.handleError(textRes)
+	//}
+
+	rawKlines := [][]interface{}{}
+	if err := json.Unmarshal(textRes, &rawKlines); err != nil {
+		return errors.Wrap(err, "rawKlines unmarshal failed")
+	}
+	klines := []*protoBinance.Candle{}
+	for _, k := range rawKlines {
+		ot, err := timeFromUnixTimestampFloat(k[0])
+		if err != nil {
+			return errors.Wrap(err, "cannot parse Kline.OpenTime")
+		}
+		open, err := floatFromString(k[1])
+		if err != nil {
+			return errors.Wrap(err, "cannot parse Kline.Open")
+		}
+		high, err := floatFromString(k[2])
+		if err != nil {
+			return errors.Wrap(err, "cannot parse Kline.High")
+		}
+		low, err := floatFromString(k[3])
+		if err != nil {
+			return errors.Wrap(err, "cannot parse Kline.Low")
+		}
+		cls, err := floatFromString(k[4])
+		if err != nil {
+			return errors.Wrap(err, "cannot parse Kline.Close")
+		}
+		volume, err := floatFromString(k[5])
+		if err != nil {
+			return errors.Wrap(err, "cannot parse Kline.Volume")
+		}
+		ct, err := timeFromUnixTimestampFloat(k[6])
+		if err != nil {
+			return errors.Wrap(err, "cannot parse Kline.CloseTime")
+		}
+		qav, err := floatFromString(k[7])
+		if err != nil {
+			return errors.Wrap(err, "cannot parse Kline.QuoteAssetVolume")
+		}
+		not, ok := k[8].(float64)
+		if !ok {
+			return errors.Wrap(err, "cannot parse Kline.NumberOfTrades")
+		}
+		tbbav, err := floatFromString(k[9])
+		if err != nil {
+			return errors.Wrap(err, "cannot parse Kline.TakerBuyBaseAssetVolume")
+		}
+		tbqav, err := floatFromString(k[10])
+		if err != nil {
+			return errors.Wrap(err, "cannot parse Kline.TakerBuyQuoteAssetVolume")
+		}
+		klines = append(klines, &protoBinance.Candle{
+			OpenTime:                 ot.String(),
+			Open:                     open,
+			High:                     high,
+			Low:                      low,
+			Close:                    cls,
+			Volume:                   volume,
+			CloseTime:                ct.String(),
+			QuoteAssetVolume:         qav,
+			NumberOfTrades:           int32(not),
+			TakerBuyBaseAssetVolume:  tbbav,
+			TakerBuyQuoteAssetVolume: tbqav,
+		})
+	}
+
+	res.Status = constRes.Success
+	res.Data = &protoBinance.Candles{
+		Candles: klines,
+	}
 	return nil
 }

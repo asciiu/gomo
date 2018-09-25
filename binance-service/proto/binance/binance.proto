@@ -7,10 +7,29 @@ import "github.com/asciiu/gomo/binance-service/proto/balance/balance.proto";
 service BinanceService {
   rpc GetBalances(balance.BalanceRequest) returns (balance.BalancesResponse) {}
   rpc GetMarketRestrictions(MarketRestrictionRequest) returns (MarketRestrictionResponse) {}
+  rpc GetCandles(MarketRequest) returns (CandlesResponse) {}
+}
+
+message MarketRequest {
+  string marketName = 1;
 }
 
 message MarketRestrictionRequest {
   string marketName = 1;
+}
+
+message Candle {
+  string openTime = 1;
+  double open = 2;
+  double high = 3;
+  double low = 4;
+  double close = 5;
+  double volume = 6;
+  string closeTime = 7;
+  double quoteAssetVolume = 8;
+  int32 numberOfTrades = 9;
+  double takerBuyBaseAssetVolume = 10;
+  double takerBuyQuoteAssetVolume = 11;
 }
 
 message MarketRestriction {
@@ -24,6 +43,10 @@ message MarketRestriction {
   int32 marketPrecision = 8;
 }
 
+message Candles {
+  repeated Candle candles = 1;
+}
+
 message RestrictionData {
   MarketRestriction restrictions = 1;
 }
@@ -32,5 +55,11 @@ message MarketRestrictionResponse {
   string status = 1;
   string message = 2;
   RestrictionData data = 3;
+}
+
+message CandlesResponse {
+  string status = 1;
+  string message = 2;
+  Candles data = 3;
 }
 
