@@ -119,7 +119,6 @@ func NewRouter(db *sql.DB) *echo.Echo {
 
 	micro.RegisterSubscriber(constMessage.TopicAggTrade, service.Server(), func(ctx context.Context, tradeEvents *constEvt.TradeEvents) error {
 		socketController.CacheEvents(tradeEvents)
-		searchController.CacheEvents(tradeEvents)
 		return nil
 	})
 
