@@ -79,6 +79,7 @@ message TriggeredOrderEvent {
   string triggerID = 15;
   double triggeredPrice = 16;
   string triggeredCondition = 17;
+  bool closeOnComplete = 18;
 }
 
 message CompletedOrderEvent {
