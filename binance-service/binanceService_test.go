@@ -176,7 +176,7 @@ func TestGetCandle(t *testing.T) {
 	service.GetCandles(context.Background(), &request, &response)
 
 	assert.Equal(t, "success", response.Status, response.Message)
-	fmt.Println(response.Data)
+	assert.Equal(t, 500, len(response.Data.Candles), "should be 500 candle data")
 
 	repoUser.DeleteUserHard(db, user.ID)
 }

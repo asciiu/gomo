@@ -210,14 +210,6 @@ func (service *AnalyticsService) ConvertCurrency(ctx context.Context, req *proto
 			// reverse case exists BTC-ADA
 			reverse = 1 / market.ClosedAtPrice
 		}
-		//if market.MarketName == from+"-BTC" {
-		//	// indirect from rate
-		//	fromRate = market.ClosedAtPrice
-		//}
-		//if market.MarketName == to+"-BTC" {
-		//	// indirect to rate
-		//	toRate = market.ClosedAtPrice
-		//}
 		if market.MarketName == from+"-BTC" {
 			// indirect from rate
 			fromRate = market.ClosedAtPrice
