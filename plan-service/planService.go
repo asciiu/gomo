@@ -304,7 +304,6 @@ func (service *PlanService) HandleCompletedOrder(ctx context.Context, completedO
 		changeReq.Amount = completedOrderEvent.FinalCurrencyBalance
 		service.AccountClient.ChangeLockedBalance(ctx, &changeReq)
 
-		//now := string(pq.FormatTimestamp(time.Now().UTC()))
 		if err := repoPlan.UpdateTriggerResults(service.DB,
 			completedOrderEvent.TriggerID,
 			completedOrderEvent.TriggeredPrice,

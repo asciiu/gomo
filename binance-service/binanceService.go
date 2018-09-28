@@ -94,6 +94,7 @@ func (service *BinanceService) HandleFillOrder(ctx context.Context, triggerEvent
 			TriggerID:              triggerEvent.TriggerID,
 			TriggeredPrice:         triggerEvent.TriggeredPrice,
 			TriggeredCondition:     triggerEvent.TriggeredCondition,
+			CloseOnComplete:        triggerEvent.CloseOnComplete,
 		}
 
 		// qauntity must be of step size

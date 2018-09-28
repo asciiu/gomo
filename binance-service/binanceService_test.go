@@ -73,33 +73,13 @@ func TestOrderQuery(t *testing.T) {
 	)
 	b := binance.NewBinance(binanceService)
 	marketName := "ADABTC"
-	//orders, _ := b.AllOrders(binance.AllOrdersRequest{
-	//	Symbol:     marketName,
-	//	OrderID:    59016988,
-	//	Limit:      1,
-	//	RecvWindow: time.Duration(2) * time.Second,
-	//	Timestamp:  time.Now(),
-	//})
 
 	trades, _ := b.MyTrades(binance.MyTradesRequest{
-		Symbol: marketName,
-		//FromID:     18887917,
+		Symbol:     marketName,
 		Limit:      200,
 		RecvWindow: time.Duration(2) * time.Second,
 		Timestamp:  time.Now(),
 	})
-
-	//if err != nil {
-	//	fmt.Println(err)
-	//}
-
-	//executedOrder, _ := b.QueryOrder(binance.QueryOrderRequest{
-	//	Symbol:            marketName,
-	//	OrderID:           59016988,
-	//	OrigClientOrderID: "1d2b57a8-a695-11e8-98d0-529269fb1459",
-	//	RecvWindow:        time.Duration(2) * time.Second,
-	//	Timestamp:         time.Now(),
-	//})
 
 	for _, t := range trades {
 		fmt.Printf("%+v\n", t)
