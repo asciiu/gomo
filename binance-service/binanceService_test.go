@@ -41,18 +41,18 @@ func setupService() (*BinanceService, *sql.DB, *user.User) {
 
 func TestExchangeInfo(t *testing.T) {
 	bexinfo := NewBinanceExchangeInfo()
-	marketName := "ADA-BTC"
+	marketName := "TRX-BTC"
 	lotSize := bexinfo.LotSize(marketName)
 	priceFilter := bexinfo.PriceFilter(marketName)
 	minNotional := bexinfo.MinNotional(marketName)
 	icebergParts := bexinfo.IcebergParts(marketName)
 	maxAlg := bexinfo.MaxAlgoOrders(marketName)
 
-	fmt.Println(priceFilter)
-	fmt.Println(lotSize)
-	fmt.Println(minNotional)
-	fmt.Println(icebergParts)
-	fmt.Println(maxAlg)
+	fmt.Println("price filter: ", priceFilter)
+	fmt.Println("lot size: ", lotSize.StepSize)
+	fmt.Println("min notional: ", minNotional)
+	fmt.Println("iceberg parts: ", icebergParts)
+	fmt.Println("max alg: ", maxAlg)
 }
 
 func TestOrderQuery(t *testing.T) {

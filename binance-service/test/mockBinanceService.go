@@ -68,6 +68,12 @@ func (m *mockBinanceService) GetMarketRestrictions(ctx context.Context, in *prot
 	}, nil
 }
 
+func (m *mockBinanceService) GetCandles(ctx context.Context, in *protoBinance.MarketRequest, opts ...client.CallOption) (*protoBinance.CandlesResponse, error) {
+	return &protoBinance.CandlesResponse{
+		Status: "success",
+	}, nil
+}
+
 func MockBinanceServiceClient() protoBinance.BinanceServiceClient {
 	return new(mockBinanceService)
 }
