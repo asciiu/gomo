@@ -46,6 +46,7 @@ message MarketInfo {
   string maxMarketPrice = 14;
   string marketPriceStep = 15;
   string price = 16;
+  string timestamp = 17;
 }
 
 message ConversionAmount {
