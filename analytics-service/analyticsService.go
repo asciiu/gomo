@@ -92,6 +92,7 @@ func (service *AnalyticsService) Ticker() error {
 func (service *AnalyticsService) HandleExchangeEvent(payload *evt.TradeEvents) error {
 	// record close price for the market
 	for _, event := range payload.Events {
+
 		// market := Market{
 		// 	Exchange: event.Exchange,
 		// 	Name:     event.MarketName,
@@ -134,28 +135,35 @@ func (service *AnalyticsService) HandleExchangeEvent(payload *evt.TradeEvents) e
 		key := fmt.Sprintf("%s-%s", event.Exchange, event.MarketName)
 
 		service.Lock()
-		service.Directory[key] = &market
 		if m, ok := service.Directory[key]; ok {
 			// update the price only
 			m.Price = fmt.Sprintf("%.8f", event.Price)
 		} else {
 			// grab exchange rules for this market here
-			// switch event.Exchange {
-			// case constExch.Binance:
-			// 	rules, _ := service.BinanceClient.GetMarketRestrictions(context.Background(), &protoBinance.MarketRestrictionRequest{MarketName: event.MarketName})
-			// 	if rules.Status == constRes.Success {
-			// 		market.MinTradeSize = fmt.Sprintf("%.8f", rules.Data.Restrictions.MinTradeSize)
-			// 		market.MaxTradeSize = fmt.Sprintf("%.8f", rules.Data.Restrictions.MaxTradeSize)
-			// 		market.TradeSizeStep = fmt.Sprintf("%.8f", rules.Data.Restrictions.TradeSizeStep)
-			// 		market.MinMarketPrice = fmt.Sprintf("%.8f", rules.Data.Restrictions.MinMarketPrice)
-			// 		market.MaxMarketPrice = fmt.Sprintf("%.8f", rules.Data.Restrictions.MaxMarketPrice)
-			// 		market.MarketPriceStep = fmt.Sprintf("%.8f", rules.Data.Restrictions.MarketPriceStep)
-			// 		market.BasePrecision = rules.Data.Restrictions.BasePrecision
-			// 		market.MarketPrecision = rules.Data.Restrictions.MarketPrecision
-			// 	} else {
-			// 		log.Println("could not get rules for ", event.MarketName)
-			// 	}
-			// }
+			switch event.Exchange {
+			case constExch.Binance:
+				//rules, _ := service.BinanceClient.GetMarketRestrictions(context.Background(), &protoBinance.MarketRestrictionRequest{MarketName: event.MarketName})
+				//if rules.Status == constRes.Success {
+				//	market.MinTradeSize = fmt.Sprintf("%.8f", rules.Data.Restrictions.MinTradeSize)
+				//	market.MaxTradeSize = fmt.Sprintf("%.8f", rules.Data.Restrictions.MaxTradeSize)
+				//	market.TradeSizeStep = fmt.Sprintf("%.8f", rules.Data.Restrictions.TradeSizeStep)
+				//	market.MinMarketPrice = fmt.Sprintf("%.8f", rules.Data.Restrictions.MinMarketPrice)
+				//	market.MaxMarketPrice = fmt.Sprintf("%.8f", rules.Data.Restrictions.MaxMarketPrice)
+				//	market.MarketPriceStep = fmt.Sprintf("%.8f", rules.Data.Restrictions.MarketPriceStep)
+				//	market.BasePrecision = rules.Data.Restrictions.BasePrecision
+				//	market.MarketPrecision = rules.Data.Restrictions.MarketPrecision
+				//} else {
+				//	log.Println("could not get rules for ", event.MarketName)
+				//}
+				market.MinTradeSize = "0.00000001"
+				market.MaxTradeSize = "1000000000.0"
+				market.TradeSizeStep = "0.00000001"
+				market.MinMarketPrice = "0.00000001"
+				market.MaxMarketPrice = "1000000000.0"
+				market.MarketPriceStep = "0.00000001"
+				market.BasePrecision = 8
+				market.MarketPrecision = 8
+			}
 			service.Directory[key] = &market
 		}
 		service.Unlock()
@@ -250,31 +258,31 @@ func (service *AnalyticsService) GetMarketInfo(ctx context.Context, req *protoAn
 			strings.Contains(strings.ToLower(v.MarketCurrencySymbol), strings.ToLower(term)) ||
 			strings.Contains(strings.ToLower(v.MarketCurrencyName), strings.ToLower(term)) {
 
-			now := time.Now().UTC()
-			timestamp, _ := time.Parse(time.RFC3339, v.Timestamp)
+			//now := time.Now().UTC()
+			//timestamp, _ := time.Parse(time.RFC3339, v.Timestamp)
 
 			// if timestamp is empty or if the data is stale refresh the rules
 			// data is stale when older than 1 hour
-			if v.Timestamp == "" || now.Sub(timestamp).Hours() > 1.0 {
-				switch v.Exchange {
-				case constExch.Binance:
-					rules, _ := service.BinanceClient.GetMarketRestrictions(context.Background(), &protoBinance.MarketRestrictionRequest{MarketName: v.MarketName})
-					if rules.Status == constRes.Success {
-						v.MinTradeSize = fmt.Sprintf("%.8f", rules.Data.Restrictions.MinTradeSize)
-						v.MaxTradeSize = fmt.Sprintf("%.8f", rules.Data.Restrictions.MaxTradeSize)
-						v.TradeSizeStep = fmt.Sprintf("%.8f", rules.Data.Restrictions.TradeSizeStep)
-						v.MinMarketPrice = fmt.Sprintf("%.8f", rules.Data.Restrictions.MinMarketPrice)
-						v.MaxMarketPrice = fmt.Sprintf("%.8f", rules.Data.Restrictions.MaxMarketPrice)
-						v.MarketPriceStep = fmt.Sprintf("%.8f", rules.Data.Restrictions.MarketPriceStep)
-						v.BasePrecision = rules.Data.Restrictions.BasePrecision
-						v.MarketPrecision = rules.Data.Restrictions.MarketPrecision
-						v.Timestamp = now.Format(time.RFC3339)
-						m = append(m, v)
-					} else {
-						log.Println("could not get rules for ", v.MarketName)
-					}
-				}
-			}
+			// if v.Timestamp == "" || now.Sub(timestamp).Hours() > 1.0 {
+			// 	switch v.Exchange {
+			// 	case constExch.Binance:
+			// 		rules, _ := service.BinanceClient.GetMarketRestrictions(context.Background(), &protoBinance.MarketRestrictionRequest{MarketName: v.MarketName})
+			// 		if rules.Status == constRes.Success {
+			// 			v.MinTradeSize = fmt.Sprintf("%.8f", rules.Data.Restrictions.MinTradeSize)
+			// 			v.MaxTradeSize = fmt.Sprintf("%.8f", rules.Data.Restrictions.MaxTradeSize)
+			// 			v.TradeSizeStep = fmt.Sprintf("%.8f", rules.Data.Restrictions.TradeSizeStep)
+			// 			v.MinMarketPrice = fmt.Sprintf("%.8f", rules.Data.Restrictions.MinMarketPrice)
+			// 			v.MaxMarketPrice = fmt.Sprintf("%.8f", rules.Data.Restrictions.MaxMarketPrice)
+			// 			v.MarketPriceStep = fmt.Sprintf("%.8f", rules.Data.Restrictions.MarketPriceStep)
+			// 			v.BasePrecision = rules.Data.Restrictions.BasePrecision
+			// 			v.MarketPrecision = rules.Data.Restrictions.MarketPrecision
+			// 			v.Timestamp = now.Format(time.RFC3339)
+			m = append(m, v)
+			// 		} else {
+			// 			log.Println("could not get rules for ", v.MarketName)
+			// 		}
+			// 	}
+			// }
 		}
 	}
 
