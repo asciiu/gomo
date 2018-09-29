@@ -9,6 +9,7 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
+	"time"
 
 	constAccount "github.com/asciiu/gomo/account-service/constants"
 	constExt "github.com/asciiu/gomo/common/constants/exchange"
@@ -17,6 +18,7 @@ import (
 	commonUtil "github.com/asciiu/gomo/common/util"
 	protoEngine "github.com/asciiu/gomo/execution-engine/proto/engine"
 	constPlan "github.com/asciiu/gomo/plan-service/constants"
+	"github.com/lib/pq"
 	"github.com/mattn/anko/vm"
 	micro "github.com/micro/go-micro"
 )
@@ -125,6 +127,7 @@ func (engine *Engine) HandleTradeEvents(ctx context.Context, payload *protoEvt.T
 									TriggeredPrice:         tradeEvent.Price,
 									TriggeredCondition:     desc,
 									ExchangeMarketName:     constPlan.PaperOrder,
+									ExchangeTime:           string(pq.FormatTimestamp(time.Now().UTC())),
 									Status:                 constPlan.Filled,
 									CloseOnComplete:        plan.CloseOnComplete,
 								}
@@ -272,6 +275,7 @@ func (engine *Engine) AddPlan(ctx context.Context, req *protoEngine.NewPlanReque
 						TriggeredPrice:         lastPrice,
 						TriggeredCondition:     "Immeadiate!",
 						ExchangeMarketName:     constPlan.PaperOrder,
+						ExchangeTime:           string(pq.FormatTimestamp(time.Now().UTC())),
 						Status:                 constPlan.Filled,
 						CloseOnComplete:        req.CloseOnComplete,
 					}

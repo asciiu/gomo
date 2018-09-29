@@ -14,7 +14,7 @@
     "common/util",
     "plan-service/constants"
   ]
-  revision = "e86272a66521ddf7715d2498661661966f54da5b"
+  revision = "01996a72dc37f5cbab7cf1dd3b0ad5f154578308"
 
 [[projects]]
   name = "github.com/davecgh/go-spew"
@@ -321,6 +321,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "8e74b6cf48ae24946bd6fffaf672861ee32fe59cfe09b028ab126db080063cb6"
+  inputs-digest = "93348ec7eb29c5d8bd19a7d42d4dd6f4b7c7207a03b99ad66596b81cd19d2e18"
   solver-name = "gps-cdcl"
   solver-version = 1
