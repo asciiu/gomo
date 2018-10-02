@@ -33,6 +33,8 @@ type BinanceService struct {
 }
 
 func (service *BinanceService) HandleFillOrder(ctx context.Context, triggerEvent *protoEvt.TriggeredOrderEvent) error {
+	log.Printf("trigger event -- %+v\n", triggerEvent)
+
 	// ignore events not binance
 	// perhaps we can have this handler only receive binance triggers but for the sake of
 	// simplicity when adding new exchanges let's just have each exchange service do a check
