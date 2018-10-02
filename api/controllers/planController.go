@@ -58,7 +58,6 @@ type Plan struct {
 	Title                      string              `json:"title"`
 	TotalDepth                 uint32              `json:"totalDepth"`
 	Exchange                   string              `json:"exchange"`
-	ExchangeMarketName         string              `json:"exchangeMarketName"`
 	UserCurrencySymbol         string              `json:"userCurrencySymbol"`
 	UserCurrencyBalance        float64             `json:"userCurrencyBalance"`
 	InitialUserCurrencyBalance float64             `json:"initialUserCurrencyBalance"`
@@ -85,11 +84,10 @@ type PlanActivitySummary struct {
 }
 
 type Order struct {
-	OrderID         string `json:"orderID,omitempty"`
-	ParentOrderID   string `json:"parentOrderID,omitempty"`
-	PlanDepth       uint32 `json:"planDepth,omitempty"`
-	OrderTemplateID string `json:"orderTemplateID,omitempty"`
-	//KeyID                    string                `json:"keyID,omitempty"`
+	OrderID                  string                `json:"orderID,omitempty"`
+	ParentOrderID            string                `json:"parentOrderID,omitempty"`
+	PlanDepth                uint32                `json:"planDepth,omitempty"`
+	OrderTemplateID          string                `json:"orderTemplateID,omitempty"`
 	AccountID                string                `json:"accountID,omitempty"`
 	KeyPublic                string                `json:"keyPublic,omitempty"`
 	KeyDescription           string                `json:"keyDescription,omitempty"`
@@ -99,7 +97,6 @@ type Order struct {
 	LimitPrice               float64               `json:"limitPrice,omitempty"`
 	Exchange                 string                `json:"exchange,omitempty"`
 	ExchangeOrderID          string                `json:"exchangeOrderID"`
-	ExchangeMarketName       string                `json:"exchangeMarketName,omitempty"`
 	MarketName               string                `json:"marketName,omitempty"`
 	BaseCurrencySymbol       string                `json:"baseCurrencySymbol"`
 	BaseCurrencyName         string                `json:"baseCurrencyName"`
@@ -293,7 +290,6 @@ func (controller *PlanController) HandleGetPlan(c echo.Context) error {
 			LimitPrice:               o.LimitPrice,
 			Exchange:                 o.Exchange,
 			ExchangeOrderID:          o.ExchangeOrderID,
-			ExchangeMarketName:       o.ExchangeMarketName,
 			MarketName:               o.MarketName,
 			BaseCurrencySymbol:       baseCurrencySymbol,
 			BaseCurrencyName:         baseCurrencyName,
@@ -485,7 +481,6 @@ func (controller *PlanController) HandleListPlans(c echo.Context) error {
 				LimitPrice:               o.LimitPrice,
 				Exchange:                 o.Exchange,
 				ExchangeOrderID:          o.ExchangeOrderID,
-				ExchangeMarketName:       o.ExchangeMarketName,
 				MarketName:               o.MarketName,
 				BaseCurrencySymbol:       baseCurrencySymbol,
 				BaseCurrencyName:         baseCurrencyName,
@@ -755,7 +750,6 @@ func (controller *PlanController) HandlePostPlan(c echo.Context) error {
 			Side:                     o.Side,
 			LimitPrice:               o.LimitPrice,
 			Exchange:                 o.Exchange,
-			ExchangeMarketName:       o.ExchangeMarketName,
 			MarketName:               o.MarketName,
 			BaseCurrencySymbol:       baseCurrencySymbol,
 			BaseCurrencyName:         baseCurrencyName,
@@ -953,7 +947,6 @@ func (controller *PlanController) HandleUpdatePlan(c echo.Context) error {
 			LimitPrice:               o.LimitPrice,
 			Exchange:                 o.Exchange,
 			ExchangeOrderID:          o.ExchangeOrderID,
-			ExchangeMarketName:       o.ExchangeMarketName,
 			MarketName:               o.MarketName,
 			BaseCurrencySymbol:       baseCurrencySymbol,
 			BaseCurrencyName:         baseCurrencyName,
