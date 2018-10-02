@@ -151,7 +151,7 @@ func TestSuccessfulOrderPlan(t *testing.T) {
 			&protoOrder.NewOrderRequest{
 				OrderID:         "4d671984-d7dd-4dce-a20f-23f25d6daf7f",
 				AccountID:       acc.AccountID,
-				OrderType:       "paper",
+				OrderType:       "market",
 				OrderTemplateID: "mokie22",
 				ParentOrderID:   "00000000-0000-0000-0000-000000000000",
 				MarketName:      "BTC-USDT",
@@ -198,7 +198,7 @@ func TestUnsortedPlan(t *testing.T) {
 			&protoOrder.NewOrderRequest{
 				OrderID:         "da46997b-9d4f-45b2-9d2a-aaa404a213c5",
 				AccountID:       acc.AccountID,
-				OrderType:       "paper",
+				OrderType:       "market",
 				OrderTemplateID: "mokie22",
 				ParentOrderID:   "4d671984-d7dd-4dce-a20f-23f25d6daf7f",
 				MarketName:      "BTC-USDT",
@@ -219,7 +219,7 @@ func TestUnsortedPlan(t *testing.T) {
 			&protoOrder.NewOrderRequest{
 				OrderID:         "4d671984-d7dd-4dce-a20f-23f25d6daf7f",
 				AccountID:       acc.AccountID,
-				OrderType:       "paper",
+				OrderType:       "market",
 				OrderTemplateID: "mokie22",
 				ParentOrderID:   "00000000-0000-0000-0000-000000000000",
 				MarketName:      "BTC-USDT",
@@ -263,7 +263,7 @@ func TestInsufficientBalancePlan(t *testing.T) {
 			&protoOrder.NewOrderRequest{
 				OrderID:         "4d671984-d7dd-4dce-a20f-23f25d6daf7f",
 				AccountID:       acc.AccountID,
-				OrderType:       "paper",
+				OrderType:       "market",
 				OrderTemplateID: "mokie22",
 				ParentOrderID:   "00000000-0000-0000-0000-000000000000",
 				MarketName:      "BTC-USDT",
@@ -308,7 +308,7 @@ func TestOrderUpdatePlan(t *testing.T) {
 			&protoOrder.NewOrderRequest{
 				OrderID:         "4d671984-d7dd-4dce-a20f-23f25d6daf7f",
 				AccountID:       acc.AccountID,
-				OrderType:       "paper",
+				OrderType:       "market",
 				OrderTemplateID: "mokie",
 				ParentOrderID:   "00000000-0000-0000-0000-000000000000",
 				MarketName:      "BTC-USDT",
@@ -329,7 +329,7 @@ func TestOrderUpdatePlan(t *testing.T) {
 			&protoOrder.NewOrderRequest{
 				OrderID:         "966fabac-8cad-11e8-9eb6-529269fb1459",
 				AccountID:       acc.AccountID,
-				OrderType:       "paper",
+				OrderType:       "market",
 				OrderTemplateID: "mokie",
 				ParentOrderID:   "4d671984-d7dd-4dce-a20f-23f25d6daf7f",
 				MarketName:      "EOS-BTC",
@@ -349,7 +349,7 @@ func TestOrderUpdatePlan(t *testing.T) {
 			&protoOrder.NewOrderRequest{
 				OrderID:         "3c960c68-8cb0-11e8-9eb6-529269fb1459",
 				AccountID:       acc.AccountID,
-				OrderType:       "paper",
+				OrderType:       "market",
 				OrderTemplateID: "mokie",
 				ParentOrderID:   "4d671984-d7dd-4dce-a20f-23f25d6daf7f",
 				MarketName:      "BTC-USDT",
@@ -384,7 +384,7 @@ func TestOrderUpdatePlan(t *testing.T) {
 			&protoOrder.NewOrderRequest{
 				OrderID:         "4d671984-d7dd-4dce-a20f-23f25d6daf7f",
 				AccountID:       acc.AccountID,
-				OrderType:       "paper",
+				OrderType:       "market",
 				OrderTemplateID: "mokie22",
 				ParentOrderID:   "00000000-0000-0000-0000-000000000000",
 				MarketName:      "BTC-USDT",
@@ -404,7 +404,7 @@ func TestOrderUpdatePlan(t *testing.T) {
 			}, &protoOrder.NewOrderRequest{
 				OrderID:         "4d671984-d7dd-4dce-a20f-23f25d6daf76",
 				AccountID:       acc.AccountID,
-				OrderType:       "paper",
+				OrderType:       "market",
 				OrderTemplateID: "mokie22",
 				ParentOrderID:   "4d671984-d7dd-4dce-a20f-23f25d6daf7f",
 				MarketName:      "ADA-BTC",
@@ -464,7 +464,7 @@ func TestOrderUpdatePlanFailure(t *testing.T) {
 			&protoOrder.NewOrderRequest{
 				OrderID:         "4d671984-d7dd-4dce-a20f-23f25d6daf7f",
 				AccountID:       acc.AccountID,
-				OrderType:       "paper",
+				OrderType:       "market",
 				OrderTemplateID: "mokie22",
 				ParentOrderID:   "00000000-0000-0000-0000-000000000000",
 				MarketName:      "BTC-USDT",
@@ -506,7 +506,7 @@ func TestOrderUpdatePlanFailure(t *testing.T) {
 			&protoOrder.NewOrderRequest{
 				OrderID:         "4d671984-d7dd-4dce-a20f-23f25d6daf7f",
 				AccountID:       acc.AccountID,
-				OrderType:       "paper",
+				OrderType:       "market",
 				OrderTemplateID: "mokie22",
 				ParentOrderID:   "00000000-0000-0000-0000-000000000000",
 				MarketName:      "ETH-USDT",
@@ -526,7 +526,7 @@ func TestOrderUpdatePlanFailure(t *testing.T) {
 			}, &protoOrder.NewOrderRequest{
 				OrderID:         "4d671984-d7dd-4dce-a20f-23f25d6daf76",
 				AccountID:       acc.AccountID,
-				OrderType:       "paper",
+				OrderType:       "market",
 				OrderTemplateID: "mokie22",
 				ParentOrderID:   "4d671984-d7dd-4dce-a20f-23f25d6daf7f",
 				MarketName:      "ADA-ETH",
@@ -583,7 +583,7 @@ func TestOrderUpdatePlanFailureBecauseOfExecution(t *testing.T) {
 			&protoOrder.NewOrderRequest{
 				OrderID:         "4d671984-d7dd-4dce-a20f-23f25d6daf7f",
 				AccountID:       acc.AccountID,
-				OrderType:       "paper",
+				OrderType:       "market",
 				OrderTemplateID: "mokie",
 				ParentOrderID:   "00000000-0000-0000-0000-000000000000",
 				MarketName:      "BTC-USDT",
@@ -604,7 +604,7 @@ func TestOrderUpdatePlanFailureBecauseOfExecution(t *testing.T) {
 			&protoOrder.NewOrderRequest{
 				OrderID:         "966fabac-8cad-11e8-9eb6-529269fb1459",
 				AccountID:       acc.AccountID,
-				OrderType:       "paper",
+				OrderType:       "market",
 				OrderTemplateID: "mokie",
 				ParentOrderID:   "4d671984-d7dd-4dce-a20f-23f25d6daf7f",
 				MarketName:      "EOS-BTC",
@@ -624,7 +624,7 @@ func TestOrderUpdatePlanFailureBecauseOfExecution(t *testing.T) {
 			&protoOrder.NewOrderRequest{
 				OrderID:         "3c960c68-8cb0-11e8-9eb6-529269fb1459",
 				AccountID:       acc.AccountID,
-				OrderType:       "paper",
+				OrderType:       "market",
 				OrderTemplateID: "mokie",
 				ParentOrderID:   "4d671984-d7dd-4dce-a20f-23f25d6daf7f",
 				MarketName:      "BTC-USDT",
@@ -665,7 +665,7 @@ func TestOrderUpdatePlanFailureBecauseOfExecution(t *testing.T) {
 			&protoOrder.NewOrderRequest{
 				OrderID:         "4d671984-d7dd-4dce-a20f-23f25d6daf7f",
 				AccountID:       acc.AccountID,
-				OrderType:       "paper",
+				OrderType:       "market",
 				OrderTemplateID: "mokie22",
 				ParentOrderID:   "00000000-0000-0000-0000-000000000000",
 				MarketName:      "BTC-USDT",
@@ -685,7 +685,7 @@ func TestOrderUpdatePlanFailureBecauseOfExecution(t *testing.T) {
 			}, &protoOrder.NewOrderRequest{
 				OrderID:         "4d671984-d7dd-4dce-a20f-23f25d6daf76",
 				AccountID:       acc.AccountID,
-				OrderType:       "paper",
+				OrderType:       "market",
 				OrderTemplateID: "mokie22",
 				ParentOrderID:   "4d671984-d7dd-4dce-a20f-23f25d6daf7f",
 				MarketName:      "ADA-BTC",
@@ -728,7 +728,7 @@ func TestDeletePlan(t *testing.T) {
 			&protoOrder.NewOrderRequest{
 				OrderID:         "4d671984-d7dd-4dce-a20f-23f25d6daf7f",
 				AccountID:       acc.AccountID,
-				OrderType:       "paper",
+				OrderType:       "market",
 				OrderTemplateID: "mokie",
 				ParentOrderID:   "00000000-0000-0000-0000-000000000000",
 				MarketName:      "BTC-USDT",
@@ -749,7 +749,7 @@ func TestDeletePlan(t *testing.T) {
 			&protoOrder.NewOrderRequest{
 				OrderID:         "966fabac-8cad-11e8-9eb6-529269fb1459",
 				AccountID:       acc.AccountID,
-				OrderType:       "paper",
+				OrderType:       "market",
 				OrderTemplateID: "mokie",
 				ParentOrderID:   "4d671984-d7dd-4dce-a20f-23f25d6daf7f",
 				MarketName:      "EOS-BTC",
@@ -769,7 +769,7 @@ func TestDeletePlan(t *testing.T) {
 			&protoOrder.NewOrderRequest{
 				OrderID:         "3c960c68-8cb0-11e8-9eb6-529269fb1459",
 				AccountID:       acc.AccountID,
-				OrderType:       "paper",
+				OrderType:       "market",
 				OrderTemplateID: "mokie",
 				ParentOrderID:   "4d671984-d7dd-4dce-a20f-23f25d6daf7f",
 				MarketName:      "BTC-USDT",
@@ -832,7 +832,7 @@ func TestHandleAccountDeleted(t *testing.T) {
 			&protoOrder.NewOrderRequest{
 				OrderID:         "4d671984-d7dd-4dce-a20f-23f25d6daf7f",
 				AccountID:       acc.AccountID,
-				OrderType:       "paper",
+				OrderType:       "market",
 				OrderTemplateID: "mokie",
 				ParentOrderID:   "00000000-0000-0000-0000-000000000000",
 				MarketName:      "BTC-USDT",
@@ -853,7 +853,7 @@ func TestHandleAccountDeleted(t *testing.T) {
 			&protoOrder.NewOrderRequest{
 				OrderID:         "966fabac-8cad-11e8-9eb6-529269fb1459",
 				AccountID:       acc.AccountID,
-				OrderType:       "paper",
+				OrderType:       "market",
 				OrderTemplateID: "mokie",
 				ParentOrderID:   "4d671984-d7dd-4dce-a20f-23f25d6daf7f",
 				MarketName:      "EOS-BTC",
@@ -873,7 +873,7 @@ func TestHandleAccountDeleted(t *testing.T) {
 			&protoOrder.NewOrderRequest{
 				OrderID:         "3c960c68-8cb0-11e8-9eb6-529269fb1459",
 				AccountID:       acc.AccountID,
-				OrderType:       "paper",
+				OrderType:       "market",
 				OrderTemplateID: "mokie",
 				ParentOrderID:   "4d671984-d7dd-4dce-a20f-23f25d6daf7f",
 				MarketName:      "BTC-USDT",

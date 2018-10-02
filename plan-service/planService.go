@@ -459,10 +459,6 @@ func (service *PlanService) NewPlan(ctx context.Context, req *protoPlan.NewPlanR
 		res.Status = constRes.Fail
 		res.Message = "you cannot add a market/limit order to a plan that will begin with a paper order"
 		return nil
-	case req.Orders[0].OrderType != constPlan.PaperOrder && !ValidateNotPaperOrders(req.Orders):
-		res.Status = constRes.Fail
-		res.Message = "you cannot add paper orders to a plan that will begin with a market/limit order"
-		return nil
 	}
 
 	// fetch all order accounts
@@ -510,7 +506,7 @@ func (service *PlanService) NewPlan(ctx context.Context, req *protoPlan.NewPlanR
 		}
 		if !ValidateOrderType(or.OrderType) {
 			res.Status = constRes.Fail
-			res.Message = "market, limit, or paper required for order type"
+			res.Message = "market, or limit required for order type"
 			return nil
 		}
 		if !ValidateOrderSide(or.Side) {
@@ -1087,8 +1083,15 @@ func (service *PlanService) UpdatePlan(ctx context.Context, req *protoPlan.Updat
 	// the length of orders in the existing plan should include the last executed if any
 	// more orders than that means there are active orders currency running
 
-	// TODO if last order failed there is no need to kill the plan
-	if pln.Status == constPlan.Active && len(pln.Orders) > 1 {
+	activeOrder := false
+	for _, previous := range pln.Orders {
+		if previous.Status == constPlan.Active {
+			activeOrder = true
+		}
+	}
+
+	// only key plans that are active and that have an active order
+	if pln.Status == constPlan.Active && activeOrder {
 		req := protoEngine.KillRequest{PlanID: pln.PlanID}
 		_, err := service.EngineClient.KillPlan(ctx, &req)
 		if err != nil {
