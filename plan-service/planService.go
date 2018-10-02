@@ -901,11 +901,6 @@ func (service *PlanService) UpdatePlan(ctx context.Context, req *protoPlan.Updat
 		res.Status = constRes.Fail
 		res.Message = "you cannot append market or limit orders to a plan that will begin with a paper order"
 		return nil
-	case pln.LastExecutedPlanDepth > 0 && pln.Orders[0].OrderType != constPlan.PaperOrder && !ValidateNotPaperOrders(req.Orders):
-		// the executed plan was live - can't add paper orders to this plan
-		res.Status = constRes.Fail
-		res.Message = "you cannot add paper orders with a plan that has already executed a live order"
-		return nil
 	}
 
 	// fetch the keys
@@ -928,6 +923,8 @@ func (service *PlanService) UpdatePlan(ctx context.Context, req *protoPlan.Updat
 	now := string(pq.FormatTimestamp(time.Now().UTC()))
 	newOrders := make([]*protoOrder.Order, 0, len(req.Orders))
 	exchange := ""
+	keyPublic := ""
+	keySecret := ""
 	depth := pln.LastExecutedPlanDepth
 	totalDepth := depth
 	lockRequest := new(protoBalance.ChangeBalanceRequest)
@@ -947,7 +944,7 @@ func (service *PlanService) UpdatePlan(ctx context.Context, req *protoPlan.Updat
 		}
 		if !ValidateOrderType(or.OrderType) {
 			res.Status = constRes.Fail
-			res.Message = "market, limit, or paper required for order type"
+			res.Message = "market or limit required for order type"
 			return nil
 		}
 		if !ValidateOrderSide(or.Side) {
@@ -990,6 +987,8 @@ func (service *PlanService) UpdatePlan(ctx context.Context, req *protoPlan.Updat
 		for _, ky := range akeys {
 			if ky.AccountID == or.AccountID {
 				exchange = ky.Exchange
+				keyPublic = ky.KeyPublic
+				keySecret = ky.KeySecret
 				foundKey = true
 				accType = ky.AccountType
 
@@ -1060,6 +1059,8 @@ func (service *PlanService) UpdatePlan(ctx context.Context, req *protoPlan.Updat
 		order := protoOrder.Order{
 			AccountID:              or.AccountID,
 			AccountType:            accType,
+			KeyPublic:              keyPublic,
+			KeySecret:              keySecret,
 			OrderID:                or.OrderID,
 			OrderPriority:          or.OrderPriority,
 			OrderType:              or.OrderType,
@@ -1085,6 +1086,8 @@ func (service *PlanService) UpdatePlan(ctx context.Context, req *protoPlan.Updat
 	// if the plan is currently active we need to kill the plan by its ID in the engine
 	// the length of orders in the existing plan should include the last executed if any
 	// more orders than that means there are active orders currency running
+
+	// TODO if last order failed there is no need to kill the plan
 	if pln.Status == constPlan.Active && len(pln.Orders) > 1 {
 		req := protoEngine.KillRequest{PlanID: pln.PlanID}
 		_, err := service.EngineClient.KillPlan(ctx, &req)
@@ -1254,6 +1257,8 @@ func (service *PlanService) UpdatePlan(ctx context.Context, req *protoPlan.Updat
 
 	txn.Commit()
 
+	// we overwrite the pln orders here so the plan order response will contain the
+	// new order. Publish plan shall also publish the new orders
 	pln.Orders = newOrders
 
 	// activate first plan order if plan is active
