@@ -52,30 +52,29 @@ type PlansPage struct {
 
 // This response should never return the key secret
 type Plan struct {
-	PlanID                     string              `json:"planID"`
-	PlanTemplateID             string              `json:"planTemplateID"`
-	PlanNumber                 uint64              `json:"planNumber"`
-	Title                      string              `json:"title"`
-	TotalDepth                 uint32              `json:"totalDepth"`
-	Exchange                   string              `json:"exchange"`
-	UserCurrencySymbol         string              `json:"userCurrencySymbol"`
-	UserCurrencyBalance        float64             `json:"userCurrencyBalance"`
-	InitialUserCurrencyBalance float64             `json:"initialUserCurrencyBalance"`
-	InitialTimestamp           string              `json:"initialTimestamp"`
-	ActiveCurrencySymbol       string              `json:"activeCurrencySymbol"`
-	ActiveCurrencyName         string              `json:"activeCurrencyName"`
-	ActiveCurrencyBalance      float64             `json:"activeCurrencyBalance"`
-	InitialCurrencySymbol      string              `json:"initialCurrencySymbol"`
-	InitialCurrencyName        string              `json:"initialCurrencyName"`
-	InitialCurrencyBalance     float64             `json:"initialCurrencyBalance"`
-	LastExecutedOrderID        string              `json:"lastExecutedOrderID"`
-	LastExecutedPlanDepth      uint32              `json:"lastExecutedPlanDepth"`
-	Status                     string              `json:"status"`
-	CloseOnComplete            bool                `json:"closeOnComplete"`
-	CreatedOn                  string              `json:"createdOn"`
-	UpdatedOn                  string              `json:"updatedOn"`
-	Activity                   PlanActivitySummary `json:"activity"`
-	Orders                     []*Order            `json:"orders"`
+	PlanID                     string   `json:"planID"`
+	PlanTemplateID             string   `json:"planTemplateID"`
+	PlanNumber                 uint64   `json:"planNumber"`
+	Title                      string   `json:"title"`
+	TotalDepth                 uint32   `json:"totalDepth"`
+	Exchange                   string   `json:"exchange"`
+	UserCurrencySymbol         string   `json:"userCurrencySymbol"`
+	UserCurrencyBalance        float64  `json:"userCurrencyBalance"`
+	InitialUserCurrencyBalance float64  `json:"initialUserCurrencyBalance"`
+	InitialTimestamp           string   `json:"initialTimestamp"`
+	ActiveCurrencySymbol       string   `json:"activeCurrencySymbol"`
+	ActiveCurrencyName         string   `json:"activeCurrencyName"`
+	ActiveCurrencyBalance      float64  `json:"activeCurrencyBalance"`
+	InitialCurrencySymbol      string   `json:"initialCurrencySymbol"`
+	InitialCurrencyName        string   `json:"initialCurrencyName"`
+	InitialCurrencyBalance     float64  `json:"initialCurrencyBalance"`
+	LastExecutedOrderID        string   `json:"lastExecutedOrderID"`
+	LastExecutedPlanDepth      uint32   `json:"lastExecutedPlanDepth"`
+	Status                     string   `json:"status"`
+	CloseOnComplete            bool     `json:"closeOnComplete"`
+	CreatedOn                  string   `json:"createdOn"`
+	UpdatedOn                  string   `json:"updatedOn"`
+	Orders                     []*Order `json:"orders"`
 }
 
 type PlanActivitySummary struct {
@@ -312,21 +311,6 @@ func (controller *PlanController) HandleGetPlan(c echo.Context) error {
 		newOrders = append(newOrders, &newo)
 	}
 
-	// retrieve plan activity
-	getActivity := protoActivity.RecentActivityRequest{
-		ObjectID: planID,
-		Count:    1,
-	}
-	activityData, _ := controller.BulletinClient.FindMostRecentActivity(context.Background(), &getActivity)
-	getCount := protoActivity.ActivityCountRequest{
-		ObjectID: planID,
-	}
-	activityCount, _ := controller.BulletinClient.FindActivityCount(context.Background(), &getCount)
-	var recent *protoActivity.Activity
-	if activityCount.Data.Count > 0 {
-		recent = activityData.Data.Activity[0]
-	}
-
 	convertReq := protoAnalytics.ConversionRequest{
 		Exchange:    plan.Exchange,
 		From:        plan.ActiveCurrencySymbol,
@@ -377,10 +361,6 @@ func (controller *PlanController) HandleGetPlan(c echo.Context) error {
 			Orders:                     newOrders,
 			CreatedOn:                  plan.CreatedOn,
 			UpdatedOn:                  plan.UpdatedOn,
-			Activity: PlanActivitySummary{
-				Total:  activityCount.Data.Count,
-				Recent: recent,
-			},
 		},
 	}
 
