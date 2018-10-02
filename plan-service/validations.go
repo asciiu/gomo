@@ -142,7 +142,6 @@ func ValidateOrderType(ot string) bool {
 	ots := [...]string{
 		constPlan.LimitOrder,
 		constPlan.MarketOrder,
-		constPlan.PaperOrder,
 	}
 
 	for _, ty := range ots {
