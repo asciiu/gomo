@@ -2,8 +2,6 @@ syntax = "proto3";
 
 package order;
 
-import "github.com/asciiu/gomo/plan-service/proto/trade/trade.proto";
-
 // Requests
 message TriggerRequest {
   string triggerID = 1;             // uuid 
@@ -74,7 +72,6 @@ message Order {
   string createdOn = 26;
   string updatedOn = 27;
   repeated Trigger triggers = 28;
-  repeated trade.Trade trades = 30; 
 }
 
 message Trigger {
