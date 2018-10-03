@@ -7,7 +7,12 @@ import (
 	"unicode/utf8"
 )
 
-func ToFixed(num float64, precision int) float64 {
+func ToFixedRounded(num float64, precision int) float64 {
+	output := math.Pow(10, float64(precision))
+	return float64(math.Round(num*output)) / output
+}
+
+func ToFixedFloor(num float64, precision int) float64 {
 	output := math.Pow(10, float64(precision))
 	return float64(math.Floor(num*output)) / output
 }
