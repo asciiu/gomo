@@ -236,6 +236,8 @@ func (service *PlanService) HandleAccountDeleted(ctx context.Context, evt *proto
 
 // Handle a completed order event
 func (service *PlanService) HandleCompletedOrder(ctx context.Context, completedOrderEvent *protoEvt.CompletedOrderEvent) error {
+	log.Printf("completed event -- %+v\n", completedOrderEvent)
+
 	now := string(pq.FormatTimestamp(time.Now().UTC()))
 
 	notification := protoActivity.Activity{
