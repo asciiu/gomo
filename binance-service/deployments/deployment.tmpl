@@ -16,11 +16,7 @@ spec:
         - name: binance-service 
           image: us.gcr.io/fomo-204904/binance-service:dev
           imagePullPolicy: Always 
-          command: [
-            "./binance-service",
-            "--selector=static",
-            "--server_address=:8080"
-          ]
+          command: []
           envFrom:
           - configMapRef:
               name: fomo-config

@@ -234,7 +234,7 @@ func (service *BinanceService) HandleFillOrder(ctx context.Context, triggerEvent
 			}
 		}
 
-		if err := service.CompletedPub.Publish(ctx, &completedEvent); err != nil {
+		if err := service.CompletedPub.Publish(ctx, completedEvent); err != nil {
 			log.Println("publish err: ", err.Error())
 		}
 	}()
