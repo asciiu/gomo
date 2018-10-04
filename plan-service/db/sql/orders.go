@@ -196,7 +196,8 @@ func UpdateOrderStatusAndBalance(db *sql.DB, orderID, status string, initBalance
 	return planID, depth, nil
 }
 
-func UpdateOrderResults(db *sql.DB, orderID, exOrderID string, traded, remainder, finalBalance float64, finalSymbol string) error {
+func UpdateOrderResults(db *sql.DB, orderID, exOrderID, exTime string,
+	traded, remainder, finalBalance, feeAmount, exPrice float64, finalSymbol, feeSymbol string) error {
 	updatePlanOrderSql := `
 	UPDATE orders 
 	SET 
@@ -204,8 +205,12 @@ func UpdateOrderResults(db *sql.DB, orderID, exOrderID string, traded, remainder
 		initial_currency_remainder = $2,
 		final_currency_symbol = $3,
 		final_currency_balance = $4,
-		exchange_order_id = $5
-	WHERE id = $6`
+		exchange_order_id = $5,
+		exchange_price = $6,
+		exchange_time = $7,
+		fee_currency_symbol = $8,
+		fee_currency_amount = $9
+	WHERE id = $10`
 
 	_, err := db.Exec(updatePlanOrderSql,
 		traded,
@@ -213,6 +218,24 @@ func UpdateOrderResults(db *sql.DB, orderID, exOrderID string, traded, remainder
 		finalSymbol,
 		finalBalance,
 		exOrderID,
+		exPrice,
+		exTime,
+		feeSymbol,
+		feeAmount,
+		orderID)
+
+	return err
+}
+
+func UpdateOrderErrors(db *sql.DB, orderID, errors string) error {
+	updatePlanOrderSql := `
+	UPDATE orders 
+	SET 
+		errors = $1
+	WHERE id = $2`
+
+	_, err := db.Exec(updatePlanOrderSql,
+		errors,
 		orderID)
 
 	return err

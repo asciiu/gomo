@@ -318,10 +318,14 @@ func (service *PlanService) HandleCompletedOrder(ctx context.Context, completedO
 		if err := repoPlan.UpdateOrderResults(service.DB,
 			completedOrderEvent.OrderID,
 			completedOrderEvent.ExchangeOrderID,
+			completedOrderEvent.ExchangeTime,
 			completedOrderEvent.InitialCurrencyTraded,
 			completedOrderEvent.InitialCurrencyRemainder,
 			completedOrderEvent.FinalCurrencyBalance,
-			completedOrderEvent.FinalCurrencySymbol); err != nil {
+			completedOrderEvent.FeeCurrencyAmount,
+			completedOrderEvent.ExchangePrice,
+			completedOrderEvent.FinalCurrencySymbol,
+			completedOrderEvent.FeeCurrencySymbol); err != nil {
 			log.Println("completed order error trying to update the order -- ", err.Error())
 			return nil
 		}
@@ -377,6 +381,10 @@ func (service *PlanService) HandleCompletedOrder(ctx context.Context, completedO
 			}
 		}
 	} else if completedOrderEvent.Status == constPlan.Failed {
+		if err := repoPlan.UpdateOrderErrors(service.DB, completedOrderEvent.OrderID, completedOrderEvent.Details); err != nil {
+			log.Println("could not update order error -- ", err.Error())
+		}
+
 		// in theory this should not be required because the plan should close
 		// to free the locked funds
 
