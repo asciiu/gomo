@@ -1,5 +1,5 @@
 build:
-	docker build --no-cache -t us.gcr.io/fomo-204904/binance-websocket:dev .
+	docker build --no-cache -t us.gcr.io/fomo-204904/binance-websocket:dev -f ../binance-websocket/Dockerfile .. 
 
 stage:
 	docker push us.gcr.io/fomo-204904/binance-websocket:dev 
