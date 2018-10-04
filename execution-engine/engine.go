@@ -127,6 +127,7 @@ func (engine *Engine) HandleTradeEvents(ctx context.Context, payload *protoEvt.T
 									TriggeredPrice:         tradeEvent.Price,
 									TriggeredCondition:     desc,
 									ExchangeMarketName:     constPlan.PaperOrder,
+									ExchangePrice:          tradeEvent.Price,
 									ExchangeTime:           string(pq.FormatTimestamp(time.Now().UTC())),
 									Status:                 constPlan.Filled,
 									CloseOnComplete:        plan.CloseOnComplete,
@@ -135,21 +136,22 @@ func (engine *Engine) HandleTradeEvents(ctx context.Context, payload *protoEvt.T
 								symbols := strings.Split(order.MarketName, "-")
 								// adjust balances for buy
 								if order.Side == constPlan.Buy {
-									qty := commonUtil.ToFixed(plan.ActiveCurrencyBalance/tradeEvent.Price, precision)
+									qty := commonUtil.ToFixedFloor(plan.ActiveCurrencyBalance/tradeEvent.Price, precision)
 
+									completedEvent.ExchangePrice = tradeEvent.Price
 									completedEvent.FinalCurrencySymbol = symbols[0]
 									completedEvent.FinalCurrencyBalance = qty
-									completedEvent.InitialCurrencyTraded = commonUtil.ToFixed(completedEvent.FinalCurrencyBalance*tradeEvent.Price, precision)
-									completedEvent.InitialCurrencyRemainder = commonUtil.ToFixed(plan.ActiveCurrencyBalance-completedEvent.InitialCurrencyTraded, precision)
+									completedEvent.InitialCurrencyTraded = commonUtil.ToFixedFloor(completedEvent.FinalCurrencyBalance*tradeEvent.Price, precision)
+									completedEvent.InitialCurrencyRemainder = commonUtil.ToFixedFloor(plan.ActiveCurrencyBalance-completedEvent.InitialCurrencyTraded, precision)
 									completedEvent.Details = fmt.Sprintf("orderID: %s, bought %.8f %s with %.8f %s", completedEvent.OrderID, completedEvent.FinalCurrencyBalance, symbols[0], completedEvent.InitialCurrencyTraded, symbols[1])
 								}
 
 								// adjust balances for sell
 								if order.Side == constPlan.Sell {
 									completedEvent.FinalCurrencySymbol = symbols[1]
-									completedEvent.FinalCurrencyBalance = commonUtil.ToFixed(plan.ActiveCurrencyBalance*tradeEvent.Price, precision)
+									completedEvent.FinalCurrencyBalance = commonUtil.ToFixedFloor(plan.ActiveCurrencyBalance*tradeEvent.Price, precision)
 									completedEvent.InitialCurrencyRemainder = 0
-									completedEvent.InitialCurrencyTraded = commonUtil.ToFixed(plan.ActiveCurrencyBalance, precision)
+									completedEvent.InitialCurrencyTraded = commonUtil.ToFixedFloor(plan.ActiveCurrencyBalance, precision)
 									completedEvent.Details = fmt.Sprintf("orderID: %s, sold %.8f %s for %.8f %s", completedEvent.OrderID, plan.ActiveCurrencyBalance, symbols[0], completedEvent.FinalCurrencyBalance, symbols[1])
 								}
 
@@ -283,21 +285,21 @@ func (engine *Engine) AddPlan(ctx context.Context, req *protoEngine.NewPlanReque
 					symbols := strings.Split(order.MarketName, "-")
 					// adjust balances for buy
 					if order.Side == constPlan.Buy {
-						qty := commonUtil.ToFixed(req.ActiveCurrencyBalance/lastPrice, precision)
+						qty := commonUtil.ToFixedFloor(req.ActiveCurrencyBalance/lastPrice, precision)
 
 						completedEvent.FinalCurrencySymbol = symbols[0]
 						completedEvent.FinalCurrencyBalance = qty
-						completedEvent.InitialCurrencyTraded = commonUtil.ToFixed(completedEvent.FinalCurrencyBalance*lastPrice, precision)
-						completedEvent.InitialCurrencyRemainder = commonUtil.ToFixed(req.ActiveCurrencyBalance-completedEvent.InitialCurrencyTraded, precision)
+						completedEvent.InitialCurrencyTraded = commonUtil.ToFixedFloor(completedEvent.FinalCurrencyBalance*lastPrice, precision)
+						completedEvent.InitialCurrencyRemainder = commonUtil.ToFixedFloor(req.ActiveCurrencyBalance-completedEvent.InitialCurrencyTraded, precision)
 						completedEvent.Details = fmt.Sprintf("bought %.8f %s with %.8f %s", completedEvent.FinalCurrencyBalance, symbols[0], completedEvent.InitialCurrencyTraded, symbols[1])
 					}
 
 					// adjust balances for sell
 					if order.Side == constPlan.Sell {
 						completedEvent.FinalCurrencySymbol = symbols[1]
-						completedEvent.FinalCurrencyBalance = commonUtil.ToFixed(req.ActiveCurrencyBalance*lastPrice, precision)
+						completedEvent.FinalCurrencyBalance = commonUtil.ToFixedFloor(req.ActiveCurrencyBalance*lastPrice, precision)
 						completedEvent.InitialCurrencyRemainder = 0
-						completedEvent.InitialCurrencyTraded = commonUtil.ToFixed(req.ActiveCurrencyBalance, precision)
+						completedEvent.InitialCurrencyTraded = commonUtil.ToFixedFloor(req.ActiveCurrencyBalance, precision)
 						completedEvent.Details = fmt.Sprintf("sold %.8f %s for %.8f %s", req.ActiveCurrencyBalance, symbols[0], completedEvent.FinalCurrencyBalance, symbols[1])
 					}
 

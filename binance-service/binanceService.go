@@ -188,8 +188,9 @@ func (service *BinanceService) HandleFillOrder(ctx context.Context, triggerEvent
 				var commission float64
 				var feesym string
 				var latest time.Time
-				var totalTrades int32
+				var totalTrades float64
 				var sumPrice float64
+				// loop trades and find all that match order ID
 				for _, trade := range trades {
 					if trade.OrderID == processedOrder.OrderID {
 						totalTrades++
@@ -216,7 +217,7 @@ func (service *BinanceService) HandleFillOrder(ctx context.Context, triggerEvent
 				completedEvent.FeeCurrencySymbol = feesym
 				completedEvent.FeeCurrencyAmount = commission
 				// compute the exchange rate as an average
-				completedEvent.ExchangePrice = sumPrice / totalTrades
+				completedEvent.ExchangePrice = util.ToFixedRounded(sumPrice/totalTrades, 8)
 
 				completedEvent.Status = constPlan.Filled
 				completedEvent.ExchangeOrderID = strconv.FormatInt(processedOrder.OrderID, 10)

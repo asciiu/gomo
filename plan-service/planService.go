@@ -272,7 +272,7 @@ func (service *PlanService) HandleCompletedOrder(ctx context.Context, completedO
 			InitialCurrencyBalance:   completedOrderEvent.InitialCurrencyBalance,
 			InitialCurrencyTraded:    completedOrderEvent.InitialCurrencyTraded,
 			InitialCurrencyRemainder: completedOrderEvent.InitialCurrencyRemainder,
-			InitialCurrencyPrice:     completedOrderEvent.InitialCurrencyPrice,
+			InitialCurrencyPrice:     completedOrderEvent.ExchangePrice,
 			FinalCurrencySymbol:      completedOrderEvent.FinalCurrencySymbol,
 			FinalCurrencyBalance:     completedOrderEvent.FinalCurrencyBalance,
 			FeeCurrencySymbol:        completedOrderEvent.FeeCurrencySymbol,
