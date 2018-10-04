@@ -186,8 +186,14 @@ func (service *BinanceService) HandleFillOrder(ctx context.Context, triggerEvent
 
 				var quantity float64
 				var commission float64
+				var feesym string
+				var latest time.Time
+				var totalTrades int32
+				var sumPrice float64
 				for _, trade := range trades {
 					if trade.OrderID == processedOrder.OrderID {
+						totalTrades++
+
 						log.Printf("trade results -- %+v\n", trade)
 
 						if triggerEvent.Side == constPlan.Sell {
@@ -196,12 +202,21 @@ func (service *BinanceService) HandleFillOrder(ctx context.Context, triggerEvent
 							quantity += trade.Qty
 						}
 
-						completedEvent.ExchangeTime = string(pq.FormatTimestamp(trade.Time))
-						completedEvent.FeeCurrencySymbol = trade.CommissionAsset
-						completedEvent.InitialCurrencyPrice = trade.Price
+						// assuming same fee currency
+						feesym = trade.CommissionAsset
+
+						if trade.Time.After(latest) {
+							latest = trade.Time
+						}
+						sumPrice += trade.Price
 						commission += trade.Commission
 					}
 				}
+				completedEvent.ExchangeTime = string(pq.FormatTimestamp(latest))
+				completedEvent.FeeCurrencySymbol = feesym
+				completedEvent.FeeCurrencyAmount = commission
+				// compute the exchange rate as an average
+				completedEvent.ExchangePrice = sumPrice / totalTrades
 
 				completedEvent.Status = constPlan.Filled
 				completedEvent.ExchangeOrderID = strconv.FormatInt(processedOrder.OrderID, 10)
