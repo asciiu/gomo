@@ -783,23 +783,8 @@ func (service *PlanService) GetUserPlan(ctx context.Context, req *protoPlan.GetU
 // Can't return an error with a response object - response object is returned as nil when error is non nil.
 // Therefore, return error in response object.
 func (service *PlanService) GetUserPlans(ctx context.Context, req *protoPlan.GetUserPlansRequest, res *protoPlan.PlansPageResponse) error {
-
-	var page *protoPlan.PlansPage
-	var err error
-
 	// search by userID and status
-	page, err = repoPlan.FindUserPlansWithStatus(service.DB, req.UserID, req.Status, req.Page, req.PageSize)
-	// for i, p := range page.Plans {
-	// 	plan, err := repoPlan.FindParentAndChildren(service.DB, p.PlanID, p.LastExecutedOrderID)
-	// 	switch {
-	// 	case err == sql.ErrNoRows:
-	// 		continue
-	// 	case err != nil:
-	// 		break
-	// 	default:
-	// 		page.Plans[i] = plan
-	// 	}
-	// }
+	page, err := repoPlan.FindUserPlansWithStatus(service.DB, req.UserID, req.Status, req.Page, req.PageSize)
 
 	if err == nil {
 		res.Status = constRes.Success

@@ -46,11 +46,9 @@ message GetUserPlanRequest {
 
 message GetUserPlansRequest {
     string userID = 1;
-    string exchange = 2; 
-    string marketName = 3;
-    string status = 4;
-    uint32 page = 5;
-    uint32 pageSize = 6;
+    string status = 2;
+    uint32 page = 3;
+    uint32 pageSize = 4;
 }
 
 message DeletePlanRequest {
