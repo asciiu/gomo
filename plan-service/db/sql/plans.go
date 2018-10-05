@@ -468,7 +468,11 @@ func FindPlanOrders(db *sql.DB, req *protoPlan.GetUserPlanRequest) (*protoPlan.P
 		o.plan_depth,
 		o.exchange_name,
 		o.exchange_order_id,
+		o.exchange_price,
+		o.exchange_time,
 		o.market_name,
+		o.fee_currency_symbol,
+		o.fee_currency_amount,
 		o.initial_currency_symbol,
 		o.initial_currency_balance,
 		o.initial_currency_traded,
@@ -481,6 +485,7 @@ func FindPlanOrders(db *sql.DB, req *protoPlan.GetUserPlanRequest) (*protoPlan.P
 		o.side,
 		o.limit_price, 
 		o.status,
+		o.errors,
 		o.grupo,
 		o.created_on,
 		o.updated_on,
@@ -520,6 +525,11 @@ func FindPlanOrders(db *sql.DB, req *protoPlan.GetUserPlanRequest) (*protoPlan.P
 		var triggeredCondition sql.NullString
 		var triggeredTimestamp sql.NullString
 		var initialTimestamp sql.NullString
+		var orderErr sql.NullString
+		var exchangePrice sql.NullFloat64
+		var exchangeTime sql.NullString
+		var feeSymbol sql.NullString
+		var feeAmount sql.NullFloat64
 		var finalCurrencySymbol sql.NullString
 		var exchangeOrderID sql.NullString
 		var actionsStr string
@@ -555,7 +565,11 @@ func FindPlanOrders(db *sql.DB, req *protoPlan.GetUserPlanRequest) (*protoPlan.P
 			&order.PlanDepth,
 			&order.Exchange,
 			&exchangeOrderID,
+			&exchangePrice,
+			&exchangeTime,
 			&order.MarketName,
+			&feeSymbol,
+			&feeAmount,
 			&order.InitialCurrencySymbol,
 			&order.InitialCurrencyBalance,
 			&order.InitialCurrencyTraded,
@@ -568,6 +582,7 @@ func FindPlanOrders(db *sql.DB, req *protoPlan.GetUserPlanRequest) (*protoPlan.P
 			&order.Side,
 			&price,
 			&order.Status,
+			&orderErr,
 			&order.Grupo,
 			&order.CreatedOn,
 			&order.UpdatedOn,
@@ -612,6 +627,21 @@ func FindPlanOrders(db *sql.DB, req *protoPlan.GetUserPlanRequest) (*protoPlan.P
 		}
 		if triggerTemplateID.Valid {
 			trigger.TriggerTemplateID = triggerTemplateID.String
+		}
+		if feeSymbol.Valid {
+			order.FeeCurrencySymbol = feeSymbol.String
+		}
+		if feeAmount.Valid {
+			order.FeeCurrencyAmount = feeAmount.Float64
+		}
+		if exchangePrice.Valid {
+			order.ExchangePrice = exchangePrice.Float64
+		}
+		if exchangeTime.Valid {
+			order.ExchangeTime = exchangeTime.String
+		}
+		if orderErr.Valid {
+			order.Errors = orderErr.String
 		}
 		if err := json.Unmarshal([]byte(actionsStr), &trigger.Actions); err != nil {
 			return nil, err

@@ -59,7 +59,7 @@ message Order {
   double limitPrice = 14;               // limit price is required for 'limit' order type
   string exchange = 15;
   string exchangeOrderID = 16;
-  string exchangeTimestamp = 17;
+  string exchangeTime = 17;
   double exchangePrice = 18;
   string marketName = 19;               // e.g. ADA-BTC
   string initialCurrencySymbol = 20;     // e.g. BTC

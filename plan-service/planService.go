@@ -254,8 +254,10 @@ func (service *PlanService) HandleCompletedOrder(ctx context.Context, completedO
 	log.Printf("%+v\n", notification)
 
 	// notify the user of completed order
-	if err := service.NotifyPub.Publish(context.Background(), &notification); err != nil {
-		log.Println("could not publish notification: ", err)
+	if service.NotifyPub != nil {
+		if err := service.NotifyPub.Publish(context.Background(), &notification); err != nil {
+			log.Println("could not publish notification: ", err)
+		}
 	}
 
 	planID, depth, err := repoPlan.UpdateOrderStatus(service.DB, completedOrderEvent.OrderID, completedOrderEvent.Status)
