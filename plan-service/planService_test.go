@@ -919,3 +919,57 @@ func TestHandleAccountDeleted(t *testing.T) {
 
 	repoUser.DeleteUserHard(service.DB, user.ID)
 }
+
+func TestGetUserPlans(t *testing.T) {
+	service, user, acc := setupService()
+
+	defer service.DB.Close()
+
+	//orders := make([]*protoOrder.NewOrderRequest, 0)
+	req := protoPlan.NewPlanRequest{
+		UserID:             user.ID,
+		Status:             "active",
+		CloseOnComplete:    false,
+		PlanTemplateID:     "update_test",
+		UserCurrencySymbol: "USDT",
+		Orders: []*protoOrder.NewOrderRequest{
+			&protoOrder.NewOrderRequest{
+				OrderID:         "4d671984-d7dd-4dce-a20f-23f25d6daf7f",
+				AccountID:       acc.AccountID,
+				OrderType:       "market",
+				OrderTemplateID: "mokie",
+				ParentOrderID:   "00000000-0000-0000-0000-000000000000",
+				MarketName:      "BTC-USDT",
+				Side:            "buy",
+				InitialCurrencyBalance: 100,
+				Triggers: []*protoOrder.TriggerRequest{
+					&protoOrder.TriggerRequest{
+						Code:              "test",
+						Index:             0,
+						Name:              "test_trigger",
+						Title:             "Testing",
+						TriggerTemplateID: "testtemplate",
+						Actions:           []string{"placeOrder"},
+					},
+				},
+			},
+		},
+	}
+	res := protoPlan.PlanResponse{}
+	service.NewPlan(context.Background(), &req, &res)
+	assert.Equal(t, "success", res.Status, "return status of inserting plan should be success got: "+res.Message)
+
+	getPlanReq := protoPlan.GetUserPlansRequest{
+		UserID:   user.ID,
+		Page:     0,
+		PageSize: 10,
+	}
+	plansRes := protoPlan.PlansPageResponse{}
+	service.GetUserPlans(context.Background(), &getPlanReq, &plansRes)
+
+	assert.Equal(t, "success", plansRes.Status, "return status of get plans should be success got: "+res.Message)
+	assert.Equal(t, 1, len(plansRes.Data.Plans), "return status of get plans should be success got: "+res.Message)
+	assert.Equal(t, "test_trigger", plansRes.Data.Plans[0].Orders[0].Triggers[0].Name, "trigger name wrong")
+
+	repoUser.DeleteUserHard(service.DB, user.ID)
+}

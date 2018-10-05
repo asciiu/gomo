@@ -892,7 +892,7 @@ func FindChildOrders(db *sql.DB, planID, parentOrderID string) (*protoPlan.Plan,
 	return &plan, nil
 }
 
-// Leo wants to display the last executed order from the plan list summary card.
+// Includes last executed and next order of executed orders.
 func FindParentAndChildren(db *sql.DB, planID, parentOrderID string) (*protoPlan.Plan, error) {
 	rows, err := db.Query(`SELECT 
 		p.id as plan_id,
@@ -1290,51 +1290,211 @@ func FindAccountPlans(db *sql.DB, accountID string) ([]*protoPlan.Plan, error) {
 	return plans, nil
 }
 
+// func FindUserPlansWithStatus(db *sql.DB, userID, status string, page, pageSize uint32) (*protoPlan.PlansPage, error) {
+
+// 	var count uint32
+// 	queryCount := `SELECT count(*) FROM plans WHERE user_id = $1 AND status = $2`
+// 	err := db.QueryRow(queryCount, userID, status).Scan(&count)
+
+// 	plans := make([]*protoPlan.Plan, 0)
+// 	query := `SELECT
+// 			id,
+// 			title,
+// 			total_depth,
+// 			exchange_name,
+// 			user_currency_symbol,
+// 			active_currency_symbol,
+// 			active_currency_balance,
+// 			initial_currency_symbol,
+// 			initial_currency_balance,
+// 			initial_timestamp,
+// 			last_executed_plan_depth,
+// 			last_executed_order_id,
+// 			plan_template_id,
+// 			close_on_complete,
+// 			user_plan_number,
+// 			status,
+// 			created_on,
+// 			updated_on
+// 		FROM plans
+// 		WHERE user_id = $1 AND status = $2 ORDER BY created_on OFFSET $3 LIMIT $4`
+
+// 	rows, err := db.Query(query, userID, status, page, pageSize)
+// 	if err != nil {
+// 		return nil, err
+// 	}
+// 	defer rows.Close()
+// 	for rows.Next() {
+// 		var plan protoPlan.Plan
+// 		var planTemplateID sql.NullString
+// 		var initialTimestamp sql.NullString
+
+// 		err := rows.Scan(
+// 			&plan.PlanID,
+// 			&plan.Title,
+// 			&plan.TotalDepth,
+// 			&plan.Exchange,
+// 			&plan.UserCurrencySymbol,
+// 			&plan.ActiveCurrencySymbol,
+// 			&plan.ActiveCurrencyBalance,
+// 			&plan.InitialCurrencySymbol,
+// 			&plan.InitialCurrencyBalance,
+// 			&initialTimestamp,
+// 			&plan.LastExecutedPlanDepth,
+// 			&plan.LastExecutedOrderID,
+// 			&planTemplateID,
+// 			&plan.CloseOnComplete,
+// 			&plan.UserPlanNumber,
+// 			&plan.Status,
+// 			&plan.CreatedOn,
+// 			&plan.UpdatedOn)
+
+// 		if err != nil {
+// 			return nil, err
+// 		}
+// 		if initialTimestamp.Valid {
+// 			plan.InitialTimestamp = initialTimestamp.String
+// 		}
+// 		if planTemplateID.Valid {
+// 			plan.PlanTemplateID = planTemplateID.String
+// 		}
+
+// 		plans = append(plans, &plan)
+// 	}
+// 	err = rows.Err()
+// 	if err != nil {
+// 		log.Fatal(err)
+// 		return nil, err
+// 	}
+
+// 	result := protoPlan.PlansPage{
+// 		Page:     page,
+// 		PageSize: pageSize,
+// 		Total:    count,
+// 		Plans:    plans,
+// 	}
+
+// 	return &result, nil
+// }
+
+// Find all user plans for exchange with status
+//		WHERE user_id = $1 AND status = $2 AND exchange_name = $3 ORDER BY created_on OFFSET $4 LIMIT $5`
 func FindUserPlansWithStatus(db *sql.DB, userID, status string, page, pageSize uint32) (*protoPlan.PlansPage, error) {
 
 	var count uint32
-	queryCount := `SELECT count(*) FROM plans WHERE user_id = $1 AND status = $2`
+	queryCount := `SELECT count(*) FROM plans WHERE user_id = $1 AND status like '%' || $2 || '%'`
 	err := db.QueryRow(queryCount, userID, status).Scan(&count)
-
-	plans := make([]*protoPlan.Plan, 0)
-	query := `SELECT 
-			id,
-			title,
-			total_depth,
-			exchange_name,
-			user_currency_symbol,
-			active_currency_symbol,
-			active_currency_balance,
-			initial_currency_symbol,
-			initial_currency_balance,
-			initial_timestamp,
-			last_executed_plan_depth,
-			last_executed_order_id,
-			plan_template_id,
-			close_on_complete,
-			user_plan_number,
-			status,
-			created_on,
-			updated_on
-		FROM plans 
-		WHERE user_id = $1 AND status = $2 ORDER BY created_on OFFSET $3 LIMIT $4`
-
-	rows, err := db.Query(query, userID, status, page, pageSize)
 	if err != nil {
 		return nil, err
 	}
+
+	rows, err := db.Query(`SELECT 
+	p.id as plan_id,
+	p.user_id,
+	p.title,
+	p.total_depth,
+	p.exchange_name,
+	p.user_currency_symbol,
+	p.user_currency_balance_at_init,
+	p.active_currency_symbol,
+	p.active_currency_balance,
+	p.initial_currency_symbol,
+	p.initial_currency_balance,
+	p.initial_timestamp,
+	p.last_executed_plan_depth,
+	p.last_executed_order_id,
+	p.close_on_complete,
+	p.user_plan_number,
+	p.status,
+	p.created_on,
+	p.updated_on,
+	a.id as account_id,
+	a.key_public,
+	a.key_secret,
+	a.description,
+	o.id as order_id,
+	o.parent_order_id,
+	o.plan_id,
+	o.plan_depth,
+	o.exchange_name,
+	o.exchange_order_id,
+	o.exchange_price,
+	o.exchange_time,
+	o.market_name,
+	o.fee_currency_symbol,
+	o.fee_currency_amount,
+	o.initial_currency_symbol,
+	o.initial_currency_balance,
+	o.initial_currency_traded,
+	o.initial_currency_remainder,
+	o.final_currency_symbol,
+	o.final_currency_balance,
+	o.order_priority,
+	o.order_template_id,
+	o.order_type,
+	o.side,
+	o.limit_price, 
+	o.status,
+	o.errors,
+	o.grupo,
+	o.created_on,
+	o.updated_on,
+	t.id as trigger_id,
+	t.index,
+	t.title,
+	t.name,
+	t.code,
+	array_to_json(t.actions),
+	t.triggered,
+	t.triggered_price,
+	t.triggered_condition,
+	t.triggered_timestamp,
+	t.trigger_template_id,
+	t.created_on,
+	t.updated_on
+	FROM plans p 
+	JOIN orders o on p.id = o.plan_id
+	JOIN triggers t on o.id = t.order_id
+	JOIN accounts a on o.account_id = a.id
+	WHERE p.user_id = $1 AND p.status like '%' || $2 || '%' AND (o.parent_order_id = p.last_executed_order_id or o.plan_depth <= (p.last_executed_plan_depth +1))
+	ORDER BY p.id, o.plan_depth, o.order_priority, o.id, t.index
+	OFFSET $3 LIMIT $4`, userID, status, page, pageSize)
+
+	if err != nil {
+		return nil, err
+	}
+
 	defer rows.Close()
+
+	plans := make([]*protoPlan.Plan, 0)
 	for rows.Next() {
 		var plan protoPlan.Plan
-		var planTemplateID sql.NullString
 		var initialTimestamp sql.NullString
+		var trigger protoOrder.Trigger
+		var price sql.NullFloat64
+		var triggerTemplateID sql.NullString
+		var triggeredPrice sql.NullFloat64
+		var triggeredCondition sql.NullString
+		var triggeredTimestamp sql.NullString
+		var orderErr sql.NullString
+		var exchangePrice sql.NullFloat64
+		var exchangeTime sql.NullString
+		var feeSymbol sql.NullString
+		var feeAmount sql.NullFloat64
+		var finalCurrencySymbol sql.NullString
+		var exchangeOrderID sql.NullString
+		var actionsStr string
+		var order protoOrder.Order
+		var balanceAtInit sql.NullFloat64
 
 		err := rows.Scan(
 			&plan.PlanID,
+			&plan.UserID,
 			&plan.Title,
 			&plan.TotalDepth,
 			&plan.Exchange,
 			&plan.UserCurrencySymbol,
+			&balanceAtInit,
 			&plan.ActiveCurrencySymbol,
 			&plan.ActiveCurrencyBalance,
 			&plan.InitialCurrencySymbol,
@@ -1342,113 +1502,153 @@ func FindUserPlansWithStatus(db *sql.DB, userID, status string, page, pageSize u
 			&initialTimestamp,
 			&plan.LastExecutedPlanDepth,
 			&plan.LastExecutedOrderID,
-			&planTemplateID,
 			&plan.CloseOnComplete,
 			&plan.UserPlanNumber,
 			&plan.Status,
 			&plan.CreatedOn,
-			&plan.UpdatedOn)
+			&plan.UpdatedOn,
+			&order.AccountID,
+			&order.KeyPublic,
+			&order.KeySecret,
+			&order.KeyDescription,
+			&order.OrderID,
+			&order.ParentOrderID,
+			&order.PlanID,
+			&order.PlanDepth,
+			&order.Exchange,
+			&exchangeOrderID,
+			&exchangePrice,
+			&exchangeTime,
+			&order.MarketName,
+			&feeSymbol,
+			&feeAmount,
+			&order.InitialCurrencySymbol,
+			&order.InitialCurrencyBalance,
+			&order.InitialCurrencyTraded,
+			&order.InitialCurrencyRemainder,
+			&finalCurrencySymbol,
+			&order.FinalCurrencyBalance,
+			&order.OrderPriority,
+			&order.OrderTemplateID,
+			&order.OrderType,
+			&order.Side,
+			&price,
+			&order.Status,
+			&orderErr,
+			&order.Grupo,
+			&order.CreatedOn,
+			&order.UpdatedOn,
+			&trigger.TriggerID,
+			&trigger.Index,
+			&trigger.Title,
+			&trigger.Name,
+			&trigger.Code,
+			&actionsStr,
+			&trigger.Triggered,
+			&triggeredPrice,
+			&triggeredCondition,
+			&triggeredTimestamp,
+			&triggerTemplateID,
+			&trigger.CreatedOn,
+			&trigger.UpdatedOn)
 
 		if err != nil {
 			return nil, err
 		}
+		if exchangeOrderID.Valid {
+			order.ExchangeOrderID = exchangeOrderID.String
+		}
 		if initialTimestamp.Valid {
 			plan.InitialTimestamp = initialTimestamp.String
 		}
-		if planTemplateID.Valid {
-			plan.PlanTemplateID = planTemplateID.String
+		if price.Valid {
+			order.LimitPrice = price.Float64
 		}
-
-		plans = append(plans, &plan)
-	}
-	err = rows.Err()
-	if err != nil {
-		log.Fatal(err)
-		return nil, err
-	}
-
-	result := protoPlan.PlansPage{
-		Page:     page,
-		PageSize: pageSize,
-		Total:    count,
-		Plans:    plans,
-	}
-
-	return &result, nil
-}
-
-// Find all user plans for exchange with status
-func FindUserExchangePlansWithStatus(db *sql.DB, userID, status, exchange string, page, pageSize uint32) (*protoPlan.PlansPage, error) {
-
-	var count uint32
-	queryCount := `SELECT count(*) FROM plans WHERE user_id = $1 AND status = $2 AND exchange_name = $3`
-	err := db.QueryRow(queryCount, userID, status, exchange).Scan(&count)
-
-	plans := make([]*protoPlan.Plan, 0)
-	query := `SELECT 
-			id,
-			title,
-			total_depth,
-			exchange_name,
-			user_currency_symbol,
-			active_currency_symbol,
-			active_currency_balance,
-			initial_currency_symbol,
-			initial_currency_balance,
-			initial_timestamp,
-			last_executed_plan_depth,
-			last_executed_order_id,
-			plan_template_id,
-			close_on_complete,
-			user_plan_number,
-			status,
-			created_on,
-			updated_on
-		FROM plans 
-		WHERE user_id = $1 AND status = $2 AND exchange_name = $3 ORDER BY created_on OFFSET $4 LIMIT $5`
-
-	rows, err := db.Query(query, userID, status, exchange, page, pageSize)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	for rows.Next() {
-		var plan protoPlan.Plan
-		var planTemplateID sql.NullString
-		var initialTimestamp sql.NullString
-
-		err := rows.Scan(
-			&plan.PlanID,
-			&plan.Title,
-			&plan.TotalDepth,
-			&plan.Exchange,
-			&plan.UserCurrencySymbol,
-			&plan.ActiveCurrencySymbol,
-			&plan.ActiveCurrencyBalance,
-			&plan.InitialCurrencySymbol,
-			&plan.InitialCurrencyBalance,
-			&initialTimestamp,
-			&plan.LastExecutedPlanDepth,
-			&plan.LastExecutedOrderID,
-			&planTemplateID,
-			&plan.CloseOnComplete,
-			&plan.UserPlanNumber,
-			&plan.Status,
-			&plan.CreatedOn,
-			&plan.UpdatedOn)
-
-		if err != nil {
+		if finalCurrencySymbol.Valid {
+			order.FinalCurrencySymbol = finalCurrencySymbol.String
+		}
+		if triggeredPrice.Valid {
+			trigger.TriggeredPrice = triggeredPrice.Float64
+		}
+		if triggeredCondition.Valid {
+			trigger.TriggeredCondition = triggeredCondition.String
+		}
+		if triggeredTimestamp.Valid {
+			trigger.TriggeredTimestamp = triggeredTimestamp.String
+		}
+		if triggerTemplateID.Valid {
+			trigger.TriggerTemplateID = triggerTemplateID.String
+		}
+		if err := json.Unmarshal([]byte(actionsStr), &trigger.Actions); err != nil {
 			return nil, err
 		}
-		if initialTimestamp.Valid {
-			plan.InitialTimestamp = initialTimestamp.String
+		if feeSymbol.Valid {
+			order.FeeCurrencySymbol = feeSymbol.String
 		}
-		if planTemplateID.Valid {
-			plan.PlanTemplateID = planTemplateID.String
+		if feeAmount.Valid {
+			order.FeeCurrencyAmount = feeAmount.Float64
+		}
+		if exchangePrice.Valid {
+			order.ExchangePrice = exchangePrice.Float64
+		}
+		if exchangeTime.Valid {
+			order.ExchangeTime = exchangeTime.String
+		}
+		if orderErr.Valid {
+			order.Errors = orderErr.String
+		}
+		if balanceAtInit.Valid {
+			plan.UserCurrencyBalanceAtInit = balanceAtInit.Float64
+		}
+		trigger.OrderID = order.OrderID
+
+		// does the plan structure already exist in the plans
+		isNewPlan := true
+		for _, p := range plans {
+			// append structures to existing plan
+			if p.PlanID == plan.PlanID {
+				// is this a new order?
+				isNewOrder := true
+				for _, o := range p.Orders {
+					// if not new order append trigger
+					if o.OrderID == order.OrderID {
+						isNewTrigger := true
+						for _, t := range o.Triggers {
+							if t.TriggerID == trigger.TriggerID {
+								isNewTrigger = false
+								break
+							}
+						}
+
+						if isNewTrigger {
+							o.Triggers = append(o.Triggers, &trigger)
+						}
+
+						isNewOrder = false
+						break
+					}
+				}
+
+				if isNewOrder {
+					// append the trigger to the new order
+					order.Triggers = append(order.Triggers, &trigger)
+					p.Orders = append(p.Orders, &order)
+				}
+
+				isNewPlan = false
+				break
+			}
 		}
 
-		plans = append(plans, &plan)
+		// new plan append to plans
+		if isNewPlan {
+			order.Triggers = append(order.Triggers, &trigger)
+			plan.Orders = append(plan.Orders, &order)
+			// TODO merge all under the appropriate structure
+			plans = append(plans, &plan)
+		}
 	}
+
 	err = rows.Err()
 	if err != nil {
 		return nil, err
