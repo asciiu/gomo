@@ -605,18 +605,6 @@
         "parameters": [
           {
             "type": "string",
-            "x-go-name": "Exchange",
-            "name": "exchange",
-            "in": "query"
-          },
-          {
-            "type": "string",
-            "x-go-name": "MarketName",
-            "name": "marketName",
-            "in": "query"
-          },
-          {
-            "type": "string",
             "x-go-name": "Status",
             "name": "status",
             "in": "query"
@@ -1544,14 +1532,6 @@
       "description": "required for swaggered, otherwise never used",
       "type": "object",
       "properties": {
-        "exchange": {
-          "type": "string",
-          "x-go-name": "Exchange"
-        },
-        "marketName": {
-          "type": "string",
-          "x-go-name": "MarketName"
-        },
         "page": {
           "type": "integer",
           "format": "uint32",
@@ -2088,10 +2068,10 @@
           "type": "string",
           "x-go-name": "UpdatedOn"
         },
-        "userCurrencyBalance": {
+        "userCurrencyBalanceAtInit": {
           "type": "number",
           "format": "double",
-          "x-go-name": "UserCurrencyBalance"
+          "x-go-name": "UserCurrencyBalanceAtInit"
         },
         "userCurrencySymbol": {
           "type": "string",
@@ -2117,9 +2097,6 @@
     "PlanController": {
       "type": "object",
       "properties": {
-        "AnalyticsClient": {
-          "$ref": "#/definitions/AnalyticsServiceClient"
-        },
         "BulletinClient": {
           "$ref": "#/definitions/ActivityBulletinClient"
         },

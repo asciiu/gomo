@@ -351,11 +351,9 @@ func (controller *PlanController) HandleGetPlan(c echo.Context) error {
 // required for swaggered, otherwise never used
 // swagger:parameters GetUserPlansParams
 type GetUserPlansParams struct {
-	Exchange   string `json:"exchange"`
-	MarketName string `json:"marketName"`
-	Status     string `json:"status"`
-	Page       uint32 `json:"page"`
-	PageSize   uint32 `json:"pageSize"`
+	Status   string `json:"status"`
+	Page     uint32 `json:"page"`
+	PageSize uint32 `json:"pageSize"`
 }
 
 // swagger:route GET /plans plans GetUserPlansParams
@@ -379,8 +377,6 @@ func (controller *PlanController) HandleListPlans(c echo.Context) error {
 	token := c.Get("user").(*jwt.Token)
 	claims := token.Claims.(jwt.MapClaims)
 	userID := claims["jti"].(string)
-	exchange := c.QueryParam("exchange")
-	marketName := c.QueryParam("marketName")
 	status := c.QueryParam("status")
 
 	pageStr := c.QueryParam("page")
@@ -395,12 +391,10 @@ func (controller *PlanController) HandleListPlans(c echo.Context) error {
 	}
 
 	getRequest := protoPlan.GetUserPlansRequest{
-		UserID:     userID,
-		Page:       uint32(page),
-		PageSize:   uint32(pageSize),
-		Exchange:   exchange,
-		MarketName: marketName,
-		Status:     status,
+		UserID:   userID,
+		Page:     uint32(page),
+		PageSize: uint32(pageSize),
+		Status:   status,
 	}
 
 	r, _ := controller.PlanClient.GetUserPlans(context.Background(), &getRequest)
