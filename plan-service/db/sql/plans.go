@@ -917,7 +917,11 @@ func FindParentAndChildren(db *sql.DB, planID, parentOrderID string) (*protoPlan
 		o.plan_depth,
 		o.exchange_name,
 		o.exchange_order_id,
+		o.exchange_price,
+		o.exchange_time,
 		o.market_name,
+		o.fee_currency_symbol,
+		o.fee_currency_amount,
 		o.initial_currency_symbol,
 		o.initial_currency_balance,
 		o.initial_currency_traded,
@@ -930,6 +934,7 @@ func FindParentAndChildren(db *sql.DB, planID, parentOrderID string) (*protoPlan
 		o.side,
 		o.limit_price, 
 		o.status,
+		o.errors,
 		o.grupo,
 		o.created_on,
 		o.updated_on,
@@ -968,8 +973,13 @@ func FindParentAndChildren(db *sql.DB, planID, parentOrderID string) (*protoPlan
 		var triggeredPrice sql.NullFloat64
 		var triggeredCondition sql.NullString
 		var triggeredTimestamp sql.NullString
-		var finalCurrencySymbol sql.NullString
 		var initialTimestamp sql.NullString
+		var orderErr sql.NullString
+		var exchangePrice sql.NullFloat64
+		var exchangeTime sql.NullString
+		var feeSymbol sql.NullString
+		var feeAmount sql.NullFloat64
+		var finalCurrencySymbol sql.NullString
 		var exchangeOrderID sql.NullString
 		var actionsStr string
 		var order protoOrder.Order
@@ -1003,7 +1013,11 @@ func FindParentAndChildren(db *sql.DB, planID, parentOrderID string) (*protoPlan
 			&order.PlanDepth,
 			&order.Exchange,
 			&exchangeOrderID,
+			&exchangePrice,
+			&exchangeTime,
 			&order.MarketName,
+			&feeSymbol,
+			&feeAmount,
 			&order.InitialCurrencySymbol,
 			&order.InitialCurrencyBalance,
 			&order.InitialCurrencyTraded,
@@ -1016,6 +1030,7 @@ func FindParentAndChildren(db *sql.DB, planID, parentOrderID string) (*protoPlan
 			&order.Side,
 			&price,
 			&order.Status,
+			&orderErr,
 			&order.Grupo,
 			&order.CreatedOn,
 			&order.UpdatedOn,
@@ -1062,6 +1077,21 @@ func FindParentAndChildren(db *sql.DB, planID, parentOrderID string) (*protoPlan
 		}
 		if err := json.Unmarshal([]byte(actionsStr), &trigger.Actions); err != nil {
 			return nil, err
+		}
+		if feeSymbol.Valid {
+			order.FeeCurrencySymbol = feeSymbol.String
+		}
+		if feeAmount.Valid {
+			order.FeeCurrencyAmount = feeAmount.Float64
+		}
+		if exchangePrice.Valid {
+			order.ExchangePrice = exchangePrice.Float64
+		}
+		if exchangeTime.Valid {
+			order.ExchangeTime = exchangeTime.String
+		}
+		if orderErr.Valid {
+			order.Errors = orderErr.String
 		}
 		trigger.OrderID = order.OrderID
 
