@@ -1823,7 +1823,6 @@
       "type": "object",
       "properties": {
         "accountID": {
-          "description": "KeyID                    string                `json:\"keyID,omitempty\"`",
           "type": "string",
           "x-go-name": "AccountID"
         },
@@ -1839,17 +1838,35 @@
           "type": "string",
           "x-go-name": "CreatedOn"
         },
+        "errors": {
+          "type": "string",
+          "x-go-name": "Errors"
+        },
         "exchange": {
           "type": "string",
           "x-go-name": "Exchange"
         },
-        "exchangeMarketName": {
-          "type": "string",
-          "x-go-name": "ExchangeMarketName"
-        },
         "exchangeOrderID": {
           "type": "string",
           "x-go-name": "ExchangeOrderID"
+        },
+        "exchangePrice": {
+          "type": "number",
+          "format": "double",
+          "x-go-name": "ExchangePrice"
+        },
+        "exchangeTime": {
+          "type": "string",
+          "x-go-name": "ExchangeTime"
+        },
+        "feeCurrencyAmount": {
+          "type": "number",
+          "format": "double",
+          "x-go-name": "FeeCurrencyAmount"
+        },
+        "feeCurrencySymbol": {
+          "type": "string",
+          "x-go-name": "FeeCurrencySymbol"
         },
         "finalCurrencyBalance": {
           "type": "number",
@@ -1960,13 +1977,6 @@
           "type": "string",
           "x-go-name": "Status"
         },
-        "trades": {
-          "type": "array",
-          "items": {
-            "$ref": "#/definitions/Trade"
-          },
-          "x-go-name": "Trades"
-        },
         "triggers": {
           "type": "array",
           "items": {
@@ -1998,9 +2008,6 @@
           "type": "string",
           "x-go-name": "ActiveCurrencySymbol"
         },
-        "activity": {
-          "$ref": "#/definitions/PlanActivitySummary"
-        },
         "closeOnComplete": {
           "type": "boolean",
           "x-go-name": "CloseOnComplete"
@@ -2012,10 +2019,6 @@
         "exchange": {
           "type": "string",
           "x-go-name": "Exchange"
-        },
-        "exchangeMarketName": {
-          "type": "string",
-          "x-go-name": "ExchangeMarketName"
         },
         "initialCurrencyBalance": {
           "type": "number",
@@ -2429,78 +2432,6 @@
         }
       },
       "x-go-package": "github.com/asciiu/gomo/api/controllers"
-    },
-    "Trade": {
-      "type": "object",
-      "properties": {
-        "createdOn": {
-          "type": "string",
-          "x-go-name": "CreatedOn"
-        },
-        "exchangeTime": {
-          "type": "string",
-          "x-go-name": "ExchangeTime"
-        },
-        "feeCurrencyAmount": {
-          "type": "number",
-          "format": "double",
-          "x-go-name": "FeeCurrencyAmount"
-        },
-        "feeCurrencySymbol": {
-          "type": "string",
-          "x-go-name": "FeeCurrencySymbol"
-        },
-        "finalCurrencyBalance": {
-          "type": "number",
-          "format": "double",
-          "x-go-name": "FinalCurrencyBalance"
-        },
-        "finalCurrencySymbol": {
-          "type": "string",
-          "x-go-name": "FinalCurrencySymbol"
-        },
-        "initialCurrencyBalance": {
-          "type": "number",
-          "format": "double",
-          "x-go-name": "InitialCurrencyBalance"
-        },
-        "initialCurrencyPrice": {
-          "type": "number",
-          "format": "double",
-          "x-go-name": "InitialCurrencyPrice"
-        },
-        "initialCurrencyRemainder": {
-          "type": "number",
-          "format": "double",
-          "x-go-name": "InitialCurrencyRemainder"
-        },
-        "initialCurrencySymbol": {
-          "type": "string",
-          "x-go-name": "InitialCurrencySymbol"
-        },
-        "initialCurrencyTraded": {
-          "type": "number",
-          "format": "double",
-          "x-go-name": "InitialCurrencyTraded"
-        },
-        "orderID": {
-          "type": "string",
-          "x-go-name": "OrderID"
-        },
-        "side": {
-          "type": "string",
-          "x-go-name": "Side"
-        },
-        "tradeID": {
-          "type": "string",
-          "x-go-name": "TradeID"
-        },
-        "updatedOn": {
-          "type": "string",
-          "x-go-name": "UpdatedOn"
-        }
-      },
-      "x-go-package": "github.com/asciiu/gomo/api/vendor/github.com/asciiu/gomo/plan-service/proto/trade"
     },
     "Trigger": {
       "type": "object",

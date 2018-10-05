@@ -6,7 +6,6 @@ import (
 	"net/http"
 	"strconv"
 	"strings"
-	"time"
 
 	protoActivity "github.com/asciiu/gomo/activity-bulletin/proto"
 	protoAnalytics "github.com/asciiu/gomo/analytics-service/proto/analytics"
@@ -52,14 +51,15 @@ type PlansPage struct {
 
 // This response should never return the key secret
 type Plan struct {
-	PlanID                     string   `json:"planID"`
-	PlanTemplateID             string   `json:"planTemplateID"`
-	PlanNumber                 uint64   `json:"planNumber"`
-	Title                      string   `json:"title"`
-	TotalDepth                 uint32   `json:"totalDepth"`
-	Exchange                   string   `json:"exchange"`
-	UserCurrencySymbol         string   `json:"userCurrencySymbol"`
-	UserCurrencyBalance        float64  `json:"userCurrencyBalance"`
+	PlanID             string `json:"planID"`
+	PlanTemplateID     string `json:"planTemplateID"`
+	PlanNumber         uint64 `json:"planNumber"`
+	Title              string `json:"title"`
+	TotalDepth         uint32 `json:"totalDepth"`
+	Exchange           string `json:"exchange"`
+	UserCurrencySymbol string `json:"userCurrencySymbol"`
+	//UserCurrencyBalance        float64  `json:"userCurrencyBalance"`
+	UserCurrencyBalanceAtInit  float64  `json:"userCurrencyBalanceAtInit"`
 	InitialUserCurrencyBalance float64  `json:"initialUserCurrencyBalance"`
 	InitialTimestamp           string   `json:"initialTimestamp"`
 	ActiveCurrencySymbol       string   `json:"activeCurrencySymbol"`
@@ -321,14 +321,14 @@ func (controller *PlanController) HandleGetPlan(c echo.Context) error {
 		newOrders = append(newOrders, &newo)
 	}
 
-	convertReq := protoAnalytics.ConversionRequest{
-		Exchange:    plan.Exchange,
-		From:        plan.ActiveCurrencySymbol,
-		FromAmount:  plan.ActiveCurrencyBalance,
-		To:          plan.BaseCurrencySymbol,
-		AtTimestamp: time.Now().UTC().Format(time.RFC3339),
-	}
-	convertRes, _ := controller.AnalyticsClient.ConvertCurrency(context.Background(), &convertReq)
+	//convertReq := protoAnalytics.ConversionRequest{
+	//	Exchange:    plan.Exchange,
+	//	From:        plan.ActiveCurrencySymbol,
+	//	FromAmount:  plan.ActiveCurrencyBalance,
+	//	To:          plan.BaseCurrencySymbol,
+	//	AtTimestamp: time.Now().UTC().Format(time.RFC3339),
+	//}
+	//convertRes, _ := controller.AnalyticsClient.ConvertCurrency(context.Background(), &convertReq)
 
 	// calc plan initial balance at time only if initial timestamp is valid
 	// when initial timestamp == "" it means it was not set yet -- 8/29/18 set as first triggeredTime
@@ -348,15 +348,16 @@ func (controller *PlanController) HandleGetPlan(c echo.Context) error {
 	res := &ResponsePlanSuccess{
 		Status: constRes.Success,
 		Data: &Plan{
-			PlanID:                     plan.PlanID,
-			PlanTemplateID:             plan.PlanTemplateID,
-			PlanNumber:                 plan.UserPlanNumber,
-			Title:                      plan.Title,
-			TotalDepth:                 plan.TotalDepth,
-			Exchange:                   plan.Exchange,
-			InitialTimestamp:           plan.InitialTimestamp,
-			UserCurrencySymbol:         plan.BaseCurrencySymbol,
-			UserCurrencyBalance:        convertRes.Data.ConvertedAmount,
+			PlanID:             plan.PlanID,
+			PlanTemplateID:     plan.PlanTemplateID,
+			PlanNumber:         plan.UserPlanNumber,
+			Title:              plan.Title,
+			TotalDepth:         plan.TotalDepth,
+			Exchange:           plan.Exchange,
+			InitialTimestamp:   plan.InitialTimestamp,
+			UserCurrencySymbol: plan.BaseCurrencySymbol,
+			//UserCurrencyBalance: convertRes.Data.ConvertedAmount,
+			// UserCurrencyBalanceAtInit
 			InitialUserCurrencyBalance: initialTimeBalance,
 			ActiveCurrencySymbol:       plan.ActiveCurrencySymbol,
 			ActiveCurrencyName:         controller.currencies[plan.ActiveCurrencySymbol],
@@ -498,14 +499,14 @@ func (controller *PlanController) HandleListPlans(c echo.Context) error {
 			cOrders = append(cOrders, &newo)
 		}
 
-		convertReq := protoAnalytics.ConversionRequest{
-			Exchange:    plan.Exchange,
-			From:        plan.ActiveCurrencySymbol,
-			FromAmount:  plan.ActiveCurrencyBalance,
-			To:          plan.BaseCurrencySymbol,
-			AtTimestamp: time.Now().UTC().Format(time.RFC3339),
-		}
-		convertRes, _ := controller.AnalyticsClient.ConvertCurrency(context.Background(), &convertReq)
+		//convertReq := protoAnalytics.ConversionRequest{
+		//	Exchange:    plan.Exchange,
+		//	From:        plan.ActiveCurrencySymbol,
+		//	FromAmount:  plan.ActiveCurrencyBalance,
+		//	To:          plan.BaseCurrencySymbol,
+		//	AtTimestamp: time.Now().UTC().Format(time.RFC3339),
+		//}
+		//convertRes, _ := controller.AnalyticsClient.ConvertCurrency(context.Background(), &convertReq)
 
 		// calc initial time balance only if there is a valid timestamp
 		initialTimeBalance := 0.0
@@ -522,14 +523,14 @@ func (controller *PlanController) HandleListPlans(c echo.Context) error {
 		}
 
 		pln := Plan{
-			PlanID:                     plan.PlanID,
-			PlanTemplateID:             plan.PlanTemplateID,
-			PlanNumber:                 plan.UserPlanNumber,
-			Title:                      plan.Title,
-			TotalDepth:                 plan.TotalDepth,
-			Exchange:                   plan.Exchange,
-			UserCurrencySymbol:         plan.BaseCurrencySymbol,
-			UserCurrencyBalance:        convertRes.Data.ConvertedAmount,
+			PlanID:             plan.PlanID,
+			PlanTemplateID:     plan.PlanTemplateID,
+			PlanNumber:         plan.UserPlanNumber,
+			Title:              plan.Title,
+			TotalDepth:         plan.TotalDepth,
+			Exchange:           plan.Exchange,
+			UserCurrencySymbol: plan.BaseCurrencySymbol,
+			//UserCurrencyBalance:        convertRes.Data.ConvertedAmount,
 			InitialTimestamp:           plan.InitialTimestamp,
 			InitialUserCurrencyBalance: initialTimeBalance,
 			ActiveCurrencySymbol:       plan.ActiveCurrencySymbol,
