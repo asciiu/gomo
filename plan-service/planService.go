@@ -11,6 +11,7 @@ import (
 
 	constAccount "github.com/asciiu/gomo/account-service/constants"
 	protoActivity "github.com/asciiu/gomo/activity-bulletin/proto"
+	protoAnalytics "github.com/asciiu/gomo/analytics-service/proto/analytics"
 	constRes "github.com/asciiu/gomo/common/constants/response"
 	protoEvt "github.com/asciiu/gomo/common/proto/events"
 	commonUtil "github.com/asciiu/gomo/common/util"
@@ -32,10 +33,11 @@ const precision = 8
 
 // PlanService ...
 type PlanService struct {
-	DB            *sql.DB
-	AccountClient protoAccount.AccountServiceClient
-	EngineClient  protoEngine.ExecutionEngineClient
-	NotifyPub     micro.Publisher
+	DB              *sql.DB
+	AccountClient   protoAccount.AccountServiceClient
+	EngineClient    protoEngine.ExecutionEngineClient
+	AnalyticsClient protoAnalytics.AnalyticsServiceClient
+	NotifyPub       micro.Publisher
 }
 
 // private: This is where the order events are published to the rest of the system
@@ -346,7 +348,21 @@ func (service *PlanService) HandleCompletedOrder(ctx context.Context, completedO
 
 		// first order and init time was not set
 		if depth == 1 && initTime == "" {
-			if err := repoPlan.UpdatePlanInitTimestamp(service.DB, planID, now); err != nil {
+			userCurrencySymbol, err := repoPlan.FindPlanUserCurrencySymbol(service.DB, completedOrderEvent.PlanID)
+			var initialAssetValue float64
+			if err == nil && userCurrencySymbol != "" {
+				convertReq := protoAnalytics.ConversionRequest{
+					Exchange:    completedOrderEvent.Exchange,
+					From:        completedOrderEvent.InitialCurrencySymbol,
+					FromAmount:  completedOrderEvent.InitialCurrencyBalance,
+					To:          userCurrencySymbol,
+					AtTimestamp: now,
+				}
+				convertRes, _ := service.AnalyticsClient.ConvertCurrency(context.Background(), &convertReq)
+				initialAssetValue = convertRes.Data.ConvertedAmount
+			}
+
+			if err := repoPlan.UpdatePlanInitTimestamp(service.DB, planID, now, initialAssetValue); err != nil {
 				log.Println("could not update plan init time -- ", err.Error())
 				return nil
 			}
@@ -667,9 +683,11 @@ func (service *PlanService) NewPlan(ctx context.Context, req *protoPlan.NewPlanR
 
 	// base currency defaults to USDT
 	baseCurrencySymbol := "USDT"
-	if req.BaseCurrencySymbol != "" {
-		baseCurrencySymbol = req.BaseCurrencySymbol
+	if req.UserCurrencySymbol != "" {
+		baseCurrencySymbol = req.UserCurrencySymbol
 	}
+
+	// TODO if req.IntialTimestamp compute the initial currency balance using the baseCurrencySymbol
 
 	pln := protoPlan.Plan{
 		PlanID:                 planID.String(),
@@ -677,7 +695,7 @@ func (service *PlanService) NewPlan(ctx context.Context, req *protoPlan.NewPlanR
 		UserID:                 req.UserID,
 		Title:                  title,
 		TotalDepth:             totalDepth,
-		BaseCurrencySymbol:     baseCurrencySymbol,
+		UserCurrencySymbol:     baseCurrencySymbol,
 		ActiveCurrencySymbol:   newOrders[0].InitialCurrencySymbol,
 		ActiveCurrencyBalance:  newOrders[0].InitialCurrencyBalance,
 		InitialCurrencySymbol:  newOrders[0].InitialCurrencySymbol,
@@ -1141,9 +1159,9 @@ func (service *PlanService) UpdatePlan(ctx context.Context, req *protoPlan.Updat
 			return nil
 		}
 	}
-	if pln.BaseCurrencySymbol != req.BaseCurrencySymbol {
-		pln.BaseCurrencySymbol = req.BaseCurrencySymbol
-		if err := repoPlan.UpdatePlanBaseCurrencyTxn(txn, ctx, pln.PlanID, pln.BaseCurrencySymbol); err != nil {
+	if pln.UserCurrencySymbol != req.UserCurrencySymbol {
+		pln.UserCurrencySymbol = req.UserCurrencySymbol
+		if err := repoPlan.UpdatePlanBaseCurrencyTxn(txn, ctx, pln.PlanID, pln.UserCurrencySymbol); err != nil {
 			txn.Rollback()
 			res.Status = constRes.Error
 			res.Message = "error encountered while updating the plan base currency: " + err.Error()
@@ -1161,6 +1179,8 @@ func (service *PlanService) UpdatePlan(ctx context.Context, req *protoPlan.Updat
 		// TODO unlock the active currency? when close
 	}
 	if pln.InitialTimestamp != req.InitialTimestamp && req.InitialTimestamp != "" {
+
+		// TODO if req.IntialTimestamp compute the initial currency balance using the baseCurrencySymbol
 		pln.InitialTimestamp = req.InitialTimestamp
 		if err := repoPlan.UpdatePlanInitTimeTxn(txn, ctx, pln.PlanID, pln.InitialTimestamp); err != nil {
 			txn.Rollback()

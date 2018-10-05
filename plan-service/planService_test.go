@@ -11,6 +11,7 @@ import (
 	protoAccount "github.com/asciiu/gomo/account-service/proto/account"
 	protoBalance "github.com/asciiu/gomo/account-service/proto/balance"
 	testAccount "github.com/asciiu/gomo/account-service/test"
+	testAnalytics "github.com/asciiu/gomo/analytics-service/test"
 	"github.com/asciiu/gomo/common/db"
 	protoEvt "github.com/asciiu/gomo/common/proto/events"
 	protoEngine "github.com/asciiu/gomo/execution-engine/proto/engine"
@@ -37,9 +38,10 @@ func setupService() (*PlanService, *user.User, *protoAccount.Account) {
 	db, _ := db.NewDB(dbUrl)
 
 	planService := PlanService{
-		DB:            db,
-		AccountClient: testAccount.MockAccountServiceClient(db),
-		EngineClient:  testEngine.MockEngineClient(db),
+		DB:              db,
+		AccountClient:   testAccount.MockAccountServiceClient(db),
+		AnalyticsClient: testAnalytics.MockAnalyticsServiceClient(db),
+		EngineClient:    testEngine.MockEngineClient(db),
 	}
 
 	user := user.NewUser("first", "last", "test@email", "hash")
@@ -178,7 +180,7 @@ func TestSuccessfulOrderPlan(t *testing.T) {
 	assert.Equal(t, "success", res.Status, fmt.Sprintf("return status of inserting plan should be success got: %s", res.Message))
 	assert.Equal(t, uint64(1), res.Data.Plan.UserPlanNumber, "the plan number should be 1")
 	assert.Equal(t, "Testing 123", res.Data.Plan.Title, "titles don't match")
-	assert.Equal(t, "USDT", res.Data.Plan.BaseCurrencySymbol, "base currency is expected to default to USDT")
+	assert.Equal(t, "USDT", res.Data.Plan.UserCurrencySymbol, "base currency is expected to default to USDT")
 
 	repoUser.DeleteUserHard(service.DB, user.ID)
 }
@@ -377,7 +379,7 @@ func TestOrderUpdatePlan(t *testing.T) {
 		PlanID:             res.Data.Plan.PlanID,
 		UserID:             user.ID,
 		Status:             "active",
-		BaseCurrencySymbol: "BTC",
+		UserCurrencySymbol: "BTC",
 		CloseOnComplete:    false,
 		PlanTemplateID:     "thing2",
 		Orders: []*protoOrder.NewOrderRequest{
@@ -430,7 +432,7 @@ func TestOrderUpdatePlan(t *testing.T) {
 	assert.Equal(t, 2, len(res.Data.Plan.Orders), "update should have yielded a single order")
 	assert.Equal(t, 70.0, res.Data.Plan.Orders[0].InitialCurrencyBalance, "active currency balance after update order incorrect")
 	assert.Equal(t, "thing2", res.Data.Plan.PlanTemplateID, "the template ID should have changed")
-	assert.Equal(t, "BTC", res.Data.Plan.BaseCurrencySymbol, "base currency should be BTC")
+	assert.Equal(t, "BTC", res.Data.Plan.UserCurrencySymbol, "base currency should be BTC")
 
 	// Next verify that when we read the plan again that things indeed change
 	req3 := protoPlan.GetUserPlanRequest{

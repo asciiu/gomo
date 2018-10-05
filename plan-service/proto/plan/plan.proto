@@ -15,7 +15,7 @@ service PlanService {
 // Requests
 message NewPlanRequest {
   string userID = 1;
-  string baseCurrencySymbol = 2;
+  string userCurrencySymbol = 2;
   string initialTimestamp = 3;
   string title = 4;
   string planTemplateID = 5;
@@ -27,7 +27,7 @@ message NewPlanRequest {
 message UpdatePlanRequest {
   string planID = 1;
   string userID = 2;
-  string baseCurrencySymbol = 3;
+  string userCurrencySymbol = 3;
   string initialTimestamp = 4;
   string title = 5;
   string planTemplateID = 6;
@@ -67,9 +67,10 @@ message Plan {
   string exchange = 5;
   string title = 6;
   uint32 totalDepth = 7;
-  string baseCurrencySymbol = 8;
-  string activeCurrencySymbol = 9;
-  double activeCurrencyBalance = 10;
+  string userCurrencySymbol = 8;
+  double userCurrencyBalanceAtInit = 9;
+  string activeCurrencySymbol = 10;
+  double activeCurrencyBalance = 21;
   string initialCurrencySymbol = 11;
   double initialCurrencyBalance = 12;
   string initialTimestamp = 13;

@@ -141,7 +141,7 @@ func FindPlanWithUnexecutedOrders(db *sql.DB, planID string) (*protoPlan.Plan, e
 			&plan.Title,
 			&plan.TotalDepth,
 			&plan.Exchange,
-			&plan.BaseCurrencySymbol,
+			&plan.UserCurrencySymbol,
 			&plan.ActiveCurrencySymbol,
 			&plan.ActiveCurrencyBalance,
 			&plan.InitialCurrencySymbol,
@@ -332,7 +332,7 @@ func FindActivePlans(db *sql.DB) ([]*protoPlan.Plan, error) {
 			&plan.Title,
 			&plan.TotalDepth,
 			&plan.Exchange,
-			&plan.BaseCurrencySymbol,
+			&plan.UserCurrencySymbol,
 			&plan.ActiveCurrencySymbol,
 			&plan.ActiveCurrencyBalance,
 			&plan.InitialCurrencySymbol,
@@ -445,6 +445,7 @@ func FindPlanOrders(db *sql.DB, req *protoPlan.GetUserPlanRequest) (*protoPlan.P
 		p.total_depth,
 		p.exchange_name,
 		p.user_currency_symbol,
+		p.user_currency_balance_at_init,
 		p.active_currency_symbol,
 		p.active_currency_balance,
 		p.initial_currency_symbol,
@@ -530,6 +531,7 @@ func FindPlanOrders(db *sql.DB, req *protoPlan.GetUserPlanRequest) (*protoPlan.P
 		var exchangeTime sql.NullString
 		var feeSymbol sql.NullString
 		var feeAmount sql.NullFloat64
+		var userBalanceInit sql.NullFloat64
 		var finalCurrencySymbol sql.NullString
 		var exchangeOrderID sql.NullString
 		var actionsStr string
@@ -541,7 +543,8 @@ func FindPlanOrders(db *sql.DB, req *protoPlan.GetUserPlanRequest) (*protoPlan.P
 			&plan.Title,
 			&plan.TotalDepth,
 			&plan.Exchange,
-			&plan.BaseCurrencySymbol,
+			&plan.UserCurrencySymbol,
+			&userBalanceInit,
 			&plan.ActiveCurrencySymbol,
 			&plan.ActiveCurrencyBalance,
 			&plan.InitialCurrencySymbol,
@@ -642,6 +645,9 @@ func FindPlanOrders(db *sql.DB, req *protoPlan.GetUserPlanRequest) (*protoPlan.P
 		}
 		if orderErr.Valid {
 			order.Errors = orderErr.String
+		}
+		if userBalanceInit.Valid {
+			plan.UserCurrencyBalanceAtInit = userBalanceInit.Float64
 		}
 		if err := json.Unmarshal([]byte(actionsStr), &trigger.Actions); err != nil {
 			return nil, err
@@ -778,7 +784,7 @@ func FindChildOrders(db *sql.DB, planID, parentOrderID string) (*protoPlan.Plan,
 			&plan.Title,
 			&plan.TotalDepth,
 			&plan.Exchange,
-			&plan.BaseCurrencySymbol,
+			&plan.UserCurrencySymbol,
 			&plan.ActiveCurrencySymbol,
 			&plan.ActiveCurrencyBalance,
 			&plan.InitialCurrencySymbol,
@@ -990,7 +996,7 @@ func FindParentAndChildren(db *sql.DB, planID, parentOrderID string) (*protoPlan
 			&plan.Title,
 			&plan.TotalDepth,
 			&plan.Exchange,
-			&plan.BaseCurrencySymbol,
+			&plan.UserCurrencySymbol,
 			&plan.ActiveCurrencySymbol,
 			&plan.ActiveCurrencyBalance,
 			&plan.InitialCurrencySymbol,
@@ -1162,7 +1168,7 @@ func FindUserPlans(db *sql.DB, userID string, page, pageSize uint32) (*protoPlan
 			&plan.Title,
 			&plan.TotalDepth,
 			&plan.Exchange,
-			&plan.BaseCurrencySymbol,
+			&plan.UserCurrencySymbol,
 			&plan.ActiveCurrencySymbol,
 			&plan.ActiveCurrencyBalance,
 			&plan.InitialCurrencySymbol,
@@ -1248,7 +1254,7 @@ func FindAccountPlans(db *sql.DB, accountID string) ([]*protoPlan.Plan, error) {
 			&plan.Title,
 			&plan.TotalDepth,
 			&plan.Exchange,
-			&plan.BaseCurrencySymbol,
+			&plan.UserCurrencySymbol,
 			&plan.ActiveCurrencySymbol,
 			&plan.ActiveCurrencyBalance,
 			&plan.InitialCurrencySymbol,
@@ -1328,7 +1334,7 @@ func FindUserPlansWithStatus(db *sql.DB, userID, status string, page, pageSize u
 			&plan.Title,
 			&plan.TotalDepth,
 			&plan.Exchange,
-			&plan.BaseCurrencySymbol,
+			&plan.UserCurrencySymbol,
 			&plan.ActiveCurrencySymbol,
 			&plan.ActiveCurrencyBalance,
 			&plan.InitialCurrencySymbol,
@@ -1416,7 +1422,7 @@ func FindUserExchangePlansWithStatus(db *sql.DB, userID, status, exchange string
 			&plan.Title,
 			&plan.TotalDepth,
 			&plan.Exchange,
-			&plan.BaseCurrencySymbol,
+			&plan.UserCurrencySymbol,
 			&plan.ActiveCurrencySymbol,
 			&plan.ActiveCurrencyBalance,
 			&plan.InitialCurrencySymbol,
@@ -1456,6 +1462,24 @@ func FindUserExchangePlansWithStatus(db *sql.DB, userID, status, exchange string
 	}
 
 	return &result, nil
+}
+
+func FindPlanUserCurrencySymbol(db *sql.DB, planID string) (string, error) {
+
+	var userCurrencySymbol sql.NullString
+	query := `SELECT user_currency_symbol FROM plans WHERE id = $1`
+	err := db.QueryRow(query, planID).Scan(&userCurrencySymbol)
+
+	if err != nil {
+		return "", err
+	}
+
+	var symbol string
+	if userCurrencySymbol.Valid {
+		symbol = userCurrencySymbol.String
+	}
+
+	return symbol, nil
 }
 
 // Find all user plans for exchange with status
@@ -1503,7 +1527,7 @@ func FindUserMarketPlansWithStatus(db *sql.DB, userID, status, exchange, marketN
 			&plan.Title,
 			&plan.TotalDepth,
 			&plan.Exchange,
-			&plan.BaseCurrencySymbol,
+			&plan.UserCurrencySymbol,
 			&plan.ActiveCurrencySymbol,
 			&plan.ActiveCurrencyBalance,
 			&plan.InitialCurrencySymbol,
@@ -1584,7 +1608,7 @@ func InsertPlan(db *sql.DB, newPlan *protoPlan.Plan) error {
 		newPlan.Title,
 		newPlan.TotalDepth,
 		newPlan.Exchange,
-		newPlan.BaseCurrencySymbol,
+		newPlan.UserCurrencySymbol,
 		newPlan.ActiveCurrencySymbol,
 		newPlan.ActiveCurrencyBalance,
 		newPlan.InitialCurrencySymbol,
@@ -1661,15 +1685,16 @@ func UpdatePlanStatus(db *sql.DB, planID, status string) error {
 // 	return error
 // }
 
-func UpdatePlanInitTimestamp(db *sql.DB, planID, timestamp string) error {
+func UpdatePlanInitTimestamp(db *sql.DB, planID, timestamp string, balance float64) error {
 	stmt := `
 		UPDATE plans 
 		SET 
-			initial_timestamp = $1
+			initial_timestamp = $1,
+			user_currency_balance_at_init = $2
 		WHERE
-			id = $2`
+			id = $3`
 
-	_, err := db.Exec(stmt, timestamp, planID)
+	_, err := db.Exec(stmt, timestamp, balance, planID)
 
 	return err
 }

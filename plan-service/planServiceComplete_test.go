@@ -21,10 +21,11 @@ func TestFilledOrder(t *testing.T) {
 
 	//orders := make([]*protoOrder.NewOrderRequest, 0)
 	req := protoPlan.NewPlanRequest{
-		UserID:          user.ID,
-		Status:          "active",
-		CloseOnComplete: false,
-		PlanTemplateID:  "update_test",
+		UserID:             user.ID,
+		Status:             "active",
+		UserCurrencySymbol: "USDT",
+		CloseOnComplete:    false,
+		PlanTemplateID:     "update_test",
 		Orders: []*protoOrder.NewOrderRequest{
 			&protoOrder.NewOrderRequest{
 				OrderID:         "4d671984-d7dd-4dce-a20f-23f25d6daf7f",
@@ -99,6 +100,7 @@ func TestFilledOrder(t *testing.T) {
 	assert.Equal(t, "BTC", res.Data.Plan.Orders[0].FinalCurrencySymbol, "final should be BTC")
 	assert.Equal(t, 0.1, res.Data.Plan.Orders[0].FinalCurrencyBalance, "final balance off")
 	assert.Equal(t, 998.0, res.Data.Plan.Orders[0].ExchangePrice, "exchange price off")
+	assert.Equal(t, 100.0, res.Data.Plan.UserCurrencyBalanceAtInit, "assert value at init incorrect")
 
 	repoUser.DeleteUserHard(service.DB, user.ID)
 }
@@ -110,10 +112,11 @@ func TestFailedOrder(t *testing.T) {
 
 	//orders := make([]*protoOrder.NewOrderRequest, 0)
 	req := protoPlan.NewPlanRequest{
-		UserID:          user.ID,
-		Status:          "active",
-		CloseOnComplete: false,
-		PlanTemplateID:  "update_test",
+		UserID:             user.ID,
+		Status:             "active",
+		CloseOnComplete:    false,
+		PlanTemplateID:     "update_test",
+		UserCurrencySymbol: "USDT",
 		Orders: []*protoOrder.NewOrderRequest{
 			&protoOrder.NewOrderRequest{
 				OrderID:         "4d671984-d7dd-4dce-a20f-23f25d6daf7f",

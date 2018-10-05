@@ -6,6 +6,7 @@ import (
 	"os"
 
 	protoAccount "github.com/asciiu/gomo/account-service/proto/account"
+	protoAnalytics "github.com/asciiu/gomo/analytics-service/proto/analytics"
 	constMessage "github.com/asciiu/gomo/common/constants/message"
 	"github.com/asciiu/gomo/common/db"
 	protoEngine "github.com/asciiu/gomo/execution-engine/proto/engine"
@@ -35,10 +36,11 @@ func main() {
 	}
 
 	planService := PlanService{
-		DB:            gomoDB,
-		AccountClient: protoAccount.NewAccountServiceClient("accounts", srv.Client()),
-		EngineClient:  protoEngine.NewExecutionEngineClient("engine", srv.Client()),
-		NotifyPub:     micro.NewPublisher(constMessage.TopicNotification, srv.Client()),
+		DB:              gomoDB,
+		AccountClient:   protoAccount.NewAccountServiceClient("accounts", srv.Client()),
+		AnalyticsClient: protoAnalytics.NewAnalyticsServiceClient("analytics", srv.Client()),
+		EngineClient:    protoEngine.NewExecutionEngineClient("engine", srv.Client()),
+		NotifyPub:       micro.NewPublisher(constMessage.TopicNotification, srv.Client()),
 	}
 
 	micro.RegisterSubscriber(constMessage.TopicCompletedOrder, srv.Server(), planService.HandleCompletedOrder, server.SubscriberQueue("complete.order"))
