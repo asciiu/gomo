@@ -96,6 +96,8 @@ type Order struct {
 	LimitPrice               float64               `json:"limitPrice,omitempty"`
 	Exchange                 string                `json:"exchange,omitempty"`
 	ExchangeOrderID          string                `json:"exchangeOrderID"`
+	ExchangePrice            float64               `json:"exchangePrice"`
+	ExchangeTime             string                `json:"exchangeTime"`
 	MarketName               string                `json:"marketName,omitempty"`
 	BaseCurrencySymbol       string                `json:"baseCurrencySymbol"`
 	BaseCurrencyName         string                `json:"baseCurrencyName"`
@@ -111,8 +113,11 @@ type Order struct {
 	FinalCurrencyName        string                `json:"finalCurrencyName"`
 	FinalCurrencyBalance     float64               `json:"finalCurrencyBalance"`
 	FinalCurrencyValue       float64               `json:"finalCurrencyValue"`
+	FeeCurrencySymbol        string                `json:"feeCurrencySymbol"`
+	FeeCurrencyAmount        float64               `json:"feeCurrencyAmount"`
 	Grupo                    string                `json:"grupo"`
 	Status                   string                `json:"status,omitempty"`
+	Errors                   string                `json:"errors"`
 	CreatedOn                string                `json:"createdOn,omitempty"`
 	UpdatedOn                string                `json:"updatedOn,omitempty"`
 	Triggers                 []*protoOrder.Trigger `json:"triggers,omitempty"`
@@ -289,6 +294,8 @@ func (controller *PlanController) HandleGetPlan(c echo.Context) error {
 			LimitPrice:               o.LimitPrice,
 			Exchange:                 o.Exchange,
 			ExchangeOrderID:          o.ExchangeOrderID,
+			ExchangePrice:            o.ExchangePrice,
+			ExchangeTime:             o.ExchangeTime,
 			MarketName:               o.MarketName,
 			BaseCurrencySymbol:       baseCurrencySymbol,
 			BaseCurrencyName:         baseCurrencyName,
@@ -302,8 +309,11 @@ func (controller *PlanController) HandleGetPlan(c echo.Context) error {
 			FinalCurrencySymbol:      o.FinalCurrencySymbol,
 			FinalCurrencyName:        controller.currencies[o.FinalCurrencySymbol],
 			FinalCurrencyBalance:     o.FinalCurrencyBalance,
+			FeeCurrencySymbol:        o.FeeCurrencySymbol,
+			FeeCurrencyAmount:        o.FeeCurrencyAmount,
 			Grupo:                    o.Grupo,
 			Status:                   o.Status,
+			Errors:                   o.Errors,
 			CreatedOn:                o.CreatedOn,
 			UpdatedOn:                o.UpdatedOn,
 			Triggers:                 o.Triggers,
@@ -461,6 +471,8 @@ func (controller *PlanController) HandleListPlans(c echo.Context) error {
 				LimitPrice:               o.LimitPrice,
 				Exchange:                 o.Exchange,
 				ExchangeOrderID:          o.ExchangeOrderID,
+				ExchangePrice:            o.ExchangePrice,
+				ExchangeTime:             o.ExchangeTime,
 				MarketName:               o.MarketName,
 				BaseCurrencySymbol:       baseCurrencySymbol,
 				BaseCurrencyName:         baseCurrencyName,
@@ -474,8 +486,11 @@ func (controller *PlanController) HandleListPlans(c echo.Context) error {
 				FinalCurrencySymbol:      o.FinalCurrencySymbol,
 				FinalCurrencyName:        controller.currencies[o.FinalCurrencySymbol],
 				FinalCurrencyBalance:     o.FinalCurrencyBalance,
+				FeeCurrencySymbol:        o.FeeCurrencySymbol,
+				FeeCurrencyAmount:        o.FeeCurrencyAmount,
 				Grupo:                    o.Grupo,
 				Status:                   o.Status,
+				Errors:                   o.Errors,
 				CreatedOn:                o.CreatedOn,
 				UpdatedOn:                o.UpdatedOn,
 				Triggers:                 o.Triggers,
