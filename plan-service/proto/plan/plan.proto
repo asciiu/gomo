@@ -21,7 +21,9 @@ message NewPlanRequest {
   string planTemplateID = 5;
   string status = 6;
   bool closeOnComplete = 7;
-  repeated order.NewOrderRequest orders = 8; 
+  string committedCurrencySymbol = 8;
+  double committedCurrencyBalance = 9;
+  repeated order.NewOrderRequest orders = 10; 
 }
 
 message UpdatePlanRequest {
@@ -33,7 +35,9 @@ message UpdatePlanRequest {
   string planTemplateID = 6;
   string status = 7;
   bool closeOnComplete = 8;
-  repeated order.NewOrderRequest orders = 9; 
+  string committedCurrencySymbol = 9;
+  double committedCurrencyBalance = 10;
+  repeated order.NewOrderRequest orders = 11; 
 }
 
 
@@ -67,18 +71,20 @@ message Plan {
   uint32 totalDepth = 7;
   string userCurrencySymbol = 8;
   double userCurrencyBalanceAtInit = 9;
-  string activeCurrencySymbol = 10;
-  double activeCurrencyBalance = 21;
-  string initialCurrencySymbol = 11;
-  double initialCurrencyBalance = 12;
-  string initialTimestamp = 13;
-  uint32 lastExecutedPlanDepth = 14;
-  string lastExecutedOrderID = 15;
-  string status = 16;
-  bool closeOnComplete = 17;
-  string createdOn = 18;
-  string updatedOn = 19;
-  repeated order.Order orders = 20; 
+  string committedCurrencySymbol = 10;
+  double committedCurrencyBalance = 11;
+  string activeCurrencySymbol = 12;
+  double activeCurrencyBalance = 13;
+  string initialCurrencySymbol = 14;
+  double initialCurrencyBalance = 15;
+  string initialTimestamp = 16;
+  uint32 lastExecutedPlanDepth = 17;
+  string lastExecutedOrderID = 18;
+  string status = 19;
+  bool closeOnComplete = 20;
+  string createdOn = 21;
+  string updatedOn = 22;
+  repeated order.Order orders = 23; 
 }
 
 message PlanData {
