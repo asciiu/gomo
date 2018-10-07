@@ -62,6 +62,9 @@ type Plan struct {
 	ActiveCurrencySymbol       string   `json:"activeCurrencySymbol"`
 	ActiveCurrencyName         string   `json:"activeCurrencyName"`
 	ActiveCurrencyBalance      float64  `json:"activeCurrencyBalance"`
+	CommittedCurrencySymbol    string   `json:"committedCurrencySymbol"`
+	CommittedCurrencyName      string   `json:"committedCurrencyName"`
+	CommittedCurrencyBalance   float64  `json:"committedCurrencyBalance"`
 	InitialCurrencySymbol      string   `json:"initialCurrencySymbol"`
 	InitialCurrencyName        string   `json:"initialCurrencyName"`
 	InitialCurrencyBalance     float64  `json:"initialCurrencyBalance"`
@@ -518,6 +521,12 @@ type PlanRequest struct {
 	// Optional init timestamp for plan RFC3339 formatted (e.g. 2018-08-26T22:49:10.168652Z). This timestamp will be used to measure initial user currency balance (valuation in user preferred currency)
 	// in: body
 	InitialTimestamp string `json:"initialTimestamp"`
+	// Required reserve currency for plan  e.g. BTC, USDT, ETH...
+	// in: body
+	CommittedCurrencySymbol string `json:"committedCurrencySymbol"`
+	// Required reserve currency amount  e.g. 1.0
+	// in: body
+	CommittedCurrencyAmount float64 `json:"committedCurrencyAmount"`
 	// Optional defaults to 'active' status. Valid input status is 'active', 'inactive', or 'historic'
 	// in: body
 	Status string `json:"status"`
@@ -639,14 +648,16 @@ func (controller *PlanController) HandlePostPlan(c echo.Context) error {
 	}
 
 	newPlanRequest := protoPlan.NewPlanRequest{
-		UserID:             userID,
-		Title:              newPlan.Title,
-		UserCurrencySymbol: newPlan.UserCurrencySymbol,
-		PlanTemplateID:     newPlan.PlanTemplateID,
-		Status:             newPlan.Status,
-		CloseOnComplete:    newPlan.CloseOnComplete,
-		InitialTimestamp:   newPlan.InitialTimestamp,
-		Orders:             newOrderRequests,
+		UserID:                   userID,
+		Title:                    newPlan.Title,
+		UserCurrencySymbol:       newPlan.UserCurrencySymbol,
+		PlanTemplateID:           newPlan.PlanTemplateID,
+		Status:                   newPlan.Status,
+		CloseOnComplete:          newPlan.CloseOnComplete,
+		InitialTimestamp:         newPlan.InitialTimestamp,
+		CommittedCurrencySymbol:  newPlan.CommittedCurrencySymbol,
+		CommittedCurrencyBalance: newPlan.CommittedCurrencyAmount,
+		Orders: newOrderRequests,
 	}
 
 	// add plan returns nil for error
@@ -753,6 +764,12 @@ type UpdatePlanRequest struct {
 	// Optional init timestamp for plan RFC3339 formatted (e.g. 2018-08-26T22:49:10.168652Z). This timestamp will be used to measure initial user currency balance (valuation in user preferred currency)
 	// in: body
 	InitialTimestamp string `json:"initialTimestamp"`
+	// Required reserve currency for plan  e.g. BTC, USDT, ETH...
+	// in: body
+	CommittedCurrencySymbol string `json:"committedCurrencySymbol"`
+	// Required reserve currency amount  e.g. 1.0
+	// in: body
+	CommittedCurrencyAmount float64 `json:"committedCurrencyAmount"`
 	// Optional only needed to update the status of the plan to 'inactive', 'active'
 	// in: body
 	Status string `json:"status"`
@@ -818,15 +835,17 @@ func (controller *PlanController) HandleUpdatePlan(c echo.Context) error {
 	}
 
 	updatePlanRequest := protoPlan.UpdatePlanRequest{
-		PlanID:             planID,
-		UserID:             userID,
-		Title:              updatePlan.Title,
-		UserCurrencySymbol: updatePlan.UserCurrencySymbol,
-		PlanTemplateID:     updatePlan.PlanTemplateID,
-		InitialTimestamp:   updatePlan.InitialTimestamp,
-		Status:             updatePlan.Status,
-		CloseOnComplete:    updatePlan.CloseOnComplete,
-		Orders:             orderRequests,
+		PlanID:                   planID,
+		UserID:                   userID,
+		Title:                    updatePlan.Title,
+		UserCurrencySymbol:       updatePlan.UserCurrencySymbol,
+		PlanTemplateID:           updatePlan.PlanTemplateID,
+		InitialTimestamp:         updatePlan.InitialTimestamp,
+		Status:                   updatePlan.Status,
+		CloseOnComplete:          updatePlan.CloseOnComplete,
+		CommittedCurrencySymbol:  updatePlan.CommittedCurrencySymbol,
+		CommittedCurrencyBalance: updatePlan.CommittedCurrencyAmount,
+		Orders: orderRequests,
 	}
 
 	// add plan returns nil for error
