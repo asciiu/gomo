@@ -684,6 +684,25 @@
             }
           },
           {
+            "x-go-name": "CommittedCurrencySymbol",
+            "description": "Required reserve currency for plan  e.g. BTC, USDT, ETH...",
+            "name": "committedCurrencySymbol",
+            "in": "body",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "x-go-name": "CommittedCurrencyAmount",
+            "description": "Required reserve currency amount  e.g. 1.0",
+            "name": "committedCurrencyAmount",
+            "in": "body",
+            "schema": {
+              "type": "number",
+              "format": "double"
+            }
+          },
+          {
             "x-go-name": "Status",
             "description": "Optional defaults to 'active' status. Valid input status is 'active', 'inactive', or 'historic'",
             "name": "status",
@@ -817,6 +836,25 @@
             "in": "body",
             "schema": {
               "type": "string"
+            }
+          },
+          {
+            "x-go-name": "CommittedCurrencySymbol",
+            "description": "Required reserve currency for plan  e.g. BTC, USDT, ETH...",
+            "name": "committedCurrencySymbol",
+            "in": "body",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "x-go-name": "CommittedCurrencyAmount",
+            "description": "Required reserve currency amount  e.g. 1.0",
+            "name": "committedCurrencyAmount",
+            "in": "body",
+            "schema": {
+              "type": "number",
+              "format": "double"
             }
           },
           {
@@ -1992,6 +2030,19 @@
           "type": "boolean",
           "x-go-name": "CloseOnComplete"
         },
+        "committedCurrencyBalance": {
+          "type": "number",
+          "format": "double",
+          "x-go-name": "CommittedCurrencyBalance"
+        },
+        "committedCurrencyName": {
+          "type": "string",
+          "x-go-name": "CommittedCurrencyName"
+        },
+        "committedCurrencySymbol": {
+          "type": "string",
+          "x-go-name": "CommittedCurrencySymbol"
+        },
         "createdOn": {
           "type": "string",
           "x-go-name": "CreatedOn"
@@ -2116,6 +2167,17 @@
           "description": "Required bool to indicate that you want the plan to be 'closed' when the last order for the plan finishes (note: order status fail will also close the plan)\nin: body",
           "type": "boolean",
           "x-go-name": "CloseOnComplete"
+        },
+        "committedCurrencyAmount": {
+          "description": "Required reserve currency amount  e.g. 1.0\nin: body",
+          "type": "number",
+          "format": "double",
+          "x-go-name": "CommittedCurrencyAmount"
+        },
+        "committedCurrencySymbol": {
+          "description": "Required reserve currency for plan  e.g. BTC, USDT, ETH...\nin: body",
+          "type": "string",
+          "x-go-name": "CommittedCurrencySymbol"
         },
         "initialTimestamp": {
           "description": "Optional init timestamp for plan RFC3339 formatted (e.g. 2018-08-26T22:49:10.168652Z). This timestamp will be used to measure initial user currency balance (valuation in user preferred currency)\nin: body",
@@ -2566,6 +2628,17 @@
           "description": "Optional bool to indicate that you want the plan to be 'closed' when the last order for the plan finishes (note: order status fail will also close the plan)\nin: body",
           "type": "boolean",
           "x-go-name": "CloseOnComplete"
+        },
+        "committedCurrencyAmount": {
+          "description": "Required reserve currency amount  e.g. 1.0\nin: body",
+          "type": "number",
+          "format": "double",
+          "x-go-name": "CommittedCurrencyAmount"
+        },
+        "committedCurrencySymbol": {
+          "description": "Required reserve currency for plan  e.g. BTC, USDT, ETH...\nin: body",
+          "type": "string",
+          "x-go-name": "CommittedCurrencySymbol"
         },
         "initialTimestamp": {
           "description": "Optional init timestamp for plan RFC3339 formatted (e.g. 2018-08-26T22:49:10.168652Z). This timestamp will be used to measure initial user currency balance (valuation in user preferred currency)\nin: body",

@@ -3,6 +3,7 @@ package main
 import (
 	constPlan "github.com/asciiu/gomo/plan-service/constants"
 	protoOrder "github.com/asciiu/gomo/plan-service/proto/order"
+	protoPlan "github.com/asciiu/gomo/plan-service/proto/plan"
 	"github.com/google/uuid"
 )
 
@@ -111,11 +112,9 @@ func ValidateNodeCount(orderRequests []*protoOrder.NewOrderRequest) bool {
 }
 
 // validate non zero currency balance
-func ValidateNoneZeroBalance(orderRequests []*protoOrder.NewOrderRequest) bool {
-	for _, o := range orderRequests {
-		if o.ParentOrderID == uuid.Nil.String() && o.InitialCurrencyBalance > 0 {
-			return true
-		}
+func ValidateNoneZeroBalance(planRequest *protoPlan.NewPlanRequest) bool {
+	if planRequest.CommittedCurrencyAmount > 0 {
+		return true
 	}
 	return false
 }

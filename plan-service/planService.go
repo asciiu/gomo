@@ -24,7 +24,6 @@ import (
 	repoPlan "github.com/asciiu/gomo/plan-service/db/sql"
 	protoOrder "github.com/asciiu/gomo/plan-service/proto/order"
 	protoPlan "github.com/asciiu/gomo/plan-service/proto/plan"
-	protoTrade "github.com/asciiu/gomo/plan-service/proto/trade"
 	"github.com/google/uuid"
 	"github.com/lib/pq"
 )
@@ -109,8 +108,8 @@ func (service *PlanService) publishPlan(ctx context.Context, plan *protoPlan.Pla
 	newPlan := protoEngine.NewPlanRequest{
 		PlanID:                plan.PlanID,
 		UserID:                plan.UserID,
-		ActiveCurrencyBalance: plan.ActiveCurrencyBalance,
-		ActiveCurrencySymbol:  plan.ActiveCurrencySymbol,
+		ActiveCurrencyBalance: plan.CommittedCurrencyAmount,
+		ActiveCurrencySymbol:  plan.CommittedCurrencySymbol,
 		CloseOnComplete:       plan.CloseOnComplete,
 		Orders:                newOrders,
 	}
@@ -124,7 +123,7 @@ func (service *PlanService) publishPlan(ctx context.Context, plan *protoPlan.Pla
 
 	// update the order status
 	for _, o := range newOrders {
-		if _, _, err := repoPlan.UpdateOrderStatusAndBalance(service.DB, o.OrderID, constPlan.Active, plan.ActiveCurrencyBalance); err != nil {
+		if _, _, err := repoPlan.UpdateOrderStatusAndBalance(service.DB, o.OrderID, constPlan.Active, plan.CommittedCurrencyAmount); err != nil {
 			log.Println("could not update order status to active -- ", err.Error())
 		}
 	}
@@ -170,8 +169,8 @@ func (service *PlanService) validateLockedBalance(ctx context.Context, currency 
 // ContinuePlan will activate an order (i.e. send a plan order) to the execution engine to process.
 func (service *PlanService) ContinuePlan(ctx context.Context, plan *protoPlan.Plan) error {
 
-	currency := plan.ActiveCurrencySymbol
-	balance := plan.ActiveCurrencyBalance
+	currency := plan.CommittedCurrencySymbol
+	balance := plan.CommittedCurrencyAmount
 	// assume for now that all orders in the plan use the same account ID. This may not be true in the future
 	accountID := plan.Orders[0].AccountID
 
@@ -269,25 +268,25 @@ func (service *PlanService) HandleCompletedOrder(ctx context.Context, completedO
 	}
 
 	if completedOrderEvent.Status == constPlan.Filled {
-		if err := repoPlan.InsertTradeResult(service.DB, &protoTrade.Trade{
-			TradeID:                  uuid.New().String(),
-			OrderID:                  completedOrderEvent.OrderID,
-			InitialCurrencySymbol:    completedOrderEvent.InitialCurrencySymbol,
-			InitialCurrencyBalance:   completedOrderEvent.InitialCurrencyBalance,
-			InitialCurrencyTraded:    completedOrderEvent.InitialCurrencyTraded,
-			InitialCurrencyRemainder: completedOrderEvent.InitialCurrencyRemainder,
-			InitialCurrencyPrice:     completedOrderEvent.ExchangePrice,
-			FinalCurrencySymbol:      completedOrderEvent.FinalCurrencySymbol,
-			FinalCurrencyBalance:     completedOrderEvent.FinalCurrencyBalance,
-			FeeCurrencySymbol:        completedOrderEvent.FeeCurrencySymbol,
-			FeeCurrencyAmount:        completedOrderEvent.FeeCurrencyAmount,
-			ExchangeTime:             completedOrderEvent.ExchangeTime,
-			Side:                     completedOrderEvent.Side,
-			CreatedOn:                now,
-			UpdatedOn:                now,
-		}); err != nil {
-			log.Println("could not log trade results -- ", err.Error())
-		}
+		//if err := repoPlan.InsertTradeResult(service.DB, &protoTrade.Trade{
+		//TradeID:                  uuid.New().String(),
+		//OrderID:                  completedOrderEvent.OrderID,
+		//InitialCurrencySymbol:    completedOrderEvent.InitialCurrencySymbol,
+		//InitialCurrencyBalance:   completedOrderEvent.InitialCurrencyBalance,
+		//InitialCurrencyTraded:    completedOrderEvent.InitialCurrencyTraded,
+		//InitialCurrencyRemainder: completedOrderEvent.InitialCurrencyRemainder,
+		//InitialCurrencyPrice:     completedOrderEvent.ExchangePrice,
+		//FinalCurrencySymbol:      completedOrderEvent.FinalCurrencySymbol,
+		//FinalCurrencyBalance:     completedOrderEvent.FinalCurrencyBalance,
+		//FeeCurrencySymbol:        completedOrderEvent.FeeCurrencySymbol,
+		//FeeCurrencyAmount:        completedOrderEvent.FeeCurrencyAmount,
+		//ExchangeTime:             completedOrderEvent.ExchangeTime,
+		//Side:                     completedOrderEvent.Side,
+		//CreatedOn:                now,
+		//UpdatedOn:                now,
+		//}); err != nil {
+		//log.Println("could not log trade results -- ", err.Error())
+		//}
 
 		// TODO error check these in case the account service is unreachable
 		// remove lock on initial balance
@@ -479,9 +478,9 @@ func (service *PlanService) NewPlan(ctx context.Context, req *protoPlan.NewPlanR
 		res.Status = constRes.Fail
 		res.Message = "you can only post 10 inactive nodes at a time!"
 		return nil
-	case !ValidateNoneZeroBalance(req.Orders):
+	case !ValidateNoneZeroBalance(req):
 		res.Status = constRes.Fail
-		res.Message = "non zero initialCurrencyBalance required for root order!"
+		res.Message = "non zero committedCurrencyAmount required for plan!"
 		return nil
 	case req.Orders[0].OrderType == constPlan.PaperOrder && !ValidatePaperOrders(req.Orders):
 		res.Status = constRes.Fail
@@ -648,12 +647,12 @@ func (service *PlanService) NewPlan(ctx context.Context, req *protoPlan.NewPlanR
 		newOrders = append(newOrders, &order)
 	}
 
-	currencySymbol := newOrders[0].InitialCurrencySymbol
-	currencyBalance := newOrders[0].InitialCurrencyBalance
+	//currencySymbol := newOrders[0].InitialCurrencySymbol
+	//currencyBalance := newOrders[0].InitialCurrencyBalance
 	accountID := newOrders[0].AccountID
 
 	// is the initial amount in the account balance?
-	validBalance, err := service.validateAvailableBalance(ctx, currencySymbol, currencyBalance, req.UserID, accountID)
+	validBalance, err := service.validateAvailableBalance(ctx, req.CommittedCurrencySymbol, req.CommittedCurrencyAmount, req.UserID, accountID)
 	if err != nil {
 		msg := fmt.Sprintf("validateAvailableBalance error %s", err.Error())
 		log.Println(msg)
@@ -664,15 +663,15 @@ func (service *PlanService) NewPlan(ctx context.Context, req *protoPlan.NewPlanR
 	}
 	if !validBalance {
 		res.Status = constRes.Fail
-		res.Message = fmt.Sprintf("insufficient %s balance, requested amount %.8f exceeds available balance", currencySymbol, currencyBalance)
+		res.Message = fmt.Sprintf("insufficient %s balance, requested amount %.8f exceeds available balance", req.CommittedCurrencySymbol, req.CommittedCurrencyAmount)
 		return nil
 	}
 
 	lockRequest := protoBalance.ChangeBalanceRequest{
 		AccountID:      accountID,
 		UserID:         req.UserID,
-		CurrencySymbol: currencySymbol,
-		Amount:         currencyBalance,
+		CurrencySymbol: req.CommittedCurrencySymbol,
+		Amount:         req.CommittedCurrencyAmount,
 	}
 
 	count := repoPlan.FindUserPlanCount(service.DB, req.UserID)
@@ -690,26 +689,28 @@ func (service *PlanService) NewPlan(ctx context.Context, req *protoPlan.NewPlanR
 	// TODO if req.IntialTimestamp compute the initial currency balance using the baseCurrencySymbol
 
 	pln := protoPlan.Plan{
-		PlanID:                 planID.String(),
-		PlanTemplateID:         req.PlanTemplateID,
-		UserID:                 req.UserID,
-		Title:                  title,
-		TotalDepth:             totalDepth,
-		UserCurrencySymbol:     baseCurrencySymbol,
-		ActiveCurrencySymbol:   newOrders[0].InitialCurrencySymbol,
-		ActiveCurrencyBalance:  newOrders[0].InitialCurrencyBalance,
-		InitialCurrencySymbol:  newOrders[0].InitialCurrencySymbol,
-		InitialCurrencyBalance: newOrders[0].InitialCurrencyBalance,
-		InitialTimestamp:       req.InitialTimestamp,
-		Exchange:               newOrders[0].Exchange,
-		LastExecutedPlanDepth:  0,
-		LastExecutedOrderID:    none,
-		Orders:                 newOrders,
-		UserPlanNumber:         count + 1,
-		Status:                 req.Status,
-		CloseOnComplete:        req.CloseOnComplete,
-		CreatedOn:              now,
-		UpdatedOn:              now,
+		PlanID:             planID.String(),
+		PlanTemplateID:     req.PlanTemplateID,
+		UserID:             req.UserID,
+		Title:              title,
+		TotalDepth:         totalDepth,
+		UserCurrencySymbol: baseCurrencySymbol,
+		//ActiveCurrencySymbol:   newOrders[0].InitialCurrencySymbol,
+		//ActiveCurrencyBalance:  newOrders[0].InitialCurrencyBalance,
+		CommittedCurrencySymbol: req.CommittedCurrencySymbol,
+		CommittedCurrencyAmount: req.CommittedCurrencyAmount,
+		InitialCurrencySymbol:   req.CommittedCurrencySymbol,
+		InitialCurrencyBalance:  req.CommittedCurrencyAmount,
+		InitialTimestamp:        req.InitialTimestamp,
+		Exchange:                newOrders[0].Exchange,
+		LastExecutedPlanDepth:   0,
+		LastExecutedOrderID:     none,
+		Orders:                  newOrders,
+		UserPlanNumber:          count + 1,
+		Status:                  req.Status,
+		CloseOnComplete:         req.CloseOnComplete,
+		CreatedOn:               now,
+		UpdatedOn:               now,
 	}
 
 	err = repoPlan.InsertPlan(service.DB, &pln)
@@ -875,11 +876,11 @@ func (service *PlanService) UpdatePlan(ctx context.Context, req *protoPlan.Updat
 		res.Status = constRes.Fail
 		res.Message = "this ain't no tree! All orders must be connected using the parentOrderID relationship."
 		return nil
-	case pln.LastExecutedPlanDepth == 0 && !ValidateNoneZeroBalance(req.Orders):
-		// you must commit a balance for the plan in the first order
-		res.Status = constRes.Fail
-		res.Message = "the initialCurrencyBalance must be set for the root order"
-		return nil
+	//case pln.LastExecutedPlanDepth == 0 && !ValidateNoneZeroBalance(req.Orders):
+	//	// you must commit a balance for the plan in the first order
+	//	res.Status = constRes.Fail
+	//	res.Message = "the initialCurrencyBalance must be set for the root order"
+	//	return nil
 	case pln.LastExecutedPlanDepth == 0 && !ValidateSingleRootNode(req.Orders):
 		// you can't start a plan without a root order
 		res.Status = constRes.Fail
@@ -925,6 +926,7 @@ func (service *PlanService) UpdatePlan(ctx context.Context, req *protoPlan.Updat
 	keySecret := ""
 	depth := pln.LastExecutedPlanDepth
 	totalDepth := depth
+	//lockRequest := new(protoBalance.ChangeBalanceRequest)
 
 	for _, or := range req.Orders {
 		orderStatus := constPlan.Inactive
@@ -1033,28 +1035,25 @@ func (service *PlanService) UpdatePlan(ctx context.Context, req *protoPlan.Updat
 			currencySymbol = symbolPair[0]
 		}
 
-		//lockRequest := new(protoBalance.ChangeBalanceRequest)
 		// validate the balance for non paper orders that are set to use a predefined balance
-		//if or.InitialCurrencyBalance > 0 {
-		//	service.unlocked
+		// if or.InitialCurrencyBalance > 0 {
+		// 	validBalance, err := service.validateAvailableBalance(ctx, currencySymbol, or.InitialCurrencyBalance, req.UserID, or.AccountID)
+		// 	if err != nil {
+		// 		res.Status = constRes.Error
+		// 		res.Message = fmt.Sprintf("failed to validate the currency balance for %s: %s", currencySymbol, err.Error())
+		// 		return nil
+		// 	}
+		// 	if !validBalance {
+		// 		res.Status = constRes.Fail
+		// 		res.Message = fmt.Sprintf("insufficient %s balance, %.8f requested in orderID: %s", currencySymbol, or.InitialCurrencyBalance, or.OrderID)
+		// 		return nil
+		// 	}
 
-		//	validBalance, err := service.validateAvailableBalance(ctx, currencySymbol, or.InitialCurrencyBalance, req.UserID, or.AccountID)
-		//	if err != nil {
-		//		res.Status = constRes.Error
-		//		res.Message = fmt.Sprintf("failed to validate the currency balance for %s: %s", currencySymbol, err.Error())
-		//		return nil
-		//	}
-		//	if !validBalance {
-		//		res.Status = constRes.Fail
-		//		res.Message = fmt.Sprintf("insufficient %s balance, %.8f requested in orderID: %s", currencySymbol, or.InitialCurrencyBalance, or.OrderID)
-		//		return nil
-		//	}
-
-		//	lockRequest.AccountID = or.AccountID
-		//	lockRequest.UserID = req.UserID
-		//	lockRequest.CurrencySymbol = currencySymbol
-		//	lockRequest.Amount = or.InitialCurrencyBalance
-		//}
+		// 	lockRequest.AccountID = or.AccountID
+		// 	lockRequest.UserID = req.UserID
+		// 	lockRequest.CurrencySymbol = currencySymbol
+		// 	lockRequest.Amount = or.InitialCurrencyBalance
+		// }
 
 		order := protoOrder.Order{
 			AccountID:              or.AccountID,
@@ -1121,12 +1120,12 @@ func (service *PlanService) UpdatePlan(ctx context.Context, req *protoPlan.Updat
 
 	// if root has not executed yet and we have new orders
 	if pln.LastExecutedPlanDepth == 0 && len(newOrders) > 0 {
-		pln.ActiveCurrencySymbol = newOrders[0].InitialCurrencySymbol
-		pln.ActiveCurrencyBalance = newOrders[0].InitialCurrencyBalance
-		pln.InitialCurrencySymbol = newOrders[0].InitialCurrencySymbol
-		pln.InitialCurrencyBalance = newOrders[0].InitialCurrencyBalance
+		//pln.ActiveCurrencySymbol = newOrders[0].InitialCurrencySymbol
+		//pln.ActiveCurrencyBalance = newOrders[0].InitialCurrencyBalance
+		//pln.InitialCurrencySymbol = newOrders[0].InitialCurrencySymbol
+		//pln.InitialCurrencyBalance = newOrders[0].InitialCurrencyBalance
 		pln.Exchange = newOrders[0].Exchange
-		if err := repoPlan.UpdatePlanContextTxn(txn, ctx, pln.PlanID, pln.ActiveCurrencySymbol, pln.Exchange, pln.ActiveCurrencyBalance); err != nil {
+		if err := repoPlan.UpdatePlanContextTxn(txn, ctx, pln.PlanID, pln.CommittedCurrencySymbol, pln.Exchange, pln.CommittedCurrencyAmount); err != nil {
 			txn.Rollback()
 			res.Status = constRes.Error
 			res.Message = "error encountered while updating the plan context: " + err.Error()
@@ -1141,6 +1140,7 @@ func (service *PlanService) UpdatePlan(ctx context.Context, req *protoPlan.Updat
 			res.Message = "error encountered while updating the plan base currency: " + err.Error()
 			return nil
 		}
+		// TODO when the currency symbol changes recompute the initial assert value
 	}
 	if pln.Status != req.Status {
 		pln.Status = req.Status
@@ -1205,8 +1205,8 @@ func (service *PlanService) UpdatePlan(ctx context.Context, req *protoPlan.Updat
 					changeReq := protoBalance.ChangeBalanceRequest{
 						UserID:         pln.UserID,
 						AccountID:      order.AccountID,
-						CurrencySymbol: pln.ActiveCurrencySymbol,
-						Amount:         pln.ActiveCurrencyBalance,
+						CurrencySymbol: pln.CommittedCurrencySymbol,
+						Amount:         pln.CommittedCurrencyAmount,
 					}
 					service.AccountClient.UnlockBalance(ctx, &changeReq)
 					break
@@ -1280,12 +1280,12 @@ func (service *PlanService) UpdatePlan(ctx context.Context, req *protoPlan.Updat
 		}
 	}
 
-	//if lockRequest.AccountID != "" {
-	//	r, _ := service.AccountClient.LockBalance(ctx, lockRequest)
-	//	if r.Status != constRes.Success {
-	//		log.Println("could not lock the initial balance within update -- ", err.Error())
-	//	}
-	//}
+	// if lockRequest.AccountID != "" {
+	// 	r, _ := service.AccountClient.LockBalance(ctx, lockRequest)
+	// 	if r.Status != constRes.Success {
+	// 		log.Println("could not lock the initial balance within update -- ", err.Error())
+	// 	}
+	// }
 
 	res.Status = constRes.Success
 	res.Data = &protoPlan.PlanData{Plan: pln}

@@ -21,11 +21,13 @@ func TestFilledOrder(t *testing.T) {
 
 	//orders := make([]*protoOrder.NewOrderRequest, 0)
 	req := protoPlan.NewPlanRequest{
-		UserID:             user.ID,
-		Status:             "active",
-		UserCurrencySymbol: "USDT",
-		CloseOnComplete:    false,
-		PlanTemplateID:     "update_test",
+		UserID:                  user.ID,
+		Status:                  "active",
+		UserCurrencySymbol:      "USDT",
+		CloseOnComplete:         false,
+		PlanTemplateID:          "update_test",
+		CommittedCurrencySymbol: "USDT",
+		CommittedCurrencyAmount: 100.0,
 		Orders: []*protoOrder.NewOrderRequest{
 			&protoOrder.NewOrderRequest{
 				OrderID:         "4d671984-d7dd-4dce-a20f-23f25d6daf7f",
@@ -35,7 +37,7 @@ func TestFilledOrder(t *testing.T) {
 				ParentOrderID:   "00000000-0000-0000-0000-000000000000",
 				MarketName:      "BTC-USDT",
 				Side:            "buy",
-				InitialCurrencyBalance: 100,
+				InitialCurrencyBalance: 0,
 				Triggers: []*protoOrder.TriggerRequest{
 					&protoOrder.TriggerRequest{
 						TriggerID:         "ab4734f7-5ab7-46eb-9972-ed632ac752f8",
@@ -112,11 +114,13 @@ func TestFailedOrder(t *testing.T) {
 
 	//orders := make([]*protoOrder.NewOrderRequest, 0)
 	req := protoPlan.NewPlanRequest{
-		UserID:             user.ID,
-		Status:             "active",
-		CloseOnComplete:    false,
-		PlanTemplateID:     "update_test",
-		UserCurrencySymbol: "USDT",
+		UserID:                  user.ID,
+		Status:                  "active",
+		CloseOnComplete:         false,
+		PlanTemplateID:          "update_test",
+		UserCurrencySymbol:      "USDT",
+		CommittedCurrencySymbol: "USDT",
+		CommittedCurrencyAmount: 100.0,
 		Orders: []*protoOrder.NewOrderRequest{
 			&protoOrder.NewOrderRequest{
 				OrderID:         "4d671984-d7dd-4dce-a20f-23f25d6daf7f",
@@ -126,7 +130,7 @@ func TestFailedOrder(t *testing.T) {
 				ParentOrderID:   "00000000-0000-0000-0000-000000000000",
 				MarketName:      "BTC-USDT",
 				Side:            "buy",
-				InitialCurrencyBalance: 100,
+				InitialCurrencyBalance: 0,
 				Triggers: []*protoOrder.TriggerRequest{
 					&protoOrder.TriggerRequest{
 						TriggerID:         "ab4734f7-5ab7-46eb-9972-ed632ac752f8",

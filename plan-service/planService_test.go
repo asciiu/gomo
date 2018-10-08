@@ -112,10 +112,12 @@ func TestOrdersMustHaveTriggers(t *testing.T) {
 	defer service.DB.Close()
 
 	req := protoPlan.NewPlanRequest{
-		UserID:          user.ID,
-		Status:          "active",
-		CloseOnComplete: false,
-		PlanTemplateID:  "no_trigger_test",
+		UserID:                  user.ID,
+		Status:                  "active",
+		CloseOnComplete:         false,
+		CommittedCurrencySymbol: "USDT",
+		CommittedCurrencyAmount: 100.0,
+		PlanTemplateID:          "no_trigger_test",
 		Orders: []*protoOrder.NewOrderRequest{
 			&protoOrder.NewOrderRequest{
 				OrderID:         "4d671984-d7dd-4dce-a20f-23f25d6daf7f",
@@ -125,7 +127,7 @@ func TestOrdersMustHaveTriggers(t *testing.T) {
 				ParentOrderID:   "00000000-0000-0000-0000-000000000000",
 				MarketName:      "BTC-USDT",
 				Side:            "buy",
-				InitialCurrencyBalance: 100,
+				InitialCurrencyBalance: 0,
 			},
 		},
 	}
@@ -144,11 +146,13 @@ func TestSuccessfulOrderPlan(t *testing.T) {
 	defer service.DB.Close()
 
 	req := protoPlan.NewPlanRequest{
-		UserID:          user.ID,
-		Status:          "active",
-		Title:           "Testing 123",
-		CloseOnComplete: false,
-		PlanTemplateID:  "bloody_test",
+		UserID:                  user.ID,
+		Status:                  "active",
+		Title:                   "Testing 123",
+		CloseOnComplete:         false,
+		PlanTemplateID:          "bloody_test",
+		CommittedCurrencySymbol: "USDT",
+		CommittedCurrencyAmount: 70.0,
 		Orders: []*protoOrder.NewOrderRequest{
 			&protoOrder.NewOrderRequest{
 				OrderID:         "4d671984-d7dd-4dce-a20f-23f25d6daf7f",
@@ -158,7 +162,7 @@ func TestSuccessfulOrderPlan(t *testing.T) {
 				ParentOrderID:   "00000000-0000-0000-0000-000000000000",
 				MarketName:      "BTC-USDT",
 				Side:            "buy",
-				InitialCurrencyBalance: 70,
+				InitialCurrencyBalance: 0,
 				Triggers: []*protoOrder.TriggerRequest{
 					&protoOrder.TriggerRequest{
 						TriggerID:         "ab4734f7-5ab7-46eb-9972-ed632ac752f8",
@@ -192,10 +196,12 @@ func TestUnsortedPlan(t *testing.T) {
 	defer service.DB.Close()
 
 	req := protoPlan.NewPlanRequest{
-		UserID:          user.ID,
-		Status:          "active",
-		CloseOnComplete: false,
-		PlanTemplateID:  "bloody_test",
+		UserID:                  user.ID,
+		Status:                  "active",
+		CloseOnComplete:         false,
+		PlanTemplateID:          "bloody_test",
+		CommittedCurrencySymbol: "USDT",
+		CommittedCurrencyAmount: 70.0,
 		Orders: []*protoOrder.NewOrderRequest{
 			&protoOrder.NewOrderRequest{
 				OrderID:         "da46997b-9d4f-45b2-9d2a-aaa404a213c5",
@@ -205,7 +211,7 @@ func TestUnsortedPlan(t *testing.T) {
 				ParentOrderID:   "4d671984-d7dd-4dce-a20f-23f25d6daf7f",
 				MarketName:      "BTC-USDT",
 				Side:            "buy",
-				InitialCurrencyBalance: 70,
+				InitialCurrencyBalance: 0,
 				Triggers: []*protoOrder.TriggerRequest{
 					&protoOrder.TriggerRequest{
 						TriggerID:         "ab4734f7-5ab7-46eb-9972-ed632ac752f8",
@@ -256,11 +262,13 @@ func TestInsufficientBalancePlan(t *testing.T) {
 	defer service.DB.Close()
 
 	req := protoPlan.NewPlanRequest{
-		UserID:          user.ID,
-		Status:          "active",
-		Title:           "Testing 123",
-		CloseOnComplete: false,
-		PlanTemplateID:  "bloody_test",
+		UserID:                  user.ID,
+		Status:                  "active",
+		Title:                   "Testing 123",
+		CloseOnComplete:         false,
+		PlanTemplateID:          "bloody_test",
+		CommittedCurrencySymbol: "USDT",
+		CommittedCurrencyAmount: 170.0,
 		Orders: []*protoOrder.NewOrderRequest{
 			&protoOrder.NewOrderRequest{
 				OrderID:         "4d671984-d7dd-4dce-a20f-23f25d6daf7f",
@@ -270,7 +278,7 @@ func TestInsufficientBalancePlan(t *testing.T) {
 				ParentOrderID:   "00000000-0000-0000-0000-000000000000",
 				MarketName:      "BTC-USDT",
 				Side:            "buy",
-				InitialCurrencyBalance: 170,
+				InitialCurrencyBalance: 0,
 				Triggers: []*protoOrder.TriggerRequest{
 					&protoOrder.TriggerRequest{
 						TriggerID:         "ab4734f7-5ab7-46eb-9972-ed632ac752f8",
@@ -302,10 +310,12 @@ func TestOrderUpdatePlan(t *testing.T) {
 
 	//orders := make([]*protoOrder.NewOrderRequest, 0)
 	req := protoPlan.NewPlanRequest{
-		UserID:          user.ID,
-		Status:          "active",
-		CloseOnComplete: false,
-		PlanTemplateID:  "update_test",
+		UserID:                  user.ID,
+		Status:                  "active",
+		CloseOnComplete:         false,
+		PlanTemplateID:          "update_test",
+		CommittedCurrencySymbol: "USDT",
+		CommittedCurrencyAmount: 100.0,
 		Orders: []*protoOrder.NewOrderRequest{
 			&protoOrder.NewOrderRequest{
 				OrderID:         "4d671984-d7dd-4dce-a20f-23f25d6daf7f",
@@ -315,7 +325,7 @@ func TestOrderUpdatePlan(t *testing.T) {
 				ParentOrderID:   "00000000-0000-0000-0000-000000000000",
 				MarketName:      "BTC-USDT",
 				Side:            "buy",
-				InitialCurrencyBalance: 100,
+				InitialCurrencyBalance: 0,
 				Triggers: []*protoOrder.TriggerRequest{
 					&protoOrder.TriggerRequest{
 						TriggerID:         "ab4734f7-5ab7-46eb-9972-ed632ac752f8",
@@ -391,7 +401,7 @@ func TestOrderUpdatePlan(t *testing.T) {
 				ParentOrderID:   "00000000-0000-0000-0000-000000000000",
 				MarketName:      "BTC-USDT",
 				Side:            "buy",
-				InitialCurrencyBalance: 70,
+				InitialCurrencyBalance: 0,
 				Triggers: []*protoOrder.TriggerRequest{
 					&protoOrder.TriggerRequest{
 						TriggerID:         "ab4734f7-5ab7-46eb-9972-ed632ac752f8",
@@ -430,7 +440,7 @@ func TestOrderUpdatePlan(t *testing.T) {
 	service.UpdatePlan(context.Background(), &req2, &res)
 	assert.Equal(t, "success", res.Status, res.Message)
 	assert.Equal(t, 2, len(res.Data.Plan.Orders), "update should have yielded a single order")
-	assert.Equal(t, 70.0, res.Data.Plan.Orders[0].InitialCurrencyBalance, "active currency balance after update order incorrect")
+	assert.Equal(t, 100.0, res.Data.Plan.CommittedCurrencyAmount, "committed currency amount after update order incorrect")
 	assert.Equal(t, "thing2", res.Data.Plan.PlanTemplateID, "the template ID should have changed")
 	assert.Equal(t, "BTC", res.Data.Plan.UserCurrencySymbol, "base currency should be BTC")
 
@@ -445,7 +455,7 @@ func TestOrderUpdatePlan(t *testing.T) {
 	service.GetUserPlan(context.Background(), &req3, &res)
 	assert.Equal(t, "success", res.Status, "return status for get plan should be success got: "+res.Message)
 	assert.Equal(t, 2, len(res.Data.Plan.Orders), "update should have yielded a single order")
-	assert.Equal(t, 70.0, res.Data.Plan.Orders[0].InitialCurrencyBalance, "active currency balance after update order incorrect")
+	assert.Equal(t, 100.0, res.Data.Plan.CommittedCurrencyAmount, "committed currency amount after update order incorrect")
 	assert.Equal(t, "thing2", res.Data.Plan.PlanTemplateID, "the template ID should have changed")
 
 	repoUser.DeleteUserHard(service.DB, user.ID)
@@ -458,10 +468,12 @@ func TestOrderUpdatePlanFailure(t *testing.T) {
 	defer service.DB.Close()
 
 	req := protoPlan.NewPlanRequest{
-		UserID:          user.ID,
-		Status:          "active",
-		CloseOnComplete: false,
-		PlanTemplateID:  "thing",
+		UserID:                  user.ID,
+		Status:                  "active",
+		CloseOnComplete:         false,
+		PlanTemplateID:          "thing",
+		CommittedCurrencySymbol: "USDT",
+		CommittedCurrencyAmount: 100.0,
 		Orders: []*protoOrder.NewOrderRequest{
 			&protoOrder.NewOrderRequest{
 				OrderID:         "4d671984-d7dd-4dce-a20f-23f25d6daf7f",
@@ -471,7 +483,7 @@ func TestOrderUpdatePlanFailure(t *testing.T) {
 				ParentOrderID:   "00000000-0000-0000-0000-000000000000",
 				MarketName:      "BTC-USDT",
 				Side:            "buy",
-				InitialCurrencyBalance: 100,
+				InitialCurrencyBalance: 0,
 				Triggers: []*protoOrder.TriggerRequest{
 					&protoOrder.TriggerRequest{
 						TriggerID:         "ab4734f7-5ab7-46eb-9972-ed632ac752f8",
@@ -513,7 +525,7 @@ func TestOrderUpdatePlanFailure(t *testing.T) {
 				ParentOrderID:   "00000000-0000-0000-0000-000000000000",
 				MarketName:      "ETH-USDT",
 				Side:            "buy",
-				InitialCurrencyBalance: 1000,
+				//InitialCurrencyBalance: 1000,
 				Triggers: []*protoOrder.TriggerRequest{
 					&protoOrder.TriggerRequest{
 						TriggerID:         "ab4734f7-5ab7-46eb-9972-ed632ac752f8",
@@ -577,10 +589,12 @@ func TestOrderUpdatePlanFailureBecauseOfExecution(t *testing.T) {
 
 	//orders := make([]*protoOrder.NewOrderRequest, 0)
 	req := protoPlan.NewPlanRequest{
-		UserID:          user.ID,
-		Status:          "active",
-		CloseOnComplete: false,
-		PlanTemplateID:  "update_test",
+		UserID:                  user.ID,
+		Status:                  "active",
+		CloseOnComplete:         false,
+		PlanTemplateID:          "update_test",
+		CommittedCurrencySymbol: "USDT",
+		CommittedCurrencyAmount: 100.0,
 		Orders: []*protoOrder.NewOrderRequest{
 			&protoOrder.NewOrderRequest{
 				OrderID:         "4d671984-d7dd-4dce-a20f-23f25d6daf7f",
@@ -590,7 +604,7 @@ func TestOrderUpdatePlanFailureBecauseOfExecution(t *testing.T) {
 				ParentOrderID:   "00000000-0000-0000-0000-000000000000",
 				MarketName:      "BTC-USDT",
 				Side:            "buy",
-				InitialCurrencyBalance: 100,
+				InitialCurrencyBalance: 0,
 				Triggers: []*protoOrder.TriggerRequest{
 					&protoOrder.TriggerRequest{
 						TriggerID:         "ab4734f7-5ab7-46eb-9972-ed632ac752f8",
@@ -672,7 +686,7 @@ func TestOrderUpdatePlanFailureBecauseOfExecution(t *testing.T) {
 				ParentOrderID:   "00000000-0000-0000-0000-000000000000",
 				MarketName:      "BTC-USDT",
 				Side:            "buy",
-				InitialCurrencyBalance: 70,
+				InitialCurrencyBalance: 0,
 				Triggers: []*protoOrder.TriggerRequest{
 					&protoOrder.TriggerRequest{
 						TriggerID:         "ab4734f7-5ab7-46eb-9972-ed632ac752f8",
@@ -722,10 +736,12 @@ func TestDeletePlan(t *testing.T) {
 
 	//orders := make([]*protoOrder.NewOrderRequest, 0)
 	req := protoPlan.NewPlanRequest{
-		UserID:          user.ID,
-		Status:          "active",
-		CloseOnComplete: false,
-		PlanTemplateID:  "update_test",
+		UserID:                  user.ID,
+		Status:                  "active",
+		CloseOnComplete:         false,
+		PlanTemplateID:          "update_test",
+		CommittedCurrencySymbol: "USDT",
+		CommittedCurrencyAmount: 100.0,
 		Orders: []*protoOrder.NewOrderRequest{
 			&protoOrder.NewOrderRequest{
 				OrderID:         "4d671984-d7dd-4dce-a20f-23f25d6daf7f",
@@ -735,7 +751,7 @@ func TestDeletePlan(t *testing.T) {
 				ParentOrderID:   "00000000-0000-0000-0000-000000000000",
 				MarketName:      "BTC-USDT",
 				Side:            "buy",
-				InitialCurrencyBalance: 100,
+				InitialCurrencyBalance: 0,
 				Triggers: []*protoOrder.TriggerRequest{
 					&protoOrder.TriggerRequest{
 						TriggerID:         "ab4734f7-5ab7-46eb-9972-ed632ac752f8",
@@ -826,10 +842,12 @@ func TestHandleAccountDeleted(t *testing.T) {
 
 	//orders := make([]*protoOrder.NewOrderRequest, 0)
 	req := protoPlan.NewPlanRequest{
-		UserID:          user.ID,
-		Status:          "active",
-		CloseOnComplete: false,
-		PlanTemplateID:  "update_test",
+		UserID:                  user.ID,
+		Status:                  "active",
+		CloseOnComplete:         false,
+		PlanTemplateID:          "update_test",
+		CommittedCurrencySymbol: "USDT",
+		CommittedCurrencyAmount: 100,
 		Orders: []*protoOrder.NewOrderRequest{
 			&protoOrder.NewOrderRequest{
 				OrderID:         "4d671984-d7dd-4dce-a20f-23f25d6daf7f",
@@ -839,7 +857,7 @@ func TestHandleAccountDeleted(t *testing.T) {
 				ParentOrderID:   "00000000-0000-0000-0000-000000000000",
 				MarketName:      "BTC-USDT",
 				Side:            "buy",
-				InitialCurrencyBalance: 100,
+				InitialCurrencyBalance: 0,
 				Triggers: []*protoOrder.TriggerRequest{
 					&protoOrder.TriggerRequest{
 						TriggerID:         "ab4734f7-5ab7-46eb-9972-ed632ac752f8",
@@ -927,11 +945,13 @@ func TestGetUserPlans(t *testing.T) {
 
 	//orders := make([]*protoOrder.NewOrderRequest, 0)
 	req := protoPlan.NewPlanRequest{
-		UserID:             user.ID,
-		Status:             "active",
-		CloseOnComplete:    false,
-		PlanTemplateID:     "update_test",
-		UserCurrencySymbol: "USDT",
+		UserID:                  user.ID,
+		Status:                  "active",
+		CloseOnComplete:         false,
+		PlanTemplateID:          "update_test",
+		UserCurrencySymbol:      "USDT",
+		CommittedCurrencySymbol: "USDT",
+		CommittedCurrencyAmount: 100.0,
 		Orders: []*protoOrder.NewOrderRequest{
 			&protoOrder.NewOrderRequest{
 				OrderID:         "4d671984-d7dd-4dce-a20f-23f25d6daf7f",
@@ -941,7 +961,7 @@ func TestGetUserPlans(t *testing.T) {
 				ParentOrderID:   "00000000-0000-0000-0000-000000000000",
 				MarketName:      "BTC-USDT",
 				Side:            "buy",
-				InitialCurrencyBalance: 100,
+				InitialCurrencyBalance: 0,
 				Triggers: []*protoOrder.TriggerRequest{
 					&protoOrder.TriggerRequest{
 						Code:              "test",
