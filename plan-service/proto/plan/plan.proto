@@ -22,7 +22,7 @@ message NewPlanRequest {
   string status = 6;
   bool closeOnComplete = 7;
   string committedCurrencySymbol = 8;
-  double committedCurrencyBalance = 9;
+  double committedCurrencyAmount = 9;
   repeated order.NewOrderRequest orders = 10; 
 }
 
@@ -36,7 +36,7 @@ message UpdatePlanRequest {
   string status = 7;
   bool closeOnComplete = 8;
   string committedCurrencySymbol = 9;
-  double committedCurrencyBalance = 10;
+  double committedCurrencyAmount = 10;
   repeated order.NewOrderRequest orders = 11; 
 }
 
@@ -72,9 +72,9 @@ message Plan {
   string userCurrencySymbol = 8;
   double userCurrencyBalanceAtInit = 9;
   string committedCurrencySymbol = 10;
-  double committedCurrencyBalance = 11;
-  string activeCurrencySymbol = 12;
-  double activeCurrencyBalance = 13;
+  double committedCurrencyAmount = 11;
+  string activeCurrencySymbol = 12;            // to be removed use committedCurrencySymbol
+  double activeCurrencyBalance = 13;           // to be removed use committedCurrencyAmount
   string initialCurrencySymbol = 14;
   double initialCurrencyBalance = 15;
   string initialTimestamp = 16;
