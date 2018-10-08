@@ -59,12 +59,9 @@ type Plan struct {
 	UserCurrencyBalanceAtInit  float64  `json:"userCurrencyBalanceAtInit"`
 	InitialUserCurrencyBalance float64  `json:"initialUserCurrencyBalance"`
 	InitialTimestamp           string   `json:"initialTimestamp"`
-	ActiveCurrencySymbol       string   `json:"activeCurrencySymbol"`
-	ActiveCurrencyName         string   `json:"activeCurrencyName"`
-	ActiveCurrencyBalance      float64  `json:"activeCurrencyBalance"`
 	CommittedCurrencySymbol    string   `json:"committedCurrencySymbol"`
+	CommittedCurrencyAmount    float64  `json:"committedCurrencyBalance"`
 	CommittedCurrencyName      string   `json:"committedCurrencyName"`
-	CommittedCurrencyBalance   float64  `json:"committedCurrencyBalance"`
 	InitialCurrencySymbol      string   `json:"initialCurrencySymbol"`
 	InitialCurrencyName        string   `json:"initialCurrencyName"`
 	InitialCurrencyBalance     float64  `json:"initialCurrencyBalance"`
@@ -332,9 +329,9 @@ func (controller *PlanController) HandleGetPlan(c echo.Context) error {
 			InitialTimestamp:          plan.InitialTimestamp,
 			UserCurrencySymbol:        plan.UserCurrencySymbol,
 			UserCurrencyBalanceAtInit: plan.UserCurrencyBalanceAtInit,
-			ActiveCurrencySymbol:      plan.ActiveCurrencySymbol,
-			ActiveCurrencyName:        controller.currencies[plan.ActiveCurrencySymbol],
-			ActiveCurrencyBalance:     plan.ActiveCurrencyBalance,
+			CommittedCurrencySymbol:   plan.CommittedCurrencySymbol,
+			CommittedCurrencyName:     controller.currencies[plan.CommittedCurrencySymbol],
+			CommittedCurrencyAmount:   plan.CommittedCurrencyAmount,
 			InitialCurrencySymbol:     plan.InitialCurrencySymbol,
 			InitialCurrencyName:       controller.currencies[plan.InitialCurrencySymbol],
 			InitialCurrencyBalance:    plan.InitialCurrencyBalance,
@@ -476,9 +473,9 @@ func (controller *PlanController) HandleListPlans(c echo.Context) error {
 			UserCurrencySymbol:        plan.UserCurrencySymbol,
 			UserCurrencyBalanceAtInit: plan.UserCurrencyBalanceAtInit,
 			InitialTimestamp:          plan.InitialTimestamp,
-			ActiveCurrencySymbol:      plan.ActiveCurrencySymbol,
-			ActiveCurrencyName:        controller.currencies[plan.ActiveCurrencySymbol],
-			ActiveCurrencyBalance:     plan.ActiveCurrencyBalance,
+			CommittedCurrencySymbol:   plan.CommittedCurrencySymbol,
+			CommittedCurrencyName:     controller.currencies[plan.CommittedCurrencySymbol],
+			CommittedCurrencyAmount:   plan.CommittedCurrencyAmount,
 			InitialCurrencySymbol:     plan.InitialCurrencySymbol,
 			InitialCurrencyName:       controller.currencies[plan.InitialCurrencySymbol],
 			InitialCurrencyBalance:    plan.InitialCurrencyBalance,
@@ -730,9 +727,9 @@ func (controller *PlanController) HandlePostPlan(c echo.Context) error {
 			Exchange:                  plan.Exchange,
 			UserCurrencySymbol:        plan.UserCurrencySymbol,
 			UserCurrencyBalanceAtInit: plan.UserCurrencyBalanceAtInit,
-			ActiveCurrencySymbol:      plan.ActiveCurrencySymbol,
-			ActiveCurrencyName:        controller.currencies[plan.ActiveCurrencySymbol],
-			ActiveCurrencyBalance:     plan.ActiveCurrencyBalance,
+			CommittedCurrencySymbol:   plan.CommittedCurrencySymbol,
+			CommittedCurrencyName:     controller.currencies[plan.CommittedCurrencySymbol],
+			CommittedCurrencyAmount:   plan.CommittedCurrencyAmount,
 			InitialCurrencySymbol:     plan.InitialCurrencySymbol,
 			InitialCurrencyName:       controller.currencies[plan.InitialCurrencySymbol],
 			InitialCurrencyBalance:    plan.InitialCurrencyBalance,
@@ -921,9 +918,9 @@ func (controller *PlanController) HandleUpdatePlan(c echo.Context) error {
 			Exchange:                  plan.Exchange,
 			UserCurrencySymbol:        plan.UserCurrencySymbol,
 			UserCurrencyBalanceAtInit: plan.UserCurrencyBalanceAtInit,
-			ActiveCurrencySymbol:      plan.ActiveCurrencySymbol,
-			ActiveCurrencyName:        controller.currencies[plan.ActiveCurrencySymbol],
-			ActiveCurrencyBalance:     plan.ActiveCurrencyBalance,
+			CommittedCurrencySymbol:   plan.CommittedCurrencySymbol,
+			CommittedCurrencyName:     controller.currencies[plan.CommittedCurrencySymbol],
+			CommittedCurrencyAmount:   plan.CommittedCurrencyAmount,
 			InitialCurrencySymbol:     plan.InitialCurrencySymbol,
 			InitialCurrencyName:       controller.currencies[plan.InitialCurrencySymbol],
 			InitialCurrencyBalance:    plan.InitialCurrencyBalance,
