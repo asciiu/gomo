@@ -73,8 +73,6 @@ message Plan {
   double userCurrencyBalanceAtInit = 9;
   string committedCurrencySymbol = 10;
   double committedCurrencyAmount = 11;
-  string activeCurrencySymbol = 12;            // to be removed use committedCurrencySymbol
-  double activeCurrencyBalance = 13;           // to be removed use committedCurrencyAmount
   string initialCurrencySymbol = 14;
   double initialCurrencyBalance = 15;
   string initialTimestamp = 16;
