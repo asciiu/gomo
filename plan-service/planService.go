@@ -1093,7 +1093,7 @@ func (service *PlanService) UpdatePlan(ctx context.Context, req *protoPlan.Updat
 		}
 	}
 
-	// only key plans that are active and that have an active order
+	// only kill plans that are active and that have an active order
 	if pln.Status == constPlan.Active && activeOrder {
 		req := protoEngine.KillRequest{PlanID: pln.PlanID}
 		_, err := service.EngineClient.KillPlan(ctx, &req)
@@ -1102,6 +1102,20 @@ func (service *PlanService) UpdatePlan(ctx context.Context, req *protoPlan.Updat
 			res.Message = "you cannot update this plan because an order for this plan has updated. To avoid seeing this message again try pausing your plan before you update it."
 			return nil
 		}
+	}
+
+	if len(req.Orders) == 0 && pln.LastExecutedPlanDepth == 0 {
+		pln.Status = constPlan.Deleted
+		if err := repoPlan.UpdatePlanStatus(service.DB, req.PlanID, pln.Status); err != nil {
+			res.Status = constRes.Error
+			res.Message = err.Error()
+			return nil
+		}
+
+		res.Status = constRes.Success
+		res.Data = &protoPlan.PlanData{Plan: pln}
+
+		return nil
 	}
 
 	txn, err := service.DB.Begin()
