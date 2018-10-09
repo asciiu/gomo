@@ -60,7 +60,7 @@ type Plan struct {
 	InitialUserCurrencyBalance float64  `json:"initialUserCurrencyBalance"`
 	InitialTimestamp           string   `json:"initialTimestamp"`
 	CommittedCurrencySymbol    string   `json:"committedCurrencySymbol"`
-	CommittedCurrencyAmount    float64  `json:"committedCurrencyBalance"`
+	CommittedCurrencyAmount    float64  `json:"committedCurrencyAmount"`
 	CommittedCurrencyName      string   `json:"committedCurrencyName"`
 	InitialCurrencySymbol      string   `json:"initialCurrencySymbol"`
 	InitialCurrencyName        string   `json:"initialCurrencyName"`
