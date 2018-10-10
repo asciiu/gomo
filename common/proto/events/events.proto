@@ -79,7 +79,8 @@ message TriggeredOrderEvent {
   string triggerID = 15;
   double triggeredPrice = 16;
   string triggeredCondition = 17;
-  bool closeOnComplete = 18;
+  string triggeredTime = 18;
+  bool closeOnComplete = 19;
 }
 
 message CompletedOrderEvent {
@@ -98,16 +99,17 @@ message CompletedOrderEvent {
   double finalCurrencyBalance = 13; 
   string feeCurrencySymbol = 14;
   double feeCurrencyAmount = 15;
-  string triggerID = 17;
-  double triggeredPrice = 18; 
-  string triggeredCondition = 19;
+  string triggerID = 16;
+  double triggeredPrice = 17; 
+  string triggeredCondition = 18;
+  string triggeredTime = 19;
   string exchangeOrderID = 20;
   string exchangeMarketName = 21;
   string exchangeTime = 22;
-  double exchangePrice = 16;
-  string status = 23;
-  string details = 24; 
-  bool closeOnComplete = 25;
+  double exchangePrice = 23;
+  string status = 24;
+  string details = 25; 
+  bool closeOnComplete = 26;
 }
 
 message AbortedOrderEvent {
