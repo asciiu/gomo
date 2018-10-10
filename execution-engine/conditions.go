@@ -86,6 +86,52 @@ func (cond *TrailingStopPercent) evaluate(price float64) (bool, string) {
 	return false, "evaluated as false"
 }
 
+// examples:
+// TrailingStopLoss(.05, "percent")   -- active the stop loss 5 percent below the entry
+// TrailingStopLoss(0.00004000, "points")   -- active the stop loss 4k satoshi below entry
+// type TrailingStopLoss struct {
+// 	Arm  float64 // the price where the trailing stop loss starts at
+// 	Type string  // either "percent", "points"
+// 	Stop float64 // stop price
+// 	Top  float64 // the top for the trailing stop
+// }
+
+//func (cond *TrailingStopLoss) evaluate(price float64) (bool, string) {
+//	// set the top to the current price
+//	if cond.Top == 0.0 {
+//		cond.Top = price
+//		return false, fmt.Sprintf("new top: %.8f", price)
+//	}
+//
+//	// we have a new top when the price
+//	// is greater than the top
+//	if price > cond.Top {
+//		cond.Top = price
+//	}
+//
+//	// trailing stop is true when the price is less than percent from top
+//	if (cond.Top * (1 - cond.Percent)) > price {
+//		return true, fmt.Sprintf("{condition: TrailingStopPercent, top:%.8f, percent:%.8f, price:%.8f}",
+//			cond.Top, cond.Percent, price)
+//	}
+//
+//	return false, "evaluated as false"
+//}
+
+// client should send in StopLoss(percent)
+type StopLoss struct {
+	Stop float64 // the price where the trailing stop loss triggers
+}
+
+func (cond *StopLoss) evaluate(price float64) (bool, string) {
+	// stop price
+	if cond.Stop <= price {
+		return true, fmt.Sprintf("{condition: StopLoss, price: %.8f}", price)
+	}
+
+	return false, "evaluated as false"
+}
+
 // This trigger will execute on the next price
 type Immediate struct {
 }

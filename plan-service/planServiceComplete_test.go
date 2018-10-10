@@ -69,6 +69,7 @@ func TestFilledOrder(t *testing.T) {
 		TriggerID:                "ab4734f7-5ab7-46eb-9972-ed632ac752f8",
 		TriggeredPrice:           1001,
 		TriggeredCondition:       "test",
+		TriggeredTime:            now,
 		CloseOnComplete:          false,
 		InitialCurrencyBalance:   100,
 		InitialCurrencySymbol:    "USDT",
@@ -149,6 +150,7 @@ func TestFailedOrder(t *testing.T) {
 	service.NewPlan(context.Background(), &req, &res)
 	assert.Equal(t, "success", res.Status, "return status of inserting plan should be success got: "+res.Message)
 
+	now := string(pq.FormatTimestamp(time.Now().UTC()))
 	completedEvent := protoEvt.CompletedOrderEvent{
 		UserID:                   user.ID,
 		PlanID:                   res.Data.Plan.PlanID,
@@ -160,6 +162,7 @@ func TestFailedOrder(t *testing.T) {
 		TriggerID:                "ab4734f7-5ab7-46eb-9972-ed632ac752f8",
 		TriggeredPrice:           1001,
 		TriggeredCondition:       "test",
+		TriggeredTime:            now,
 		CloseOnComplete:          false,
 		InitialCurrencyBalance:   100,
 		InitialCurrencySymbol:    "USDT",

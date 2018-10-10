@@ -63,6 +63,7 @@ func (service *BinanceService) FormatTriggerEvent(triggerEvent *protoEvt.Trigger
 		TriggerID:              triggerEvent.TriggerID,
 		TriggeredPrice:         triggerEvent.TriggeredPrice,
 		TriggeredCondition:     triggerEvent.TriggeredCondition,
+		TriggeredTime:          triggerEvent.TriggeredTime,
 		CloseOnComplete:        triggerEvent.CloseOnComplete,
 	}
 

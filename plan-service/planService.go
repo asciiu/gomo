@@ -313,7 +313,7 @@ func (service *PlanService) HandleCompletedOrder(ctx context.Context, completedO
 			completedOrderEvent.TriggerID,
 			completedOrderEvent.TriggeredPrice,
 			completedOrderEvent.TriggeredCondition,
-			completedOrderEvent.ExchangeTime); err != nil {
+			completedOrderEvent.TriggeredTime); err != nil {
 			log.Println("completed order error trying to update the trigger -- ", err.Error())
 			return nil
 		}

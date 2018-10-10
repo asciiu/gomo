@@ -106,9 +106,11 @@ func (engine *Engine) HandleTradeEvents(ctx context.Context, payload *protoEvt.T
 			for _, order := range plan.Orders {
 				if tradeEvent.MarketName == order.MarketName && tradeEvent.Exchange == order.Exchange {
 					for _, trigger := range order.TriggerExs {
+						// evalute the trigger - is it true?
 						if isTrue, desc := trigger.Evaluate(tradeEvent.Price); isTrue {
 							// remove this order from the processor
 							engine.Plans = append(plans[:p], plans[p+1:]...)
+							now := string(pq.FormatTimestamp(time.Now().UTC()))
 
 							// assume if there is no key that it is paper
 							// paper accounts should NOT have a public key.
@@ -126,9 +128,10 @@ func (engine *Engine) HandleTradeEvents(ctx context.Context, payload *protoEvt.T
 									TriggerID:              trigger.TriggerID,
 									TriggeredPrice:         tradeEvent.Price,
 									TriggeredCondition:     desc,
+									TriggeredTime:          now,
 									ExchangeMarketName:     constPlan.PaperOrder,
 									ExchangePrice:          tradeEvent.Price,
-									ExchangeTime:           string(pq.FormatTimestamp(time.Now().UTC())),
+									ExchangeTime:           now,
 									Status:                 constPlan.Filled,
 									CloseOnComplete:        plan.CloseOnComplete,
 								}
@@ -194,6 +197,7 @@ func (engine *Engine) HandleTradeEvents(ctx context.Context, payload *protoEvt.T
 									TriggerID:             trigger.TriggerID,
 									TriggeredPrice:        tradeEvent.Price,
 									TriggeredCondition:    desc,
+									TriggeredTime:         now,
 								}
 
 								// Never log the secrets contained in the event
@@ -259,6 +263,7 @@ func (engine *Engine) AddPlan(ctx context.Context, req *protoEngine.NewPlanReque
 
 			case str == "immediateMarketPrice":
 				lastPrice := engine.PriceLine[order.MarketName]
+				now := string(pq.FormatTimestamp(time.Now().UTC()))
 
 				// execute this order right NOW! It's FOMO TIME! but only when we have the last price
 				// for the market in question
@@ -276,8 +281,9 @@ func (engine *Engine) AddPlan(ctx context.Context, req *protoEngine.NewPlanReque
 						TriggerID:              trigger.TriggerID,
 						TriggeredPrice:         lastPrice,
 						TriggeredCondition:     "Immeadiate!",
+						TriggeredTime:          now,
 						ExchangeMarketName:     constPlan.PaperOrder,
-						ExchangeTime:           string(pq.FormatTimestamp(time.Now().UTC())),
+						ExchangeTime:           now,
 						Status:                 constPlan.Filled,
 						CloseOnComplete:        req.CloseOnComplete,
 					}
