@@ -106,12 +106,12 @@ func (service *PlanService) publishPlan(ctx context.Context, plan *protoPlan.Pla
 	}
 
 	newPlan := protoEngine.NewPlanRequest{
-		PlanID:                plan.PlanID,
-		UserID:                plan.UserID,
-		ActiveCurrencyBalance: plan.CommittedCurrencyAmount,
-		ActiveCurrencySymbol:  plan.CommittedCurrencySymbol,
-		CloseOnComplete:       plan.CloseOnComplete,
-		Orders:                newOrders,
+		PlanID:                  plan.PlanID,
+		UserID:                  plan.UserID,
+		CommittedCurrencyAmount: plan.CommittedCurrencyAmount,
+		CommittedCurrencySymbol: plan.CommittedCurrencySymbol,
+		CloseOnComplete:         plan.CloseOnComplete,
+		Orders:                  newOrders,
 	}
 
 	response, err := service.EngineClient.AddPlan(ctx, &newPlan)
@@ -689,14 +689,12 @@ func (service *PlanService) NewPlan(ctx context.Context, req *protoPlan.NewPlanR
 	// TODO if req.IntialTimestamp compute the initial currency balance using the baseCurrencySymbol
 
 	pln := protoPlan.Plan{
-		PlanID:             planID.String(),
-		PlanTemplateID:     req.PlanTemplateID,
-		UserID:             req.UserID,
-		Title:              title,
-		TotalDepth:         totalDepth,
-		UserCurrencySymbol: baseCurrencySymbol,
-		//ActiveCurrencySymbol:   newOrders[0].InitialCurrencySymbol,
-		//ActiveCurrencyBalance:  newOrders[0].InitialCurrencyBalance,
+		PlanID:                  planID.String(),
+		PlanTemplateID:          req.PlanTemplateID,
+		UserID:                  req.UserID,
+		Title:                   title,
+		TotalDepth:              totalDepth,
+		UserCurrencySymbol:      baseCurrencySymbol,
 		CommittedCurrencySymbol: req.CommittedCurrencySymbol,
 		CommittedCurrencyAmount: req.CommittedCurrencyAmount,
 		InitialCurrencySymbol:   req.CommittedCurrencySymbol,
@@ -1134,8 +1132,8 @@ func (service *PlanService) UpdatePlan(ctx context.Context, req *protoPlan.Updat
 
 	// if root has not executed yet and we have new orders
 	if pln.LastExecutedPlanDepth == 0 && len(newOrders) > 0 {
-		//pln.ActiveCurrencySymbol = newOrders[0].InitialCurrencySymbol
-		//pln.ActiveCurrencyBalance = newOrders[0].InitialCurrencyBalance
+		//pln.CommittedCurrencySymbol = newOrders[0].InitialCurrencySymbol
+		//pln.CommittedCurrencyAmount = newOrders[0].InitialCurrencyBalance
 		//pln.InitialCurrencySymbol = newOrders[0].InitialCurrencySymbol
 		//pln.InitialCurrencyBalance = newOrders[0].InitialCurrencyBalance
 		pln.Exchange = newOrders[0].Exchange
