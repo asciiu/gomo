@@ -37,7 +37,7 @@ func TestFilledOrder(t *testing.T) {
 				ParentOrderID:   "00000000-0000-0000-0000-000000000000",
 				MarketName:      "BTC-USDT",
 				Side:            "buy",
-				InitialCurrencyBalance: 0,
+				InitialCurrencyBalance: 100.0,
 				Triggers: []*protoOrder.TriggerRequest{
 					&protoOrder.TriggerRequest{
 						TriggerID:         "ab4734f7-5ab7-46eb-9972-ed632ac752f8",
@@ -131,7 +131,7 @@ func TestFailedOrder(t *testing.T) {
 				ParentOrderID:   "00000000-0000-0000-0000-000000000000",
 				MarketName:      "BTC-USDT",
 				Side:            "buy",
-				InitialCurrencyBalance: 0,
+				InitialCurrencyBalance: 100.0,
 				Triggers: []*protoOrder.TriggerRequest{
 					&protoOrder.TriggerRequest{
 						TriggerID:         "ab4734f7-5ab7-46eb-9972-ed632ac752f8",
