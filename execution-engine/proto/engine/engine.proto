@@ -26,8 +26,8 @@ message KillUserRequest {
 message NewPlanRequest {
   string planID = 1;
   string userID = 2;
-  string activeCurrencySymbol = 3;
-  double activeCurrencyBalance = 4;
+  string committedCurrencySymbol = 3;
+  double committedCurrencyAmount = 4;
   bool closeOnComplete = 5;
   repeated Order orders = 6;
 }

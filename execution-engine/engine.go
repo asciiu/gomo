@@ -27,12 +27,12 @@ const precision = 8
 
 // Order has conditions
 type Plan struct {
-	PlanID                string
-	UserID                string
-	ActiveCurrencySymbol  string
-	ActiveCurrencyBalance float64
-	CloseOnComplete       bool
-	Orders                []*Order
+	PlanID                  string
+	UserID                  string
+	CommittedCurrencySymbol string
+	committedCurrencyAmount float64
+	CloseOnComplete         bool
+	Orders                  []*Order
 }
 
 type Order struct {
@@ -123,8 +123,8 @@ func (engine *Engine) HandleTradeEvents(ctx context.Context, payload *protoEvt.T
 									MarketName:             order.MarketName,
 									Side:                   order.Side,
 									AccountID:              order.AccountID,
-									InitialCurrencyBalance: plan.ActiveCurrencyBalance,
-									InitialCurrencySymbol:  plan.ActiveCurrencySymbol,
+									InitialCurrencyBalance: plan.committedCurrencyAmount,
+									InitialCurrencySymbol:  plan.CommittedCurrencySymbol,
 									TriggerID:              trigger.TriggerID,
 									TriggeredPrice:         tradeEvent.Price,
 									TriggeredCondition:     desc,
@@ -139,23 +139,23 @@ func (engine *Engine) HandleTradeEvents(ctx context.Context, payload *protoEvt.T
 								symbols := strings.Split(order.MarketName, "-")
 								// adjust balances for buy
 								if order.Side == constPlan.Buy {
-									qty := commonUtil.ToFixedFloor(plan.ActiveCurrencyBalance/tradeEvent.Price, precision)
+									qty := commonUtil.ToFixedFloor(plan.committedCurrencyAmount/tradeEvent.Price, precision)
 
 									completedEvent.ExchangePrice = tradeEvent.Price
 									completedEvent.FinalCurrencySymbol = symbols[0]
 									completedEvent.FinalCurrencyBalance = qty
 									completedEvent.InitialCurrencyTraded = commonUtil.ToFixedFloor(completedEvent.FinalCurrencyBalance*tradeEvent.Price, precision)
-									completedEvent.InitialCurrencyRemainder = commonUtil.ToFixedFloor(plan.ActiveCurrencyBalance-completedEvent.InitialCurrencyTraded, precision)
+									completedEvent.InitialCurrencyRemainder = commonUtil.ToFixedFloor(plan.committedCurrencyAmount-completedEvent.InitialCurrencyTraded, precision)
 									completedEvent.Details = fmt.Sprintf("orderID: %s, bought %.8f %s with %.8f %s", completedEvent.OrderID, completedEvent.FinalCurrencyBalance, symbols[0], completedEvent.InitialCurrencyTraded, symbols[1])
 								}
 
 								// adjust balances for sell
 								if order.Side == constPlan.Sell {
 									completedEvent.FinalCurrencySymbol = symbols[1]
-									completedEvent.FinalCurrencyBalance = commonUtil.ToFixedFloor(plan.ActiveCurrencyBalance*tradeEvent.Price, precision)
+									completedEvent.FinalCurrencyBalance = commonUtil.ToFixedFloor(plan.committedCurrencyAmount*tradeEvent.Price, precision)
 									completedEvent.InitialCurrencyRemainder = 0
-									completedEvent.InitialCurrencyTraded = commonUtil.ToFixedFloor(plan.ActiveCurrencyBalance, precision)
-									completedEvent.Details = fmt.Sprintf("orderID: %s, sold %.8f %s for %.8f %s", completedEvent.OrderID, plan.ActiveCurrencyBalance, symbols[0], completedEvent.FinalCurrencyBalance, symbols[1])
+									completedEvent.InitialCurrencyTraded = commonUtil.ToFixedFloor(plan.committedCurrencyAmount, precision)
+									completedEvent.Details = fmt.Sprintf("orderID: %s, sold %.8f %s for %.8f %s", completedEvent.OrderID, plan.committedCurrencyAmount, symbols[0], completedEvent.FinalCurrencyBalance, symbols[1])
 								}
 
 								// Never log the secrets contained in the event
@@ -168,36 +168,36 @@ func (engine *Engine) HandleTradeEvents(ctx context.Context, payload *protoEvt.T
 								quantity := 0.0
 								switch {
 								case order.Side == constPlan.Buy && order.OrderType == constPlan.LimitOrder:
-									quantity = plan.ActiveCurrencyBalance / order.LimitPrice
+									quantity = plan.committedCurrencyAmount / order.LimitPrice
 
 								case order.Side == constPlan.Buy && order.OrderType == constPlan.MarketOrder:
-									quantity = plan.ActiveCurrencyBalance / tradeEvent.Price
+									quantity = plan.committedCurrencyAmount / tradeEvent.Price
 
 								default:
 									// sell entire active balance
-									quantity = plan.ActiveCurrencyBalance
+									quantity = plan.committedCurrencyAmount
 								}
 
 								// convert this active order event to a triggered order event
 								triggeredEvent := protoEvt.TriggeredOrderEvent{
-									Exchange:              order.Exchange,
-									OrderID:               order.OrderID,
-									PlanID:                plan.PlanID,
-									UserID:                plan.UserID,
-									AccountID:             order.AccountID,
-									ActiveCurrencySymbol:  plan.ActiveCurrencySymbol,
-									ActiveCurrencyBalance: plan.ActiveCurrencyBalance,
-									KeyPublic:             order.KeyPublic,
-									KeySecret:             order.KeySecret,
-									MarketName:            order.MarketName,
-									Side:                  order.Side,
-									OrderType:             order.OrderType,
-									LimitPrice:            order.LimitPrice,
-									Quantity:              quantity,
-									TriggerID:             trigger.TriggerID,
-									TriggeredPrice:        tradeEvent.Price,
-									TriggeredCondition:    desc,
-									TriggeredTime:         now,
+									Exchange:                order.Exchange,
+									OrderID:                 order.OrderID,
+									PlanID:                  plan.PlanID,
+									UserID:                  plan.UserID,
+									AccountID:               order.AccountID,
+									CommittedCurrencySymbol: plan.CommittedCurrencySymbol,
+									CommittedCurrencyAmount: plan.committedCurrencyAmount,
+									KeyPublic:               order.KeyPublic,
+									KeySecret:               order.KeySecret,
+									MarketName:              order.MarketName,
+									Side:                    order.Side,
+									OrderType:               order.OrderType,
+									LimitPrice:              order.LimitPrice,
+									Quantity:                quantity,
+									TriggerID:               trigger.TriggerID,
+									TriggeredPrice:          tradeEvent.Price,
+									TriggeredCondition:      desc,
+									TriggeredTime:           now,
 								}
 
 								// Never log the secrets contained in the event
@@ -276,8 +276,8 @@ func (engine *Engine) AddPlan(ctx context.Context, req *protoEngine.NewPlanReque
 						MarketName:             order.MarketName,
 						Side:                   order.Side,
 						AccountID:              order.AccountID,
-						InitialCurrencyBalance: req.ActiveCurrencyBalance,
-						InitialCurrencySymbol:  req.ActiveCurrencySymbol,
+						InitialCurrencyBalance: req.CommittedCurrencyAmount,
+						InitialCurrencySymbol:  req.CommittedCurrencySymbol,
 						TriggerID:              trigger.TriggerID,
 						TriggeredPrice:         lastPrice,
 						TriggeredCondition:     "Immeadiate!",
@@ -291,22 +291,22 @@ func (engine *Engine) AddPlan(ctx context.Context, req *protoEngine.NewPlanReque
 					symbols := strings.Split(order.MarketName, "-")
 					// adjust balances for buy
 					if order.Side == constPlan.Buy {
-						qty := commonUtil.ToFixedFloor(req.ActiveCurrencyBalance/lastPrice, precision)
+						qty := commonUtil.ToFixedFloor(req.CommittedCurrencyAmount/lastPrice, precision)
 
 						completedEvent.FinalCurrencySymbol = symbols[0]
 						completedEvent.FinalCurrencyBalance = qty
 						completedEvent.InitialCurrencyTraded = commonUtil.ToFixedFloor(completedEvent.FinalCurrencyBalance*lastPrice, precision)
-						completedEvent.InitialCurrencyRemainder = commonUtil.ToFixedFloor(req.ActiveCurrencyBalance-completedEvent.InitialCurrencyTraded, precision)
+						completedEvent.InitialCurrencyRemainder = commonUtil.ToFixedFloor(req.CommittedCurrencyAmount-completedEvent.InitialCurrencyTraded, precision)
 						completedEvent.Details = fmt.Sprintf("bought %.8f %s with %.8f %s", completedEvent.FinalCurrencyBalance, symbols[0], completedEvent.InitialCurrencyTraded, symbols[1])
 					}
 
 					// adjust balances for sell
 					if order.Side == constPlan.Sell {
 						completedEvent.FinalCurrencySymbol = symbols[1]
-						completedEvent.FinalCurrencyBalance = commonUtil.ToFixedFloor(req.ActiveCurrencyBalance*lastPrice, precision)
+						completedEvent.FinalCurrencyBalance = commonUtil.ToFixedFloor(req.CommittedCurrencyAmount*lastPrice, precision)
 						completedEvent.InitialCurrencyRemainder = 0
-						completedEvent.InitialCurrencyTraded = commonUtil.ToFixedFloor(req.ActiveCurrencyBalance, precision)
-						completedEvent.Details = fmt.Sprintf("sold %.8f %s for %.8f %s", req.ActiveCurrencyBalance, symbols[0], completedEvent.FinalCurrencyBalance, symbols[1])
+						completedEvent.InitialCurrencyTraded = commonUtil.ToFixedFloor(req.CommittedCurrencyAmount, precision)
+						completedEvent.Details = fmt.Sprintf("sold %.8f %s for %.8f %s", req.CommittedCurrencyAmount, symbols[0], completedEvent.FinalCurrencyBalance, symbols[1])
 					}
 
 					// Never log the secrets contained in the event
@@ -371,12 +371,12 @@ func (engine *Engine) AddPlan(ctx context.Context, req *protoEngine.NewPlanReque
 	}
 
 	engine.Plans = append(engine.Plans, &Plan{
-		PlanID:                req.PlanID,
-		UserID:                req.UserID,
-		ActiveCurrencySymbol:  req.ActiveCurrencySymbol,
-		ActiveCurrencyBalance: req.ActiveCurrencyBalance,
-		CloseOnComplete:       req.CloseOnComplete,
-		Orders:                orders,
+		PlanID:                  req.PlanID,
+		UserID:                  req.UserID,
+		CommittedCurrencySymbol: req.CommittedCurrencySymbol,
+		committedCurrencyAmount: req.CommittedCurrencyAmount,
+		CloseOnComplete:         req.CloseOnComplete,
+		Orders:                  orders,
 	})
 
 	res.Status = constRes.Success
