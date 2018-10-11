@@ -26,7 +26,7 @@ spec:
               name: fomo-config
           env:
           - name: UPDATED_AT
-            value: "Wed Oct 10 23:15:07 MDT 2018" 
+            value: "Wed Oct 10 23:58:43 MDT 2018" 
           ports:
           - containerPort: 8080
             name: binance-port

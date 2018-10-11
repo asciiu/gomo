@@ -57,8 +57,8 @@ func (service *BinanceService) FormatTriggerEvent(triggerEvent *protoEvt.Trigger
 		MarketName:             triggerEvent.MarketName,
 		Side:                   triggerEvent.Side,
 		AccountID:              triggerEvent.AccountID,
-		InitialCurrencyBalance: triggerEvent.ActiveCurrencyBalance,
-		InitialCurrencySymbol:  triggerEvent.ActiveCurrencySymbol,
+		InitialCurrencyBalance: triggerEvent.CommittedCurrencyAmount,
+		InitialCurrencySymbol:  triggerEvent.CommittedCurrencySymbol,
 		FinalCurrencySymbol:    finalCurrency,
 		TriggerID:              triggerEvent.TriggerID,
 		TriggeredPrice:         triggerEvent.TriggeredPrice,
@@ -75,7 +75,7 @@ func (service *BinanceService) FormatTriggerEvent(triggerEvent *protoEvt.Trigger
 	switch {
 	case triggerEvent.Side == constPlan.Buy && triggerEvent.OrderType == constPlan.LimitOrder:
 		// buy limit order should use limit price to compute final currency qty
-		qauntity = triggerEvent.ActiveCurrencyBalance / triggerEvent.LimitPrice
+		qauntity = triggerEvent.CommittedCurrencyAmount / triggerEvent.LimitPrice
 
 		steps := math.Floor(qauntity / lotSize.StepSize)
 		qauntity = lotSize.StepSize * steps
@@ -87,7 +87,7 @@ func (service *BinanceService) FormatTriggerEvent(triggerEvent *protoEvt.Trigger
 
 	case triggerEvent.Side == constPlan.Buy && triggerEvent.OrderType == constPlan.MarketOrder:
 		// buy market should use the triggered price in the event
-		qauntity = triggerEvent.ActiveCurrencyBalance / triggerEvent.TriggeredPrice
+		qauntity = triggerEvent.CommittedCurrencyAmount / triggerEvent.TriggeredPrice
 
 		steps := math.Floor(qauntity / lotSize.StepSize)
 		qauntity = lotSize.StepSize * steps
@@ -99,7 +99,7 @@ func (service *BinanceService) FormatTriggerEvent(triggerEvent *protoEvt.Trigger
 
 	default:
 		// assume sell entire active balance
-		qauntity = triggerEvent.ActiveCurrencyBalance
+		qauntity = triggerEvent.CommittedCurrencyAmount
 
 		steps := math.Floor(qauntity / lotSize.StepSize)
 		qauntity = lotSize.StepSize * steps
