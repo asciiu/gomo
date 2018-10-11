@@ -218,13 +218,13 @@ func (service *BinanceService) HandleFillOrder(ctx context.Context, triggerEvent
 				}
 				completedEvent.ExchangeTime = string(pq.FormatTimestamp(latest))
 				completedEvent.FeeCurrencySymbol = feesym
-				completedEvent.FeeCurrencyAmount = commission
+				completedEvent.FeeCurrencyAmount = util.ToFixedRounded(commission, 8)
 				// compute the exchange rate as an average
 				completedEvent.ExchangePrice = util.ToFixedRounded(sumPrice/totalTrades, 8)
 
 				completedEvent.Status = constPlan.Filled
 				completedEvent.ExchangeOrderID = strconv.FormatInt(processedOrder.OrderID, 10)
-				completedEvent.FinalCurrencyBalance = quantity
+				completedEvent.FinalCurrencyBalance = util.ToFixedRounded(quantity, 8)
 				completedEvent.FeeCurrencyAmount = commission
 
 				if triggerEvent.Side == constPlan.Sell {
