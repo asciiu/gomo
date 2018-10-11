@@ -32,8 +32,8 @@ message CandleDataRequest {
 message NewPlanEvent {
   string planID = 1;
   string userID = 2;
-  string activeCurrencySymbol = 3;
-  double activeCurrencyBalance = 4;
+  string committedCurrencySymbol = 3;
+  double committedCurrencyAmount = 4;
   bool closeOnComplete = 5;
   repeated Order orders = 6;
 }
@@ -67,8 +67,8 @@ message TriggeredOrderEvent {
   string planID = 3;
   string userID = 4;
   string accountID = 5;
-  string activeCurrencySymbol = 6;
-  double activeCurrencyBalance = 7;
+  string committedCurrencySymbol = 6;
+  double committedCurrencyAmount = 7;
   double quantity = 8;
   string keyPublic = 9;
   string keySecret = 10;
