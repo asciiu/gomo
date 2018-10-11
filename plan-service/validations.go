@@ -113,7 +113,7 @@ func ValidateNodeCount(orderRequests []*protoOrder.NewOrderRequest) bool {
 
 // validate non zero currency balance
 func ValidateNoneZeroBalance(planRequest *protoPlan.NewPlanRequest) bool {
-	if planRequest.CommittedCurrencyAmount > 0 {
+	if planRequest.CommittedCurrencyAmount > 0 || planRequest.Orders[0].InitialCurrencyBalance > 0 {
 		return true
 	}
 	return false
