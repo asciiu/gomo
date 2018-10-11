@@ -173,7 +173,7 @@ func (service *BinanceService) HandleFillOrder(ctx context.Context, triggerEvent
 			log.Printf("processed order -- %+v\n", processedOrder)
 
 			// need to wait for binance to fill the order on their end to avoid race condition
-			time.Sleep(2 * time.Second)
+			time.Sleep(1 * time.Second)
 
 			// ask for most recent 200
 			trades, err := b.MyTrades(binance.MyTradesRequest{
