@@ -225,7 +225,6 @@ func (service *BinanceService) HandleFillOrder(ctx context.Context, triggerEvent
 				completedEvent.Status = constPlan.Filled
 				completedEvent.ExchangeOrderID = strconv.FormatInt(processedOrder.OrderID, 10)
 				completedEvent.FinalCurrencyBalance = util.ToFixedRounded(quantity, 8)
-				completedEvent.FeeCurrencyAmount = commission
 
 				if triggerEvent.Side == constPlan.Sell {
 					completedEvent.Details = fmt.Sprintf("sold %.8f %s in exchange for %.8f %s",
