@@ -230,9 +230,13 @@ func (engine *Engine) AddPlan(ctx context.Context, req *protoEngine.NewPlanReque
 	// convert plan orders to have trigger expressions
 	orders := make([]*Order, 0)
 
-	trailingPoint := regexp.MustCompile(`^.*?TrailingStopPoint\((0\.\d{2,}),\s(\d+\.\d+).*?`)
-	trailingPercent := regexp.MustCompile(`^.*?TrailingStopPercent\((0\.\d{2,}),\s(\d+\.\d+).*?`)
+	// TrailingStopPrice(0.00001234)
+	trailingPrice := regexp.MustCompile(`^.*?TrailingStopPrice\((0\.\d{2,}).*?`)
+	// TrailingStopPercent(0.012)
+	trailingPercent := regexp.MustCompile(`^.*?TrailingStopPercent\((0\.\d{2,}).*?`)
+	// StopLossPercent
 	stopLossPercent := regexp.MustCompile(`^.*?StopLossPercent\((0\.\d{2,}).*?`)
+	// StopLossPrice
 	stopLossPrice := regexp.MustCompile(`^.*?StopLossPrice\((0\.\d{2,}).*?`)
 
 	for _, order := range req.Orders {
@@ -244,37 +248,42 @@ func (engine *Engine) AddPlan(ctx context.Context, req *protoEngine.NewPlanReque
 			str := trigger.Code
 			var expression Expression
 			switch {
-			case trailingPoint.MatchString(str):
-				rs := trailingPoint.FindStringSubmatch(str)
-				top, _ := strconv.ParseFloat(rs[1], 64)
-				points, _ := strconv.ParseFloat(rs[2], 64)
+			case trailingPrice.MatchString(str):
+				rs := trailingPrice.FindStringSubmatch(str)
+				stopPrice, _ := strconv.ParseFloat(rs[1], 64)
 
-				ts := TrailingStopPoint{
-					Top:    top,
-					Points: points,
+				ts := TrailingStopPrice{
+					StopPrice:  stopPrice,
+					StartPrice: stopPrice,
 				}
 				expression = (&ts).evaluate
+
 			case trailingPercent.MatchString(str):
 				rs := trailingPercent.FindStringSubmatch(str)
-				top, _ := strconv.ParseFloat(rs[1], 64)
-				percent, _ := strconv.ParseFloat(rs[2], 64)
+				percent, _ := strconv.ParseFloat(rs[1], 64)
 
-				ts := TrailingStopPercent{
-					Top:     top,
-					Percent: percent,
+				if req.ReferencePrice > 0 {
+					// refer to the notes for stopLossPercent case below
+					stopPrice := commonUtil.ToFixedFloor(percent*req.ReferencePrice, 8)
+					ts := TrailingStopPercent{
+						StopPrice: stopPrice,
+						Percent:   percent,
+					}
+					expression = (&ts).evaluate
 				}
-				expression = (&ts).evaluate
+
 			case stopLossPercent.MatchString(str):
 				rs := stopLossPercent.FindStringSubmatch(str)
 				percent, _ := strconv.ParseFloat(rs[1], 64)
 
+				// 10/11/18 Flowy's Gospel
 				// only create an expression if there is a reference price
 				// this check is needed to ensure that a stop loss can only be set
 				// after an order fills - i.e. can't be used in the root orders because
 				// there is no entry price from a previous filled order. The exchangePrice
 				// or triggerPrice of the last filled order will be the reference price.
 				if req.ReferencePrice > 0 {
-					stopPrice := req.ReferencePrice * percent
+					stopPrice := commonUtil.ToFixedFloor(req.ReferencePrice*percent, 8)
 
 					ts := StopLossPercent{
 						StopPrice: stopPrice,

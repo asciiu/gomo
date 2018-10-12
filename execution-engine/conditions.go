@@ -34,55 +34,46 @@ func (cond *PriceCondition) evaluate(price float64) (bool, string) {
 }
 
 // TrailingStopPoint based upon difference in points
-type TrailingStopPoint struct {
-	Top    float64
-	Points float64
+type TrailingStopPrice struct {
+	StopPrice  float64
+	StartPrice float64
 }
 
-func (cond *TrailingStopPoint) evaluate(price float64) (bool, string) {
-	if cond.Top <= 0.0 {
-		cond.Top = price
-		return false, fmt.Sprintf("new top: %.8f", price)
-	}
+func (cond *TrailingStopPrice) evaluate(price float64) (bool, string) {
 	// we have a new top when the price
 	// is greater than the top
-	if price > cond.Top {
-		cond.Top = price
+	if price > cond.StopPrice {
+		cond.StopPrice = price
 	}
 
 	// trailing stop is true when the price is less than the
 	// condition top minus the pts
-	if (cond.Top - cond.Points) > price {
-		return true, fmt.Sprintf("{condition: TrailingStopPoint, top:%.8f, points:%.8f, price:%.8f}",
-			cond.Top, cond.Points, price)
+	if cond.StopPrice >= price {
+		return true, fmt.Sprintf("TrailingStopPrice(%.8f) >= %.8f",
+			cond.StartPrice, price)
 	}
 	return false, "evaluated as false"
 }
 
 // TrailingStopPercent based upon difference in percent
 type TrailingStopPercent struct {
-	Top     float64
-	Percent float64
+	StopPrice float64
+	Percent   float64
 }
 
 func (cond *TrailingStopPercent) evaluate(price float64) (bool, string) {
-	if cond.Top <= 0.0 {
-		cond.Top = price
-		return false, fmt.Sprintf("new top: %.8f", price)
-	}
-
 	// we have a new top when the price
 	// is greater than the top
-	if price > cond.Top {
-		cond.Top = price
+	if price > cond.StopPrice {
+		cond.StopPrice = price
 	}
 
-	// trailing stop is true when the price is less than percent from top
-	if (cond.Top * (1 - cond.Percent)) > price {
-		return true, fmt.Sprintf("{condition: TrailingStopPercent, top:%.8f, percent:%.8f, price:%.8f}",
-			cond.Top, cond.Percent, price)
+	// trailing stop is true when the price is less than the
+	// condition top minus the pts
+	if cond.StopPrice >= price {
+		return true, fmt.Sprintf("TrailingStopPercent(%.8f) >= %.8f",
+			cond.Percent, price)
 	}
-
 	return false, "evaluated as false"
 }
 
@@ -126,7 +117,7 @@ type StopLossPercent struct {
 
 func (cond *StopLossPercent) evaluate(price float64) (bool, string) {
 	// stop price
-	if cond.StopPrice <= price {
+	if cond.StopPrice >= price {
 		return true, fmt.Sprintf("StopLossPercent(%.8f) <= %.8f", cond.Percent, price)
 	}
 
@@ -139,7 +130,7 @@ type StopLossPrice struct {
 
 func (cond *StopLossPrice) evaluate(price float64) (bool, string) {
 	// stop price
-	if cond.StopPrice <= price {
+	if cond.StopPrice >= price {
 		return true, fmt.Sprintf("StopLossPrice(%.8f) <= %.8f", cond.StopPrice, price)
 	}
 
