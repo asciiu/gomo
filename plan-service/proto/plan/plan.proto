@@ -78,6 +78,7 @@ message Plan {
   string initialTimestamp = 16;
   uint32 lastExecutedPlanDepth = 17;
   string lastExecutedOrderID = 18;
+  double referencePrice = 24;
   string status = 19;
   bool closeOnComplete = 20;
   string createdOn = 21;

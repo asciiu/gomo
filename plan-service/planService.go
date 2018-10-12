@@ -111,6 +111,7 @@ func (service *PlanService) publishPlan(ctx context.Context, plan *protoPlan.Pla
 		CommittedCurrencyAmount: plan.CommittedCurrencyAmount,
 		CommittedCurrencySymbol: plan.CommittedCurrencySymbol,
 		CloseOnComplete:         plan.CloseOnComplete,
+		ReferencePrice:          plan.ReferencePrice,
 		Orders:                  newOrders,
 	}
 
@@ -313,12 +314,18 @@ func (service *PlanService) HandleCompletedOrder(ctx context.Context, completedO
 			return nil
 		}
 
+		referencePrice := completedOrderEvent.TriggeredPrice
+		if completedOrderEvent.ExchangePrice > 0 {
+			referencePrice = completedOrderEvent.ExchangePrice
+		}
+
 		initTime, err := repoPlan.UpdatePlanContext(service.DB,
 			planID,
 			completedOrderEvent.OrderID,
 			completedOrderEvent.Exchange,
 			completedOrderEvent.FinalCurrencySymbol,
 			completedOrderEvent.FinalCurrencyBalance,
+			referencePrice,
 			depth)
 		if err != nil {
 			log.Println("completed order error trying to update the plan context -- ", err.Error())

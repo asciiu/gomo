@@ -265,6 +265,7 @@ func FindActivePlans(db *sql.DB) ([]*protoPlan.Plan, error) {
 		p.initial_timestamp,
 		p.last_executed_plan_depth,
 		p.last_executed_order_id,
+		p.reference_price,
 		p.close_on_complete,
 		p.user_plan_number,
 		p.status,
@@ -325,6 +326,7 @@ func FindActivePlans(db *sql.DB) ([]*protoPlan.Plan, error) {
 		var exchangeOrderID sql.NullString
 		var plan protoPlan.Plan
 		var order protoOrder.Order
+		var referencePrice sql.NullFloat64
 
 		err := rows.Scan(
 			&plan.PlanID,
@@ -340,6 +342,7 @@ func FindActivePlans(db *sql.DB) ([]*protoPlan.Plan, error) {
 			&initialTimestamp,
 			&plan.LastExecutedPlanDepth,
 			&plan.LastExecutedOrderID,
+			&referencePrice,
 			&plan.CloseOnComplete,
 			&plan.UserPlanNumber,
 			&plan.Status,
@@ -393,6 +396,9 @@ func FindActivePlans(db *sql.DB) ([]*protoPlan.Plan, error) {
 		}
 		if err := json.Unmarshal([]byte(actionsStr), &trigger.Actions); err != nil {
 			return nil, err
+		}
+		if referencePrice.Valid {
+			plan.ReferencePrice = referencePrice.Float64
 		}
 
 		// add order to plan if planID matches
@@ -706,6 +712,7 @@ func FindChildOrders(db *sql.DB, planID, parentOrderID string) (*protoPlan.Plan,
 		p.initial_timestamp,
 		p.last_executed_plan_depth,
 		p.last_executed_order_id,
+		p.reference_price,
 		p.close_on_complete,
 		p.user_plan_number,
 		p.status,
@@ -777,6 +784,7 @@ func FindChildOrders(db *sql.DB, planID, parentOrderID string) (*protoPlan.Plan,
 		var exchangeOrderID sql.NullString
 		var actionsStr string
 		var order protoOrder.Order
+		var referencePrice sql.NullFloat64
 
 		err := rows.Scan(
 			&plan.PlanID,
@@ -792,6 +800,7 @@ func FindChildOrders(db *sql.DB, planID, parentOrderID string) (*protoPlan.Plan,
 			&initialTimestamp,
 			&plan.LastExecutedPlanDepth,
 			&plan.LastExecutedOrderID,
+			&referencePrice,
 			&plan.CloseOnComplete,
 			&plan.UserPlanNumber,
 			&plan.Status,
@@ -863,6 +872,9 @@ func FindChildOrders(db *sql.DB, planID, parentOrderID string) (*protoPlan.Plan,
 		}
 		if triggerTemplateID.Valid {
 			trigger.TriggerTemplateID = triggerTemplateID.String
+		}
+		if referencePrice.Valid {
+			plan.ReferencePrice = referencePrice.Float64
 		}
 		if err := json.Unmarshal([]byte(actionsStr), &trigger.Actions); err != nil {
 			return nil, err
@@ -1900,7 +1912,7 @@ func UpdatePlanInitTimestamp(db *sql.DB, planID, timestamp string, balance float
 }
 
 // returns (initial_time, error)
-func UpdatePlanContext(db *sql.DB, planID, executedOrderID, exchange, symbol string, activeBalance float64, planDepth int32) (string, error) {
+func UpdatePlanContext(db *sql.DB, planID, executedOrderID, exchange, symbol string, activeBalance, referencePrice float64, planDepth int32) (string, error) {
 	stmt := `
 		UPDATE plans 
 		SET 
@@ -1908,13 +1920,14 @@ func UpdatePlanContext(db *sql.DB, planID, executedOrderID, exchange, symbol str
 			last_executed_plan_depth = $2,
 			active_currency_symbol = $3,
 			active_currency_balance = $4,
-			exchange_name = $5 
+			exchange_name = $5, 
+			reference_price = $6
 		WHERE
-			id = $6
+			id = $7
 		RETURNING initial_timestamp`
 
 	var initTime sql.NullString
-	err := db.QueryRow(stmt, executedOrderID, planDepth, symbol, activeBalance, exchange, planID).Scan(&initTime)
+	err := db.QueryRow(stmt, executedOrderID, planDepth, symbol, activeBalance, exchange, referencePrice, planID).Scan(&initTime)
 	if err != nil {
 		return "", err
 	}
