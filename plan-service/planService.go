@@ -814,6 +814,18 @@ func (service *PlanService) DeletePlan(ctx context.Context, req *protoPlan.Delet
 	pln.Status = constPlan.Deleted
 	err = repoPlan.UpdatePlanStatus(service.DB, req.PlanID, pln.Status)
 
+	// assuming same exchange account per plan
+	accountID := pln.Orders[0].AccountID
+
+	// plan was closed, release the locked funds
+	changeReq := protoBalance.ChangeBalanceRequest{
+		UserID:         pln.UserID,
+		AccountID:      accountID,
+		CurrencySymbol: pln.CommittedCurrencySymbol,
+		Amount:         pln.CommittedCurrencyAmount,
+	}
+	service.AccountClient.UnlockBalance(ctx, &changeReq)
+
 	if err != nil {
 		res.Status = constRes.Error
 		res.Message = err.Error()
