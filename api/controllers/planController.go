@@ -174,6 +174,8 @@ func (controller *PlanController) HandleDeletePlan(c echo.Context) error {
 		UserID: userID,
 	}
 
+	log.Printf("%+v\n", delRequest)
+
 	r, _ := controller.PlanClient.DeletePlan(context.Background(), &delRequest)
 	if r.Status != constRes.Success {
 		res := &ResponseError{
@@ -250,6 +252,7 @@ func (controller *PlanController) HandleGetPlan(c echo.Context) error {
 		PlanDepth:  uint32(pd),
 		PlanLength: uint32(pl)}
 
+	log.Printf("%+v\n", getRequest)
 	r, _ := controller.PlanClient.GetUserPlan(context.Background(), &getRequest)
 	if r.Status != constRes.Success {
 		res := &ResponseError{
@@ -397,6 +400,7 @@ func (controller *PlanController) HandleListPlans(c echo.Context) error {
 		Status:   status,
 	}
 
+	log.Printf("%+v\n", getRequest)
 	r, _ := controller.PlanClient.GetUserPlans(context.Background(), &getRequest)
 	if r.Status != constRes.Success {
 		res := &ResponseError{
@@ -657,6 +661,7 @@ func (controller *PlanController) HandlePostPlan(c echo.Context) error {
 		Orders:                  newOrderRequests,
 	}
 
+	log.Printf("%+v\n", newPlanRequest)
 	// add plan returns nil for error
 	r, _ := controller.PlanClient.NewPlan(context.Background(), &newPlanRequest)
 	if r.Status != constRes.Success {
@@ -845,6 +850,7 @@ func (controller *PlanController) HandleUpdatePlan(c echo.Context) error {
 		Orders:                  orderRequests,
 	}
 
+	log.Printf("%+v\n", updatePlanRequest)
 	// add plan returns nil for error
 	r, _ := controller.PlanClient.UpdatePlan(context.Background(), &updatePlanRequest)
 	if r.Status != constRes.Success {
