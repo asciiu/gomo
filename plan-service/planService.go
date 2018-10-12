@@ -1230,6 +1230,7 @@ func (service *PlanService) UpdatePlan(ctx context.Context, req *protoPlan.Updat
 					break
 				}
 			}
+			pln.Status = constPlan.Closed
 		}
 	}
 
