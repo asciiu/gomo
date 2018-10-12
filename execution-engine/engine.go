@@ -30,8 +30,9 @@ type Plan struct {
 	PlanID                  string
 	UserID                  string
 	CommittedCurrencySymbol string
-	committedCurrencyAmount float64
+	CommittedCurrencyAmount float64
 	CloseOnComplete         bool
+	ReferencePrice          float64 // this was the last rate of exchange for this plan i.e. triggeredPrice (paper) or exchangePrice (real)
 	Orders                  []*Order
 }
 
@@ -123,7 +124,7 @@ func (engine *Engine) HandleTradeEvents(ctx context.Context, payload *protoEvt.T
 									MarketName:             order.MarketName,
 									Side:                   order.Side,
 									AccountID:              order.AccountID,
-									InitialCurrencyBalance: plan.committedCurrencyAmount,
+									InitialCurrencyBalance: plan.CommittedCurrencyAmount,
 									InitialCurrencySymbol:  plan.CommittedCurrencySymbol,
 									TriggerID:              trigger.TriggerID,
 									TriggeredPrice:         tradeEvent.Price,
@@ -139,23 +140,23 @@ func (engine *Engine) HandleTradeEvents(ctx context.Context, payload *protoEvt.T
 								symbols := strings.Split(order.MarketName, "-")
 								// adjust balances for buy
 								if order.Side == constPlan.Buy {
-									qty := commonUtil.ToFixedFloor(plan.committedCurrencyAmount/tradeEvent.Price, precision)
+									qty := commonUtil.ToFixedFloor(plan.CommittedCurrencyAmount/tradeEvent.Price, precision)
 
 									completedEvent.ExchangePrice = tradeEvent.Price
 									completedEvent.FinalCurrencySymbol = symbols[0]
 									completedEvent.FinalCurrencyBalance = qty
 									completedEvent.InitialCurrencyTraded = commonUtil.ToFixedFloor(completedEvent.FinalCurrencyBalance*tradeEvent.Price, precision)
-									completedEvent.InitialCurrencyRemainder = commonUtil.ToFixedFloor(plan.committedCurrencyAmount-completedEvent.InitialCurrencyTraded, precision)
+									completedEvent.InitialCurrencyRemainder = commonUtil.ToFixedFloor(plan.CommittedCurrencyAmount-completedEvent.InitialCurrencyTraded, precision)
 									completedEvent.Details = fmt.Sprintf("orderID: %s, bought %.8f %s with %.8f %s", completedEvent.OrderID, completedEvent.FinalCurrencyBalance, symbols[0], completedEvent.InitialCurrencyTraded, symbols[1])
 								}
 
 								// adjust balances for sell
 								if order.Side == constPlan.Sell {
 									completedEvent.FinalCurrencySymbol = symbols[1]
-									completedEvent.FinalCurrencyBalance = commonUtil.ToFixedFloor(plan.committedCurrencyAmount*tradeEvent.Price, precision)
+									completedEvent.FinalCurrencyBalance = commonUtil.ToFixedFloor(plan.CommittedCurrencyAmount*tradeEvent.Price, precision)
 									completedEvent.InitialCurrencyRemainder = 0
-									completedEvent.InitialCurrencyTraded = commonUtil.ToFixedFloor(plan.committedCurrencyAmount, precision)
-									completedEvent.Details = fmt.Sprintf("orderID: %s, sold %.8f %s for %.8f %s", completedEvent.OrderID, plan.committedCurrencyAmount, symbols[0], completedEvent.FinalCurrencyBalance, symbols[1])
+									completedEvent.InitialCurrencyTraded = commonUtil.ToFixedFloor(plan.CommittedCurrencyAmount, precision)
+									completedEvent.Details = fmt.Sprintf("orderID: %s, sold %.8f %s for %.8f %s", completedEvent.OrderID, plan.CommittedCurrencyAmount, symbols[0], completedEvent.FinalCurrencyBalance, symbols[1])
 								}
 
 								// Never log the secrets contained in the event
@@ -168,14 +169,14 @@ func (engine *Engine) HandleTradeEvents(ctx context.Context, payload *protoEvt.T
 								quantity := 0.0
 								switch {
 								case order.Side == constPlan.Buy && order.OrderType == constPlan.LimitOrder:
-									quantity = plan.committedCurrencyAmount / order.LimitPrice
+									quantity = plan.CommittedCurrencyAmount / order.LimitPrice
 
 								case order.Side == constPlan.Buy && order.OrderType == constPlan.MarketOrder:
-									quantity = plan.committedCurrencyAmount / tradeEvent.Price
+									quantity = plan.CommittedCurrencyAmount / tradeEvent.Price
 
 								default:
 									// sell entire active balance
-									quantity = plan.committedCurrencyAmount
+									quantity = plan.CommittedCurrencyAmount
 								}
 
 								// convert this active order event to a triggered order event
@@ -186,7 +187,7 @@ func (engine *Engine) HandleTradeEvents(ctx context.Context, payload *protoEvt.T
 									UserID:                  plan.UserID,
 									AccountID:               order.AccountID,
 									CommittedCurrencySymbol: plan.CommittedCurrencySymbol,
-									CommittedCurrencyAmount: plan.committedCurrencyAmount,
+									CommittedCurrencyAmount: plan.CommittedCurrencyAmount,
 									KeyPublic:               order.KeyPublic,
 									KeySecret:               order.KeySecret,
 									MarketName:              order.MarketName,
@@ -231,6 +232,9 @@ func (engine *Engine) AddPlan(ctx context.Context, req *protoEngine.NewPlanReque
 
 	trailingPoint := regexp.MustCompile(`^.*?TrailingStopPoint\((0\.\d{2,}),\s(\d+\.\d+).*?`)
 	trailingPercent := regexp.MustCompile(`^.*?TrailingStopPercent\((0\.\d{2,}),\s(\d+\.\d+).*?`)
+	stopLossPercent := regexp.MustCompile(`^.*?StopLossPercent\((0\.\d{2,}).*?`)
+	stopLossPrice := regexp.MustCompile(`^.*?StopLossPrice\((0\.\d{2,}).*?`)
+
 	for _, order := range req.Orders {
 
 		// convert trigger to trigger expression
@@ -260,8 +264,35 @@ func (engine *Engine) AddPlan(ctx context.Context, req *protoEngine.NewPlanReque
 					Percent: percent,
 				}
 				expression = (&ts).evaluate
+			case stopLossPercent.MatchString(str):
+				rs := stopLossPercent.FindStringSubmatch(str)
+				percent, _ := strconv.ParseFloat(rs[1], 64)
 
-			case str == "immediateMarketPrice":
+				// only create an expression if there is a reference price
+				// this check is needed to ensure that a stop loss can only be set
+				// after an order fills - i.e. can't be used in the root orders because
+				// there is no entry price from a previous filled order. The exchangePrice
+				// or triggerPrice of the last filled order will be the reference price.
+				if req.ReferencePrice > 0 {
+					stopPrice := req.ReferencePrice * percent
+
+					ts := StopLossPercent{
+						StopPrice: stopPrice,
+						Percent:   percent,
+					}
+					expression = (&ts).evaluate
+				}
+
+			case stopLossPrice.MatchString(str):
+				rs := stopLossPrice.FindStringSubmatch(str)
+				stopPrice, _ := strconv.ParseFloat(rs[1], 64)
+
+				ts := StopLossPrice{
+					StopPrice: stopPrice,
+				}
+				expression = (&ts).evaluate
+
+			case str == "Immediate":
 				lastPrice := engine.PriceLine[order.MarketName]
 				now := string(pq.FormatTimestamp(time.Now().UTC()))
 
@@ -280,7 +311,7 @@ func (engine *Engine) AddPlan(ctx context.Context, req *protoEngine.NewPlanReque
 						InitialCurrencySymbol:  req.CommittedCurrencySymbol,
 						TriggerID:              trigger.TriggerID,
 						TriggeredPrice:         lastPrice,
-						TriggeredCondition:     "Immeadiate!",
+						TriggeredCondition:     "Immediate!",
 						TriggeredTime:          now,
 						ExchangeMarketName:     constPlan.PaperOrder,
 						ExchangeTime:           now,
@@ -374,7 +405,7 @@ func (engine *Engine) AddPlan(ctx context.Context, req *protoEngine.NewPlanReque
 		PlanID:                  req.PlanID,
 		UserID:                  req.UserID,
 		CommittedCurrencySymbol: req.CommittedCurrencySymbol,
-		committedCurrencyAmount: req.CommittedCurrencyAmount,
+		CommittedCurrencyAmount: req.CommittedCurrencyAmount,
 		CloseOnComplete:         req.CloseOnComplete,
 		Orders:                  orders,
 	})

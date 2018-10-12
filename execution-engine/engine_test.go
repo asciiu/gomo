@@ -2,7 +2,9 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"log"
+	"regexp"
 	"testing"
 
 	"github.com/asciiu/gomo/common/db"
@@ -43,10 +45,10 @@ func TestAddPlan(t *testing.T) {
 	defer engine.DB.Close()
 
 	req := protoEngine.NewPlanRequest{
-		PlanID:                "1aa6ae7f-76bc-49ba-a58b-5cf431e0337c",
-		UserID:                "30c30397-066c-4a48-9b9a-b778ef11f291",
-		ActiveCurrencySymbol:  "USDT",
-		ActiveCurrencyBalance: 100.00,
+		PlanID:                  "1aa6ae7f-76bc-49ba-a58b-5cf431e0337c",
+		UserID:                  "30c30397-066c-4a48-9b9a-b778ef11f291",
+		CommittedCurrencySymbol: "USDT",
+		CommittedCurrencyAmount: 100.00,
 		Orders: []*protoEngine.Order{
 			&protoEngine.Order{
 				OrderID:     "4d67dcac-0e46-49f5-9258-234fdba373ae",
@@ -89,10 +91,10 @@ func TestDeletedAccount(t *testing.T) {
 	defer engine.DB.Close()
 
 	req := protoEngine.NewPlanRequest{
-		PlanID:                "1aa6ae7f-76bc-49ba-a58b-5cf431e0337c",
-		UserID:                "30c30397-066c-4a48-9b9a-b778ef11f291",
-		ActiveCurrencySymbol:  "USDT",
-		ActiveCurrencyBalance: 100.00,
+		PlanID:                  "1aa6ae7f-76bc-49ba-a58b-5cf431e0337c",
+		UserID:                  "30c30397-066c-4a48-9b9a-b778ef11f291",
+		CommittedCurrencySymbol: "USDT",
+		CommittedCurrencyAmount: 100.00,
 		Orders: []*protoEngine.Order{
 			&protoEngine.Order{
 				AccountID:   "188077aa-2d7a-4b18-8011-1b3b32340e79",
@@ -121,4 +123,15 @@ func TestDeletedAccount(t *testing.T) {
 	engine.HandleAccountDeleted(context.Background(), &protoEvt.DeletedAccountEvent{"188077aa-2d7a-4b18-8011-1b3b32340e79"})
 
 	assert.Equal(t, 0, len(engine.Plans), "the engine should have a no plans")
+}
+
+func TestRegex(t *testing.T) {
+	stopLoss := regexp.MustCompile(`^.*?StopLoss\((0\.\d{2,}).*?`)
+	str := "StopLoss(0.10)"
+	switch {
+	case stopLoss.MatchString(str):
+		rs := stopLoss.FindStringSubmatch(str)
+		fmt.Println(rs[1])
+	}
+	fmt.Println("done")
 }

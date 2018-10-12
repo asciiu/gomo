@@ -119,14 +119,28 @@ func (cond *TrailingStopPercent) evaluate(price float64) (bool, string) {
 //}
 
 // client should send in StopLoss(percent)
-type StopLoss struct {
-	Stop float64 // the price where the trailing stop loss triggers
+type StopLossPercent struct {
+	Percent   float64
+	StopPrice float64 // the price where the trailing stop loss triggers
 }
 
-func (cond *StopLoss) evaluate(price float64) (bool, string) {
+func (cond *StopLossPercent) evaluate(price float64) (bool, string) {
 	// stop price
-	if cond.Stop <= price {
-		return true, fmt.Sprintf("{condition: StopLoss, price: %.8f}", price)
+	if cond.StopPrice <= price {
+		return true, fmt.Sprintf("StopLossPercent(%.8f) <= %.8f", cond.Percent, price)
+	}
+
+	return false, "evaluated as false"
+}
+
+type StopLossPrice struct {
+	StopPrice float64 // the price where stop loss triggers
+}
+
+func (cond *StopLossPrice) evaluate(price float64) (bool, string) {
+	// stop price
+	if cond.StopPrice <= price {
+		return true, fmt.Sprintf("StopLossPrice(%.8f) <= %.8f", cond.StopPrice, price)
 	}
 
 	return false, "evaluated as false"

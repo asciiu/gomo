@@ -29,7 +29,8 @@ message NewPlanRequest {
   string committedCurrencySymbol = 3;
   double committedCurrencyAmount = 4;
   bool closeOnComplete = 5;
-  repeated Order orders = 6;
+  double referencePrice = 6;            // this will be the last triggeredPrice from the last executed order
+  repeated Order orders = 7;
 }
 
 message Order {
