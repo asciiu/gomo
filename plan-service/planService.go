@@ -1207,31 +1207,30 @@ func (service *PlanService) UpdatePlan(ctx context.Context, req *protoPlan.Updat
 			res.Message = "error encountered while updating the plan close on complete option: " + err.Error()
 			return nil
 		}
-
-		// close the plan
-		if pln.CloseOnComplete && len(req.Orders) == 0 {
-			if err := repoPlan.UpdatePlanStatusTxn(txn, ctx, pln.PlanID, constPlan.Closed); err != nil {
-				txn.Rollback()
-				res.Status = constRes.Error
-				res.Message = "error encountered while closing the plan: " + err.Error()
-				return nil
-			}
-
-			for _, order := range pln.Orders {
-				if order.OrderID == pln.LastExecutedOrderID {
-					// release the locked funds from the last executed order
-					changeReq := protoBalance.ChangeBalanceRequest{
-						UserID:         pln.UserID,
-						AccountID:      order.AccountID,
-						CurrencySymbol: pln.CommittedCurrencySymbol,
-						Amount:         pln.CommittedCurrencyAmount,
-					}
-					service.AccountClient.UnlockBalance(ctx, &changeReq)
-					break
-				}
-			}
-			pln.Status = constPlan.Closed
+	}
+	// close the plan
+	if pln.CloseOnComplete && len(req.Orders) == 0 {
+		if err := repoPlan.UpdatePlanStatusTxn(txn, ctx, pln.PlanID, constPlan.Closed); err != nil {
+			txn.Rollback()
+			res.Status = constRes.Error
+			res.Message = "error encountered while closing the plan: " + err.Error()
+			return nil
 		}
+
+		for _, order := range pln.Orders {
+			if order.OrderID == pln.LastExecutedOrderID {
+				// release the locked funds from the last executed order
+				changeReq := protoBalance.ChangeBalanceRequest{
+					UserID:         pln.UserID,
+					AccountID:      order.AccountID,
+					CurrencySymbol: pln.CommittedCurrencySymbol,
+					Amount:         pln.CommittedCurrencyAmount,
+				}
+				service.AccountClient.UnlockBalance(ctx, &changeReq)
+				break
+			}
+		}
+		pln.Status = constPlan.Closed
 	}
 
 	if pln.PlanTemplateID != req.PlanTemplateID {
