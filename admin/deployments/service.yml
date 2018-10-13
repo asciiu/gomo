@@ -1,0 +1,20 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: admin 
+  labels:
+    app: admin 
+spec:
+  type: LoadBalancer
+  loadBalancerIP: "35.197.102.65"
+  ports:
+  - name: http
+    protocol: TCP
+    port: 80
+    targetPort: 80 
+  - name: https
+    protocol: TCP
+    port: 443
+    targetPort: 443 
+  selector:
+    app: admin 

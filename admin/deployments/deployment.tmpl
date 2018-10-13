@@ -1,0 +1,41 @@
+apiVersion: apps/v1beta1
+kind: Deployment
+metadata:
+  namespace: default
+  name: admin 
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: admin 
+  template:
+    metadata:
+      labels:
+        app: admin 
+    spec:
+        containers:
+        - name: admin 
+          image: us.gcr.io/fomo-204904/admin:dev
+          imagePullPolicy: Always 
+          command: [
+            "./admin",
+            "--selector=static"
+          ]
+          envFrom:
+          - configMapRef:
+              name: fomo-config
+          env:
+          - name: UPDATED_AT
+            value: "{{ UPDATED_AT }}"
+          ports:
+          - containerPort:  443 
+            name: https-port
+          - containerPort:  80 
+            name: http-port
+          volumeMounts:
+          - mountPath: /mnt/fomo
+            name: admin-data
+        volumes:
+        - name: admin-data
+          persistentVolumeClaim:
+            claimName: fomo-stage-api-vol 
