@@ -21,7 +21,7 @@ func SetMainMiddlewares(e *echo.Echo) {
 	e.Use(middleware.CORSWithConfig(middleware.CORSConfig{
 		AllowOrigins:  []string{"*", "http://dev.fomo.exchange"},
 		AllowMethods:  []string{echo.GET, echo.HEAD, echo.PUT, echo.PATCH, echo.POST, echo.DELETE},
-		AllowHeaders:  []string{echo.HeaderOrigin, echo.HeaderContentType, echo.HeaderAccept},
+		AllowHeaders:  []string{echo.HeaderOrigin, echo.HeaderContentType, echo.HeaderAccept, echo.HeaderAuthorization, "Refresh"},
 		ExposeHeaders: []string{"set-authorization", "set-refresh"},
 	}))
 
