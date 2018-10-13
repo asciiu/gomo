@@ -841,11 +841,25 @@ func (service *PlanService) DeletePlan(ctx context.Context, req *protoPlan.Delet
 
 // UpdatePlan returns error to conform to protobuf def, but the error will always be returned as nil.
 // Can't return an error with a response object - response object is returned as nil when error is non nil.
-// Therefore, return error in response object.
+// Therefore, return error in the response object.
+//
+// How it works;
+// type UpdatePlanRequest struct {
+//	PlanID                         -- planID to update
+//	UserID                         -- owner of plan
+//	UserCurrencySymbol             -- changes the user preferrend currency symbol for the plan
+//	InitialTimestamp               -- initial timestamp controls the plan valuation
+//	Title                          -- changes the title fo the plan
+//	PlanTemplateID                 -- chagnes the plan's template ID
+//	Status                         -- changes the plan's status, when status is closed the plan's committed currency is unlocked, the plan is killed, and the status for the plan is set to closed. No other updates are set when the plan is closed.
+//	CloseOnComplete                -- changes auto close
+//	CommittedCurrencySymbol        -- plan's committed currency e.g. USDT
+//	CommittedCurrencyAmount        -- plan's committed currency amount
+//	Orders                         -- send in new orders only, these orders will replace the unexecuted orders in this plan`
+//}
+//
 func (service *PlanService) UpdatePlan(ctx context.Context, req *protoPlan.UpdatePlanRequest, res *protoPlan.PlanResponse) error {
-	// load current state of plan
-	// the plan should be paused long before UpdatePlan is called
-	// this function assumes that the plan is inactive
+	// get current state of he plan
 	pln, err := repoPlan.FindPlanWithUnexecutedOrders(service.DB, req.PlanID)
 
 	switch {

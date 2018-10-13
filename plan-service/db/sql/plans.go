@@ -1389,12 +1389,11 @@ func FindAccountPlans(db *sql.DB, accountID string) ([]*protoPlan.Plan, error) {
 // 	return &result, nil
 // }
 
-// Find all user plans for exchange with status
-//		WHERE user_id = $1 AND status = $2 AND exchange_name = $3 ORDER BY created_on OFFSET $4 LIMIT $5`
+// Find all user plans - excludes deleted plans.
 func FindUserPlansWithStatus(db *sql.DB, userID, status string, page, pageSize uint32) (*protoPlan.PlansPage, error) {
 
 	var count uint32
-	queryCount := `SELECT count(*) FROM plans WHERE user_id = $1 AND status like '%' || $2 || '%'`
+	queryCount := `SELECT count(*) FROM plans WHERE user_id = $1 AND status like '%' || $2 || '%' AND status != 'deleted'`
 	err := db.QueryRow(queryCount, userID, status).Scan(&count)
 	if err != nil {
 		return nil, err
@@ -1468,7 +1467,7 @@ func FindUserPlansWithStatus(db *sql.DB, userID, status string, page, pageSize u
 	JOIN orders o on p.id = o.plan_id
 	JOIN triggers t on o.id = t.order_id
 	JOIN accounts a on o.account_id = a.id
-	WHERE p.user_id = $1 AND p.status like '%' || $2 || '%' AND (o.parent_order_id = p.last_executed_order_id or o.plan_depth <= (p.last_executed_plan_depth +1))
+	WHERE p.user_id = $1 AND p.status like '%' || $2 || '%' AND p.status != 'deleted' AND (o.parent_order_id = p.last_executed_order_id or o.plan_depth <= (p.last_executed_plan_depth +1))
 	ORDER BY p.id, o.plan_depth, o.order_priority, o.id, t.index
 	OFFSET $3 LIMIT $4`, userID, status, page, pageSize)
 
