@@ -859,7 +859,7 @@ func (service *PlanService) UpdatePlan(ctx context.Context, req *protoPlan.Updat
 		res.Status = constRes.Error
 		res.Message = fmt.Sprintf(err.Error())
 		return nil
-	case len(req.Orders) == 0 && pln.LastExecutedPlanDepth == 0:
+	case len(req.Orders) == 0 && pln.LastExecutedPlanDepth == 0 && req.Status != constPlan.Closed:
 		res.Status = constRes.Fail
 		res.Message = "to plan or not to plan. That is the question. A plan must have at least 1 order."
 		return nil
@@ -871,9 +871,9 @@ func (service *PlanService) UpdatePlan(ctx context.Context, req *protoPlan.Updat
 		res.Status = constRes.Fail
 		res.Message = "orders must have triggers"
 		return nil
-	case !ValidatePlanInputStatus(req.Status):
+	case !ValidateUpdatePlanStatus(req.Status):
 		res.Status = constRes.Fail
-		res.Message = "plan status must be active, inactive"
+		res.Message = "plan status must be active, inactive, or closed"
 		return nil
 	case !ValidateConnectedRoutesFromParent(pln.LastExecutedOrderID, req.Orders):
 		// all orders must be connected using parentOrderID
@@ -904,6 +904,44 @@ func (service *PlanService) UpdatePlan(ctx context.Context, req *protoPlan.Updat
 		res.Status = constRes.Fail
 		res.Message = "you cannot append market or limit orders to a plan that will begin with a paper order"
 		return nil
+	}
+
+	// close the plan now!
+	if req.Status == constPlan.Closed {
+		activeOrder := false
+		for _, previous := range pln.Orders {
+			if previous.Status == constPlan.Active {
+				activeOrder = true
+			}
+		}
+
+		// only kill plans that are active and that have an active order
+		if pln.Status == constPlan.Active && activeOrder {
+			req := protoEngine.KillRequest{PlanID: pln.PlanID}
+			_, err := service.EngineClient.KillPlan(ctx, &req)
+			if err != nil {
+				res.Status = constRes.Fail
+				res.Message = "you cannot update this plan because an order for this plan has updated. To avoid seeing this message again try pausing your plan before you update it."
+				return nil
+			}
+		}
+
+		pln.Status = constPlan.Closed
+		if err := repoPlan.UpdatePlanStatus(service.DB, pln.PlanID, pln.Status); err != nil {
+			res.Status = constRes.Error
+			res.Message = "error encountered while updating the plan status: " + err.Error()
+			return nil
+		}
+
+		accountID := pln.Orders[0].AccountID
+		// plan was closed, release the locked funds
+		changeReq := protoBalance.ChangeBalanceRequest{
+			UserID:         pln.UserID,
+			AccountID:      accountID,
+			CurrencySymbol: pln.CommittedCurrencySymbol,
+			Amount:         pln.CommittedCurrencyAmount,
+		}
+		service.AccountClient.UnlockBalance(ctx, &changeReq)
 	}
 
 	// fetch the keys
@@ -1208,6 +1246,7 @@ func (service *PlanService) UpdatePlan(ctx context.Context, req *protoPlan.Updat
 			return nil
 		}
 	}
+
 	// close the plan
 	if pln.CloseOnComplete && len(req.Orders) == 0 {
 		if err := repoPlan.UpdatePlanStatusTxn(txn, ctx, pln.PlanID, constPlan.Closed); err != nil {

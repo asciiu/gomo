@@ -33,6 +33,7 @@ func ValidateUpdatePlanStatus(pstatus string) bool {
 	pistats := [...]string{
 		constPlan.Active,
 		constPlan.Inactive,
+		constPlan.Closed,
 	}
 
 	for _, stat := range pistats {
