@@ -49,7 +49,7 @@ func (controller *WebsocketController) Connect(c echo.Context) error {
 	// block until client closes
 	if _, _, err := ws.ReadMessage(); err != nil {
 		// client closes this will read: websocket: close 1005 (no status)
-		log.Println(err)
+		log.Println("read error: ", err)
 	}
 
 	// remove the connection from the connect pool
@@ -69,11 +69,11 @@ func (controller *WebsocketController) Ticker() {
 			for _, conn := range controller.connections {
 				json, err := json.Marshal(events)
 				if err != nil {
-					log.Println(err)
+					log.Println("marchall error: ", err)
 				}
 
 				if err := conn.WriteMessage(websocket.TextMessage, json); err != nil {
-					log.Println(err)
+					log.Println("write error: ", err)
 				}
 			}
 		}

@@ -162,7 +162,7 @@ func (controller *AuthController) RefreshAccess(next echo.HandlerFunc) echo.Hand
 			return []byte(os.Getenv("GOMO_JWT")), nil
 		})
 
-		if err != nil {
+		if err != nil && c.Request().Method != http.MethodOptions {
 
 			selectAuth := c.Request().Header.Get("Refresh")
 			if selectAuth != "" {
