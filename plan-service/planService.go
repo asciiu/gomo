@@ -175,6 +175,7 @@ func (service *PlanService) ContinuePlan(ctx context.Context, plan *protoPlan.Pl
 	// assume for now that all orders in the plan use the same account ID. This may not be true in the future
 	accountID := plan.Orders[0].AccountID
 
+	// assume the balance has already been locked
 	valid, err := service.validateLockedBalance(ctx, currency, balance, plan.UserID, accountID)
 	if err != nil {
 		return err
@@ -921,7 +922,7 @@ func (service *PlanService) UpdatePlan(ctx context.Context, req *protoPlan.Updat
 	}
 
 	// close the plan now!
-	if req.Status == constPlan.Closed {
+	if req.Status == constPlan.Closed && pln.Status != constPlan.Closed {
 		activeOrder := false
 		for _, previous := range pln.Orders {
 			if previous.Status == constPlan.Active {
