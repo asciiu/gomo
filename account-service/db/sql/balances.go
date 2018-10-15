@@ -153,13 +153,15 @@ func UpdateExchangeBalanceTxn(txn *sql.Tx, ctx context.Context, accountID, userI
 	return err
 }
 
-func UpdateAvailableBalance(db *sql.DB, userID, accountID, currencySymbol string, available float64) (*protoBalance.Balance, error) {
+func UpdateAvailableBalance(db *sql.DB, userID, accountID, currencySymbol string, available, exchangeTotal, exchangeAvailable float64) (*protoBalance.Balance, error) {
 	stmt := `
 		UPDATE balances 
 		SET 
-			available = $1
+			available = $1,
+			exchange_total = $2,
+			exchange_available = $3
 		WHERE
-			account_id = $2 AND user_id = $3 AND currency_symbol = $4
+			account_id = $4 AND user_id = $5 AND currency_symbol = $6
 		RETURNING 
 			user_id,
 			account_id,
@@ -173,7 +175,7 @@ func UpdateAvailableBalance(db *sql.DB, userID, accountID, currencySymbol string
 			updated_on`
 
 	balance := new(protoBalance.Balance)
-	err := db.QueryRow(stmt, available, accountID, userID, currencySymbol).
+	err := db.QueryRow(stmt, available, exchangeTotal, exchangeAvailable, accountID, userID, currencySymbol).
 		Scan(
 			&balance.UserID,
 			&balance.AccountID,
@@ -234,13 +236,15 @@ func UpdateInternalBalance(db *sql.DB, userID, accountID, currencySymbol string,
 	return balance, nil
 }
 
-func UpdateLockedBalance(db *sql.DB, userID, accountID, currencySymbol string, locked float64) (*protoBalance.Balance, error) {
+func UpdateLockedBalance(db *sql.DB, userID, accountID, currencySymbol string, locked, exchangeTotal, exchangeAvailalbe float64) (*protoBalance.Balance, error) {
 	stmt := `
 		UPDATE balances 
 		SET 
-			locked = $1
+			locked = $1,
+			exchange_total = $2,
+			exchange_available = $3
 		WHERE
-			account_id = $2 AND user_id = $3 AND currency_symbol = $4
+			account_id = $4 AND user_id = $5 AND currency_symbol = $6
 		RETURNING 
 			user_id,
 			account_id,
@@ -254,7 +258,7 @@ func UpdateLockedBalance(db *sql.DB, userID, accountID, currencySymbol string, l
 			updated_on`
 
 	balance := new(protoBalance.Balance)
-	err := db.QueryRow(stmt, locked, accountID, userID, currencySymbol).
+	err := db.QueryRow(stmt, locked, exchangeTotal, exchangeAvailalbe, accountID, userID, currencySymbol).
 		Scan(
 			&balance.UserID,
 			&balance.AccountID,
