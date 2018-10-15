@@ -957,6 +957,10 @@ func (service *PlanService) UpdatePlan(ctx context.Context, req *protoPlan.Updat
 			Amount:         pln.CommittedCurrencyAmount,
 		}
 		service.AccountClient.UnlockBalance(ctx, &changeReq)
+
+		res.Status = constRes.Success
+		res.Data = &protoPlan.PlanData{Plan: pln}
+		return nil
 	}
 
 	// fetch the keys
@@ -1262,8 +1266,10 @@ func (service *PlanService) UpdatePlan(ctx context.Context, req *protoPlan.Updat
 		}
 	}
 
-	// close the plan
-	if pln.CloseOnComplete && len(req.Orders) == 0 {
+	// close the plan if the close on complete setting is on
+	// and if the req orders are empty
+	// must alsno not already be closed
+	if pln.CloseOnComplete && len(req.Orders) == 0 && pln.Status != constPlan.Closed {
 		if err := repoPlan.UpdatePlanStatusTxn(txn, ctx, pln.PlanID, constPlan.Closed); err != nil {
 			txn.Rollback()
 			res.Status = constRes.Error
