@@ -72,9 +72,7 @@ func (controller *WebsocketController) Ticker() {
 					log.Println("marchall error: ", err)
 				}
 
-				if err := conn.WriteMessage(websocket.TextMessage, json); err != nil {
-					log.Println("write error: ", err)
-				}
+				conn.WriteMessage(websocket.TextMessage, json)
 			}
 		}
 	}
