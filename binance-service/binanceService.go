@@ -173,7 +173,7 @@ func (service *BinanceService) HandleFillOrder(ctx context.Context, triggerEvent
 			log.Printf("processed order -- %+v\n", processedOrder)
 
 			// need to wait for binance to fill the order on their end to avoid race condition
-			time.Sleep(1 * time.Second)
+			time.Sleep(2 * time.Second)
 
 			// ask for most recent 200
 			trades, err := b.MyTrades(binance.MyTradesRequest{
@@ -216,11 +216,15 @@ func (service *BinanceService) HandleFillOrder(ctx context.Context, triggerEvent
 						commission += trade.Commission
 					}
 				}
+				exchangeRate := 0.0
+				if totalTrades > 0 {
+					exchangeRate = util.ToFixedRounded(sumPrice/totalTrades, 8)
+				}
 				completedEvent.ExchangeTime = string(pq.FormatTimestamp(latest))
 				completedEvent.FeeCurrencySymbol = feesym
 				completedEvent.FeeCurrencyAmount = util.ToFixedRounded(commission, 8)
 				// compute the exchange rate as an average
-				completedEvent.ExchangePrice = util.ToFixedRounded(sumPrice/totalTrades, 8)
+				completedEvent.ExchangePrice = exchangeRate
 
 				completedEvent.Status = constPlan.Filled
 				completedEvent.ExchangeOrderID = strconv.FormatInt(processedOrder.OrderID, 10)
