@@ -301,7 +301,7 @@ func (engine *Engine) AddPlan(ctx context.Context, req *protoEngine.NewPlanReque
 				}
 				expression = (&ts).evaluate
 
-			case str == "Immediate":
+			case str == "Immediate()":
 				lastPrice := engine.PriceLine[order.MarketName]
 				now := string(pq.FormatTimestamp(time.Now().UTC()))
 
