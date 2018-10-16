@@ -240,8 +240,9 @@ func (service *AccountService) ChangeAvailableBalance(ctx context.Context, req *
 	balance, err := repoAccount.FindBalance(service.DB, req.UserID, req.AccountID, req.CurrencySymbol)
 	switch {
 	case err == sql.ErrNoRows:
+		// there was no balance found therefore, add a record
 		now := string(pq.FormatTimestamp(time.Now().UTC()))
-		balance := protoBalance.Balance{
+		balance = &protoBalance.Balance{
 			UserID:            req.UserID,
 			AccountID:         req.AccountID,
 			CurrencySymbol:    req.CurrencySymbol,
@@ -252,14 +253,14 @@ func (service *AccountService) ChangeAvailableBalance(ctx context.Context, req *
 			CreatedOn:         now,
 			UpdatedOn:         now,
 		}
-		if err := repoAccount.InsertBalance(service.DB, &balance); err != nil {
+		if err := repoAccount.InsertBalance(service.DB, balance); err != nil {
 			log.Println("ChangeAvailableBalance on InsertBalance error: ", err.Error())
 			res.Status = constRes.Error
 			res.Message = err.Error()
 		}
 		res.Status = constRes.Success
 		res.Data = &protoBalance.BalanceData{
-			Balance: &balance,
+			Balance: balance,
 		}
 
 	case err != nil:
@@ -267,9 +268,14 @@ func (service *AccountService) ChangeAvailableBalance(ctx context.Context, req *
 		res.Status = constRes.Error
 		res.Message = err.Error()
 	default:
-		available := balance.Available + req.Amount
-		exchangeTotal := balance.ExchangeTotal + req.Amount
-		exchangeAvailable := balance.ExchangeAvailable + req.Amount
+		available := util.ToFixedRounded(balance.Available+req.Amount, 8)
+		exchangeTotal := util.ToFixedRounded(balance.ExchangeTotal+req.Amount, 8)
+		exchangeAvailable := util.ToFixedRounded(balance.ExchangeAvailable+req.Amount, 8)
+
+		// available can never be negative
+		if available <= 0.0 {
+			available = 0.0
+		}
 
 		balance, err = repoAccount.UpdateAvailableBalance(service.DB, req.UserID, req.AccountID, req.CurrencySymbol, available, exchangeTotal, exchangeAvailable)
 		if err != nil {
@@ -292,7 +298,7 @@ func (service *AccountService) ChangeLockedBalance(ctx context.Context, req *pro
 	case err == sql.ErrNoRows:
 		// currency not found yet create a balance for it
 		now := string(pq.FormatTimestamp(time.Now().UTC()))
-		balance := protoBalance.Balance{
+		balance = &protoBalance.Balance{
 			UserID:            req.UserID,
 			AccountID:         req.AccountID,
 			CurrencySymbol:    req.CurrencySymbol,
@@ -303,23 +309,27 @@ func (service *AccountService) ChangeLockedBalance(ctx context.Context, req *pro
 			CreatedOn:         now,
 			UpdatedOn:         now,
 		}
-		if err := repoAccount.InsertBalance(service.DB, &balance); err != nil {
+		if err := repoAccount.InsertBalance(service.DB, balance); err != nil {
 			log.Println("ChangeLockedBalance on InsertBalance error: ", err.Error())
 			res.Status = constRes.Error
 			res.Message = err.Error()
 		}
 		res.Status = constRes.Success
 		res.Data = &protoBalance.BalanceData{
-			Balance: &balance,
+			Balance: balance,
 		}
 	case err != nil:
 		log.Println("ChangeLockedBalance on FindBalance error: ", err.Error())
 		res.Status = constRes.Error
 		res.Message = err.Error()
 	default:
-		locked := balance.Locked + req.Amount
-		exchangeTotal := balance.ExchangeTotal + req.Amount
-		exchangeAvailable := balance.ExchangeAvailable + req.Amount
+		locked := util.ToFixedRounded(balance.Locked+req.Amount, 8)
+		exchangeTotal := util.ToFixedRounded(balance.ExchangeTotal+req.Amount, 8)
+		exchangeAvailable := util.ToFixedRounded(balance.ExchangeAvailable+req.Amount, 8)
+
+		if locked <= 0 {
+			locked = 0.0
+		}
 
 		balance, err = repoAccount.UpdateLockedBalance(service.DB, req.UserID, req.AccountID, req.CurrencySymbol, locked, exchangeTotal, exchangeAvailable)
 		if err != nil {
@@ -341,8 +351,9 @@ func (service *AccountService) LockBalance(ctx context.Context, req *protoBalanc
 
 	switch {
 	case err == sql.ErrNoRows:
+		// insert new balance as this currency symbol was not found for account
 		now := string(pq.FormatTimestamp(time.Now().UTC()))
-		balance := protoBalance.Balance{
+		balance = &protoBalance.Balance{
 			UserID:         req.UserID,
 			AccountID:      req.AccountID,
 			CurrencySymbol: req.CurrencySymbol,
@@ -351,22 +362,30 @@ func (service *AccountService) LockBalance(ctx context.Context, req *protoBalanc
 			CreatedOn:      now,
 			UpdatedOn:      now,
 		}
-		if err := repoAccount.InsertBalance(service.DB, &balance); err != nil {
+		if err := repoAccount.InsertBalance(service.DB, balance); err != nil {
 			log.Println("LockBalance on InsertBalance error: ", err.Error())
 			res.Status = constRes.Error
 			res.Message = err.Error()
 		}
 		res.Status = constRes.Success
 		res.Data = &protoBalance.BalanceData{
-			Balance: &balance,
+			Balance: balance,
 		}
 	case err != nil:
 		log.Println("LockBalance error on FindBalance: ", err.Error())
 		res.Status = constRes.Error
 		res.Message = err.Error()
 	default:
-		available := balance.Available - req.Amount
-		locked := balance.Locked + req.Amount
+		available := util.ToFixedRounded(balance.Available-req.Amount, 8)
+		locked := util.ToFixedRounded(balance.Locked+req.Amount, 8)
+
+		// available and locked cannot be less than 0
+		if available < 0.0 {
+			available = 0.0
+		}
+		if locked < 0.0 {
+			locked = 0.0
+		}
 
 		balance, err = repoAccount.UpdateInternalBalance(service.DB, req.UserID, req.AccountID, req.CurrencySymbol, available, locked)
 		if err != nil {
@@ -412,8 +431,16 @@ func (service *AccountService) UnlockBalance(ctx context.Context, req *protoBala
 		res.Status = constRes.Error
 		res.Message = err.Error()
 	default:
-		available := balance.Available + req.Amount
-		locked := balance.Locked - req.Amount
+		available := util.ToFixedRounded(balance.Available+req.Amount, 8)
+		locked := util.ToFixedRounded(balance.Locked-req.Amount, 8)
+
+		// available and locked cannot be less than 0
+		if available < 0.0 {
+			available = 0.0
+		}
+		if locked < 0.0 {
+			locked = 0.0
+		}
 
 		balance, err = repoAccount.UpdateInternalBalance(service.DB, req.UserID, req.AccountID, req.CurrencySymbol, available, locked)
 		if err != nil {
