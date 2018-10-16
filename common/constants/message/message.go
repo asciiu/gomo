@@ -20,3 +20,6 @@ const TopicAccountDeleted = "KillAccountPlans"
 
 // engine sends this out to fill a binance order
 const TopicFillBinanceOrder = "FillBinanceOrder"
+
+// this will start a new indicator
+const TopicStartIndicator = "TopicStartIndicator"
