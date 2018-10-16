@@ -5,6 +5,7 @@ package analytics;
 service AnalyticsService {
   rpc ConvertCurrency(ConversionRequest) returns (ConversionResponse) {}
   rpc GetMarketInfo(SearchMarketsRequest) returns (MarketsResponse) {}
+  rpc GetIndicator(IndicatorRequest) returns (IndicatorResponse) {}
 }
 
 // Requests
@@ -20,6 +21,9 @@ message SearchMarketsRequest {
   string term = 1;
 }
 
+message IndicatorRequest {
+  string indicator = 1;
+}
 
 // Responses
 message MarketPrice {
@@ -66,4 +70,9 @@ message MarketInfoResponse {
 message MarketsResponse {
   string status = 1;
   MarketInfoResponse data = 2;
+}
+
+message IndicatorResponse {
+  string status = 1;
+  string message = 2;
 }

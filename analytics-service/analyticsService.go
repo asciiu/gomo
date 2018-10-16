@@ -292,3 +292,7 @@ func (service *AnalyticsService) GetMarketInfo(ctx context.Context, req *protoAn
 	}
 	return nil
 }
+
+func (service *AnalyticsService) GetIndicator(ctx context.Context, req *protoAnalytics.IndicatorRequest, res *protoAnalytics.IndicatorResponse) error {
+	return nil
+}

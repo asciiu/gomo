@@ -42,6 +42,7 @@ func main() {
 		service.HandleExchangeEvent(tradeEvents)
 		return nil
 	})
+	//micro.RegisterSubscriber(constMessage.TopicStartIndicator, srv.Server(), service.HandleStartIndicator, server.SubscriberQueue("subscribe.indicator"))
 
 	go priceTicker.Ticker()
 
