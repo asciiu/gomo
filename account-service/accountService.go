@@ -273,9 +273,9 @@ func (service *AccountService) ChangeAvailableBalance(ctx context.Context, req *
 		exchangeAvailable := util.ToFixedRounded(balance.ExchangeAvailable+req.Amount, 8)
 
 		// available can never be negative
-		if available <= 0.0 {
-			available = 0.0
-		}
+		//if available <= 0.0 {
+		//	available = 0.0
+		//}
 
 		balance, err = repoAccount.UpdateAvailableBalance(service.DB, req.UserID, req.AccountID, req.CurrencySymbol, available, exchangeTotal, exchangeAvailable)
 		if err != nil {
@@ -327,9 +327,9 @@ func (service *AccountService) ChangeLockedBalance(ctx context.Context, req *pro
 		exchangeTotal := util.ToFixedRounded(balance.ExchangeTotal+req.Amount, 8)
 		exchangeAvailable := util.ToFixedRounded(balance.ExchangeAvailable+req.Amount, 8)
 
-		if locked <= 0 {
-			locked = 0.0
-		}
+		//if locked <= 0 {
+		//	locked = 0.0
+		//}
 
 		balance, err = repoAccount.UpdateLockedBalance(service.DB, req.UserID, req.AccountID, req.CurrencySymbol, locked, exchangeTotal, exchangeAvailable)
 		if err != nil {
@@ -380,12 +380,12 @@ func (service *AccountService) LockBalance(ctx context.Context, req *protoBalanc
 		locked := util.ToFixedRounded(balance.Locked+req.Amount, 8)
 
 		// available and locked cannot be less than 0
-		if available < 0.0 {
-			available = 0.0
-		}
-		if locked < 0.0 {
-			locked = 0.0
-		}
+		//if available < 0.0 {
+		//	available = 0.0
+		//}
+		//if locked < 0.0 {
+		//	locked = 0.0
+		//}
 
 		balance, err = repoAccount.UpdateInternalBalance(service.DB, req.UserID, req.AccountID, req.CurrencySymbol, available, locked)
 		if err != nil {
@@ -435,12 +435,12 @@ func (service *AccountService) UnlockBalance(ctx context.Context, req *protoBala
 		locked := util.ToFixedRounded(balance.Locked-req.Amount, 8)
 
 		// available and locked cannot be less than 0
-		if available < 0.0 {
-			available = 0.0
-		}
-		if locked < 0.0 {
-			locked = 0.0
-		}
+		//if available < 0.0 {
+		//	available = 0.0
+		//}
+		//if locked < 0.0 {
+		//	locked = 0.0
+		//}
 
 		balance, err = repoAccount.UpdateInternalBalance(service.DB, req.UserID, req.AccountID, req.CurrencySymbol, available, locked)
 		if err != nil {
