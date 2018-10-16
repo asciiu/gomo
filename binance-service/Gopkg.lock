@@ -9,6 +9,12 @@
 
 [[projects]]
   branch = "master"
+  name = "github.com/asciiu/go-talib"
+  packages = ["."]
+  revision = "a4b85487a1cc5434c69feb401708f0bdd3e194a5"
+
+[[projects]]
+  branch = "master"
   name = "github.com/asciiu/gomo"
   packages = [
     "common/constants/exchange",
@@ -21,7 +27,7 @@
     "user-service/db/sql",
     "user-service/models"
   ]
-  revision = "37422b70e082b7a959699f6aea1727e0a106e574"
+  revision = "1e809a22a9dfc3bb84fb2967b9ce5c40cccefeed"
 
 [[projects]]
   name = "github.com/davecgh/go-spew"
@@ -381,6 +387,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "673c00afb7c2102e396366bec21b469473e5aa981dc2b9216885d4936866792a"
+  inputs-digest = "673b22d364d0bd047b0c1750723c57bdddff8d5a8c3559d53d3742a3fa9a483f"
   solver-name = "gps-cdcl"
   solver-version = 1

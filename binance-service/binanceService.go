@@ -346,11 +346,11 @@ func (service *BinanceService) GetMarketRestrictions(ctx context.Context, req *p
 	return nil
 }
 
-func (service *BinanceService) GetCandles(ctx context.Context, req *protoBinance.MarketRequest, res *protoBinance.CandlesResponse) error {
+func (service *BinanceService) GetCandles(ctx context.Context, req *protoBinance.CandleRequest, res *protoBinance.CandlesResponse) error {
 
 	symbol := strings.Replace(req.MarketName, "-", "", 1)
 
-	url := fmt.Sprintf("https://api.binance.com/api/v1/klines?symbol=%s&interval=%s", symbol, "1m")
+	url := fmt.Sprintf("https://api.binance.com/api/v1/klines?symbol=%s&interval=%s&limit=1000", symbol, "1m")
 
 	request, _ := http.NewRequest("GET", url, nil)
 

@@ -7,11 +7,12 @@ import "github.com/asciiu/gomo/binance-service/proto/balance/balance.proto";
 service BinanceService {
   rpc GetBalances(balance.BalanceRequest) returns (balance.BalancesResponse) {}
   rpc GetMarketRestrictions(MarketRestrictionRequest) returns (MarketRestrictionResponse) {}
-  rpc GetCandles(MarketRequest) returns (CandlesResponse) {}
+  rpc GetCandles(CandleRequest) returns (CandlesResponse) {}
 }
 
-message MarketRequest {
+message CandleRequest {
   string marketName = 1;
+  int32 timePeriodSeconds = 2;
 }
 
 message MarketRestrictionRequest {
