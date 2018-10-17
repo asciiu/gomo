@@ -124,6 +124,10 @@ func (l *Lexer) readNumber() string {
 	return l.input[position:l.position]
 }
 
+// As you can see, in our case it contains the check ch == '_', which means that we’ll treat _
+// as a letter and allow it in identifiers and keywords. That means we can use variable names
+// like foo_bar. Other programming languages even allow ! and ? in identifiers. If you want
+// to allow that too, this is the place to sneak it in.
 func isLetter(ch byte) bool {
 	return 'a' <= ch && ch <= 'z' || 'A' <= ch && ch <= 'Z' || ch == '_'
 }

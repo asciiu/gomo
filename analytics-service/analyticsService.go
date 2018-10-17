@@ -294,5 +294,7 @@ func (service *AnalyticsService) GetMarketInfo(ctx context.Context, req *protoAn
 }
 
 func (service *AnalyticsService) GetIndicator(ctx context.Context, req *protoAnalytics.IndicatorRequest, res *protoAnalytics.IndicatorResponse) error {
+	//Ema(market = Binance:BTC-USDT, tf = 60, periods = 10, source = close)
+	//indicator := req.Indicator
 	return nil
 }
