@@ -3,7 +3,7 @@ package lexer
 import (
 	"testing"
 
-	"github.com/asciiu/gomo/analytics-service/token"
+	"github.com/asciiu/gomo/analytics-service/fomolang/token"
 )
 
 func TestNextToken(t *testing.T) {

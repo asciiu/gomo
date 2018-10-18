@@ -1,6 +1,6 @@
 package lexer
 
-import "github.com/asciiu/gomo/analytics-service/token"
+import "github.com/asciiu/gomo/analytics-service/fomolang/token"
 
 type Lexer struct {
 	input        string

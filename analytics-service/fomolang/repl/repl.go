@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"io"
 
-	"github.com/asciiu/gomo/analytics-service/lexer"
-	"github.com/asciiu/gomo/analytics-service/token"
+	"github.com/asciiu/gomo/analytics-service/fomolang/lexer"
+	"github.com/asciiu/gomo/analytics-service/fomolang/token"
 )
 
 const PROMPT = ">> "
