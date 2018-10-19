@@ -28,6 +28,8 @@ func main() {
 	// fmt.Printf("Feel free to type in commands\n")
 
 	// repl.Start(os.Stdin, os.Stdout)
+
+	// comment out all code below when using the REPL
 	srv := k8s.NewService(
 		micro.Name("analytics"),
 		micro.Version("latest"),
