@@ -2,7 +2,8 @@
 A Go port of the beloved fomo api.
 
 ### Prerequisites
-Install goose. 
+Install goose. This is the database migratin tool. All migrations can be found under
+/migrations as incremental SQL scripts.
 ```
 $ go get -u github.com/pressly/goose/cmd/goose
 ```
@@ -18,26 +19,19 @@ Refer to swagger markeup guide here: https://goswagger.io/generate/spec.html
 ### Migrate the Postgres DB schema 
 Apply the migrations from the "migrations" directory.
 ```
-$ goose postgres "user=postgres dbname=gomo_dev sslmode=disable" up
-```
-
-Note: When running from docker-compose up you need to migrate the dockerized postgres DB via:
-```
-$ goose postgres "user=fomo dbname=fomo_dev sslmode=disable port=6432 password=fomornd" up
-```
-
-Clean DB
-```
-$ goose postgres "user=postgres dbname=gomo_dev sslmode=disable" down-to 0 
-```
-
-### Testing 
-Apply DB schema to test database. Create dB gomo_test if it does not exist. 
-
-```
 $ goose postgres "user=postgres dbname=gomo_test sslmode=disable" up
 ```
 
+Clean DB if needed and reapply goose up command above.
+```
+$ goose postgres "user=postgres dbname=gomo_test sslmode=disable" down-to 0 
+```
+
+### Building 
+Refer to the Makefile targets: build, stage, etc.
+
+### Deploying 
+Refer to the deploment configs. 
 
 ### Generating the API docs
 From within the /api project 
@@ -45,22 +39,3 @@ From within the /api project
 $ swagger generate spec -o ./fomo-swagger.json --scan-models
 $ swagger serve -F=swagger fomo-swagger.json
 ```
-
-### Deploying
-From localhost using docker-machine you first need to create the ec2 instances:
-
-```
-docker-machine create --driver amazonec2 --amazonec2-region us-west-1 fomo-stage
-```
-
-Set the docker env:
-```
-eval $(docker-machine env fomo-stage)
-```
-
-Deploy via compose build and up. 
-```
-docker-compose build
-docker-compose -f docker-compose.yml -f docker-compose.stage.yml up -d
-```
-
