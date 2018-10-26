@@ -11,6 +11,7 @@ import (
 	constPlan "github.com/asciiu/gomo/plan-service/constants"
 	protoOrder "github.com/asciiu/gomo/plan-service/proto/order"
 	protoPlan "github.com/asciiu/gomo/plan-service/proto/plan"
+	"github.com/lib/pq"
 )
 
 /*
@@ -1392,14 +1393,23 @@ func FindAccountPlans(db *sql.DB, accountID string) ([]*protoPlan.Plan, error) {
 // Find all user plans - excludes deleted plans.
 func FindUserPlansWithStatus(db *sql.DB, userID, status string, page, pageSize uint32) (*protoPlan.PlansPage, error) {
 
-	var count uint32
-	queryCount := `SELECT count(*) FROM plans WHERE user_id = $1 AND status like '%' || $2 || '%' AND status != 'deleted'`
-	err := db.QueryRow(queryCount, userID, status).Scan(&count)
-	if err != nil {
-		return nil, err
+	// pull plan ids that are not deleted with status filter equal to requested status
+	rows, err := db.Query(`SELECT 
+	p.id as plan_id
+	FROM plans p 
+	WHERE p.user_id = $1 AND p.status like '%' || $2 || '%' AND p.status != 'deleted'
+	OFFSET $3 LIMIT $4`, userID, status, page, pageSize)
+
+	planIDs := make([]string, 0)
+	for rows.Next() {
+		var planID string
+		rows.Scan(&planID)
+		planIDs = append(planIDs, planID)
 	}
 
-	rows, err := db.Query(`SELECT 
+	// pull the plan summary for each of the plan IDs from above query
+	// includes last executed order and next order waiting to be executed with all triggers for each order
+	rows, err = db.Query(`SELECT 
 	p.id as plan_id,
 	p.user_id,
 	p.title,
@@ -1467,9 +1477,9 @@ func FindUserPlansWithStatus(db *sql.DB, userID, status string, page, pageSize u
 	JOIN orders o on p.id = o.plan_id
 	JOIN triggers t on o.id = t.order_id
 	JOIN accounts a on o.account_id = a.id
-	WHERE p.user_id = $1 AND p.status like '%' || $2 || '%' AND p.status != 'deleted' AND (o.parent_order_id = p.last_executed_order_id or o.plan_depth <= (p.last_executed_plan_depth +1))
-	ORDER BY p.id, o.plan_depth, o.order_priority, o.id, t.index
-	OFFSET $3 LIMIT $4`, userID, status, page, pageSize)
+	WHERE p.id = Any($1) AND (o.parent_order_id = p.last_executed_order_id or 
+		  o.plan_depth <= (p.last_executed_plan_depth +1))
+	ORDER BY p.id, o.plan_depth, o.order_priority, o.id, t.index`, pq.Array(planIDs))
 
 	if err != nil {
 		return nil, err
@@ -1668,7 +1678,7 @@ func FindUserPlansWithStatus(db *sql.DB, userID, status string, page, pageSize u
 	result := protoPlan.PlansPage{
 		Page:     page,
 		PageSize: pageSize,
-		Total:    count,
+		Total:    uint32(len(planIDs)),
 		Plans:    plans,
 	}
 
