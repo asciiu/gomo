@@ -36,6 +36,12 @@ func (m *mockAnalyticsService) GetMarketInfo(ctx context.Context, req *protoAnal
 	}, nil
 }
 
+func (m *mockAnalyticsService) GetIndicator(ctx context.Context, req *protoAnalytics.IndicatorRequest, opts ...client.CallOption) (*protoAnalytics.IndicatorResponse, error) {
+	return &protoAnalytics.IndicatorResponse{
+		Status: "success",
+	}, nil
+}
+
 func MockAnalyticsServiceClient(db *sql.DB) protoAnalytics.AnalyticsServiceClient {
 	return &mockAnalyticsService{db}
 }
