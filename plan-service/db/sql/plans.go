@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"errors"
 	"log"
+	"sort"
 
 	constAccount "github.com/asciiu/gomo/account-service/constants"
 	constPlan "github.com/asciiu/gomo/plan-service/constants"
@@ -1674,6 +1675,10 @@ func FindUserPlansWithStatus(db *sql.DB, userID, status string, page, pageSize u
 	if err != nil {
 		return nil, err
 	}
+
+	sort.Slice(plans, func(i, j int) bool {
+		return plans[i].CreatedOn < plans[j].CreatedOn
+	})
 
 	result := protoPlan.PlansPage{
 		Page:     page,
