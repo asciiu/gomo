@@ -1399,6 +1399,7 @@ func FindUserPlansWithStatus(db *sql.DB, userID, status string, page, pageSize u
 	p.id as plan_id
 	FROM plans p 
 	WHERE p.user_id = $1 AND p.status like '%' || $2 || '%' AND p.status != 'deleted'
+	ORDER BY p.created_on desc
 	OFFSET $3 LIMIT $4`, userID, status, page, pageSize)
 
 	planIDs := make([]string, 0)
@@ -1677,7 +1678,7 @@ func FindUserPlansWithStatus(db *sql.DB, userID, status string, page, pageSize u
 	}
 
 	sort.Slice(plans, func(i, j int) bool {
-		return plans[i].CreatedOn < plans[j].CreatedOn
+		return plans[i].CreatedOn > plans[j].CreatedOn
 	})
 
 	result := protoPlan.PlansPage{
