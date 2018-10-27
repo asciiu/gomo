@@ -1394,6 +1394,13 @@ func FindAccountPlans(db *sql.DB, accountID string) ([]*protoPlan.Plan, error) {
 // Find all user plans - excludes deleted plans.
 func FindUserPlansWithStatus(db *sql.DB, userID, status string, page, pageSize uint32) (*protoPlan.PlansPage, error) {
 
+	var total uint32
+	queryCount := `SELECT count(*) FROM plans WHERE user_id = $1 AND status like '%' || $2 || '%' AND status != 'deleted'`
+	err := db.QueryRow(queryCount, userID, status).Scan(&total)
+	if err != nil {
+		return nil, err
+	}
+
 	// pull plan ids that are not deleted with status filter equal to requested status
 	rows, err := db.Query(`SELECT 
 	p.id as plan_id
@@ -1684,7 +1691,7 @@ func FindUserPlansWithStatus(db *sql.DB, userID, status string, page, pageSize u
 	result := protoPlan.PlansPage{
 		Page:     page,
 		PageSize: pageSize,
-		Total:    uint32(len(planIDs)),
+		Total:    total,
 		Plans:    plans,
 	}
 
