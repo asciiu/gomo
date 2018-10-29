@@ -1404,7 +1404,7 @@ func FindUserPlansWithStatus(db *sql.DB, userID, status string, page, pageSize u
 	// pull plan ids that are not deleted with status filter equal to requested status
 	rows, err := db.Query(`SELECT id FROM plans 
 	WHERE user_id = $1 AND status like '%' || $2 || '%' AND status != 'deleted'
-	ORDER BY created_on desc OFFSET $3 LIMIT $4`, userID, status, page, pageSize)
+	ORDER BY created_on desc OFFSET $3 LIMIT $4`, userID, status, page*pageSize, pageSize)
 
 	planIDs := make([]string, 0)
 	for rows.Next() {
