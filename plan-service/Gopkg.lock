@@ -25,7 +25,7 @@
     "user-service/models",
   ]
   pruneopts = "UT"
-  revision = "fdf6cdef226a7ccf7204e0532d733591b509f0a3"
+  revision = "70c7c1eb43627528ed03ad77172f748cb3cbfcd1"
 
 [[projects]]
   digest = "1:a2c1d0e43bd3baaa071d1b9ed72c27d78169b2b269f71c105ac4ba34b1be4a39"
