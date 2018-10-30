@@ -91,7 +91,7 @@ func (c *BinanceClient) writePump() {
 			c.ws.SetWriteDeadline(time.Now().Add(writeWait))
 			if err := c.ws.WriteMessage(websocket.PingMessage, []byte{}); err != nil {
 				log.Println("failed to ping:", err)
-				return
+				break
 			}
 		}
 	}
@@ -103,7 +103,7 @@ func (c *BinanceClient) readPump() {
 	c.ws.SetReadLimit(maxMessageSize)
 	c.ws.SetReadDeadline(time.Now().Add(pongWait))
 	c.ws.SetPongHandler(func(string) error {
-		log.Println("pong: ", time.Now().UTC())
+		//log.Println("pong: ", time.Now().UTC())
 		c.ws.SetReadDeadline(time.Now().Add(pongWait))
 		return nil
 	})
@@ -164,23 +164,32 @@ func (c *BinanceClient) readPump() {
 }
 
 func (c *BinanceClient) run() {
-	url := "wss://stream.binance.com:9443/ws/!ticker@arr"
+	// loop indefinitely
+	for {
+		url := "wss://stream.binance.com:9443/ws/!ticker@arr"
 
-	conn, _, err := websocket.DefaultDialer.Dial(url, nil)
-	if err != nil {
-		log.Fatal("dial:", err)
+		conn, _, err := websocket.DefaultDialer.Dial(url, nil)
+		if err != nil {
+			log.Fatal("dial:", err)
+		}
+		c.ws = conn
+		log.Printf("connected to %s", url)
+
+		conn.SetCloseHandler(func(code int, text string) error {
+			log.Printf("closed connection %d %s\n", code, text)
+			return nil
+		})
+
+		go c.writePump()
+		c.readPump()
+
+		// in theory when the readPump returns the defer statement in that function
+		// should close the socket connection gracefully
+		log.Println("...binance websocket has stopped, reconnecting in 5 seconds")
+
+		// wait for 10 seconds to pull the trade results
+		time.Sleep(5 * time.Second)
 	}
-	c.ws = conn
-	log.Printf("connected to %s", url)
-
-	conn.SetCloseHandler(func(code int, text string) error {
-		log.Printf("closed connection %d %s\n", code, text)
-		return nil
-	})
-
-	go c.writePump()
-	c.readPump()
-	log.Println("websocket has stopped!")
 }
 
 func main() {
