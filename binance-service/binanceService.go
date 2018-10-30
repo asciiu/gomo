@@ -173,32 +173,37 @@ func (service *BinanceService) HandleFillOrder(ctx context.Context, triggerEvent
 			log.Printf("processed order -- %+v\n", processedOrder)
 
 			// need to wait for binance to fill the order on their end to avoid race condition
-			time.Sleep(2 * time.Second)
+			time.Sleep(1 * time.Second)
 
-			// ask for most recent 200
-			trades, err := b.MyTrades(binance.MyTradesRequest{
-				Symbol:     binanceRequest.Symbol,
-				Limit:      200,
-				RecvWindow: time.Duration(2) * time.Second,
-				Timestamp:  time.Now(),
-			})
+			var quantity float64
+			var commission float64
+			var feesym string
+			var latest time.Time
+			var totalTrades float64
+			var sumPrice float64
 
-			if err != nil {
-				log.Printf("could not retrieve recent trades after processed order %+v\n", processedOrder)
-			} else {
+			// try pulling the results 3 times
+			for i := 0; i < 3; i++ {
 
-				var quantity float64
-				var commission float64
-				var feesym string
-				var latest time.Time
-				var totalTrades float64
-				var sumPrice float64
+				// ask for most recent 200
+				trades, err := b.MyTrades(binance.MyTradesRequest{
+					Symbol:     binanceRequest.Symbol,
+					Limit:      200,
+					RecvWindow: time.Duration(2) * time.Second,
+					Timestamp:  time.Now(),
+				})
+
+				if err != nil {
+					log.Printf("could not retrieve recent trades after processed order %+v\n", processedOrder)
+					completedEvent.Status = constPlan.Failed
+					completedEvent.Details = err.Error()
+					break
+				}
+
 				// loop trades and find all that match order ID
 				for _, trade := range trades {
 					if trade.OrderID == processedOrder.OrderID {
 						totalTrades++
-
-						log.Printf("trade results -- %+v\n", trade)
 
 						if triggerEvent.Side == constPlan.Sell {
 							quantity += trade.Price * trade.Qty
@@ -216,6 +221,19 @@ func (service *BinanceService) HandleFillOrder(ctx context.Context, triggerEvent
 						commission += trade.Commission
 					}
 				}
+
+				// assume the results were pulled completely if totalTrades > 0
+				if totalTrades > 0 && commission > 0 && sumPrice > 0 {
+					log.Printf("trade results -- %+v\n", trades)
+					break
+				}
+
+				// wait for 10 seconds to pull the trade results
+				time.Sleep(10 * time.Second)
+			}
+
+			switch {
+			case totalTrades > 0 && commission > 0 && sumPrice > 0:
 				exchangeRate := 0.0
 				if totalTrades > 0 {
 					exchangeRate = util.ToFixedRounded(sumPrice/totalTrades, 8)
@@ -243,17 +261,21 @@ func (service *BinanceService) HandleFillOrder(ctx context.Context, triggerEvent
 						completedEvent.InitialCurrencyTraded,
 						completedEvent.InitialCurrencySymbol)
 				}
-
-				// I'd prefer to just call this but binance doesn't return the price in
-				// the response, so I had to resort to pulling the most recent trades
-				//executedOrder, err := b.QueryOrder(binance.QueryOrderRequest{
-				//	Symbol:            marketName,
-				//	OrderID:           processedOrder.OrderID,
-				//	OrigClientOrderID: triggerEvent.OrderID,
-				//	RecvWindow:        time.Duration(2) * time.Second,
-				//	Timestamp:         time.Now(),
-				//})
+			default:
+				log.Printf("3rd attempt to retrieve binance trade results failed for %+v\n", processedOrder)
+				completedEvent.Status = constPlan.Failed
+				completedEvent.Details = err.Error()
+				break
 			}
+			// I'd prefer to just call this but binance doesn't return the price in
+			// the response, so I had to resort to pulling the most recent trades
+			//executedOrder, err := b.QueryOrder(binance.QueryOrderRequest{
+			//	Symbol:            marketName,
+			//	OrderID:           processedOrder.OrderID,
+			//	OrigClientOrderID: triggerEvent.OrderID,
+			//	RecvWindow:        time.Duration(2) * time.Second,
+			//	Timestamp:         time.Now(),
+			//})
 		}
 
 		if err := service.CompletedPub.Publish(ctx, completedEvent); err != nil {
