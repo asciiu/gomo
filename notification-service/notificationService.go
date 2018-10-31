@@ -10,23 +10,23 @@ import (
 	"time"
 
 	protoGorush "github.com/appleboy/gorush/rpc/proto"
-	repoActivity "github.com/asciiu/gomo/activity-bulletin/db/sql"
-	protoActivity "github.com/asciiu/gomo/activity-bulletin/proto"
 	constRes "github.com/asciiu/gomo/common/constants/response"
 	protoDevice "github.com/asciiu/gomo/device-service/proto/device"
+	repoNotification "github.com/asciiu/gomo/notification-service/db/sql"
+	protoNotification "github.com/asciiu/gomo/notification-service/proto/notification"
 	"github.com/google/uuid"
 	micro "github.com/micro/go-micro"
 	"google.golang.org/grpc"
 )
 
-type Bulletin struct {
+type NotificationService struct {
 	db      *sql.DB
 	devices protoDevice.DeviceServiceClient
 	client  protoGorush.GorushClient
 	topic   string
 }
 
-func NewBulletin(db *sql.DB, service micro.Service) *Bulletin {
+func NewNotificationService(db *sql.DB, service micro.Service) *NotificationService {
 	address := fmt.Sprintf("%s", os.Getenv("GORUSH_ADDRESS"))
 	topic := fmt.Sprintf("%s", os.Getenv("APNS_TOPIC"))
 
@@ -37,7 +37,7 @@ func NewBulletin(db *sql.DB, service micro.Service) *Bulletin {
 	}
 	client := protoGorush.NewGorushClient(conn)
 
-	hs := Bulletin{
+	hs := NotificationService{
 		db:      db,
 		client:  client,
 		topic:   topic,
@@ -47,9 +47,9 @@ func NewBulletin(db *sql.DB, service micro.Service) *Bulletin {
 	return &hs
 }
 
-func (service *Bulletin) LogActivity(ctx context.Context, history *protoActivity.Activity) error {
+func (service *NotificationService) LogActivity(ctx context.Context, history *protoNotification.Activity) error {
 
-	_, error := repoActivity.InsertActivity(service.db, history)
+	_, error := repoNotification.InsertActivity(service.db, history)
 	if error != nil {
 		log.Println("could not insert new notification ", error)
 	}
@@ -106,8 +106,8 @@ func (service *Bulletin) LogActivity(ctx context.Context, history *protoActivity
 	return nil
 }
 
-func (service *Bulletin) FindUserActivity(ctx context.Context, req *protoActivity.ActivityRequest, res *protoActivity.ActivityPagedResponse) error {
-	var pagedResult *protoActivity.UserActivityPage
+func (service *NotificationService) FindUserActivity(ctx context.Context, req *protoNotification.ActivityRequest, res *protoNotification.ActivityPagedResponse) error {
+	var pagedResult *protoNotification.UserActivityPage
 	var err error
 
 	if req.ObjectID != "" {
@@ -120,11 +120,11 @@ func (service *Bulletin) FindUserActivity(ctx context.Context, req *protoActivit
 
 	if req.ObjectID != "" {
 		// history associated with object ID only
-		pagedResult, err = repoActivity.FindObjectActivity(service.db, req)
+		pagedResult, err = repoNotification.FindObjectActivity(service.db, req)
 	} else {
 		// all user history
-		//pagedResult, err = repoActivity.FindUserActivity(service.db, req.UserID, req.Page, req.PageSize)
-		pagedResult, err = repoActivity.FindUserPlansActivity(service.db, req.UserID, req.Page, req.PageSize)
+		//pagedResult, err = repoNotification.FindUserActivity(service.db, req.UserID, req.Page, req.PageSize)
+		pagedResult, err = repoNotification.FindUserPlansActivity(service.db, req.UserID, req.Page, req.PageSize)
 	}
 
 	if err == nil {
@@ -137,11 +137,11 @@ func (service *Bulletin) FindUserActivity(ctx context.Context, req *protoActivit
 	return nil
 }
 
-func (service *Bulletin) FindMostRecentActivity(ctx context.Context, req *protoActivity.RecentActivityRequest, res *protoActivity.ActivityListResponse) error {
-	history, err := repoActivity.FindRecentObjectActivity(service.db, req)
+func (service *NotificationService) FindMostRecentActivity(ctx context.Context, req *protoNotification.RecentActivityRequest, res *protoNotification.ActivityListResponse) error {
+	history, err := repoNotification.FindRecentObjectActivity(service.db, req)
 	if err == nil {
 		res.Status = constRes.Success
-		res.Data = &protoActivity.ActivityList{
+		res.Data = &protoNotification.ActivityList{
 			Activity: history,
 		}
 	} else {
@@ -151,18 +151,18 @@ func (service *Bulletin) FindMostRecentActivity(ctx context.Context, req *protoA
 	return nil
 }
 
-func (service *Bulletin) FindActivityCount(ctx context.Context, req *protoActivity.ActivityCountRequest, res *protoActivity.ActivityCountResponse) error {
-	count := repoActivity.FindObjectActivityCount(service.db, req.ObjectID)
+func (service *NotificationService) FindActivityCount(ctx context.Context, req *protoNotification.ActivityCountRequest, res *protoNotification.ActivityCountResponse) error {
+	count := repoNotification.FindObjectActivityCount(service.db, req.ObjectID)
 	res.Status = constRes.Success
-	res.Data = &protoActivity.ActivityCount{
+	res.Data = &protoNotification.ActivityCount{
 		Count: count,
 	}
 	return nil
 }
 
-func (service *Bulletin) UpdateActivity(ctx context.Context, req *protoActivity.UpdateActivityRequest, res *protoActivity.ActivityResponse) error {
+func (service *NotificationService) UpdateActivity(ctx context.Context, req *protoNotification.UpdateActivityRequest, res *protoNotification.ActivityResponse) error {
 
-	history, err := repoActivity.FindActivity(service.db, req.ActivityID)
+	history, err := repoNotification.FindActivity(service.db, req.ActivityID)
 
 	if err == sql.ErrNoRows {
 		res.Status = constRes.Nonentity
@@ -179,7 +179,7 @@ func (service *Bulletin) UpdateActivity(ctx context.Context, req *protoActivity.
 			return nil
 		}
 
-		history, err = repoActivity.UpdateActivityClickedAt(service.db, req.ActivityID, req.ClickedAt)
+		history, err = repoNotification.UpdateActivityClickedAt(service.db, req.ActivityID, req.ClickedAt)
 		if err != nil {
 			res.Status = constRes.Error
 			res.Message = err.Error()
@@ -195,7 +195,7 @@ func (service *Bulletin) UpdateActivity(ctx context.Context, req *protoActivity.
 			return nil
 		}
 
-		history, err = repoActivity.UpdateActivitySeenAt(service.db, req.ActivityID, req.SeenAt)
+		history, err = repoNotification.UpdateActivitySeenAt(service.db, req.ActivityID, req.SeenAt)
 		if err != nil {
 			res.Status = constRes.Error
 			res.Message = err.Error()
@@ -204,7 +204,7 @@ func (service *Bulletin) UpdateActivity(ctx context.Context, req *protoActivity.
 	}
 
 	res.Status = constRes.Success
-	res.Data = &protoActivity.ActivityData{
+	res.Data = &protoNotification.ActivityData{
 		Activity: history,
 	}
 

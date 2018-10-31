@@ -4,7 +4,7 @@ import (
 	"database/sql"
 	"encoding/json"
 
-	protoActivity "github.com/asciiu/gomo/activity-bulletin/proto"
+	protoNotification "github.com/asciiu/gomo/notification-service/proto/notification"
 	"github.com/google/uuid"
 )
 
@@ -18,7 +18,7 @@ import (
 // UpdateActivityClickedAt
 // UpdateActivitySeenAt
 
-func FindActivity(db *sql.DB, activityID string) (*protoActivity.Activity, error) {
+func FindActivity(db *sql.DB, activityID string) (*protoNotification.Activity, error) {
 
 	query := `SELECT 
 		id, 
@@ -34,7 +34,7 @@ func FindActivity(db *sql.DB, activityID string) (*protoActivity.Activity, error
 		seen_at
 		FROM activity_bulletin WHERE id = $1`
 
-	var h protoActivity.Activity
+	var h protoNotification.Activity
 	var clickedAt sql.NullString
 	var seenAt sql.NullString
 	err := db.QueryRow(query, activityID).Scan(
@@ -64,8 +64,8 @@ func FindActivity(db *sql.DB, activityID string) (*protoActivity.Activity, error
 	return &h, nil
 }
 
-func FindUserActivity(db *sql.DB, userID string, page, pageSize uint32) (*protoActivity.UserActivityPage, error) {
-	history := make([]*protoActivity.Activity, 0)
+func FindUserActivity(db *sql.DB, userID string, page, pageSize uint32) (*protoNotification.UserActivityPage, error) {
+	history := make([]*protoNotification.Activity, 0)
 
 	var total uint32
 	queryTotal := `SELECT count(*) FROM activity_bulletin WHERE user_id = $1`
@@ -93,7 +93,7 @@ func FindUserActivity(db *sql.DB, userID string, page, pageSize uint32) (*protoA
 	}
 	defer rows.Close()
 	for rows.Next() {
-		var h protoActivity.Activity
+		var h protoNotification.Activity
 		var clickedAt sql.NullString
 		var seenAt sql.NullString
 		err := rows.Scan(&h.ActivityID,
@@ -126,7 +126,7 @@ func FindUserActivity(db *sql.DB, userID string, page, pageSize uint32) (*protoA
 		return nil, err
 	}
 
-	result := protoActivity.UserActivityPage{
+	result := protoNotification.UserActivityPage{
 		Page:     page,
 		PageSize: pageSize,
 		Total:    total,
@@ -136,8 +136,8 @@ func FindUserActivity(db *sql.DB, userID string, page, pageSize uint32) (*protoA
 	return &result, nil
 }
 
-func FindUserPlansActivity(db *sql.DB, userID string, page, pageSize uint32) (*protoActivity.UserActivityPage, error) {
-	history := make([]*protoActivity.Activity, 0)
+func FindUserPlansActivity(db *sql.DB, userID string, page, pageSize uint32) (*protoNotification.UserActivityPage, error) {
+	history := make([]*protoNotification.Activity, 0)
 
 	var total uint32
 	queryTotal := `SELECT count(*) FROM activity_bulletin WHERE user_id = $1`
@@ -168,7 +168,7 @@ func FindUserPlansActivity(db *sql.DB, userID string, page, pageSize uint32) (*p
 	}
 	defer rows.Close()
 	for rows.Next() {
-		var h protoActivity.Activity
+		var h protoNotification.Activity
 		var clickedAt sql.NullString
 		var seenAt sql.NullString
 		err := rows.Scan(&h.ActivityID,
@@ -201,7 +201,7 @@ func FindUserPlansActivity(db *sql.DB, userID string, page, pageSize uint32) (*p
 		return nil, err
 	}
 
-	result := protoActivity.UserActivityPage{
+	result := protoNotification.UserActivityPage{
 		Page:     page,
 		PageSize: pageSize,
 		Total:    total,
@@ -211,8 +211,8 @@ func FindUserPlansActivity(db *sql.DB, userID string, page, pageSize uint32) (*p
 	return &result, nil
 }
 
-func FindObjectActivity(db *sql.DB, req *protoActivity.ActivityRequest) (*protoActivity.UserActivityPage, error) {
-	history := make([]*protoActivity.Activity, 0)
+func FindObjectActivity(db *sql.DB, req *protoNotification.ActivityRequest) (*protoNotification.UserActivityPage, error) {
+	history := make([]*protoNotification.Activity, 0)
 
 	var total uint32
 	queryTotal := `SELECT count(*) FROM activity_bulletin WHERE object_id = $1`
@@ -243,7 +243,7 @@ func FindObjectActivity(db *sql.DB, req *protoActivity.ActivityRequest) (*protoA
 	}
 	defer rows.Close()
 	for rows.Next() {
-		var h protoActivity.Activity
+		var h protoNotification.Activity
 		var clickedAt sql.NullString
 		var seenAt sql.NullString
 		err := rows.Scan(&h.ActivityID,
@@ -276,7 +276,7 @@ func FindObjectActivity(db *sql.DB, req *protoActivity.ActivityRequest) (*protoA
 		return nil, err
 	}
 
-	result := protoActivity.UserActivityPage{
+	result := protoNotification.UserActivityPage{
 		Page:     req.Page,
 		PageSize: req.PageSize,
 		Total:    total,
@@ -286,8 +286,8 @@ func FindObjectActivity(db *sql.DB, req *protoActivity.ActivityRequest) (*protoA
 	return &result, nil
 }
 
-func FindRecentObjectActivity(db *sql.DB, req *protoActivity.RecentActivityRequest) ([]*protoActivity.Activity, error) {
-	history := make([]*protoActivity.Activity, 0)
+func FindRecentObjectActivity(db *sql.DB, req *protoNotification.RecentActivityRequest) ([]*protoNotification.Activity, error) {
+	history := make([]*protoNotification.Activity, 0)
 
 	query := `SELECT id, 
 		user_id, 
@@ -309,7 +309,7 @@ func FindRecentObjectActivity(db *sql.DB, req *protoActivity.RecentActivityReque
 	}
 	defer rows.Close()
 	for rows.Next() {
-		var h protoActivity.Activity
+		var h protoNotification.Activity
 		var clickedAt sql.NullString
 		var seenAt sql.NullString
 		err := rows.Scan(&h.ActivityID,
@@ -355,7 +355,7 @@ func FindObjectActivityCount(db *sql.DB, objectID string) uint32 {
 	return count
 }
 
-func InsertActivity(db *sql.DB, history *protoActivity.Activity) (*protoActivity.Activity, error) {
+func InsertActivity(db *sql.DB, history *protoNotification.Activity) (*protoNotification.Activity, error) {
 	newID := uuid.New().String()
 
 	sqlStatement := `insert into activity_bulletin (
@@ -389,7 +389,7 @@ func InsertActivity(db *sql.DB, history *protoActivity.Activity) (*protoActivity
 	if err != nil {
 		return nil, err
 	}
-	n := &protoActivity.Activity{
+	n := &protoNotification.Activity{
 		ActivityID:  newID,
 		Type:        history.Type,
 		UserID:      history.UserID,
@@ -403,7 +403,7 @@ func InsertActivity(db *sql.DB, history *protoActivity.Activity) (*protoActivity
 	return n, nil
 }
 
-func UpdateActivityClickedAt(db *sql.DB, activityID, timestamp string) (*protoActivity.Activity, error) {
+func UpdateActivityClickedAt(db *sql.DB, activityID, timestamp string) (*protoNotification.Activity, error) {
 	stmt := `
 		UPDATE activity_bulletin 
 		SET 
@@ -424,7 +424,7 @@ func UpdateActivityClickedAt(db *sql.DB, activityID, timestamp string) (*protoAc
 		seen_at
 		`
 
-	var h protoActivity.Activity
+	var h protoNotification.Activity
 	var clickedAt sql.NullString
 	var seenAt sql.NullString
 
@@ -454,7 +454,7 @@ func UpdateActivityClickedAt(db *sql.DB, activityID, timestamp string) (*protoAc
 	return &h, nil
 }
 
-func UpdateActivitySeenAt(db *sql.DB, activityID, timestamp string) (*protoActivity.Activity, error) {
+func UpdateActivitySeenAt(db *sql.DB, activityID, timestamp string) (*protoNotification.Activity, error) {
 	stmt := `
 		UPDATE activity_bulletin 
 		SET 
@@ -474,7 +474,7 @@ func UpdateActivitySeenAt(db *sql.DB, activityID, timestamp string) (*protoActiv
 		clicked_at,
 		seen_at`
 
-	var h protoActivity.Activity
+	var h protoNotification.Activity
 	var clickedAt sql.NullString
 	var seenAt sql.NullString
 

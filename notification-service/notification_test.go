@@ -7,9 +7,9 @@ import (
 	"testing"
 	"time"
 
-	repoActivity "github.com/asciiu/gomo/activity-bulletin/db/sql"
-	protoActivity "github.com/asciiu/gomo/activity-bulletin/proto"
 	"github.com/asciiu/gomo/common/db"
+	repoNotification "github.com/asciiu/gomo/notification-service/db/sql"
+	protoNotification "github.com/asciiu/gomo/notification-service/proto/notification"
 	repoUser "github.com/asciiu/gomo/user-service/db/sql"
 	user "github.com/asciiu/gomo/user-service/models"
 	"github.com/lib/pq"
@@ -23,11 +23,11 @@ func checkErr(err error) {
 	}
 }
 
-func setupService() (*Bulletin, *user.User) {
+func setupService() (*NotificationService, *user.User) {
 	dbUrl := "postgres://postgres@localhost:5432/gomo_test?&sslmode=disable"
 	db, _ := db.NewDB(dbUrl)
 
-	hs := Bulletin{
+	hs := NotificationService{
 		db: db,
 		//devices: protoDevice.NewDeviceServiceClient("devices", service.Client()),
 	}
@@ -47,7 +47,7 @@ func TestActivity(t *testing.T) {
 
 	defer service.db.Close()
 
-	note := protoActivity.Activity{
+	note := protoNotification.Activity{
 		UserID:      user.ID,
 		Type:        "order",
 		ObjectID:    "bf24b117-1c0f-4c4f-82bc-7586c99b8d40",
@@ -56,15 +56,15 @@ func TestActivity(t *testing.T) {
 		Description: "this is a test",
 		Timestamp:   string(pq.FormatTimestamp(time.Now().UTC())),
 	}
-	repoActivity.InsertActivity(service.db, &note)
+	repoNotification.InsertActivity(service.db, &note)
 
-	req := protoActivity.ActivityRequest{
+	req := protoNotification.ActivityRequest{
 		UserID:   user.ID,
 		ObjectID: "bf24b117-1c0f-4c4f-82bc-7586c99b8d40",
 		Page:     0,
 		PageSize: 10,
 	}
-	res := protoActivity.ActivityPagedResponse{}
+	res := protoNotification.ActivityPagedResponse{}
 	service.FindUserActivity(context.Background(), &req, &res)
 
 	assert.Equal(t, "success", res.Status, fmt.Sprintf("%s", res.Message))
@@ -78,7 +78,7 @@ func TestRecentActivity(t *testing.T) {
 
 	defer service.db.Close()
 
-	note1 := protoActivity.Activity{
+	note1 := protoNotification.Activity{
 		UserID:      user.ID,
 		Type:        "order",
 		ObjectID:    "bf24b117-1c0f-4c4f-82bc-7586c99b8d40",
@@ -87,8 +87,8 @@ func TestRecentActivity(t *testing.T) {
 		Description: "this is a test",
 		Timestamp:   "2018-08-18 05:34:27.462218561Z",
 	}
-	repoActivity.InsertActivity(service.db, &note1)
-	note2 := protoActivity.Activity{
+	repoNotification.InsertActivity(service.db, &note1)
+	note2 := protoNotification.Activity{
 		UserID:      user.ID,
 		Type:        "order",
 		ObjectID:    "bf24b117-1c0f-4c4f-82bc-7586c99b8d40",
@@ -97,8 +97,8 @@ func TestRecentActivity(t *testing.T) {
 		Description: "this is a test",
 		Timestamp:   "2018-08-18 05:44:00.000000000Z",
 	}
-	repoActivity.InsertActivity(service.db, &note2)
-	note3 := protoActivity.Activity{
+	repoNotification.InsertActivity(service.db, &note2)
+	note3 := protoNotification.Activity{
 		UserID:      user.ID,
 		Type:        "order",
 		ObjectID:    "bf24b117-1c0f-4c4f-82bc-7586c99b8d40",
@@ -107,13 +107,13 @@ func TestRecentActivity(t *testing.T) {
 		Description: "this is a test",
 		Timestamp:   "2018-08-18 05:54:00.000000000Z",
 	}
-	repoActivity.InsertActivity(service.db, &note3)
+	repoNotification.InsertActivity(service.db, &note3)
 
-	req := protoActivity.RecentActivityRequest{
+	req := protoNotification.RecentActivityRequest{
 		ObjectID: "bf24b117-1c0f-4c4f-82bc-7586c99b8d40",
 		Count:    2,
 	}
-	res := protoActivity.ActivityListResponse{}
+	res := protoNotification.ActivityListResponse{}
 	service.FindMostRecentActivity(context.Background(), &req, &res)
 
 	assert.Equal(t, "success", res.Status, fmt.Sprintf("%s", res.Message))
@@ -129,7 +129,7 @@ func TestActivityCount(t *testing.T) {
 
 	defer service.db.Close()
 
-	note1 := protoActivity.Activity{
+	note1 := protoNotification.Activity{
 		UserID:      user.ID,
 		Type:        "order",
 		ObjectID:    "bf24b117-1c0f-4c4f-82bc-7586c99b8d40",
@@ -138,8 +138,8 @@ func TestActivityCount(t *testing.T) {
 		Description: "this is a test",
 		Timestamp:   "2018-08-18 05:34:27.462218561Z",
 	}
-	repoActivity.InsertActivity(service.db, &note1)
-	note2 := protoActivity.Activity{
+	repoNotification.InsertActivity(service.db, &note1)
+	note2 := protoNotification.Activity{
 		UserID:      user.ID,
 		Type:        "order",
 		ObjectID:    "bf24b117-1c0f-4c4f-82bc-7586c99b8d40",
@@ -148,12 +148,12 @@ func TestActivityCount(t *testing.T) {
 		Description: "this is a test",
 		Timestamp:   "2018-08-18 05:44:00.000000000Z",
 	}
-	repoActivity.InsertActivity(service.db, &note2)
+	repoNotification.InsertActivity(service.db, &note2)
 
-	req := protoActivity.ActivityCountRequest{
+	req := protoNotification.ActivityCountRequest{
 		ObjectID: "bf24b117-1c0f-4c4f-82bc-7586c99b8d40",
 	}
-	res := protoActivity.ActivityCountResponse{}
+	res := protoNotification.ActivityCountResponse{}
 	service.FindActivityCount(context.Background(), &req, &res)
 
 	assert.Equal(t, "success", res.Status, fmt.Sprintf("%s", res.Message))
@@ -167,7 +167,7 @@ func TestUpdateActivity(t *testing.T) {
 
 	defer service.db.Close()
 
-	note1 := protoActivity.Activity{
+	note1 := protoNotification.Activity{
 		UserID:      user.ID,
 		Type:        "order",
 		ObjectID:    "bf24b117-1c0f-4c4f-82bc-7586c99b8d40",
@@ -176,14 +176,14 @@ func TestUpdateActivity(t *testing.T) {
 		Description: "this is a test",
 		Timestamp:   "2018-08-18 05:34:27.462218561Z",
 	}
-	history, _ := repoActivity.InsertActivity(service.db, &note1)
+	history, _ := repoNotification.InsertActivity(service.db, &note1)
 
-	req := protoActivity.UpdateActivityRequest{
+	req := protoNotification.UpdateActivityRequest{
 		ActivityID: history.ActivityID,
 		SeenAt:     "2018-08-18T05:34:00Z",
 		ClickedAt:  "2018-08-18T05:54:00Z",
 	}
-	res := protoActivity.ActivityResponse{}
+	res := protoNotification.ActivityResponse{}
 	service.UpdateActivity(context.Background(), &req, &res)
 
 	assert.Equal(t, "success", res.Status, fmt.Sprintf("%s", res.Message))

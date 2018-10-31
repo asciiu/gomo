@@ -1,23 +1,23 @@
 apiVersion: apps/v1beta1
 kind: Deployment
 metadata:
-  name: bulletin
+  name: notifications
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: bulletin 
+      app: notifications 
   template:
     metadata:
       labels:
-        app: bulletin 
+        app: notifications 
     spec:
         containers:
-        - name: activity-bulletin 
-          image: us.gcr.io/fomo-204904/activity-bulletin:dev
+        - name: notification-service 
+          image: us.gcr.io/fomo-204904/notification-service:dev
           imagePullPolicy: Always 
           command: [
-            "./activity-bulletin",
+            "./notification-service",
             "--selector=static",
             "--server_address=:8080"
           ]
@@ -30,7 +30,7 @@ spec:
           - name: APNS_TOPIC
             value: "com.mozzarello.projectfomo"
           - name: UPDATED_AT
-            value: "Mon 19 Mar 2018 12:05:58 GMT"
+            value: "{{ UPDATED_AT }}" 
           ports:
           - containerPort: 8080
             name: notes-port

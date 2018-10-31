@@ -5,9 +5,9 @@ import (
 	"log"
 	"os"
 
-	protoActivity "github.com/asciiu/gomo/activity-bulletin/proto"
 	constMessage "github.com/asciiu/gomo/common/constants/message"
 	"github.com/asciiu/gomo/common/db"
+	protoNotification "github.com/asciiu/gomo/notification-service/proto/notification"
 	micro "github.com/micro/go-micro"
 	"github.com/micro/go-micro/server"
 	k8s "github.com/micro/kubernetes/go/micro"
@@ -15,7 +15,7 @@ import (
 
 func main() {
 	srv := k8s.NewService(
-		micro.Name("activity.bulletin"),
+		micro.Name("fomo.notifications"),
 	)
 
 	// Init will parse the command line flags.
@@ -27,12 +27,11 @@ func main() {
 		log.Fatalf(err.Error())
 	}
 
-	bulletin := NewBulletin(gomoDB, srv)
-
-	protoActivity.RegisterActivityBulletinHandler(srv.Server(), bulletin)
+	note := NewNotificationService(gomoDB, srv)
+	protoNotification.RegisterNotificationHandler(srv.Server(), note)
 
 	// handles key verified events
-	micro.RegisterSubscriber(constMessage.TopicNotification, srv.Server(), bulletin.LogActivity, server.SubscriberQueue("archive"))
+	micro.RegisterSubscriber(constMessage.TopicNotification, srv.Server(), note.LogActivity, server.SubscriberQueue("notifications"))
 
 	if err := srv.Run(); err != nil {
 		log.Fatal(err)
