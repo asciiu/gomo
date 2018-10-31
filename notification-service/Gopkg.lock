@@ -29,7 +29,45 @@
     "user-service/models",
   ]
   pruneopts = "UT"
-  revision = "2349756e5532108267e78b0892a83cb370e36bbd"
+  revision = "227acde52d424c616d0c9f6652ecbc57fe849678"
+
+[[projects]]
+  digest = "1:57ad2c5e50909e23f4e28dade79274b7aa23c935333fd12ffa54e502abe9dc0d"
+  name = "github.com/aws/aws-sdk-go"
+  packages = [
+    "aws",
+    "aws/awserr",
+    "aws/awsutil",
+    "aws/client",
+    "aws/client/metadata",
+    "aws/corehandlers",
+    "aws/credentials",
+    "aws/credentials/ec2rolecreds",
+    "aws/credentials/endpointcreds",
+    "aws/credentials/stscreds",
+    "aws/csm",
+    "aws/defaults",
+    "aws/ec2metadata",
+    "aws/endpoints",
+    "aws/request",
+    "aws/session",
+    "aws/signer/v4",
+    "internal/ini",
+    "internal/sdkio",
+    "internal/sdkrand",
+    "internal/sdkuri",
+    "internal/shareddefaults",
+    "private/protocol",
+    "private/protocol/query",
+    "private/protocol/query/queryutil",
+    "private/protocol/rest",
+    "private/protocol/xml/xmlutil",
+    "service/ses",
+    "service/sts",
+  ]
+  pruneopts = "UT"
+  revision = "870fa4307c5f57c14153c695df7b87af1acdcbf1"
+  version = "v1.15.66"
 
 [[projects]]
   digest = "1:ffe9824d294da03b391f44e1ae8281281b4afc1bdaa9588c9097785e3af10cec"
@@ -104,6 +142,13 @@
   packages = ["coordinate"]
   pruneopts = "UT"
   revision = "19bbd39e421bdf3559d5025fb2c760f5ffa56233"
+
+[[projects]]
+  digest = "1:e22af8c7518e1eab6f2eab2b7d7558927f816262586cd6ed9f349c97a6c285c4"
+  name = "github.com/jmespath/go-jmespath"
+  packages = ["."]
+  pruneopts = "UT"
+  revision = "0b12d6b5"
 
 [[projects]]
   digest = "1:3e551bbb3a7c0ab2a2bf4660e7fcad16db089fdcfbb44b0199e62838038623ea"
@@ -453,6 +498,10 @@
     "github.com/asciiu/gomo/device-service/proto/device",
     "github.com/asciiu/gomo/user-service/db/sql",
     "github.com/asciiu/gomo/user-service/models",
+    "github.com/aws/aws-sdk-go/aws",
+    "github.com/aws/aws-sdk-go/aws/awserr",
+    "github.com/aws/aws-sdk-go/aws/session",
+    "github.com/aws/aws-sdk-go/service/ses",
     "github.com/golang/protobuf/proto",
     "github.com/google/uuid",
     "github.com/lib/pq",

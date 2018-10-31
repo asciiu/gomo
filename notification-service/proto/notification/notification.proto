@@ -7,9 +7,19 @@ service Notification {
   rpc FindMostRecentActivity(RecentActivityRequest) returns (ActivityListResponse) {}
   rpc FindActivityCount(ActivityCountRequest) returns (ActivityCountResponse) {}
   rpc UpdateActivity(UpdateActivityRequest) returns (ActivityResponse) {}
+  rpc SendEmail(EmailRequest) returns (EmailResponse) {}
 }
 
+
 // Requests
+message EmailRequest {
+  string emailSender = 1;
+  string emailRecipient = 2;
+  string subject = 3;
+  string htmlBody = 4;
+  string textBody = 5; 
+}
+
 message ActivityRequest {
     string userID = 1;
     string objectID = 2;
@@ -33,6 +43,11 @@ message UpdateActivityRequest {
 }
 
 // Responses
+message EmailResponse {
+  string status = 1;
+  string message = 2;
+}
+
 message Activity {
   string activityID = 1;
   string userID = 3;

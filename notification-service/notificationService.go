@@ -14,9 +14,19 @@ import (
 	protoDevice "github.com/asciiu/gomo/device-service/proto/device"
 	repoNotification "github.com/asciiu/gomo/notification-service/db/sql"
 	protoNotification "github.com/asciiu/gomo/notification-service/proto/notification"
+	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/aws/awserr"
+	"github.com/aws/aws-sdk-go/aws/session"
+	"github.com/aws/aws-sdk-go/service/ses"
 	"github.com/google/uuid"
 	micro "github.com/micro/go-micro"
 	"google.golang.org/grpc"
+)
+
+const (
+	// The character encoding for the email.
+	AwsRegion = "us-east-1"
+	CharSet   = "UTF-8"
 )
 
 type NotificationService struct {
@@ -207,6 +217,70 @@ func (service *NotificationService) UpdateActivity(ctx context.Context, req *pro
 	res.Data = &protoNotification.ActivityData{
 		Activity: history,
 	}
+
+	return nil
+}
+
+func (service *NotificationService) SendEmail(ctx context.Context, req *protoNotification.EmailRequest, res *protoNotification.EmailResponse) error {
+	// Create a new session in the us-west-2 region.
+	// Replace us-west-2 with the AWS Region you're using for Amazon SES.
+	sess, err := session.NewSession(&aws.Config{
+		Region: aws.String(AwsRegion)},
+	)
+
+	// Create an SES session.
+	svc := ses.New(sess)
+
+	// Assemble the email.
+	input := &ses.SendEmailInput{
+		Destination: &ses.Destination{
+			CcAddresses: []*string{},
+			ToAddresses: []*string{
+				aws.String(req.EmailRecipient),
+			},
+		},
+		Message: &ses.Message{
+			Body: &ses.Body{
+				Html: &ses.Content{
+					Charset: aws.String(CharSet),
+					Data:    aws.String(req.HtmlBody),
+				},
+				Text: &ses.Content{
+					Charset: aws.String(CharSet),
+					Data:    aws.String(req.TextBody),
+				},
+			},
+			Subject: &ses.Content{
+				Charset: aws.String(CharSet),
+				Data:    aws.String(req.Subject),
+			},
+		},
+		Source: aws.String(req.EmailSender),
+		// Uncomment to use a configuration set
+		//ConfigurationSetName: aws.String(ConfigurationSet),
+	}
+
+	// Attempt to send the email.
+	_, err = svc.SendEmail(input)
+
+	// Display error messages if they occur.
+	if err != nil {
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case ses.ErrCodeMessageRejected:
+				return errors.New(fmt.Sprintf("%s: %s", ses.ErrCodeMessageRejected, aerr.Error()))
+			case ses.ErrCodeMailFromDomainNotVerifiedException:
+				return errors.New(fmt.Sprintf("%s: %s", ses.ErrCodeMailFromDomainNotVerifiedException, aerr.Error()))
+			case ses.ErrCodeConfigurationSetDoesNotExistException:
+				return errors.New(fmt.Sprintf("%s: %s", ses.ErrCodeConfigurationSetDoesNotExistException, aerr.Error()))
+			default:
+				return errors.New(aerr.Error())
+			}
+		}
+		return err
+	}
+
+	res.Status = constRes.Success
 
 	return nil
 }
