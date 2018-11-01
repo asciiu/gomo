@@ -351,3 +351,44 @@ func (service *NotificationService) DeleteTemplate(ctx context.Context, req *pro
 
 	return nil
 }
+
+func (service *NotificationService) ListTemplates(ctx context.Context, req *protoNotification.ListTemplatesRequest, res *protoNotification.TemplatesResponse) error {
+	// Create a new session in the us-west-2 region.
+	// Replace us-west-2 with the AWS Region you're using for Amazon SES.
+	sess, err := session.NewSession(&aws.Config{
+		Region: aws.String(AwsRegion)},
+	)
+
+	// Create an SES session.
+	svc := ses.New(sess)
+
+	// Assemble the email.
+	input := &ses.ListTemplatesInput{}
+
+	// Attempt to send the email.
+	output, err := svc.ListTemplates(input)
+
+	// Display error messages if they occur.
+	if err != nil {
+		if aerr, ok := err.(awserr.Error); ok {
+			return errors.New(aerr.Code())
+		}
+		return err
+	}
+
+	templates := make([]*protoNotification.Template, 0)
+	for _, template := range output.TemplatesMetadata {
+		templates = append(templates,
+			&protoNotification.Template{
+				Name:      *template.Name,
+				CreatedOn: (*template.CreatedTimestamp).String(),
+			})
+	}
+
+	res.Status = constRes.Success
+	res.Data = &protoNotification.TemplatesList{
+		Templates: templates,
+	}
+
+	return nil
+}

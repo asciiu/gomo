@@ -12,6 +12,7 @@ service Notification {
   rpc SendEmail(EmailRequest) returns (EmailResponse) {}
   rpc CreateTemplate(CreateTemplateRequest) returns (EmailResponse) {}
   rpc DeleteTemplate(DeleteTemplateRequest) returns (EmailResponse) {}
+  rpc ListTemplates(ListTemplatesRequest) returns (TemplatesResponse) {}
 }
 
 
@@ -33,6 +34,10 @@ message CreateTemplateRequest {
 
 message DeleteTemplateRequest {
   string templateName = 1;
+}
+
+message ListTemplatesRequest {
+  string nextToken = 1;
 }
 
 message ActivityRequest {
@@ -58,10 +63,26 @@ message UpdateActivityRequest {
 }
 
 // Responses
+message Template {
+  string name = 1;
+  string createdOn = 2;
+}
+
 message EmailResponse {
   string status = 1;
   string message = 2;
 }
+
+message TemplatesList {
+  repeated Template templates = 1;
+}
+
+message TemplatesResponse {
+  string status = 1;
+  string message = 2;
+  TemplatesList data = 3;
+}
+
 
 message Activity {
   string activityID = 1;

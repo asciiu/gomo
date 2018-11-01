@@ -65,6 +65,14 @@ func TestTemplateCreation(t *testing.T) {
 		t.Fatalf(err.Error())
 	}
 
+	list := protoNotification.ListTemplatesRequest{}
+	resTemps := protoNotification.TemplatesResponse{}
+	err = service.ListTemplates(context.Background(), &list, &resTemps)
+	if err != nil {
+		t.Fatalf(err.Error())
+	}
+	fmt.Println(resTemps)
+
 	del := protoNotification.DeleteTemplateRequest{
 		TemplateName: "test",
 	}
