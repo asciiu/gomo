@@ -38,3 +38,43 @@ func TestEmail(t *testing.T) {
 
 	repoUser.DeleteUserHard(service.db, user.ID)
 }
+
+func TestTemplateCreation(t *testing.T) {
+	service, user := setupService()
+
+	defer service.db.Close()
+
+	// The HTML body for the email.
+	html := "<h1>Fomo SES Test Email</h1><p>This email was sent with " +
+		"<a href='https://aws.amazon.com/ses/'>Amazon SES</a> using the " +
+		"<a href='https://aws.amazon.com/sdk-for-go/'>AWS SDK for Go</a>.</p>"
+
+	//The email body for recipients with non-HTML email clients.
+	txt := "This email was sent with Amazon SES using the AWS SDK for Go."
+
+	template := protoNotification.CreateTemplateRequest{
+		Subject:      "Fomo Test",
+		Html:         html,
+		Text:         txt,
+		TemplateName: "test",
+	}
+
+	res := protoNotification.EmailResponse{}
+	err := service.CreateTemplate(context.Background(), &template, &res)
+	if err != nil {
+		t.Fatalf(err.Error())
+	}
+
+	del := protoNotification.DeleteTemplateRequest{
+		TemplateName: "test",
+	}
+
+	err = service.DeleteTemplate(context.Background(), &del, &res)
+	if err != nil {
+		t.Fatalf(err.Error())
+	}
+
+	assert.Equal(t, "success", res.Status, fmt.Sprintf("%s", res.Message))
+
+	repoUser.DeleteUserHard(service.db, user.ID)
+}

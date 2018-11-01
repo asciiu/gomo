@@ -284,3 +284,70 @@ func (service *NotificationService) SendEmail(ctx context.Context, req *protoNot
 
 	return nil
 }
+
+func (service *NotificationService) CreateTemplate(ctx context.Context, req *protoNotification.CreateTemplateRequest, res *protoNotification.EmailResponse) error {
+	// Create a new session in the us-west-2 region.
+	// Replace us-west-2 with the AWS Region you're using for Amazon SES.
+	sess, err := session.NewSession(&aws.Config{
+		Region: aws.String(AwsRegion)},
+	)
+
+	// Create an SES session.
+	svc := ses.New(sess)
+
+	// Assemble the email.
+	input := &ses.CreateTemplateInput{
+		Template: &ses.Template{
+			TemplateName: aws.String(req.TemplateName),
+			HtmlPart:     aws.String(req.Html),
+			TextPart:     aws.String(req.Text),
+			SubjectPart:  aws.String(req.Subject),
+		},
+	}
+
+	// Attempt to send the email.
+	_, err = svc.CreateTemplate(input)
+
+	// Display error messages if they occur.
+	if err != nil {
+		if aerr, ok := err.(awserr.Error); ok {
+			return errors.New(aerr.Code())
+		}
+		return err
+	}
+
+	res.Status = constRes.Success
+
+	return nil
+}
+
+func (service *NotificationService) DeleteTemplate(ctx context.Context, req *protoNotification.DeleteTemplateRequest, res *protoNotification.EmailResponse) error {
+	// Create a new session in the us-west-2 region.
+	// Replace us-west-2 with the AWS Region you're using for Amazon SES.
+	sess, err := session.NewSession(&aws.Config{
+		Region: aws.String(AwsRegion)},
+	)
+
+	// Create an SES session.
+	svc := ses.New(sess)
+
+	// Assemble the email.
+	input := &ses.DeleteTemplateInput{
+		TemplateName: aws.String(req.TemplateName),
+	}
+
+	// Attempt to send the email.
+	_, err = svc.DeleteTemplate(input)
+
+	// Display error messages if they occur.
+	if err != nil {
+		if aerr, ok := err.(awserr.Error); ok {
+			return errors.New(aerr.Code())
+		}
+		return err
+	}
+
+	res.Status = constRes.Success
+
+	return nil
+}
