@@ -13,6 +13,7 @@ service Notification {
   rpc CreateTemplate(CreateTemplateRequest) returns (EmailResponse) {}
   rpc DeleteTemplate(DeleteTemplateRequest) returns (EmailResponse) {}
   rpc ListTemplates(ListTemplatesRequest) returns (TemplatesResponse) {}
+  rpc SendTemplatedEmail(SendTemplatedEmailRequest) returns (EmailResponse) {}
 }
 
 
@@ -38,6 +39,14 @@ message DeleteTemplateRequest {
 
 message ListTemplatesRequest {
   string nextToken = 1;
+}
+
+message SendTemplatedEmailRequest {
+  string emailSender = 1;
+  string emailRecipient = 2;
+  string configSetName = 3;                   // aws config set name
+  string templateName = 4;
+  string templateData = 5;
 }
 
 message ActivityRequest {

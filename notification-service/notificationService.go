@@ -392,3 +392,42 @@ func (service *NotificationService) ListTemplates(ctx context.Context, req *prot
 
 	return nil
 }
+
+func (service *NotificationService) SendTemplatedEmail(ctx context.Context, req *protoNotification.SendTemplatedEmailRequest, res *protoNotification.EmailResponse) error {
+	// Create a new session in the us-west-2 region.
+	// Replace us-west-2 with the AWS Region you're using for Amazon SES.
+	sess, err := session.NewSession(&aws.Config{
+		Region: aws.String(AwsRegion)},
+	)
+
+	// Create an SES session.
+	svc := ses.New(sess)
+
+	// Assemble the email.
+	input := &ses.SendTemplatedEmailInput{
+		ConfigurationSetName: aws.String(req.ConfigSetName),
+		Source:               aws.String(req.EmailSender),
+		Template:             aws.String(req.TemplateName),
+		TemplateData:         aws.String(req.TemplateData),
+		Destination: &ses.Destination{
+			ToAddresses: []*string{
+				aws.String(req.EmailRecipient),
+			},
+		},
+	}
+
+	// Attempt to send the email.
+	_, err = svc.SendTemplatedEmail(input)
+
+	// Display error messages if they occur.
+	if err != nil {
+		if aerr, ok := err.(awserr.Error); ok {
+			return errors.New(aerr.Code())
+		}
+		return err
+	}
+
+	res.Status = constRes.Success
+
+	return nil
+}
