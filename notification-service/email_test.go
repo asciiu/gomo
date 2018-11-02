@@ -63,64 +63,45 @@ func TestTemplateCreation(t *testing.T) {
 		t.Fatalf(err.Error())
 	}
 
+	repoUser.DeleteUserHard(service.db, user.ID)
+}
+
+// this test relies on create template test
+func TestTemplateList(t *testing.T) {
+	service, user := setupService()
+
+	defer service.db.Close()
+
+	res := protoNotification.EmailResponse{}
 	list := protoNotification.ListTemplatesRequest{}
 	resTemps := protoNotification.TemplatesResponse{}
-	err = service.ListTemplates(context.Background(), &list, &resTemps)
+	err := service.ListTemplates(context.Background(), &list, &resTemps)
 	if err != nil {
 		t.Fatalf(err.Error())
 	}
 	fmt.Println(resTemps)
 
-	del := protoNotification.DeleteTemplateRequest{
-		TemplateName: "test",
-	}
-
-	err = service.DeleteTemplate(context.Background(), &del, &res)
-	if err != nil {
-		t.Fatalf(err.Error())
-	}
-
 	assert.Equal(t, "success", res.Status, fmt.Sprintf("%s", res.Message))
 
 	repoUser.DeleteUserHard(service.db, user.ID)
 }
 
+// this test relies on create template test
 func TestSendTemplate(t *testing.T) {
 	service, user := setupService()
 
 	defer service.db.Close()
 
-	template := protoNotification.CreateTemplateRequest{
-		Subject:      "Greetings, {{name}}!",
-		Html:         "<h1>Hello {{name}},</h1><p>Your favorite animal is {{favoriteanimal}}.</p>",
-		Text:         "Dear {{name}},\r\nYour favorite animal is {{favoriteanimal}}.",
-		TemplateName: "test",
-	}
-
 	res := protoNotification.EmailResponse{}
-	err := service.CreateTemplate(context.Background(), &template, &res)
-	if err != nil {
-		t.Fatalf(err.Error())
-	}
-
 	snd := protoNotification.SendTemplatedEmailRequest{
 		EmailRecipient: "ellyssin.gimhae@gmail.com",
 		EmailSender:    "support@projectfomo.com",
 		ConfigSetName:  "fomotest",
 		TemplateName:   "test",
-		TemplateData:   "{ \"name\":\"Alejandro\", \"favoriteanimal\": \"alligator\" }",
+		TemplateData:   "{ \"name\":\"Test\", \"favoriteanimal\": \"fomo cat\" }",
 	}
 
-	err = service.SendTemplatedEmail(context.Background(), &snd, &res)
-	if err != nil {
-		t.Fatalf(err.Error())
-	}
-
-	del := protoNotification.DeleteTemplateRequest{
-		TemplateName: "test",
-	}
-
-	err = service.DeleteTemplate(context.Background(), &del, &res)
+	err := service.SendTemplatedEmail(context.Background(), &snd, &res)
 	if err != nil {
 		t.Fatalf(err.Error())
 	}
@@ -129,6 +110,7 @@ func TestSendTemplate(t *testing.T) {
 	repoUser.DeleteUserHard(service.db, user.ID)
 }
 
+// this test relies on create template test
 func TestDeleteTemplate(t *testing.T) {
 	service, user := setupService()
 	res := protoNotification.EmailResponse{}

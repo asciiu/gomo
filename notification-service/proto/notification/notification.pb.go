@@ -56,11 +56,11 @@ const _ = proto.ProtoPackageIsVersion2 // please upgrade the proto package
 
 // Requests
 type EmailRequest struct {
-	EmailSender    string `protobuf:"bytes,1,opt,name=emailSender" json:"emailSender,omitempty"`
-	EmailRecipient string `protobuf:"bytes,2,opt,name=emailRecipient" json:"emailRecipient,omitempty"`
-	Subject        string `protobuf:"bytes,3,opt,name=subject" json:"subject,omitempty"`
-	HtmlBody       string `protobuf:"bytes,4,opt,name=htmlBody" json:"htmlBody,omitempty"`
-	TextBody       string `protobuf:"bytes,5,opt,name=textBody" json:"textBody,omitempty"`
+	EmailSender    string `protobuf:"bytes,1,opt,name=emailSender" json:"emailSender"`
+	EmailRecipient string `protobuf:"bytes,2,opt,name=emailRecipient" json:"emailRecipient"`
+	Subject        string `protobuf:"bytes,3,opt,name=subject" json:"subject"`
+	HtmlBody       string `protobuf:"bytes,4,opt,name=htmlBody" json:"htmlBody"`
+	TextBody       string `protobuf:"bytes,5,opt,name=textBody" json:"textBody"`
 }
 
 func (m *EmailRequest) Reset()                    { *m = EmailRequest{} }
@@ -104,10 +104,10 @@ func (m *EmailRequest) GetTextBody() string {
 }
 
 type CreateTemplateRequest struct {
-	TemplateName string `protobuf:"bytes,1,opt,name=templateName" json:"templateName,omitempty"`
-	Subject      string `protobuf:"bytes,2,opt,name=subject" json:"subject,omitempty"`
-	Html         string `protobuf:"bytes,3,opt,name=html" json:"html,omitempty"`
-	Text         string `protobuf:"bytes,4,opt,name=text" json:"text,omitempty"`
+	TemplateName string `protobuf:"bytes,1,opt,name=templateName" json:"templateName"`
+	Subject      string `protobuf:"bytes,2,opt,name=subject" json:"subject"`
+	Html         string `protobuf:"bytes,3,opt,name=html" json:"html"`
+	Text         string `protobuf:"bytes,4,opt,name=text" json:"text"`
 }
 
 func (m *CreateTemplateRequest) Reset()                    { *m = CreateTemplateRequest{} }
@@ -144,7 +144,7 @@ func (m *CreateTemplateRequest) GetText() string {
 }
 
 type DeleteTemplateRequest struct {
-	TemplateName string `protobuf:"bytes,1,opt,name=templateName" json:"templateName,omitempty"`
+	TemplateName string `protobuf:"bytes,1,opt,name=templateName" json:"templateName"`
 }
 
 func (m *DeleteTemplateRequest) Reset()                    { *m = DeleteTemplateRequest{} }
@@ -160,7 +160,7 @@ func (m *DeleteTemplateRequest) GetTemplateName() string {
 }
 
 type ListTemplatesRequest struct {
-	NextToken string `protobuf:"bytes,1,opt,name=nextToken" json:"nextToken,omitempty"`
+	NextToken string `protobuf:"bytes,1,opt,name=nextToken" json:"nextToken"`
 }
 
 func (m *ListTemplatesRequest) Reset()                    { *m = ListTemplatesRequest{} }
@@ -176,11 +176,11 @@ func (m *ListTemplatesRequest) GetNextToken() string {
 }
 
 type SendTemplatedEmailRequest struct {
-	EmailSender    string `protobuf:"bytes,1,opt,name=emailSender" json:"emailSender,omitempty"`
-	EmailRecipient string `protobuf:"bytes,2,opt,name=emailRecipient" json:"emailRecipient,omitempty"`
-	ConfigSetName  string `protobuf:"bytes,3,opt,name=configSetName" json:"configSetName,omitempty"`
-	TemplateName   string `protobuf:"bytes,4,opt,name=templateName" json:"templateName,omitempty"`
-	TemplateData   string `protobuf:"bytes,5,opt,name=templateData" json:"templateData,omitempty"`
+	EmailSender    string `protobuf:"bytes,1,opt,name=emailSender" json:"emailSender"`
+	EmailRecipient string `protobuf:"bytes,2,opt,name=emailRecipient" json:"emailRecipient"`
+	ConfigSetName  string `protobuf:"bytes,3,opt,name=configSetName" json:"configSetName"`
+	TemplateName   string `protobuf:"bytes,4,opt,name=templateName" json:"templateName"`
+	TemplateData   string `protobuf:"bytes,5,opt,name=templateData" json:"templateData"`
 }
 
 func (m *SendTemplatedEmailRequest) Reset()                    { *m = SendTemplatedEmailRequest{} }
@@ -224,10 +224,10 @@ func (m *SendTemplatedEmailRequest) GetTemplateData() string {
 }
 
 type ActivityRequest struct {
-	UserID   string `protobuf:"bytes,1,opt,name=userID" json:"userID,omitempty"`
-	ObjectID string `protobuf:"bytes,2,opt,name=objectID" json:"objectID,omitempty"`
-	Page     uint32 `protobuf:"varint,3,opt,name=page" json:"page,omitempty"`
-	PageSize uint32 `protobuf:"varint,4,opt,name=pageSize" json:"pageSize,omitempty"`
+	UserID   string `protobuf:"bytes,1,opt,name=userID" json:"userID"`
+	ObjectID string `protobuf:"bytes,2,opt,name=objectID" json:"objectID"`
+	Page     uint32 `protobuf:"varint,3,opt,name=page" json:"page"`
+	PageSize uint32 `protobuf:"varint,4,opt,name=pageSize" json:"pageSize"`
 }
 
 func (m *ActivityRequest) Reset()                    { *m = ActivityRequest{} }
@@ -264,8 +264,8 @@ func (m *ActivityRequest) GetPageSize() uint32 {
 }
 
 type RecentActivityRequest struct {
-	ObjectID string `protobuf:"bytes,1,opt,name=objectID" json:"objectID,omitempty"`
-	Count    uint32 `protobuf:"varint,2,opt,name=count" json:"count,omitempty"`
+	ObjectID string `protobuf:"bytes,1,opt,name=objectID" json:"objectID"`
+	Count    uint32 `protobuf:"varint,2,opt,name=count" json:"count"`
 }
 
 func (m *RecentActivityRequest) Reset()                    { *m = RecentActivityRequest{} }
@@ -288,7 +288,7 @@ func (m *RecentActivityRequest) GetCount() uint32 {
 }
 
 type ActivityCountRequest struct {
-	ObjectID string `protobuf:"bytes,1,opt,name=objectID" json:"objectID,omitempty"`
+	ObjectID string `protobuf:"bytes,1,opt,name=objectID" json:"objectID"`
 }
 
 func (m *ActivityCountRequest) Reset()                    { *m = ActivityCountRequest{} }
@@ -304,9 +304,9 @@ func (m *ActivityCountRequest) GetObjectID() string {
 }
 
 type UpdateActivityRequest struct {
-	ActivityID string `protobuf:"bytes,1,opt,name=activityID" json:"activityID,omitempty"`
-	SeenAt     string `protobuf:"bytes,2,opt,name=seenAt" json:"seenAt,omitempty"`
-	ClickedAt  string `protobuf:"bytes,3,opt,name=clickedAt" json:"clickedAt,omitempty"`
+	ActivityID string `protobuf:"bytes,1,opt,name=activityID" json:"activityID"`
+	SeenAt     string `protobuf:"bytes,2,opt,name=seenAt" json:"seenAt"`
+	ClickedAt  string `protobuf:"bytes,3,opt,name=clickedAt" json:"clickedAt"`
 }
 
 func (m *UpdateActivityRequest) Reset()                    { *m = UpdateActivityRequest{} }
@@ -337,8 +337,8 @@ func (m *UpdateActivityRequest) GetClickedAt() string {
 
 // Responses
 type Template struct {
-	Name      string `protobuf:"bytes,1,opt,name=name" json:"name,omitempty"`
-	CreatedOn string `protobuf:"bytes,2,opt,name=createdOn" json:"createdOn,omitempty"`
+	Name      string `protobuf:"bytes,1,opt,name=name" json:"name"`
+	CreatedOn string `protobuf:"bytes,2,opt,name=createdOn" json:"createdOn"`
 }
 
 func (m *Template) Reset()                    { *m = Template{} }
@@ -361,8 +361,8 @@ func (m *Template) GetCreatedOn() string {
 }
 
 type EmailResponse struct {
-	Status  string `protobuf:"bytes,1,opt,name=status" json:"status,omitempty"`
-	Message string `protobuf:"bytes,2,opt,name=message" json:"message,omitempty"`
+	Status  string `protobuf:"bytes,1,opt,name=status" json:"status"`
+	Message string `protobuf:"bytes,2,opt,name=message" json:"message"`
 }
 
 func (m *EmailResponse) Reset()                    { *m = EmailResponse{} }
@@ -385,7 +385,7 @@ func (m *EmailResponse) GetMessage() string {
 }
 
 type TemplatesList struct {
-	Templates []*Template `protobuf:"bytes,1,rep,name=templates" json:"templates,omitempty"`
+	Templates []*Template `protobuf:"bytes,1,rep,name=templates" json:"templates"`
 }
 
 func (m *TemplatesList) Reset()                    { *m = TemplatesList{} }
@@ -401,9 +401,9 @@ func (m *TemplatesList) GetTemplates() []*Template {
 }
 
 type TemplatesResponse struct {
-	Status  string         `protobuf:"bytes,1,opt,name=status" json:"status,omitempty"`
-	Message string         `protobuf:"bytes,2,opt,name=message" json:"message,omitempty"`
-	Data    *TemplatesList `protobuf:"bytes,3,opt,name=data" json:"data,omitempty"`
+	Status  string         `protobuf:"bytes,1,opt,name=status" json:"status"`
+	Message string         `protobuf:"bytes,2,opt,name=message" json:"message"`
+	Data    *TemplatesList `protobuf:"bytes,3,opt,name=data" json:"data"`
 }
 
 func (m *TemplatesResponse) Reset()                    { *m = TemplatesResponse{} }
@@ -433,17 +433,17 @@ func (m *TemplatesResponse) GetData() *TemplatesList {
 }
 
 type Activity struct {
-	ActivityID  string `protobuf:"bytes,1,opt,name=activityID" json:"activityID,omitempty"`
-	UserID      string `protobuf:"bytes,3,opt,name=userID" json:"userID,omitempty"`
-	Type        string `protobuf:"bytes,2,opt,name=type" json:"type,omitempty"`
-	ObjectID    string `protobuf:"bytes,4,opt,name=objectID" json:"objectID,omitempty"`
-	Title       string `protobuf:"bytes,5,opt,name=title" json:"title,omitempty"`
-	Subtitle    string `protobuf:"bytes,6,opt,name=subtitle" json:"subtitle,omitempty"`
-	Description string `protobuf:"bytes,7,opt,name=description" json:"description,omitempty"`
-	Details     string `protobuf:"bytes,8,opt,name=details" json:"details,omitempty"`
-	Timestamp   string `protobuf:"bytes,9,opt,name=timestamp" json:"timestamp,omitempty"`
-	ClickedAt   string `protobuf:"bytes,10,opt,name=clickedAt" json:"clickedAt,omitempty"`
-	SeenAt      string `protobuf:"bytes,11,opt,name=seenAt" json:"seenAt,omitempty"`
+	ActivityID  string `protobuf:"bytes,1,opt,name=activityID" json:"activityID"`
+	UserID      string `protobuf:"bytes,3,opt,name=userID" json:"userID"`
+	Type        string `protobuf:"bytes,2,opt,name=type" json:"type"`
+	ObjectID    string `protobuf:"bytes,4,opt,name=objectID" json:"objectID"`
+	Title       string `protobuf:"bytes,5,opt,name=title" json:"title"`
+	Subtitle    string `protobuf:"bytes,6,opt,name=subtitle" json:"subtitle"`
+	Description string `protobuf:"bytes,7,opt,name=description" json:"description"`
+	Details     string `protobuf:"bytes,8,opt,name=details" json:"details"`
+	Timestamp   string `protobuf:"bytes,9,opt,name=timestamp" json:"timestamp"`
+	ClickedAt   string `protobuf:"bytes,10,opt,name=clickedAt" json:"clickedAt"`
+	SeenAt      string `protobuf:"bytes,11,opt,name=seenAt" json:"seenAt"`
 }
 
 func (m *Activity) Reset()                    { *m = Activity{} }
@@ -529,10 +529,10 @@ func (m *Activity) GetSeenAt() string {
 }
 
 type UserActivityPage struct {
-	Page     uint32      `protobuf:"varint,1,opt,name=page" json:"page,omitempty"`
-	PageSize uint32      `protobuf:"varint,2,opt,name=pageSize" json:"pageSize,omitempty"`
-	Total    uint32      `protobuf:"varint,3,opt,name=total" json:"total,omitempty"`
-	Activity []*Activity `protobuf:"bytes,4,rep,name=activity" json:"activity,omitempty"`
+	Page     uint32      `protobuf:"varint,1,opt,name=page" json:"page"`
+	PageSize uint32      `protobuf:"varint,2,opt,name=pageSize" json:"pageSize"`
+	Total    uint32      `protobuf:"varint,3,opt,name=total" json:"total"`
+	Activity []*Activity `protobuf:"bytes,4,rep,name=activity" json:"activity"`
 }
 
 func (m *UserActivityPage) Reset()                    { *m = UserActivityPage{} }
@@ -569,9 +569,9 @@ func (m *UserActivityPage) GetActivity() []*Activity {
 }
 
 type ActivityPagedResponse struct {
-	Status  string            `protobuf:"bytes,1,opt,name=status" json:"status,omitempty"`
-	Message string            `protobuf:"bytes,2,opt,name=message" json:"message,omitempty"`
-	Data    *UserActivityPage `protobuf:"bytes,3,opt,name=data" json:"data,omitempty"`
+	Status  string            `protobuf:"bytes,1,opt,name=status" json:"status"`
+	Message string            `protobuf:"bytes,2,opt,name=message" json:"message"`
+	Data    *UserActivityPage `protobuf:"bytes,3,opt,name=data" json:"data"`
 }
 
 func (m *ActivityPagedResponse) Reset()                    { *m = ActivityPagedResponse{} }
@@ -601,7 +601,7 @@ func (m *ActivityPagedResponse) GetData() *UserActivityPage {
 }
 
 type ActivityData struct {
-	Activity *Activity `protobuf:"bytes,1,opt,name=activity" json:"activity,omitempty"`
+	Activity *Activity `protobuf:"bytes,1,opt,name=activity" json:"activity"`
 }
 
 func (m *ActivityData) Reset()                    { *m = ActivityData{} }
@@ -617,9 +617,9 @@ func (m *ActivityData) GetActivity() *Activity {
 }
 
 type ActivityResponse struct {
-	Status  string        `protobuf:"bytes,1,opt,name=status" json:"status,omitempty"`
-	Message string        `protobuf:"bytes,2,opt,name=message" json:"message,omitempty"`
-	Data    *ActivityData `protobuf:"bytes,3,opt,name=data" json:"data,omitempty"`
+	Status  string        `protobuf:"bytes,1,opt,name=status" json:"status"`
+	Message string        `protobuf:"bytes,2,opt,name=message" json:"message"`
+	Data    *ActivityData `protobuf:"bytes,3,opt,name=data" json:"data"`
 }
 
 func (m *ActivityResponse) Reset()                    { *m = ActivityResponse{} }
@@ -649,7 +649,7 @@ func (m *ActivityResponse) GetData() *ActivityData {
 }
 
 type ActivityList struct {
-	Activity []*Activity `protobuf:"bytes,1,rep,name=activity" json:"activity,omitempty"`
+	Activity []*Activity `protobuf:"bytes,1,rep,name=activity" json:"activity"`
 }
 
 func (m *ActivityList) Reset()                    { *m = ActivityList{} }
@@ -665,9 +665,9 @@ func (m *ActivityList) GetActivity() []*Activity {
 }
 
 type ActivityListResponse struct {
-	Status  string        `protobuf:"bytes,1,opt,name=status" json:"status,omitempty"`
-	Message string        `protobuf:"bytes,2,opt,name=message" json:"message,omitempty"`
-	Data    *ActivityList `protobuf:"bytes,3,opt,name=data" json:"data,omitempty"`
+	Status  string        `protobuf:"bytes,1,opt,name=status" json:"status"`
+	Message string        `protobuf:"bytes,2,opt,name=message" json:"message"`
+	Data    *ActivityList `protobuf:"bytes,3,opt,name=data" json:"data"`
 }
 
 func (m *ActivityListResponse) Reset()                    { *m = ActivityListResponse{} }
@@ -697,7 +697,7 @@ func (m *ActivityListResponse) GetData() *ActivityList {
 }
 
 type ActivityCount struct {
-	Count uint32 `protobuf:"varint,1,opt,name=count" json:"count,omitempty"`
+	Count uint32 `protobuf:"varint,1,opt,name=count" json:"count"`
 }
 
 func (m *ActivityCount) Reset()                    { *m = ActivityCount{} }
@@ -713,9 +713,9 @@ func (m *ActivityCount) GetCount() uint32 {
 }
 
 type ActivityCountResponse struct {
-	Status  string         `protobuf:"bytes,1,opt,name=status" json:"status,omitempty"`
-	Message string         `protobuf:"bytes,2,opt,name=message" json:"message,omitempty"`
-	Data    *ActivityCount `protobuf:"bytes,3,opt,name=data" json:"data,omitempty"`
+	Status  string         `protobuf:"bytes,1,opt,name=status" json:"status"`
+	Message string         `protobuf:"bytes,2,opt,name=message" json:"message"`
+	Data    *ActivityCount `protobuf:"bytes,3,opt,name=data" json:"data"`
 }
 
 func (m *ActivityCountResponse) Reset()                    { *m = ActivityCountResponse{} }
